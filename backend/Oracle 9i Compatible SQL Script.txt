@@ -1,0 +1,363 @@
+-- Oracle 9i Compatible SQL Script for OpEx Hub Database
+-- Run this script in Toad for Oracle 9.0.1.8
+
+-- Create Sequences for Primary Keys
+CREATE SEQUENCE OPEX_USER_SEQ
+  START WITH 1
+  INCREMENT BY 1
+  NOCYCLE
+  NOMAXVALUE;
+
+CREATE SEQUENCE OPEX_INITIATIVE_SEQ
+  START WITH 1
+  INCREMENT BY 1
+  NOCYCLE
+  NOMAXVALUE;
+
+CREATE SEQUENCE OPEX_REMARKS_SEQ
+  START WITH 1
+  INCREMENT BY 1
+  NOCYCLE
+  NOMAXVALUE;
+
+CREATE SEQUENCE OPEX_WF_TRANS_SEQ
+  START WITH 1
+  INCREMENT BY 1
+  NOCYCLE
+  NOMAXVALUE;
+
+CREATE SEQUENCE OPEX_WF_STAGE_SEQ
+  START WITH 1
+  INCREMENT BY 1
+  NOCYCLE
+  NOMAXVALUE;
+
+CREATE SEQUENCE OPEX_TIMELINE_TASK_SEQ
+  START WITH 1
+  INCREMENT BY 1
+  NOCYCLE
+  NOMAXVALUE;
+
+CREATE SEQUENCE OPEX_MONTHLY_MON_SEQ
+  START WITH 1
+  INCREMENT BY 1
+  NOCYCLE
+  NOMAXVALUE;
+
+CREATE SEQUENCE OPEX_TIMELINE_ENT_SEQ
+  START WITH 1
+  INCREMENT BY 1
+  NOCYCLE
+  NOMAXVALUE;
+
+CREATE SEQUENCE OPEX_WF_MASTER_SEQ
+  START WITH 1
+  INCREMENT BY 1
+  NOCYCLE
+  NOMAXVALUE;
+
+-- Create Tables
+
+-- Users Table
+CREATE TABLE OPEX_USERS (
+    id NUMBER(19) PRIMARY KEY,
+    full_name VARCHAR2(100) NOT NULL,
+    email VARCHAR2(50) NOT NULL UNIQUE,
+    password VARCHAR2(120) NOT NULL,
+    site VARCHAR2(10) NOT NULL,
+    discipline VARCHAR2(10) NOT NULL,
+    role VARCHAR2(20) NOT NULL,
+    role_name VARCHAR2(100),
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP
+);
+
+-- Initiatives Table
+CREATE TABLE OPEX_INITIATIVES (
+    id NUMBER(19) PRIMARY KEY,
+    title VARCHAR2(200) NOT NULL,
+    description CLOB,
+    status VARCHAR2(20) NOT NULL,
+    priority VARCHAR2(20) NOT NULL,
+    expected_savings NUMBER(15,2),
+    actual_savings NUMBER(15,2),
+    site VARCHAR2(10) NOT NULL,
+    discipline VARCHAR2(50) NOT NULL,
+    initiative_number VARCHAR2(50) UNIQUE,
+    start_date DATE,
+    end_date DATE,
+    progress_percentage NUMBER(3) DEFAULT 0,
+    current_stage NUMBER(2) DEFAULT 1,
+    requires_moc CHAR(1) DEFAULT 'N' CHECK (requires_moc IN ('Y','N')),
+    requires_capex CHAR(1) DEFAULT 'N' CHECK (requires_capex IN ('Y','N')),
+    moc_number VARCHAR2(100),
+    capex_number VARCHAR2(100),
+    assumption_1 CLOB,
+    assumption_2 CLOB,
+    assumption_3 CLOB,
+    baseline_data CLOB,
+    target_outcome VARCHAR2(255),
+    target_value NUMBER(15,2),
+    confidence_level NUMBER(3),
+    estimated_capex NUMBER(15,2),
+    budget_type VARCHAR2(50),
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP,
+    created_by NUMBER(19) NOT NULL,
+    initiator_name VARCHAR2(100) NOT NULL,
+    FOREIGN KEY (created_by) REFERENCES OPEX_USERS(id)
+);
+
+-- Comments/Remarks Table (renamed from comments to avoid reserved keyword)
+CREATE TABLE OPEX_REMARKS (
+    id NUMBER(19) PRIMARY KEY,
+    content CLOB NOT NULL,
+    type VARCHAR2(50),
+    stage_number NUMBER(2),
+    created_at TIMESTAMP,
+    initiative_id NUMBER(19) NOT NULL,
+    user_id NUMBER(19) NOT NULL,
+    FOREIGN KEY (initiative_id) REFERENCES OPEX_INITIATIVES(id),
+    FOREIGN KEY (user_id) REFERENCES OPEX_USERS(id)
+);
+
+-- Workflow Transactions Table
+CREATE TABLE OPEX_WORKFLOW_TRANSACTIONS (
+    id NUMBER(19) PRIMARY KEY,
+    initiative_id NUMBER(19) NOT NULL,
+    stage_number NUMBER(2) NOT NULL,
+    stage_name VARCHAR2(100) NOT NULL,
+    site VARCHAR2(10) NOT NULL,
+    approve_status VARCHAR2(20) NOT NULL,
+    remarks CLOB,
+    action_by VARCHAR2(100),
+    action_date TIMESTAMP,
+    pending_with VARCHAR2(20),
+    required_role VARCHAR2(20),
+    assigned_user_id NUMBER(19),
+    requires_moc CHAR(1) DEFAULT 'N' CHECK (requires_moc IN ('Y','N')),
+    moc_number VARCHAR2(100),
+    requires_capex CHAR(1) DEFAULT 'N' CHECK (requires_capex IN ('Y','N')),
+    capex_number VARCHAR2(100),
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP,
+    FOREIGN KEY (initiative_id) REFERENCES OPEX_INITIATIVES(id),
+    FOREIGN KEY (assigned_user_id) REFERENCES OPEX_USERS(id)
+);
+
+-- Workflow Stages Table
+CREATE TABLE OPEX_WORKFLOW_STAGES (
+    id NUMBER(19) PRIMARY KEY,
+    stage_number NUMBER(2),
+    stage_name VARCHAR2(100) NOT NULL,
+    required_role VARCHAR2(20),
+    site VARCHAR2(10)
+);
+
+-- Timeline Tasks Table
+CREATE TABLE OPEX_TIMELINE_TASKS (
+    id NUMBER(19) PRIMARY KEY,
+    title VARCHAR2(200) NOT NULL,
+    description CLOB,
+    start_date DATE,
+    end_date DATE,
+    status VARCHAR2(20) NOT NULL,
+    progress_percentage NUMBER(3) DEFAULT 0,
+    responsible VARCHAR2(100),
+    accountable VARCHAR2(100),
+    consulted VARCHAR2(200),
+    informed VARCHAR2(200),
+    remarks CLOB,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP,
+    initiative_id NUMBER(19) NOT NULL,
+    FOREIGN KEY (initiative_id) REFERENCES OPEX_INITIATIVES(id)
+);
+
+-- Monthly Monitoring Entries Table
+CREATE TABLE OPEX_MONTHLY_MONITORING_ENTRIES (
+    id NUMBER(19) PRIMARY KEY,
+    initiative_id NUMBER(19) NOT NULL,
+    monitoring_month VARCHAR2(7) NOT NULL, -- Format: YYYY-MM
+    kpi_description VARCHAR2(500) NOT NULL,
+    target_value NUMBER(15,2) NOT NULL,
+    achieved_value NUMBER(15,2),
+    deviation NUMBER(15,2),
+    remarks CLOB,
+    category VARCHAR2(50) DEFAULT 'General',
+    deviation_percentage NUMBER(5,2),
+    is_finalized CHAR(1) DEFAULT 'N' CHECK (is_finalized IN ('Y','N')),
+    fa_approval CHAR(1) DEFAULT 'N' CHECK (fa_approval IN ('Y','N')),
+    fa_remarks CLOB,
+    entered_by VARCHAR2(100) NOT NULL,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL,
+    FOREIGN KEY (initiative_id) REFERENCES OPEX_INITIATIVES(id)
+);
+
+-- Timeline Entries Table
+CREATE TABLE OPEX_TIMELINE_ENTRIES (
+    id NUMBER(19) PRIMARY KEY,
+    initiative_id NUMBER(19) NOT NULL,
+    stage_name VARCHAR2(100) NOT NULL,
+    planned_start_date DATE NOT NULL,
+    planned_end_date DATE NOT NULL,
+    actual_start_date DATE,
+    actual_end_date DATE,
+    status VARCHAR2(20) NOT NULL,
+    responsible_person VARCHAR2(100) NOT NULL,
+    remarks CLOB,
+    document_path VARCHAR2(500),
+    site_lead_approval CHAR(1) DEFAULT 'N' CHECK (site_lead_approval IN ('Y','N')),
+    initiative_lead_approval CHAR(1) DEFAULT 'N' CHECK (initiative_lead_approval IN ('Y','N')),
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL,
+    FOREIGN KEY (initiative_id) REFERENCES OPEX_INITIATIVES(id)
+);
+
+-- Workflow Master Table
+CREATE TABLE OPEX_WF_MASTER (
+    id NUMBER(19) PRIMARY KEY,
+    stage_number NUMBER(2) NOT NULL,
+    stage_name VARCHAR2(100) NOT NULL,
+    role_code VARCHAR2(20) NOT NULL,
+    site VARCHAR2(10) NOT NULL,
+    user_email VARCHAR2(100) NOT NULL,
+    is_active CHAR(1) DEFAULT 'Y' CHECK (is_active IN ('Y','N'))
+);
+
+-- Create Triggers for Auto-increment functionality (replacing IDENTITY)
+
+-- Users Table Trigger
+CREATE OR REPLACE TRIGGER OPEX_USERS_TRG
+  BEFORE INSERT ON OPEX_USERS
+  FOR EACH ROW
+BEGIN
+  IF :new.id IS NULL THEN
+    SELECT OPEX_USER_SEQ.nextval INTO :new.id FROM dual;
+  END IF;
+END;
+
+-- Initiatives Table Trigger
+CREATE OR REPLACE TRIGGER OPEX_INITIATIVES_TRG
+  BEFORE INSERT ON OPEX_INITIATIVES
+  FOR EACH ROW
+BEGIN
+  IF :new.id IS NULL THEN
+    SELECT OPEX_INITIATIVE_SEQ.nextval INTO :new.id FROM dual;
+  END IF;
+END;
+
+-- Remarks Table Trigger
+CREATE OR REPLACE TRIGGER OPEX_REMARKS_TRG
+  BEFORE INSERT ON OPEX_REMARKS
+  FOR EACH ROW
+BEGIN
+  IF :new.id IS NULL THEN
+    SELECT OPEX_REMARKS_SEQ.nextval INTO :new.id FROM dual;
+  END IF;
+END;
+
+-- Workflow Transactions Table Trigger
+CREATE OR REPLACE TRIGGER OPEX_WF_TRANSACTIONS_TRG
+  BEFORE INSERT ON OPEX_WORKFLOW_TRANSACTIONS
+  FOR EACH ROW
+BEGIN
+  IF :new.id IS NULL THEN
+    SELECT OPEX_WF_TRANS_SEQ.nextval INTO :new.id FROM dual;
+  END IF;
+END;
+
+-- Workflow Stages Table Trigger
+CREATE OR REPLACE TRIGGER OPEX_WF_STAGES_TRG
+  BEFORE INSERT ON OPEX_WORKFLOW_STAGES
+  FOR EACH ROW
+BEGIN
+  IF :new.id IS NULL THEN
+    SELECT OPEX_WF_STAGE_SEQ.nextval INTO :new.id FROM dual;
+  END IF;
+END;
+
+-- Timeline Tasks Table Trigger
+CREATE OR REPLACE TRIGGER OPEX_TIMELINE_TASKS_TRG
+  BEFORE INSERT ON OPEX_TIMELINE_TASKS
+  FOR EACH ROW
+BEGIN
+  IF :new.id IS NULL THEN
+    SELECT OPEX_TIMELINE_TASK_SEQ.nextval INTO :new.id FROM dual;
+  END IF;
+END;
+
+-- Monthly Monitoring Entries Table Trigger
+CREATE OR REPLACE TRIGGER OPEX_MONTHLY_MON_TRG
+  BEFORE INSERT ON OPEX_MONTHLY_MONITORING_ENTRIES
+  FOR EACH ROW
+BEGIN
+  IF :new.id IS NULL THEN
+    SELECT OPEX_MONTHLY_MON_SEQ.nextval INTO :new.id FROM dual;
+  END IF;
+END;
+
+-- Timeline Entries Table Trigger
+CREATE OR REPLACE TRIGGER OPEX_TIMELINE_ENT_TRG
+  BEFORE INSERT ON OPEX_TIMELINE_ENTRIES
+  FOR EACH ROW
+BEGIN
+  IF :new.id IS NULL THEN
+    SELECT OPEX_TIMELINE_ENT_SEQ.nextval INTO :new.id FROM dual;
+  END IF;
+END;
+
+-- Workflow Master Table Trigger
+CREATE OR REPLACE TRIGGER OPEX_WF_MASTER_TRG
+  BEFORE INSERT ON OPEX_WF_MASTER
+  FOR EACH ROW
+BEGIN
+  IF :new.id IS NULL THEN
+    SELECT OPEX_WF_MASTER_SEQ.nextval INTO :new.id FROM dual;
+  END IF;
+END;
+
+-- Create Indexes for better performance
+CREATE INDEX IDX_OPEX_USERS_EMAIL ON OPEX_USERS(email);
+CREATE INDEX IDX_OPEX_USERS_SITE ON OPEX_USERS(site);
+CREATE INDEX IDX_OPEX_INITIATIVES_STATUS ON OPEX_INITIATIVES(status);
+CREATE INDEX IDX_OPEX_INITIATIVES_SITE ON OPEX_INITIATIVES(site);
+CREATE INDEX IDX_OPEX_INITIATIVES_CREATED_BY ON OPEX_INITIATIVES(created_by);
+CREATE INDEX IDX_OPEX_REMARKS_INITIATIVE ON OPEX_REMARKS(initiative_id);
+CREATE INDEX IDX_OPEX_REMARKS_USER ON OPEX_REMARKS(user_id);
+CREATE INDEX IDX_OPEX_WF_TRANS_INITIATIVE ON OPEX_WORKFLOW_TRANSACTIONS(initiative_id);
+CREATE INDEX IDX_OPEX_WF_TRANS_STATUS ON OPEX_WORKFLOW_TRANSACTIONS(approve_status);
+CREATE INDEX IDX_OPEX_TIMELINE_TASKS_INIT ON OPEX_TIMELINE_TASKS(initiative_id);
+CREATE INDEX IDX_OPEX_MONTHLY_MON_INIT ON OPEX_MONTHLY_MONITORING_ENTRIES(initiative_id);
+CREATE INDEX IDX_OPEX_TIMELINE_ENT_INIT ON OPEX_TIMELINE_ENTRIES(initiative_id);
+CREATE INDEX IDX_OPEX_WF_MASTER_SITE ON OPEX_WF_MASTER(site);
+CREATE INDEX IDX_OPEX_WF_MASTER_ROLE ON OPEX_WF_MASTER(role_code);
+
+-- Grant permissions (adjust as needed based on your user requirements)
+-- GRANT SELECT, INSERT, UPDATE, DELETE ON OPEX_USERS TO your_application_user;
+-- GRANT SELECT, INSERT, UPDATE, DELETE ON OPEX_INITIATIVES TO your_application_user;
+-- GRANT SELECT, INSERT, UPDATE, DELETE ON OPEX_REMARKS TO your_application_user;
+-- GRANT SELECT, INSERT, UPDATE, DELETE ON OPEX_WORKFLOW_TRANSACTIONS TO your_application_user;
+-- GRANT SELECT, INSERT, UPDATE, DELETE ON OPEX_WORKFLOW_STAGES TO your_application_user;
+-- GRANT SELECT, INSERT, UPDATE, DELETE ON OPEX_TIMELINE_TASKS TO your_application_user;
+-- GRANT SELECT, INSERT, UPDATE, DELETE ON OPEX_MONTHLY_MONITORING_ENTRIES TO your_application_user;
+-- GRANT SELECT, INSERT, UPDATE, DELETE ON OPEX_TIMELINE_ENTRIES TO your_application_user;
+-- GRANT SELECT, INSERT, UPDATE, DELETE ON OPEX_WF_MASTER TO your_application_user;
+
+-- Sample data insertion (optional)
+/*
+INSERT INTO OPEX_USERS (full_name, email, password, site, discipline, role, role_name, created_at, updated_at)
+VALUES ('Admin User', 'admin@opexhub.com', 'encoded_password', 'SITE01', 'IT', 'ADMIN', 'System Administrator', SYSDATE, SYSDATE);
+
+INSERT INTO OPEX_WF_MASTER (stage_number, stage_name, role_code, site, user_email)
+VALUES (1, 'Initial Review', 'IL', 'SITE01', 'il@opexhub.com');
+
+INSERT INTO OPEX_WF_MASTER (stage_number, stage_name, role_code, site, user_email)
+VALUES (2, 'Site Lead Approval', 'SL', 'SITE01', 'sl@opexhub.com');
+
+INSERT INTO OPEX_WF_MASTER (stage_number, stage_name, role_code, site, user_email)
+VALUES (3, 'Finance Approval', 'FA', 'SITE01', 'fa@opexhub.com');
+*/
+
+COMMIT;
