@@ -22,6 +22,6 @@ public interface TimelineEntryRepository extends JpaRepository<TimelineEntry, Lo
                                                    @Param("status") TimelineEntry.TimelineStatus status);
     
     @Query("SELECT t FROM TimelineEntry t WHERE t.initiative.id = :initiativeId AND " +
-           "(t.siteLeadApproval = false OR t.initiativeLeadApproval = false)")
+           "(t.siteLeadApproval = 'N' OR t.initiativeLeadApproval = 'N')")
     List<TimelineEntry> findPendingApprovalsForInitiative(@Param("initiativeId") Long initiativeId);
 }

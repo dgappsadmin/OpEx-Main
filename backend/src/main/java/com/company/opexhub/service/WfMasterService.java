@@ -15,7 +15,7 @@ public class WfMasterService {
     private WfMasterRepository wfMasterRepository;
 
     public List<WfMaster> getWorkflowConfigForSite(String site) {
-        return wfMasterRepository.findBySiteAndIsActiveOrderByStageNumber(site, true);
+        return wfMasterRepository.findBySiteAndIsActiveOrderByStageNumber(site, "Y");
     }
 
     public Optional<WfMaster> getWorkflowUserForStage(String site, Integer stageNumber) {

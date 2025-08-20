@@ -68,7 +68,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
     if (editingEntry) {
       updateEntryMutation.mutate({
         id: editingEntry.id!,
-        data: entryData
+        entryData: entryData
       }, {
         onSuccess: () => {
           toast({

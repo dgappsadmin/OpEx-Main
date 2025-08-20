@@ -103,7 +103,7 @@ public class WorkflowTransactionService {
     private void setNextStageInfo(WorkflowTransactionDetailDTO dto, WorkflowTransaction transaction) {
         Optional<WfMaster> nextStageConfig = wfMasterRepository
                 .findBySiteAndStageNumberAndIsActive(transaction.getSite(), 
-                    transaction.getStageNumber() + 1, true);
+                    transaction.getStageNumber() + 1, "Y");
                     
         if (nextStageConfig.isPresent()) {
             WfMaster nextStage = nextStageConfig.get();
@@ -152,7 +152,7 @@ public class WorkflowTransactionService {
     public void createInitialWorkflowTransactions(Initiative initiative) {
         // Get workflow configuration from wf_master table
         List<WfMaster> workflowStages = wfMasterRepository.findBySiteAndIsActiveOrderByStageNumber(
-            initiative.getSite(), true);
+            initiative.getSite(), "Y");
 
         if (workflowStages.isEmpty()) {
             throw new RuntimeException("No workflow configuration found for site: " + initiative.getSite());
@@ -193,7 +193,7 @@ public class WorkflowTransactionService {
                 .orElseThrow(() -> new RuntimeException("Initiative not found"));
                 
         Optional<WfMaster> nextStageConfig = wfMasterRepository
-                .findBySiteAndStageNumberAndIsActive(initiative.getSite(), stageNumber, true);
+                .findBySiteAndStageNumberAndIsActive(initiative.getSite(), stageNumber, "Y");
                 
         if (nextStageConfig.isPresent()) {
             WfMaster wfStage = nextStageConfig.get();
@@ -298,7 +298,7 @@ public class WorkflowTransactionService {
             
             // Check if this is the last stage
             Integer totalStages = wfMasterRepository.findBySiteAndIsActiveOrderByStageNumber(
-                initiative.getSite(), true).size();
+                initiative.getSite(), "Y").size();
             
             if (currentStageNumber >= totalStages) {
                 initiative.setStatus("Completed");
@@ -364,7 +364,7 @@ public class WorkflowTransactionService {
                 
                 // Also create corresponding WfMaster entry dynamically
                 Optional<WfMaster> existingWfMaster = wfMasterRepository
-                        .findBySiteAndStageNumberAndIsActive(initiative.getSite(), stageNumber, true);
+                        .findBySiteAndStageNumberAndIsActive(initiative.getSite(), stageNumber, "Y");
                         
                 if (!existingWfMaster.isPresent()) {
                     WfMaster wfMaster = new WfMaster(

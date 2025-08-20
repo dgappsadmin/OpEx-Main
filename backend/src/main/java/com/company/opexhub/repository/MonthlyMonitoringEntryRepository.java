@@ -18,11 +18,11 @@ public interface MonthlyMonitoringEntryRepository extends JpaRepository<MonthlyM
     
     List<MonthlyMonitoringEntry> findByMonitoringMonth(YearMonth month);
     
-    List<MonthlyMonitoringEntry> findByIsFinalized(Boolean isFinalized);
+    List<MonthlyMonitoringEntry> findByIsFinalized(String isFinalized);
     
-    List<MonthlyMonitoringEntry> findByFaApproval(Boolean faApproval);
+    List<MonthlyMonitoringEntry> findByFaApproval(String faApproval);
     
-    @Query("SELECT m FROM MonthlyMonitoringEntry m WHERE m.initiative.id = :initiativeId AND m.faApproval = false")
+    @Query("SELECT m FROM MonthlyMonitoringEntry m WHERE m.initiative.id = :initiativeId AND m.faApproval = 'N'")
     List<MonthlyMonitoringEntry> findPendingFAApprovalsForInitiative(@Param("initiativeId") Long initiativeId);
     
     @Query("SELECT m FROM MonthlyMonitoringEntry m WHERE m.enteredBy = :userRole")
@@ -39,7 +39,7 @@ public interface MonthlyMonitoringEntryRepository extends JpaRepository<MonthlyM
     @Query("SELECT mme FROM MonthlyMonitoringEntry mme WHERE mme.initiative.site = :site")
     List<MonthlyMonitoringEntry> findBySite(@Param("site") String site);
     
-    List<MonthlyMonitoringEntry> findByIsFinalizedTrue();
+    List<MonthlyMonitoringEntry> findByIsFinalizedOrderByMonitoringMonthDesc(String isFinalized);
     
-    List<MonthlyMonitoringEntry> findByFaApprovalTrue();
+    List<MonthlyMonitoringEntry> findByFaApprovalOrderByMonitoringMonthDesc(String faApproval);
 }

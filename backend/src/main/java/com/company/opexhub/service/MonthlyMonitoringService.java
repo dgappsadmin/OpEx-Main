@@ -89,6 +89,6 @@ public class MonthlyMonitoringService {
     }
 
     public List<MonthlyMonitoringEntry> getFinalizedEntries() {
-        return monthlyMonitoringRepository.findByIsFinalized(true);
+        return monthlyMonitoringRepository.findByIsFinalized("Y");
     }
 }

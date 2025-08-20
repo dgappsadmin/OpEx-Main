@@ -15,27 +15,27 @@ public class OpexHubApplication {
         SpringApplication.run(OpexHubApplication.class, args);
         System.out.println("Application is running and up!");
  
-        // ✅ Call your send method here
-        try {
-            send(
-                "Test Subject",
-                "Hello, this is a test email template!",
-                "dnsharma@godeepak.com",
-                "",
-                "dnsharma@godeepak.com"
-            );
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+    //     // ✅ Call your send method here
+    //     try {
+    //         send(
+    //             "Test Subject",
+    //             "Hello, this is a test email template!",
+    //             "dnsharma@godeepak.com",
+    //             "",
+    //             "dnsharma@godeepak.com"
+    //         );
+    //     } catch (IOException e) {
+    //         e.printStackTrace();
+    //     }
+    // }
  
-    public static void send(String subject, String emailTemplate, String toEmail, String cc, String bcc) throws IOException {
-        MailHelper.send(
-            subject,
-            emailTemplate,
-            toEmail,
-            cc,
-            bcc
-        );
+    // public static void send(String subject, String emailTemplate, String toEmail, String cc, String bcc) throws IOException {
+    //     MailHelper.send(
+    //         subject,
+    //         emailTemplate,
+    //         toEmail,
+    //         cc,
+    //         bcc
+    //     );
     }
 }

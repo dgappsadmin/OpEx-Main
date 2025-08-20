@@ -12,12 +12,12 @@ import java.util.Optional;
 @Repository
 public interface WfMasterRepository extends JpaRepository<WfMaster, Long> {
     
-    List<WfMaster> findBySiteAndIsActiveOrderByStageNumber(String site, Boolean isActive);
+    List<WfMaster> findBySiteAndIsActiveOrderByStageNumber(String site, String isActive);
     
-    Optional<WfMaster> findBySiteAndStageNumberAndIsActive(String site, Integer stageNumber, Boolean isActive);
+    Optional<WfMaster> findBySiteAndStageNumberAndIsActive(String site, Integer stageNumber, String isActive);
     
-    List<WfMaster> findBySiteAndRoleCodeAndIsActive(String site, String roleCode, Boolean isActive);
+    List<WfMaster> findBySiteAndRoleCodeAndIsActive(String site, String roleCode, String isActive);
     
-    @Query("SELECT wm FROM WfMaster wm WHERE wm.site = :site AND wm.stageNumber = :stageNumber AND wm.isActive = true")
+    @Query("SELECT wm FROM WfMaster wm WHERE wm.site = :site AND wm.stageNumber = :stageNumber AND wm.isActive = 'Y'")
     Optional<WfMaster> findWorkflowUserForStage(@Param("site") String site, @Param("stageNumber") Integer stageNumber);
 }
