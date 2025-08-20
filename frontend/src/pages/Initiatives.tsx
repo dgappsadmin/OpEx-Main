@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Progress } from "@/components/ui/progress";
 import { 
   FileText, 
   Calendar, 
@@ -19,9 +20,7 @@ import {
 } from "lucide-react";
 import { mockInitiatives, paginateArray, User } from "@/lib/mockData";
 import { useInitiatives } from "@/hooks/useInitiatives";
-import { useProgressPercentage } from "@/hooks/useWorkflowTransactions";
 import InitiativeModal from "@/components/modals/InitiativeModal";
-import InitiativeProgress from "@/components/initiative/InitiativeProgress";
 import { reportsAPI } from "@/lib/api";
 
 interface Initiative {
@@ -113,9 +112,11 @@ export default function Initiatives({ user }: InitiativesProps) {
         description: item.description,
         startDate: item.startDate,
         endDate: item.endDate,
-        currentStage: item.currentStage,
+        currentStage: Math.min(item.currentStage || 1, 11), // Cap at stage 11
         // Prioritize currentStageName from API for instant display
-        currentStageName: item.currentStageName || WORKFLOW_STAGE_NAMES[item.currentStage || 1] || 'Register Initiative',
+        currentStageName: item.status?.toLowerCase() === 'completed' 
+          ? 'Initiative Closure' 
+          : (item.currentStageName || WORKFLOW_STAGE_NAMES[Math.min(item.currentStage || 1, 11)] || `Stage ${Math.min(item.currentStage || 1, 11)}`),
         requiresMoc: item.requiresMoc,
         requiresCapex: item.requiresCapex,
         createdByName: item.createdBy?.fullName || item.createdByName,
@@ -348,11 +349,16 @@ export default function Initiatives({ user }: InitiativesProps) {
                         </span>
                       </TableCell>
                       <TableCell className="p-1.5 text-center">
-                        <div className="flex justify-center">
-                          <InitiativeProgress 
-                            initiativeId={initiative.id} 
-                            fallbackProgress={initiative.progress} 
-                          />
+                        <div className="space-y-0.5">
+                          <div className="flex justify-between text-2xs">
+                            <span>Progress</span>
+                            <span>{initiative.status?.toLowerCase() === 'completed' 
+                              ? '100' 
+                              : Math.round(((Math.min(initiative.currentStage || 1, 11)) - 1) * 100 / 10)}%</span>
+                          </div>
+                          <Progress value={initiative.status?.toLowerCase() === 'completed' 
+                            ? 100 
+                            : Math.round(((Math.min(initiative.currentStage || 1, 11)) - 1) * 100 / 10)} className="h-1" />
                         </div>
                       </TableCell>
                       <TableCell className="p-1.5 text-center">

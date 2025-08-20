@@ -139,28 +139,28 @@ export function AppSidebar({ user }: AppSidebarProps = {}) {
       : "hover:bg-muted text-muted-foreground hover:text-foreground";
 
   return (
-    <Sidebar className={isCollapsed ? "w-14" : "w-64"} collapsible="icon">
+    <Sidebar className={isCollapsed ? "w-12" : "w-56"} collapsible="icon">
       <SidebarContent className="bg-card border-r border-border">
-        {/* Logo Section - Optimized for 14-inch laptops */}
-        <div className="p-3 border-b border-border">
+        {/* Logo Section - Compact for 14-inch laptops */}
+        <div className="p-2 border-b border-border">
           <div className="flex items-center gap-2">
             {!isCollapsed ? (
               <div className="flex items-center">
                 <img
                   src={dnlLogo}
                   alt="DNL Logo"
-                  className="h-8 w-auto"
+                  className="h-6 w-auto"
                 />
-                <div className="ml-3">
-                  <div className="text-sm font-semibold text-foreground">OpEx Hub</div>
-                  <div className="text-xs text-muted-foreground">Operational Excellence</div>
+                <div className="ml-2">
+                  <div className="text-xs font-semibold text-foreground">OpEx Hub</div>
+                  <div className="text-2xs text-muted-foreground">Operational Excellence</div>
                 </div>
               </div>
             ) : (
               <img
                 src={dnlLogo}
                 alt="DNL Logo"
-                className="h-8 w-auto"
+                className="h-6 w-auto"
               />
             )}
           </div>
@@ -168,9 +168,9 @@ export function AppSidebar({ user }: AppSidebarProps = {}) {
 
         {/* Navigation Groups */}
         {Object.entries(groupedItems).map(([groupName, items]) => (
-          <SidebarGroup key={groupName} className="py-2">
+          <SidebarGroup key={groupName} className="py-1">
             {!isCollapsed && (
-              <SidebarGroupLabel className="text-2xs laptop-14:text-xs font-semibold text-muted-foreground px-3">
+              <SidebarGroupLabel className="text-2xs font-medium text-muted-foreground px-2 py-1">
                 {groupName}
               </SidebarGroupLabel>
             )}
@@ -178,14 +178,14 @@ export function AppSidebar({ user }: AppSidebarProps = {}) {
               <SidebarMenu>
                 {items.map((item) => (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild className="py-2 text-sm">
+                    <SidebarMenuButton asChild className="py-1.5 text-xs h-8">
                       <NavLink 
                         to={item.url} 
                         end={item.url === "/"} 
                         className={getNavCls({ isActive: isActive(item.url) })}
                       >
-                        <item.icon className="h-4 w-4" />
-                        {!isCollapsed && <span className="text-sm">{item.title}</span>}
+                        <item.icon className="h-3.5 w-3.5" />
+                        {!isCollapsed && <span className="text-xs">{item.title}</span>}
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
