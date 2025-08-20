@@ -21,7 +21,8 @@ public class TimelineEntryService {
     private InitiativeRepository initiativeRepository;
 
     public List<TimelineEntry> getTimelineEntriesByInitiative(Long initiativeId) {
-        return timelineEntryRepository.findByInitiative_IdOrderByPlannedStartDate(initiativeId);
+        // Use native query to avoid Oracle SQL generation issues
+        return timelineEntryRepository.findByInitiativeIdNative(initiativeId);
     }
 
     public Optional<TimelineEntry> getTimelineEntryById(Long id) {
@@ -50,6 +51,11 @@ public class TimelineEntryService {
         entry.setResponsiblePerson(entryDetails.getResponsiblePerson());
         entry.setRemarks(entryDetails.getRemarks());
         entry.setDocumentPath(entryDetails.getDocumentPath());
+        
+        // Set status if provided, otherwise it will be auto-calculated in @PreUpdate
+        if (entryDetails.getStatus() != null) {
+            entry.setStatus(entryDetails.getStatus());
+        }
         
         // Validate date logic
         validateDates(entry);
@@ -83,6 +89,15 @@ public class TimelineEntryService {
     public List<TimelineEntry> getPendingApprovalsForInitiative(Long initiativeId) {
         return timelineEntryRepository.findPendingApprovalsForInitiative(initiativeId);
     }
+    
+    @Transactional
+    public TimelineEntry updateStatus(Long id, TimelineEntry.TimelineStatus status) {
+        TimelineEntry entry = timelineEntryRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Timeline entry not found"));
+        
+        entry.setStatus(status);
+        return timelineEntryRepository.save(entry);
+    }
 
     private void validateDates(TimelineEntry entry) {
         // Actual start can't precede planned start
@@ -94,14 +109,16 @@ public class TimelineEntryService {
         
         // Planned end must be after planned start
         if (entry.getPlannedEndDate() != null && entry.getPlannedStartDate() != null) {
-            if (entry.getPlannedEndDate().isBefore(entry.getPlannedStartDate())) {
+            if (entry.getPlannedEndDate().isBefore(entry.getPlannedStartDate()) || 
+                entry.getPlannedEndDate().equals(entry.getPlannedStartDate())) {
                 throw new RuntimeException("Planned end date must be after planned start date");
             }
         }
         
         // Actual end must be after actual start
         if (entry.getActualEndDate() != null && entry.getActualStartDate() != null) {
-            if (entry.getActualEndDate().isBefore(entry.getActualStartDate())) {
+            if (entry.getActualEndDate().isBefore(entry.getActualStartDate()) ||
+                entry.getActualEndDate().equals(entry.getActualStartDate())) {
                 throw new RuntimeException("Actual end date must be after actual start date");
             }
         }

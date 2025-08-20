@@ -11,7 +11,11 @@ import java.util.List;
 @Repository
 public interface TimelineEntryRepository extends JpaRepository<TimelineEntry, Long> {
     
-    List<TimelineEntry> findByInitiative_IdOrderByPlannedStartDate(Long initiativeId);
+    @Query("SELECT t FROM TimelineEntry t WHERE t.initiative.id = :initiativeId ORDER BY t.plannedStartDate ASC")
+    List<TimelineEntry> findByInitiative_IdOrderByPlannedStartDate(@Param("initiativeId") Long initiativeId);
+    
+    @Query(value = "SELECT * FROM OPEX_TIMELINE_ENTRIES t WHERE t.initiative_id = :initiativeId ORDER BY t.planned_start_date ASC", nativeQuery = true)
+    List<TimelineEntry> findByInitiativeIdNative(@Param("initiativeId") Long initiativeId);
     
     List<TimelineEntry> findByStatus(TimelineEntry.TimelineStatus status);
     

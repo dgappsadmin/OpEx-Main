@@ -49,8 +49,8 @@ interface TimelineEntry {
   responsiblePerson: string;
   remarks?: string;
   documentPath?: string;
-  siteLeadApproval: boolean;
-  initiativeLeadApproval: boolean;
+  siteLeadApproval: string; // Changed from boolean to string ('Y' or 'N')
+  initiativeLeadApproval: string; // Changed from boolean to string ('Y' or 'N')
   progressPercentage?: number;
   milestones?: string[];
 }
@@ -178,10 +178,13 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
   const approvalMutation = useMutation({
     mutationFn: async ({ id, siteLeadApproval, initiativeLeadApproval }: {
       id: number;
-      siteLeadApproval?: boolean;
-      initiativeLeadApproval?: boolean;
+      siteLeadApproval?: string;
+      initiativeLeadApproval?: string;
     }) => {
-      const result = await timelineTrackerAPI.updateApprovals(id, siteLeadApproval, initiativeLeadApproval);
+      // Convert string to boolean for API call
+      const siteApproval = siteLeadApproval === 'Y';
+      const initApproval = initiativeLeadApproval === 'Y';
+      const result = await timelineTrackerAPI.updateApprovals(id, siteApproval, initApproval);
       return result.data;
     },
     onSuccess: () => {
@@ -268,8 +271,8 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
 
     const entryData = {
       ...formData,
-      siteLeadApproval: false,
-      initiativeLeadApproval: false,
+      siteLeadApproval: 'N',
+      initiativeLeadApproval: 'N',
       status: formData.status || 'PENDING',
       progressPercentage: 0
     } as TimelineEntry;
@@ -685,11 +688,11 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
 
                             <div className="flex space-x-2 pt-3 border-t">
                               <div className="flex items-center space-x-2">
-                                <Badge variant={entry.siteLeadApproval ? "default" : "outline"} className="text-xs">
-                                  {entry.siteLeadApproval ? "✓ Site Lead" : "○ Site Lead"}
+                                <Badge variant={entry.siteLeadApproval === 'Y' ? "default" : "outline"} className="text-xs">
+                                  {entry.siteLeadApproval === 'Y' ? "✓ Site Lead" : "○ Site Lead"}
                                 </Badge>
-                                <Badge variant={entry.initiativeLeadApproval ? "default" : "outline"} className="text-xs">
-                                  {entry.initiativeLeadApproval ? "✓ Initiative Lead" : "○ Initiative Lead"}
+                                <Badge variant={entry.initiativeLeadApproval === 'Y' ? "default" : "outline"} className="text-xs">
+                                  {entry.initiativeLeadApproval === 'Y' ? "✓ Initiative Lead" : "○ Initiative Lead"}
                                 </Badge>
                               </div>
                               <div className="flex space-x-1 ml-auto">
@@ -698,7 +701,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                                   variant="outline"
                                   onClick={() => approvalMutation.mutate({ 
                                     id: entry.id!, 
-                                    siteLeadApproval: !entry.siteLeadApproval 
+                                    siteLeadApproval: entry.siteLeadApproval === 'Y' ? 'N' : 'Y' 
                                   })}
                                   disabled={user.role !== 'STLD'}
                                 >
@@ -709,7 +712,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                                   variant="outline"
                                   onClick={() => approvalMutation.mutate({ 
                                     id: entry.id!, 
-                                    initiativeLeadApproval: !entry.initiativeLeadApproval 
+                                    initiativeLeadApproval: entry.initiativeLeadApproval === 'Y' ? 'N' : 'Y' 
                                   })}
                                   disabled={user.role !== 'IL'}
                                 >

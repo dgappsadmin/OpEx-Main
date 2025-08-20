@@ -60,7 +60,7 @@ public class TimelineEntry {
     private LocalDateTime updatedAt;
     
     public enum TimelineStatus {
-        PENDING, IN_PROGRESS, COMPLETED
+        PENDING, IN_PROGRESS, COMPLETED, DELAYED
     }
     
     // Constructors
@@ -90,11 +90,21 @@ public class TimelineEntry {
     private void updateStatusFromDates() {
         LocalDate today = LocalDate.now();
         
+        // Don't auto-update status if it's manually set to DELAYED
+        if (status == TimelineStatus.DELAYED) {
+            return;
+        }
+        
         if (actualEndDate != null) {
             status = TimelineStatus.COMPLETED;
         } else if (actualStartDate != null || 
                   (plannedStartDate != null && !today.isBefore(plannedStartDate))) {
-            status = TimelineStatus.IN_PROGRESS;
+            // Check if we're past the planned end date without completion - set to DELAYED
+            if (plannedEndDate != null && today.isAfter(plannedEndDate)) {
+                status = TimelineStatus.DELAYED;
+            } else {
+                status = TimelineStatus.IN_PROGRESS;
+            }
         } else {
             status = TimelineStatus.PENDING;
         }

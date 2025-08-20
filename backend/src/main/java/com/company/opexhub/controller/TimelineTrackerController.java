@@ -182,4 +182,21 @@ public class TimelineTrackerController {
                     .body(new ApiResponse<>(false, "Error retrieving pending approvals: " + e.getMessage(), null));
         }
     }
+    
+    @PutMapping("/entry/{id}/status")
+    public ResponseEntity<ApiResponse<TimelineEntry>> updateStatus(
+            @PathVariable Long id,
+            @RequestParam String status) {
+        try {
+            TimelineEntry.TimelineStatus timelineStatus = TimelineEntry.TimelineStatus.valueOf(status.toUpperCase());
+            TimelineEntry updatedEntry = timelineEntryService.updateStatus(id, timelineStatus);
+            return ResponseEntity.ok(new ApiResponse<>(true, "Status updated successfully", updatedEntry));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse<>(false, "Invalid status value: " + status, null));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse<>(false, "Error updating status: " + e.getMessage(), null));
+        }
+    }
 }

@@ -282,67 +282,40 @@ export const timelineTrackerAPI = {
   getTimelineEntries: async (initiativeId: number) => {
     const response = await api.get(`/timeline-tracker/${initiativeId}`);
     
-    // Convert Y/N back to boolean for frontend
-    if (response.data) {
-      response.data = response.data.map((entry: any) => ({
-        ...entry,
-        siteLeadApproval: ynToBoolean(entry.siteLeadApproval),
-        initiativeLeadApproval: ynToBoolean(entry.initiativeLeadApproval),
-      }));
-    }
-    
+    // Keep Y/N as strings for frontend compatibility
     return response.data;
   },
   
   getTimelineEntryById: async (id: number) => {
     const response = await api.get(`/timeline-tracker/entry/${id}`);
     
-    // Convert Y/N back to boolean for frontend
-    if (response.data) {
-      response.data = {
-        ...response.data,
-        siteLeadApproval: ynToBoolean(response.data.siteLeadApproval),
-        initiativeLeadApproval: ynToBoolean(response.data.initiativeLeadApproval),
-      };
-    }
-    
+    // Keep Y/N as strings for frontend compatibility
     return response.data;
   },
   
   createTimelineEntry: async (initiativeId: number, entryData: any) => {
-    // Convert boolean to Y/N for backend
-    const backendData = { ...entryData };
-    if (typeof backendData.siteLeadApproval === 'boolean') {
-      backendData.siteLeadApproval = booleanToYN(backendData.siteLeadApproval);
-    }
-    if (typeof backendData.initiativeLeadApproval === 'boolean') {
-      backendData.initiativeLeadApproval = booleanToYN(backendData.initiativeLeadApproval);
-    }
-    
-    const response = await api.post(`/timeline-tracker/${initiativeId}`, backendData);
+    // Data is already in Y/N format from frontend, no conversion needed
+    const response = await api.post(`/timeline-tracker/${initiativeId}`, entryData);
     return response.data;
   },
   
   updateTimelineEntry: async (id: number, entryData: any) => {
-    // Convert boolean to Y/N for backend
-    const backendData = { ...entryData };
-    if (typeof backendData.siteLeadApproval === 'boolean') {
-      backendData.siteLeadApproval = booleanToYN(backendData.siteLeadApproval);
-    }
-    if (typeof backendData.initiativeLeadApproval === 'boolean') {
-      backendData.initiativeLeadApproval = booleanToYN(backendData.initiativeLeadApproval);
-    }
-    
-    const response = await api.put(`/timeline-tracker/entry/${id}`, backendData);
+    // Data is already in Y/N format from frontend, no conversion needed
+    const response = await api.put(`/timeline-tracker/entry/${id}`, entryData);
     return response.data;
   },
   
   updateApprovals: async (id: number, siteLeadApproval?: boolean, initiativeLeadApproval?: boolean) => {
     const params = new URLSearchParams();
-    if (siteLeadApproval !== undefined) params.append('siteLeadApproval', siteLeadApproval.toString());
-    if (initiativeLeadApproval !== undefined) params.append('initiativeLeadApproval', initiativeLeadApproval.toString());
+    if (siteLeadApproval !== undefined) params.append('siteLeadApproval', siteLeadApproval ? 'Y' : 'N');
+    if (initiativeLeadApproval !== undefined) params.append('initiativeLeadApproval', initiativeLeadApproval ? 'Y' : 'N');
     
     const response = await api.put(`/timeline-tracker/entry/${id}/approvals?${params.toString()}`);
+    return response.data;
+  },
+  
+  updateStatus: async (id: number, status: string) => {
+    const response = await api.put(`/timeline-tracker/entry/${id}/status?status=${status}`);
     return response.data;
   },
   
