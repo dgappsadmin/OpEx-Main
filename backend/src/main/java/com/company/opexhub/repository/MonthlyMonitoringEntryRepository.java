@@ -6,7 +6,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.YearMonth;
 import java.util.List;
 
 @Repository
@@ -14,9 +13,9 @@ public interface MonthlyMonitoringEntryRepository extends JpaRepository<MonthlyM
     
     List<MonthlyMonitoringEntry> findByInitiative_IdOrderByMonitoringMonth(Long initiativeId);
     
-    List<MonthlyMonitoringEntry> findByInitiative_IdAndMonitoringMonth(Long initiativeId, YearMonth month);
+    List<MonthlyMonitoringEntry> findByInitiative_IdAndMonitoringMonth(Long initiativeId, String monthYear);
     
-    List<MonthlyMonitoringEntry> findByMonitoringMonth(YearMonth month);
+    List<MonthlyMonitoringEntry> findByMonitoringMonth(String monthYear);
     
     List<MonthlyMonitoringEntry> findByIsFinalized(String isFinalized);
     
@@ -27,14 +26,13 @@ public interface MonthlyMonitoringEntryRepository extends JpaRepository<MonthlyM
     
     @Query("SELECT m FROM MonthlyMonitoringEntry m WHERE m.enteredBy = :userRole")
     List<MonthlyMonitoringEntry> findByEnteredBy(@Param("userRole") String userRole);
-
      
     List<MonthlyMonitoringEntry> findByInitiativeIdOrderByMonitoringMonthDesc(Long initiativeId);
     
-    List<MonthlyMonitoringEntry> findByInitiativeIdAndMonitoringMonth(Long initiativeId, YearMonth monthYear);
+    List<MonthlyMonitoringEntry> findByInitiativeIdAndMonitoringMonth(Long initiativeId, String monthYear);
     
     @Query("SELECT mme FROM MonthlyMonitoringEntry mme WHERE mme.initiative.id = :initiativeId AND mme.monitoringMonth = :monthYear")
-    List<MonthlyMonitoringEntry> findByInitiativeAndMonth(@Param("initiativeId") Long initiativeId, @Param("monthYear") YearMonth monthYear);
+    List<MonthlyMonitoringEntry> findByInitiativeAndMonth(@Param("initiativeId") Long initiativeId, @Param("monthYear") String monthYear);
     
     @Query("SELECT mme FROM MonthlyMonitoringEntry mme WHERE mme.initiative.site = :site")
     List<MonthlyMonitoringEntry> findBySite(@Param("site") String site);

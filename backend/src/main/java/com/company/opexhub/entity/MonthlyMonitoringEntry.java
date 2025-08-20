@@ -2,7 +2,6 @@ package com.company.opexhub.entity;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.YearMonth;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -33,8 +32,8 @@ public class MonthlyMonitoringEntry {
     @JsonIgnore
     private Initiative initiative;
     
-    @Column(name = "monitoring_month", nullable = false)
-    private YearMonth monitoringMonth;
+    @Column(name = "monitoring_month", nullable = false, length = 7)
+    private String monitoringMonth; // Changed from YearMonth to String (YYYY-MM format)
     
     @Column(name = "kpi_description", nullable = false)
     private String kpiDescription;
@@ -78,7 +77,7 @@ public class MonthlyMonitoringEntry {
     // Constructors
     public MonthlyMonitoringEntry() {}
     
-    public MonthlyMonitoringEntry(Initiative initiative, YearMonth monitoringMonth, 
+    public MonthlyMonitoringEntry(Initiative initiative, String monitoringMonth, 
                                  String kpiDescription, BigDecimal targetValue, String enteredBy) {
         this.initiative = initiative;
         this.monitoringMonth = monitoringMonth;
@@ -91,12 +90,14 @@ public class MonthlyMonitoringEntry {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
+        normalizeMonitoringMonth(); // Ensure proper format before saving
         calculateDeviation();
     }
     
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+        normalizeMonitoringMonth(); // Ensure proper format before updating
         calculateDeviation();
     }
     
@@ -111,21 +112,30 @@ public class MonthlyMonitoringEntry {
         }
     }
     
-    // Helper methods for Boolean to CHAR conversion
-    public Boolean getIsFinalizedBoolean() {
-        return "Y".equals(this.isFinalized);
+    // Validation helper methods
+    public boolean isValidMonitoringMonth() {
+        if (monitoringMonth == null) return false;
+        // Match both YYYY-MM and YYYY-M formats to be more flexible
+        return monitoringMonth.matches("\\d{4}-(0[1-9]|1[0-2])");
     }
-
-    public void setIsFinalizedBoolean(Boolean isFinalized) {
-        this.isFinalized = Boolean.TRUE.equals(isFinalized) ? "Y" : "N";
+    
+    public boolean isValidYNField(String value) {
+        return "Y".equals(value) || "N".equals(value);
     }
-
-    public Boolean getFaApprovalBoolean() {
-        return "Y".equals(this.faApproval);
-    }
-
-    public void setFaApprovalBoolean(Boolean faApproval) {
-        this.faApproval = Boolean.TRUE.equals(faApproval) ? "Y" : "N";
+    
+    // Helper method to ensure proper month format before persistence
+    public void normalizeMonitoringMonth() {
+        if (monitoringMonth != null && monitoringMonth.matches("\\d{4}-\\d{1,2}")) {
+            String[] parts = monitoringMonth.split("-");
+            if (parts.length == 2) {
+                String year = parts[0];
+                String month = parts[1];
+                // Ensure month is zero-padded (e.g., "2024-1" becomes "2024-01")
+                if (month.length() == 1) {
+                    this.monitoringMonth = year + "-0" + month;
+                }
+            }
+        }
     }
     
     // Getters and Setters
@@ -135,8 +145,10 @@ public class MonthlyMonitoringEntry {
     public Initiative getInitiative() { return initiative; }
     public void setInitiative(Initiative initiative) { this.initiative = initiative; }
     
-    public YearMonth getMonitoringMonth() { return monitoringMonth; }
-    public void setMonitoringMonth(YearMonth monitoringMonth) { this.monitoringMonth = monitoringMonth; }
+    public String getMonitoringMonth() { return monitoringMonth; }
+    public void setMonitoringMonth(String monitoringMonth) { 
+        this.monitoringMonth = monitoringMonth;
+    }
     
     public String getKpiDescription() { return kpiDescription; }
     public void setKpiDescription(String kpiDescription) { this.kpiDescription = kpiDescription; }
@@ -160,10 +172,22 @@ public class MonthlyMonitoringEntry {
     public void setRemarks(String remarks) { this.remarks = remarks; }
     
     public String getIsFinalized() { return isFinalized; }
-    public void setIsFinalized(String isFinalized) { this.isFinalized = isFinalized; }
+    public void setIsFinalized(String isFinalized) { 
+        if (isValidYNField(isFinalized)) {
+            this.isFinalized = isFinalized;
+        } else {
+            this.isFinalized = "N";
+        }
+    }
     
     public String getFaApproval() { return faApproval; }
-    public void setFaApproval(String faApproval) { this.faApproval = faApproval; }
+    public void setFaApproval(String faApproval) { 
+        if (isValidYNField(faApproval)) {
+            this.faApproval = faApproval;
+        } else {
+            this.faApproval = "N";
+        }
+    }
     
     public String getFaComments() { return faComments; }
     public void setFaComments(String faComments) { this.faComments = faComments; }

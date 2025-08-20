@@ -37,15 +37,6 @@ api.interceptors.response.use(
   }
 );
 
-// Utility functions for Boolean to Y/N conversion
-const booleanToYN = (value: boolean | undefined | null): string => {
-  return value === true ? 'Y' : 'N';
-};
-
-const ynToBoolean = (value: string | undefined | null): boolean => {
-  return value === 'Y';
-};
-
 // Auth API
 export const authAPI = {
   login: async (email: string, password: string) => {
@@ -77,78 +68,21 @@ export const initiativeAPI = {
     size?: number;
   }) => {
     const response = await api.get('/initiatives', { params });
-    
-    // Convert Y/N back to boolean for frontend
-    if (response.data && response.data.content) {
-      response.data.content = response.data.content.map((initiative: any) => ({
-        ...initiative,
-        requiresMoc: ynToBoolean(initiative.requiresMoc),
-        requiresCapex: ynToBoolean(initiative.requiresCapex),
-      }));
-    }
-    
     return response.data;
   },
   
   getById: async (id: number) => {
     const response = await api.get(`/initiatives/${id}`);
-    
-    // Convert Y/N back to boolean for frontend
-    if (response.data) {
-      response.data = {
-        ...response.data,
-        requiresMoc: ynToBoolean(response.data.requiresMoc),
-        requiresCapex: ynToBoolean(response.data.requiresCapex),
-      };
-    }
-    
     return response.data;
   },
   
-  create: async (initiativeData: {
-    title: string;
-    description: string;
-    initiatorName: string;
-    priority: string;
-    expectedSavings: number;
-    site: string;
-    discipline: string;
-    startDate: string;
-    endDate: string;
-    requiresMoc: boolean;
-    requiresCapex: boolean;
-    assumption1?: string;
-    assumption2?: string;
-    assumption3?: string;
-    baselineData?: string;
-    targetOutcome?: string;
-    targetValue?: number;
-    confidenceLevel?: number;
-    estimatedCapex?: number;
-    budgetType?: string;
-  }) => {
-    // Convert boolean to Y/N for backend
-    const backendData = {
-      ...initiativeData,
-      requiresMoc: booleanToYN(initiativeData.requiresMoc),
-      requiresCapex: booleanToYN(initiativeData.requiresCapex),
-    };
-    
-    const response = await api.post('/initiatives', backendData);
+  create: async (initiativeData: any) => {
+    const response = await api.post('/initiatives', initiativeData);
     return response.data;
   },
   
   update: async (id: number, initiativeData: any) => {
-    // Convert boolean to Y/N for backend if present
-    const backendData = { ...initiativeData };
-    if (typeof backendData.requiresMoc === 'boolean') {
-      backendData.requiresMoc = booleanToYN(backendData.requiresMoc);
-    }
-    if (typeof backendData.requiresCapex === 'boolean') {
-      backendData.requiresCapex = booleanToYN(backendData.requiresCapex);
-    }
-    
-    const response = await api.put(`/initiatives/${id}`, backendData);
+    const response = await api.put(`/initiatives/${id}`, initiativeData);
     return response.data;
   },
   
@@ -281,34 +215,28 @@ export const timelineTrackerAPI = {
 
   getTimelineEntries: async (initiativeId: number) => {
     const response = await api.get(`/timeline-tracker/${initiativeId}`);
-    
-    // Keep Y/N as strings for frontend compatibility
     return response.data;
   },
   
   getTimelineEntryById: async (id: number) => {
     const response = await api.get(`/timeline-tracker/entry/${id}`);
-    
-    // Keep Y/N as strings for frontend compatibility
     return response.data;
   },
   
   createTimelineEntry: async (initiativeId: number, entryData: any) => {
-    // Data is already in Y/N format from frontend, no conversion needed
     const response = await api.post(`/timeline-tracker/${initiativeId}`, entryData);
     return response.data;
   },
   
   updateTimelineEntry: async (id: number, entryData: any) => {
-    // Data is already in Y/N format from frontend, no conversion needed
     const response = await api.put(`/timeline-tracker/entry/${id}`, entryData);
     return response.data;
   },
   
-  updateApprovals: async (id: number, siteLeadApproval?: boolean, initiativeLeadApproval?: boolean) => {
+  updateApprovals: async (id: number, siteLeadApproval?: string, initiativeLeadApproval?: string) => {
     const params = new URLSearchParams();
-    if (siteLeadApproval !== undefined) params.append('siteLeadApproval', siteLeadApproval ? 'Y' : 'N');
-    if (initiativeLeadApproval !== undefined) params.append('initiativeLeadApproval', initiativeLeadApproval ? 'Y' : 'N');
+    if (siteLeadApproval !== undefined) params.append('siteLeadApproval', siteLeadApproval);
+    if (initiativeLeadApproval !== undefined) params.append('initiativeLeadApproval', initiativeLeadApproval);
     
     const response = await api.put(`/timeline-tracker/entry/${id}/approvals?${params.toString()}`);
     return response.data;
@@ -333,17 +261,7 @@ export const timelineTrackerAPI = {
 // Workflow Transaction API
 export const workflowTransactionAPI = {
   getTransactions: (initiativeId: number) => 
-    api.get(`/workflow-transactions/initiative/${initiativeId}`).then(res => {
-      // Convert Y/N back to boolean for frontend
-      if (res.data) {
-        res.data = res.data.map((transaction: any) => ({
-          ...transaction,
-          requiresMoc: ynToBoolean(transaction.requiresMoc),
-          requiresCapex: ynToBoolean(transaction.requiresCapex),
-        }));
-      }
-      return res.data;
-    }),
+    api.get(`/workflow-transactions/initiative/${initiativeId}`).then(res => res.data),
   
   getPendingByRole: (roleCode: string) => 
     api.get(`/workflow-transactions/pending/${roleCode}`).then(res => res.data),
@@ -367,26 +285,17 @@ export const workflowTransactionAPI = {
     assignedUserId?: number;
     mocNumber?: string;
     capexNumber?: string;
-    requiresMoc?: boolean;
-    requiresCapex?: boolean;
+    requiresMoc?: string;
+    requiresCapex?: string;
   }) => {
-    // Convert boolean to Y/N for backend
-    const backendData = { ...data };
-    if (typeof backendData.requiresMoc === 'boolean') {
-      backendData.requiresMoc = booleanToYN(backendData.requiresMoc) as any;
-    }
-    if (typeof backendData.requiresCapex === 'boolean') {
-      backendData.requiresCapex = booleanToYN(backendData.requiresCapex) as any;
-    }
-    
-    return api.post(`/workflow-transactions/${data.transactionId}/process`, backendData).then(res => res.data);
+    return api.post(`/workflow-transactions/${data.transactionId}/process`, data).then(res => res.data);
   },
   
   getInitiativesReadyForClosure: () =>
     api.get('/workflow-transactions/ready-for-closure').then(res => res.data),
 };
 
-// Monthly Monitoring API
+// Monthly Monitoring API - Updated to use Y/N strings consistently
 export const monthlyMonitoringAPI = {
   // Get approved initiatives for Stage 9 access
   getApprovedInitiatives: async (userEmail: string, site: string) => {
@@ -397,85 +306,45 @@ export const monthlyMonitoringAPI = {
   getMonitoringEntries: async (initiativeId: number) => {
     const response = await api.get(`/monthly-monitoring/${initiativeId}`);
     
-    // Convert Y/N back to boolean for frontend
-    if (response.data) {
-      response.data = response.data.map((entry: any) => ({
-        ...entry,
-        isFinalized: ynToBoolean(entry.isFinalized),
-        faApproval: ynToBoolean(entry.faApproval),
-      }));
-    }
-    
+    // Data is already in Y/N format from backend, no conversion needed
     return response.data;
   },
   
   getMonitoringEntriesByMonth: async (initiativeId: number, monthYear: string) => {
     const response = await api.get(`/monthly-monitoring/${initiativeId}/month/${monthYear}`);
     
-    // Convert Y/N back to boolean for frontend
-    if (response.data) {
-      response.data = response.data.map((entry: any) => ({
-        ...entry,
-        isFinalized: ynToBoolean(entry.isFinalized),
-        faApproval: ynToBoolean(entry.faApproval),
-      }));
-    }
-    
+    // Data is already in Y/N format from backend, no conversion needed
     return response.data;
   },
   
   getMonitoringEntryById: async (id: number) => {
     const response = await api.get(`/monthly-monitoring/entry/${id}`);
     
-    // Convert Y/N back to boolean for frontend
-    if (response.data) {
-      response.data = {
-        ...response.data,
-        isFinalized: ynToBoolean(response.data.isFinalized),
-        faApproval: ynToBoolean(response.data.faApproval),
-      };
-    }
-    
+    // Data is already in Y/N format from backend, no conversion needed
     return response.data;
   },
   
   createMonitoringEntry: async (initiativeId: number, entryData: any) => {
-    // Convert boolean to Y/N for backend
-    const backendData = { ...entryData };
-    if (typeof backendData.isFinalized === 'boolean') {
-      backendData.isFinalized = booleanToYN(backendData.isFinalized);
-    }
-    if (typeof backendData.faApproval === 'boolean') {
-      backendData.faApproval = booleanToYN(backendData.faApproval);
-    }
-    
-    const response = await api.post(`/monthly-monitoring/${initiativeId}`, backendData);
+    // Data is already in Y/N format from frontend, no conversion needed
+    const response = await api.post(`/monthly-monitoring/${initiativeId}`, entryData);
     return response.data;
   },
   
   updateMonitoringEntry: async (id: number, entryData: any) => {
-    // Convert boolean to Y/N for backend
-    const backendData = { ...entryData };
-    if (typeof backendData.isFinalized === 'boolean') {
-      backendData.isFinalized = booleanToYN(backendData.isFinalized);
-    }
-    if (typeof backendData.faApproval === 'boolean') {
-      backendData.faApproval = booleanToYN(backendData.faApproval);
-    }
-    
-    const response = await api.put(`/monthly-monitoring/entry/${id}`, backendData);
+    // Data is already in Y/N format from frontend, no conversion needed
+    const response = await api.put(`/monthly-monitoring/entry/${id}`, entryData);
     return response.data;
   },
   
-  updateFinalizationStatus: async (id: number, isFinalized: boolean) => {
+  updateFinalizationStatus: async (id: number, isFinalized: string) => {
     const response = await api.put(`/monthly-monitoring/entry/${id}/finalize?isFinalized=${isFinalized}`);
     return response.data;
   },
   
-  updateFAApproval: async (id: number, faApproval: boolean, faRemarks?: string) => {
+  updateFAApproval: async (id: number, faApproval: string, faComments?: string) => {
     const params = new URLSearchParams();
-    params.append('faApproval', faApproval.toString());
-    if (faRemarks) params.append('faRemarks', faRemarks);
+    params.append('faApproval', faApproval);
+    if (faComments) params.append('faComments', faComments);
     
     const response = await api.put(`/monthly-monitoring/entry/${id}/fa-approval?${params.toString()}`);
     return response.data;
@@ -503,25 +372,21 @@ export const reportsAPI = {
       queryParams.append('year', params.year);
     }
     
-    // Use authenticated axios request to download the file
     const response = await api.get(`/reports/export/detailed-excel?${queryParams.toString()}`, {
-      responseType: 'blob', // Important: Tell axios to handle binary data
+      responseType: 'blob',
     });
     
-    // Create blob URL and trigger download
     const blob = new Blob([response.data], { 
       type: response.headers['content-type'] || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
     });
     const url = window.URL.createObjectURL(blob);
     
-    // Extract filename from Content-Disposition header if available
     const contentDisposition = response.headers['content-disposition'];
     let filename = 'detailed-report.xlsx';
     if (contentDisposition && contentDisposition.includes('filename=')) {
       filename = contentDisposition.split('filename=')[1].replace(/"/g, '');
     }
     
-    // Create temporary link and trigger download
     const link = document.createElement('a');
     link.href = url;
     link.setAttribute('download', filename);
@@ -529,32 +394,27 @@ export const reportsAPI = {
     link.click();
     document.body.removeChild(link);
     
-    // Clean up blob URL
     window.URL.revokeObjectURL(url);
     
-    return filename; // Return the filename for confirmation
+    return filename;
   },
 
   downloadInitiativeForm: async (initiativeId: string) => {
-    // Use authenticated axios request to download the Word form
     const response = await api.get(`/reports/export/initiative-form/${initiativeId}`, {
-      responseType: 'blob', // Important: Tell axios to handle binary data
+      responseType: 'blob',
     });
     
-    // Create blob URL and trigger download
     const blob = new Blob([response.data], { 
       type: response.headers['content-type'] || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
     });
     const url = window.URL.createObjectURL(blob);
     
-    // Extract filename from Content-Disposition header if available
     const contentDisposition = response.headers['content-disposition'];
     let filename = 'initiative-form.docx';
     if (contentDisposition && contentDisposition.includes('filename=')) {
       filename = contentDisposition.split('filename=')[1].replace(/"/g, '');
     }
     
-    // Create temporary link and trigger download
     const link = document.createElement('a');
     link.href = url;
     link.setAttribute('download', filename);
@@ -562,14 +422,10 @@ export const reportsAPI = {
     link.click();
     document.body.removeChild(link);
     
-    // Clean up blob URL
     window.URL.revokeObjectURL(url);
     
-    return filename; // Return the filename for confirmation
+    return filename;
   }
 };
-
-// Export utility functions for use in components
-export { booleanToYN, ynToBoolean };
 
 export default api;

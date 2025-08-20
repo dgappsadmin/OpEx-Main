@@ -49,8 +49,8 @@ interface MonthlyMonitoringEntry {
   deviationPercentage?: number;
   remarks?: string;
   category?: string;
-  isFinalized: boolean;
-  faApproval: boolean;
+  isFinalized: string; // Changed to 'Y' or 'N'
+  faApproval: string; // Changed to 'Y' or 'N'
   faComments?: string;
   enteredBy: string;
 }
@@ -189,7 +189,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
   });
 
   const finalizeMutation = useMutation({
-    mutationFn: async ({ id, isFinalized }: { id: number; isFinalized: boolean }) => {
+    mutationFn: async ({ id, isFinalized }: { id: number; isFinalized: string }) => {
       const result = await monthlyMonitoringAPI.updateFinalizationStatus(id, isFinalized);
       return result.data;
     },
@@ -208,7 +208,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
   });
 
   const faApprovalMutation = useMutation({
-    mutationFn: async ({ id, faApproval, faComments }: { id: number; faApproval: boolean; faComments?: string }) => {
+    mutationFn: async ({ id, faApproval, faComments }: { id: number; faApproval: string; faComments?: string }) => {
       const result = await monthlyMonitoringAPI.updateFAApproval(id, faApproval, faComments);
       return result.data;
     },
@@ -257,8 +257,8 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
   // Calculate summary statistics
   const summaryStats = {
     totalEntries: monitoringEntries.length,
-    finalizedEntries: monitoringEntries.filter((e: MonthlyMonitoringEntry) => e.isFinalized).length,
-    approvedEntries: monitoringEntries.filter((e: MonthlyMonitoringEntry) => e.faApproval).length,
+    finalizedEntries: monitoringEntries.filter((e: MonthlyMonitoringEntry) => e.isFinalized === 'Y').length,
+    approvedEntries: monitoringEntries.filter((e: MonthlyMonitoringEntry) => e.faApproval === 'Y').length,
     averageAchievement: monitoringEntries.length > 0 
       ? monitoringEntries.reduce((sum: number, e: MonthlyMonitoringEntry) => 
           sum + (e.achievedValue || 0), 0) / monitoringEntries.length 
@@ -288,8 +288,8 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
 
     const entryData = {
       ...formData,
-      isFinalized: false,
-      faApproval: false,
+      isFinalized: 'N', // Changed to 'N' string
+      faApproval: 'N',  // Changed to 'N' string
       category: formData.category || 'General'
     } as MonthlyMonitoringEntry;
 
@@ -671,13 +671,13 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                               </TableCell>
                               <TableCell>
                                 <div className="flex flex-wrap gap-1">
-                                  {entry.isFinalized && (
+                                  {entry.isFinalized === 'Y' && (
                                     <Badge variant="outline" className="text-xs bg-blue-50">
                                       <CheckCircle className="h-3 w-3 mr-1" />
                                       Finalized
                                     </Badge>
                                   )}
-                                  {entry.faApproval && (
+                                  {entry.faApproval === 'Y' && (
                                     <Badge variant="outline" className="text-xs bg-green-50">
                                       <Target className="h-3 w-3 mr-1" />
                                       F&A Approved
@@ -692,11 +692,11 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                                       <Edit className="h-3 w-3" />
                                     </Button>
                                   )}
-                                  {canFinalize(entry) && !entry.isFinalized && (
+                                  {canFinalize(entry) && entry.isFinalized !== 'Y' && (
                                     <Button
                                       size="sm"
                                       variant="outline"
-                                      onClick={() => finalizeMutation.mutate({ id: entry.id!, isFinalized: true })}
+                                      onClick={() => finalizeMutation.mutate({ id: entry.id!, isFinalized: 'Y' })}
                                     >
                                       <FileText className="h-3 w-3" />
                                     </Button>
@@ -705,7 +705,10 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                                     <Button
                                       size="sm"
                                       variant="outline"
-                                      onClick={() => faApprovalMutation.mutate({ id: entry.id!, faApproval: !entry.faApproval })}
+                                      onClick={() => faApprovalMutation.mutate({ 
+                                        id: entry.id!, 
+                                        faApproval: entry.faApproval === 'Y' ? 'N' : 'Y' 
+                                      })}
                                     >
                                       <Target className="h-3 w-3" />
                                     </Button>
@@ -772,8 +775,8 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                                 </Badge>
                               </div>
                               <div className="flex space-x-2">
-                                {entry.isFinalized && <Badge variant="outline">Finalized</Badge>}
-                                {entry.faApproval && <Badge variant="outline">F&A Approved</Badge>}
+                                {entry.isFinalized === 'Y' && <Badge variant="outline">Finalized</Badge>}
+                                {entry.faApproval === 'Y' && <Badge variant="outline">F&A Approved</Badge>}
                               </div>
                             </div>
                           </CardHeader>
@@ -830,11 +833,11 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                                   Edit
                                 </Button>
                               )}
-                              {canFinalize(entry) && !entry.isFinalized && (
+                              {canFinalize(entry) && entry.isFinalized !== 'Y' && (
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => finalizeMutation.mutate({ id: entry.id!, isFinalized: true })}
+                                  onClick={() => finalizeMutation.mutate({ id: entry.id!, isFinalized: 'Y' })}
                                 >
                                   <FileText className="h-4 w-4 mr-2" />
                                   Finalize
@@ -844,10 +847,13 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => faApprovalMutation.mutate({ id: entry.id!, faApproval: !entry.faApproval })}
+                                  onClick={() => faApprovalMutation.mutate({ 
+                                    id: entry.id!, 
+                                    faApproval: entry.faApproval === 'Y' ? 'N' : 'Y' 
+                                  })}
                                 >
                                   <Target className="h-4 w-4 mr-2" />
-                                  {entry.faApproval ? 'Remove' : 'Give'} F&A Approval
+                                  {entry.faApproval === 'Y' ? 'Remove' : 'Give'} F&A Approval
                                 </Button>
                               )}
                             </div>

@@ -102,24 +102,37 @@
 
   body {
     @apply bg-background text-foreground font-sans;
-    font-size: 0.9375rem; /* 15px - optimal for 14-inch laptop */
-    line-height: 1.375;
+    font-size: 0.875rem; /* 14px - optimized for 14-inch laptop */
+    line-height: 1.25;
   }
   
-  /* 14-inch laptop optimizations */
+  /* 14-inch laptop optimizations - prevent scrolling */
+  html, body {
+    height: 100%;
+    overflow-x: hidden;
+  }
+  
+  /* Container optimizations for 14-inch laptops */
   @media (min-width: 1366px) and (max-width: 1600px) {
     .container {
-      padding-left: 1rem;
-      padding-right: 1rem;
+      padding-left: 0.75rem;
+      padding-right: 0.75rem;
+    }
+  }
+  
+  /* Prevent vertical scrolling on small laptop screens */
+  @media (max-height: 768px) {
+    body {
+      font-size: 0.8125rem; /* 13px for smaller screens */
     }
   }
 }
 
-/* Enhanced Chemical Animations */
+/* Simplified Chemical Animations - Reduced for better performance on 14-inch laptops */
 @keyframes fade-in {
   from { 
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(5px);
   }
   to { 
     opacity: 1;
@@ -130,7 +143,7 @@
 @keyframes slide-down {
   from { 
     opacity: 0;
-    transform: translateY(-20px);
+    transform: translateY(-10px);
   }
   to { 
     opacity: 1;
@@ -141,7 +154,7 @@
 @keyframes slide-up {
   from { 
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(10px);
   }
   to { 
     opacity: 1;
@@ -149,179 +162,155 @@
   }
 }
 
-@keyframes pulse-slow {
-  0%, 100% { 
-    opacity: 0.3;
-  }
-  50% { 
-    opacity: 0.6;
-  }
-}
-
-@keyframes pulse-slower {
-  0%, 100% { 
-    opacity: 0.2;
-  }
-  50% { 
-    opacity: 0.4;
-  }
-}
-
 @keyframes float-molecule {
   0%, 100% { 
     transform: translateY(0px) translateX(0px) scale(1);
-    opacity: 0.4;
-  }
-  25% { 
-    transform: translateY(-15px) translateX(10px) scale(1.05);
-    opacity: 0.6;
+    opacity: 0.3;
   }
   50% { 
-    transform: translateY(-10px) translateX(-5px) scale(0.95);
+    transform: translateY(-8px) translateX(5px) scale(1.02);
     opacity: 0.5;
-  }
-  75% { 
-    transform: translateY(5px) translateX(15px) scale(1.02);
-    opacity: 0.7;
   }
 }
 
 @keyframes float-molecule-delayed {
   0%, 100% { 
     transform: translateY(0px) translateX(0px) rotate(0deg);
-    opacity: 0.3;
+    opacity: 0.25;
   }
-  33% { 
-    transform: translateY(-20px) translateX(-10px) rotate(60deg);
-    opacity: 0.6;
-  }
-  66% { 
-    transform: translateY(10px) translateX(20px) rotate(-30deg);
-    opacity: 0.5;
+  50% { 
+    transform: translateY(-10px) translateX(-5px) rotate(30deg);
+    opacity: 0.4;
   }
 }
 
 @keyframes float-molecule-slow {
   0%, 100% { 
     transform: translateY(0px) translateX(0px) rotate(0deg) scale(1);
-    opacity: 0.25;
+    opacity: 0.2;
   }
   50% { 
-    transform: translateY(-25px) translateX(15px) rotate(180deg) scale(1.1);
-    opacity: 0.6;
+    transform: translateY(-12px) translateX(8px) rotate(90deg) scale(1.05);
+    opacity: 0.4;
   }
 }
 
 @keyframes pulse-bond {
   0%, 100% { 
-    opacity: 0.2;
+    opacity: 0.15;
     transform: scaleY(1) scaleX(1);
   }
   50% { 
-    opacity: 0.6;
-    transform: scaleY(1.2) scaleX(1.05);
+    opacity: 0.4;
+    transform: scaleY(1.1) scaleX(1.03);
   }
 }
 
 @keyframes pulse-bond-delayed {
   0%, 100% { 
-    opacity: 0.15;
+    opacity: 0.1;
     transform: scaleY(1) scaleX(1);
   }
   50% { 
-    opacity: 0.5;
-    transform: scaleY(1.1) scaleX(1.08);
+    opacity: 0.3;
+    transform: scaleY(1.08) scaleX(1.05);
   }
 }
 
-/* Component-specific optimizations for 14-inch laptops */
+/* Component-specific optimizations for 14-inch laptops - Compact Design */
 @layer components {
+  /* Compact utility classes */
   .btn-compact {
-    @apply px-3 py-1.5 text-sm;
+    @apply px-2.5 py-1 text-sm h-8;
   }
   
   .card-compact {
-    @apply p-4 space-y-3;
+    @apply p-3 space-y-2;
   }
   
   .header-compact {
-    @apply h-14;
+    @apply h-12;
   }
   
   .sidebar-compact {
-    @apply w-56;
+    @apply w-52;
   }
   
   .text-laptop {
-    font-size: 0.9375rem;
-    line-height: 1.375;
+    font-size: 0.8125rem; /* 13px */
+    line-height: 1.25;
   }
   
   .modal-laptop {
-    @apply max-w-2xl max-h-[85vh];
+    @apply max-w-xl max-h-[80vh];
   }
   
   .table-laptop {
-    @apply text-sm;
+    @apply text-xs;
   }
   
   .table-laptop th,
   .table-laptop td {
-    @apply px-3 py-2;
+    @apply px-2 py-1.5;
+  }
+  
+  /* Form optimizations for 14-inch screens */
+  .form-compact .space-y-6 {
+    @apply space-y-3;
+  }
+  
+  .form-compact .space-y-4 {
+    @apply space-y-2.5;
+  }
+  
+  .form-compact .space-y-2 {
+    @apply space-y-1.5;
   }
 
-  /* Enhanced Chemical Animation Classes */
+  /* Simplified Animation Classes */
   .animate-fade-in {
-    animation: fade-in 0.6s ease-out;
+    animation: fade-in 0.4s ease-out;
   }
   
   .animate-fade-in-delayed {
-    animation: fade-in 0.8s ease-out 0.2s both;
+    animation: fade-in 0.5s ease-out 0.1s both;
   }
   
   .animate-slide-down {
-    animation: slide-down 0.6s ease-out;
+    animation: slide-down 0.4s ease-out;
   }
   
   .animate-slide-up {
-    animation: slide-up 0.6s ease-out 0.1s both;
-  }
-  
-  .animate-pulse-slow {
-    animation: pulse-slow 4s ease-in-out infinite;
-  }
-  
-  .animate-pulse-slower {
-    animation: pulse-slower 6s ease-in-out infinite 1s;
+    animation: slide-up 0.4s ease-out 0.1s both;
   }
 
   .animate-float-molecule {
-    animation: float-molecule 8s ease-in-out infinite;
+    animation: float-molecule 6s ease-in-out infinite;
   }
   
   .animate-float-molecule-delayed {
-    animation: float-molecule-delayed 10s ease-in-out infinite 2s;
+    animation: float-molecule-delayed 8s ease-in-out infinite 2s;
   }
   
   .animate-float-molecule-slow {
-    animation: float-molecule-slow 12s ease-in-out infinite 4s;
+    animation: float-molecule-slow 10s ease-in-out infinite 3s;
   }
   
   .animate-pulse-bond {
-    animation: pulse-bond 6s ease-in-out infinite;
+    animation: pulse-bond 4s ease-in-out infinite;
   }
   
   .animate-pulse-bond-delayed {
-    animation: pulse-bond-delayed 8s ease-in-out infinite 3s;
+    animation: pulse-bond-delayed 6s ease-in-out infinite 2s;
   }
 
-  /* Enhanced Glassmorphism Components */
+  /* Enhanced Glassmorphism Components - Optimized */
   .clean-card {
-    @apply bg-white/80 backdrop-blur-xl shadow-2xl border border-white/50;
+    @apply bg-white/85 backdrop-blur-md shadow-xl border border-white/60;
   }
   
   .clean-input {
-    @apply bg-white/90 backdrop-blur-sm border-gray-300 focus:border-blue-500 focus:ring-blue-500/20;
+    @apply bg-white/95 backdrop-blur-sm border-gray-300 focus:border-blue-500 focus:ring-blue-500/20;
   }
   
   .clean-button {
@@ -329,7 +318,7 @@
   }
 
   .clean-button-secondary {
-    @apply bg-white/80 backdrop-blur-sm hover:bg-white/90 text-blue-600 border border-blue-200/60 transition-all duration-200;
+    @apply bg-white/85 backdrop-blur-sm hover:bg-white/95 text-blue-600 border border-blue-200/60 transition-all duration-200;
   }
 
   /* Blue Theme Classes */
@@ -355,5 +344,28 @@
   
   .border-secondary-blue {
     @apply border-blue-200;
+  }
+}
+
+/* Specific optimizations for 14-inch laptop screens */
+@media screen and (min-width: 1360px) and (max-width: 1600px) and (min-height: 700px) and (max-height: 900px) {
+  /* 14-inch laptop screen optimization */
+  body {
+    font-size: 0.875rem;
+  }
+  
+  .auth-container {
+    @apply max-w-sm;
+  }
+}
+
+/* For smaller 14-inch screens (1366x768) */
+@media screen and (max-width: 1400px) and (max-height: 800px) {
+  body {
+    font-size: 0.8125rem;
+  }
+  
+  .auth-container {
+    @apply max-w-xs;
   }
 }

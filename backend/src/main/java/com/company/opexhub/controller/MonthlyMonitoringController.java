@@ -11,8 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import java.time.YearMonth;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
@@ -84,8 +82,13 @@ public class MonthlyMonitoringController {
         .body(new ApiResponse<>(false, "Access denied: Stage 9 not approved or user not assigned as STLD", null));
             }
             
-            YearMonth month = YearMonth.parse(monthYear, DateTimeFormatter.ofPattern("yyyy-MM"));
-            List<MonthlyMonitoringEntry> entries = monthlyMonitoringService.getMonitoringEntriesByInitiativeAndMonth(initiativeId, month);
+            // Validate month format - accepts YYYY-MM format
+            if (!monthYear.matches("\\d{4}-(0[1-9]|1[0-2])")) {
+                return ResponseEntity.badRequest()
+                        .body(new ApiResponse<>(false, "Invalid month format. Expected YYYY-MM format (e.g., 2024-01).", null));
+            }
+            
+            List<MonthlyMonitoringEntry> entries = monthlyMonitoringService.getMonitoringEntriesByInitiativeAndMonth(initiativeId, monthYear);
             return ResponseEntity.ok(new ApiResponse<>(true, "Monitoring entries retrieved successfully", entries));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
@@ -123,6 +126,13 @@ public class MonthlyMonitoringController {
                return ResponseEntity
         .status(HttpStatus.FORBIDDEN)
         .body(new ApiResponse<>(false, "Access denied: Stage 9 not approved or user not assigned as STLD", null));
+            }
+            
+            // Validate required fields and format
+            if (monitoringEntry.getMonitoringMonth() == null || 
+                !monitoringEntry.getMonitoringMonth().matches("\\d{4}-(0[1-9]|1[0-2])")) {
+                return ResponseEntity.badRequest()
+                        .body(new ApiResponse<>(false, "Invalid monitoring month format. Expected YYYY-MM format (e.g., 2024-01).", null));
             }
             
             MonthlyMonitoringEntry createdEntry = monthlyMonitoringService.createMonitoringEntry(initiativeId, monitoringEntry);
@@ -167,6 +177,12 @@ public class MonthlyMonitoringController {
             @PathVariable Long id,
             @RequestParam String isFinalized) {
         try {
+            // Validate Y/N parameter
+            if (!"Y".equals(isFinalized) && !"N".equals(isFinalized)) {
+                return ResponseEntity.badRequest()
+                        .body(new ApiResponse<>(false, "Invalid finalization status. Must be 'Y' or 'N'.", null));
+            }
+            
             MonthlyMonitoringEntry updatedEntry = monthlyMonitoringService.updateFinalizationStatus(id, isFinalized);
             return ResponseEntity.ok(new ApiResponse<>(true, "Finalization status updated successfully", updatedEntry));
         } catch (Exception e) {
@@ -181,6 +197,12 @@ public class MonthlyMonitoringController {
             @RequestParam String faApproval,
             @RequestParam(required = false) String faComments) {
         try {
+            // Validate Y/N parameter
+            if (!"Y".equals(faApproval) && !"N".equals(faApproval)) {
+                return ResponseEntity.badRequest()
+                        .body(new ApiResponse<>(false, "Invalid FA approval status. Must be 'Y' or 'N'.", null));
+            }
+            
             MonthlyMonitoringEntry updatedEntry = monthlyMonitoringService.updateFAApproval(id, faApproval, faComments);
             return ResponseEntity.ok(new ApiResponse<>(true, "F&A approval updated successfully", updatedEntry));
         } catch (Exception e) {

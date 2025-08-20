@@ -60,7 +60,6 @@ export default function AuthPage({ onLogin }: AuthProps) {
     try {
       if (isLogin) {
         console.log('Attempting login with:', formData.email);
-        // Real API login
         const result = await login(formData.email, formData.password);
         console.log('Login result:', result);
         
@@ -70,10 +69,7 @@ export default function AuthPage({ onLogin }: AuthProps) {
             title: "Login Successful",
             description: "Welcome back to OpEx Hub!",
           });
-          // Clear form data after successful login
           setFormData(prev => ({ ...prev, password: '' }));
-          
-          // Navigation happens automatically in AuthContext via useNavigate
         } else {
           console.log('Login failed with error:', result.error);
           toast({
@@ -83,7 +79,6 @@ export default function AuthPage({ onLogin }: AuthProps) {
           });
         }
       } else {
-        // Real API signup
         if (!formData.fullName || !formData.site || !formData.discipline || !formData.role) {
           toast({
             title: "Signup Failed",
@@ -110,7 +105,7 @@ export default function AuthPage({ onLogin }: AuthProps) {
             title: "Signup Successful",
             description: "Account created successfully! Please sign in.",
           });
-          setIsLogin(true); // Switch to login tab
+          setIsLogin(true);
         } else {
           toast({
             title: "Signup Failed",
@@ -135,66 +130,51 @@ export default function AuthPage({ onLogin }: AuthProps) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-white relative overflow-hidden">
-      {/* Enhanced Chemical Background */}
+    <div className="h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-white relative overflow-hidden">
+      {/* Simplified Background */}
       <div className="absolute inset-0">
-        {/* Glassmorphism Background Layer */}
         <div className="absolute inset-0 bg-gradient-to-br from-blue-100/20 via-white/40 to-blue-50/30"></div>
         
-        {/* Animated Chemical Molecules */}
+        {/* Minimal Chemical Molecules - Reduced for performance */}
         <div className="absolute inset-0">
-          {/* Large molecules */}
-          <div className="absolute top-1/4 left-1/4 w-16 h-16 bg-blue-200/40 rounded-full blur-sm animate-float-molecule"></div>
-          <div className="absolute top-3/4 right-1/4 w-12 h-12 bg-blue-300/30 rounded-full blur-sm animate-float-molecule-delayed"></div>
-          <div className="absolute bottom-1/3 left-1/3 w-20 h-20 bg-blue-100/50 rounded-full blur-sm animate-float-molecule-slow"></div>
+          <div className="absolute top-1/4 left-1/4 w-12 h-12 bg-blue-200/30 rounded-full blur-sm animate-float-molecule"></div>
+          <div className="absolute top-3/4 right-1/4 w-8 h-8 bg-blue-300/25 rounded-full blur-sm animate-float-molecule-delayed"></div>
+          <div className="absolute bottom-1/3 left-1/3 w-14 h-14 bg-blue-100/40 rounded-full blur-sm animate-float-molecule-slow"></div>
           
-          {/* Medium molecules */}
-          <div className="absolute top-1/2 right-1/3 w-8 h-8 bg-blue-400/30 rounded-full blur-sm animate-float-molecule"></div>
-          <div className="absolute bottom-1/4 right-1/2 w-10 h-10 bg-blue-200/40 rounded-full blur-sm animate-float-molecule-delayed"></div>
-          <div className="absolute top-1/6 left-1/2 w-6 h-6 bg-blue-300/35 rounded-full blur-sm animate-float-molecule-slow"></div>
-          
-          {/* Small molecules */}
-          <div className="absolute top-2/3 left-1/6 w-4 h-4 bg-blue-500/25 rounded-full blur-sm animate-float-molecule"></div>
-          <div className="absolute bottom-1/2 right-1/6 w-5 h-5 bg-blue-200/30 rounded-full blur-sm animate-float-molecule-delayed"></div>
-          <div className="absolute top-1/3 right-2/3 w-3 h-3 bg-blue-400/20 rounded-full blur-sm animate-float-molecule-slow"></div>
-          
-          {/* Molecular bonds/connections */}
-          <div className="absolute top-1/4 left-1/4 w-32 h-0.5 bg-gradient-to-r from-transparent via-blue-300/30 to-transparent rotate-45 animate-pulse-bond"></div>
-          <div className="absolute bottom-1/3 right-1/3 w-24 h-0.5 bg-gradient-to-r from-transparent via-blue-200/40 to-transparent -rotate-12 animate-pulse-bond-delayed"></div>
-          <div className="absolute top-2/3 left-1/2 w-28 h-0.5 bg-gradient-to-r from-transparent via-blue-400/25 to-transparent rotate-12 animate-pulse-bond"></div>
-          <div className="absolute bottom-1/2 left-1/6 w-20 h-0.5 bg-gradient-to-r from-transparent via-blue-300/35 to-transparent -rotate-45 animate-pulse-bond-delayed"></div>
+          {/* Minimal bonds */}
+          <div className="absolute top-1/4 left-1/4 w-20 h-0.5 bg-gradient-to-r from-transparent via-blue-300/25 to-transparent rotate-45 animate-pulse-bond"></div>
+          <div className="absolute bottom-1/3 right-1/3 w-16 h-0.5 bg-gradient-to-r from-transparent via-blue-200/30 to-transparent -rotate-12 animate-pulse-bond-delayed"></div>
         </div>
         
-        {/* Glassmorphism overlay */}
         <div className="absolute inset-0 backdrop-blur-[0.5px] bg-white/10"></div>
       </div>
       
-      {/* Main Login Container with Glassmorphism */}
-      <div className="relative w-full max-w-lg mx-4 z-10">
+      {/* Compact Login Container */}
+      <div className="relative w-full max-w-md mx-4 z-10">
         <Card className="bg-white/80 backdrop-blur-xl shadow-2xl border border-white/50 animate-fade-in">
-          <CardHeader className="text-center pb-8">
-            {/* Logo Section */}
-            <div className="flex items-center justify-center mb-8">
+          <CardHeader className="text-center pb-4">
+            {/* Compact Logo Section */}
+            <div className="flex items-center justify-center mb-4">
               <div className="relative animate-slide-down">
                 <img
                   src="https://www.godeepak.com/wp-content/uploads/2024/01/DNL-Logo.png"
                   alt="DNL Logo"
-                  className="h-16 w-auto"
+                  className="h-10 w-auto"
                 />
               </div>
             </div>
             
-            {/* Title Section */}
-            <div className="mb-6 animate-slide-up">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">OpEx Hub</h1>
-              <p className="text-blue-600 font-medium">Operational Excellence Platform</p>
-              <div className="w-16 h-0.5 bg-blue-500 mx-auto mt-4"></div>
+            {/* Compact Title Section */}
+            <div className="mb-3 animate-slide-up">
+              <h1 className="text-2xl font-bold text-gray-900 mb-1">OpEx Hub</h1>
+              <p className="text-blue-600 text-sm font-medium">Operational Excellence Platform</p>
+              <div className="w-12 h-0.5 bg-blue-500 mx-auto mt-2"></div>
             </div>
             
-            <CardTitle className="text-2xl text-gray-900 mb-2">
+            <CardTitle className="text-xl text-gray-900 mb-1">
               {isLogin ? "Sign In" : "Create Account"}
             </CardTitle>
-            <CardDescription className="text-gray-600">
+            <CardDescription className="text-gray-600 text-sm">
               {isLogin 
                 ? "Enter your credentials to access OpEx Hub" 
                 : "Fill in your details to create your account"
@@ -202,38 +182,38 @@ export default function AuthPage({ onLogin }: AuthProps) {
             </CardDescription>
           </CardHeader>
 
-          <CardContent className="animate-fade-in-delayed">
+          <CardContent className="animate-fade-in-delayed pt-0">
             <Tabs value={isLogin ? "login" : "signup"} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-8 bg-gray-100">
+              <TabsList className="grid w-full grid-cols-2 mb-4 bg-gray-100 h-9">
                 <TabsTrigger 
                   value="login" 
                   onClick={() => setIsLogin(true)}
-                  className="text-gray-700 data-[state=active]:bg-blue-500 data-[state=active]:text-white transition-all duration-200"
+                  className="text-gray-700 data-[state=active]:bg-blue-500 data-[state=active]:text-white transition-all duration-200 text-sm py-1"
                 >
-                  <LogIn className="w-4 h-4 mr-2" />
+                  <LogIn className="w-3 h-3 mr-1" />
                   Sign In
                 </TabsTrigger>
                 <TabsTrigger 
                   value="signup" 
                   onClick={() => setIsLogin(false)}
-                  className="text-gray-700 data-[state=active]:bg-blue-500 data-[state=active]:text-white transition-all duration-200"
+                  className="text-gray-700 data-[state=active]:bg-blue-500 data-[state=active]:text-white transition-all duration-200 text-sm py-1"
                 >
-                  <UserPlus className="w-4 h-4 mr-2" />
+                  <UserPlus className="w-3 h-3 mr-1" />
                   Sign Up
                 </TabsTrigger>
               </TabsList>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <TabsContent value="login" className="space-y-6 mt-0">
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="text-gray-700 font-medium">Email</Label>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <TabsContent value="login" className="space-y-4 mt-0">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="email" className="text-gray-700 font-medium text-sm">Email</Label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-blue-400" />
+                      <Mail className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-400" />
                       <Input
                         id="email"
                         type="email"
                         placeholder="Enter your email"
-                        className="pl-11 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 transition-colors duration-200"
+                        className="pl-9 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 transition-colors duration-200 h-9 text-sm"
                         value={formData.email}
                         onChange={(e) => handleInputChange("email", e.target.value)}
                         required
@@ -241,35 +221,33 @@ export default function AuthPage({ onLogin }: AuthProps) {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="password" className="text-gray-700 font-medium">Password</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="password" className="text-gray-700 font-medium text-sm">Password</Label>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-blue-400" />
+                      <Lock className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-400" />
                       <Input
                         id="password"
                         type="password"
                         placeholder="Enter your password"
-                        className="pl-11 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 transition-colors duration-200"
+                        className="pl-9 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 transition-colors duration-200 h-9 text-sm"
                         value={formData.password}
                         onChange={(e) => handleInputChange("password", e.target.value)}
                         required
                       />
                     </div>
                   </div>
-
-              
                 </TabsContent>
 
-                <TabsContent value="signup" className="space-y-5 mt-0">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="fullName" className="text-gray-700 font-medium">Full Name *</Label>
+                <TabsContent value="signup" className="space-y-3 mt-0">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="fullName" className="text-gray-700 font-medium text-xs">Full Name *</Label>
                       <div className="relative">
-                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-blue-400" />
+                        <User className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-400" />
                         <Input
                           id="fullName"
                           placeholder="Deep Sharma"
-                          className="pl-11 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 transition-colors duration-200"
+                          className="pl-9 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 transition-colors duration-200 h-9 text-sm"
                           value={formData.fullName}
                           onChange={(e) => handleInputChange("fullName", e.target.value)}
                           required={!isLogin}
@@ -277,15 +255,15 @@ export default function AuthPage({ onLogin }: AuthProps) {
                       </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="email" className="text-gray-700 font-medium">Email *</Label>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="email" className="text-gray-700 font-medium text-xs">Email *</Label>
                       <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-blue-400" />
+                        <Mail className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-400" />
                         <Input
                           id="email"
                           type="email"
                           placeholder="sharma@godeepak.com"
-                          className="pl-11 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 transition-colors duration-200"
+                          className="pl-9 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 transition-colors duration-200 h-9 text-sm"
                           value={formData.email}
                           onChange={(e) => handleInputChange("email", e.target.value)}
                           required
@@ -294,15 +272,15 @@ export default function AuthPage({ onLogin }: AuthProps) {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="password" className="text-gray-700 font-medium">Password *</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="password" className="text-gray-700 font-medium text-sm">Password *</Label>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-blue-400" />
+                      <Lock className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-400" />
                       <Input
                         id="password"
                         type="password"
                         placeholder="Create a password"
-                        className="pl-11 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 transition-colors duration-200"
+                        className="pl-9 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 transition-colors duration-200 h-9 text-sm"
                         value={formData.password}
                         onChange={(e) => handleInputChange("password", e.target.value)}
                         required
@@ -310,16 +288,16 @@ export default function AuthPage({ onLogin }: AuthProps) {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="space-y-2">
-                      <Label htmlFor="site" className="text-gray-700 font-medium text-sm">Site *</Label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="site" className="text-gray-700 font-medium text-xs">Site *</Label>
                       <Select value={formData.site} onValueChange={(value) => handleInputChange("site", value)}>
-                        <SelectTrigger className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 transition-colors duration-200">
+                        <SelectTrigger className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 transition-colors duration-200 h-9 text-sm">
                           <SelectValue placeholder="Site" />
                         </SelectTrigger>
                         <SelectContent className="bg-white border-gray-300">
                           {sites.map((site) => (
-                            <SelectItem key={site.code} value={site.code} className="hover:bg-blue-50">
+                            <SelectItem key={site.code} value={site.code} className="hover:bg-blue-50 text-sm">
                               {site.name}
                             </SelectItem>
                           ))}
@@ -327,15 +305,15 @@ export default function AuthPage({ onLogin }: AuthProps) {
                       </Select>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="discipline" className="text-gray-700 font-medium text-sm">Discipline *</Label>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="discipline" className="text-gray-700 font-medium text-xs">Discipline *</Label>
                       <Select value={formData.discipline} onValueChange={(value) => handleInputChange("discipline", value)}>
-                        <SelectTrigger className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 transition-colors duration-200">
+                        <SelectTrigger className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 transition-colors duration-200 h-9 text-sm">
                           <SelectValue placeholder="Discipline" />
                         </SelectTrigger>
                         <SelectContent className="bg-white border-gray-300">
                           {disciplines.map((discipline) => (
-                            <SelectItem key={discipline.code} value={discipline.code} className="hover:bg-blue-50">
+                            <SelectItem key={discipline.code} value={discipline.code} className="hover:bg-blue-50 text-sm">
                               {discipline.name}
                             </SelectItem>
                           ))}
@@ -343,15 +321,15 @@ export default function AuthPage({ onLogin }: AuthProps) {
                       </Select>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="role" className="text-gray-700 font-medium text-sm">Role *</Label>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="role" className="text-gray-700 font-medium text-xs">Role *</Label>
                       <Select value={formData.role} onValueChange={(value) => handleInputChange("role", value)}>
-                        <SelectTrigger className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 transition-colors duration-200">
+                        <SelectTrigger className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 transition-colors duration-200 h-9 text-sm">
                           <SelectValue placeholder="Role" />
                         </SelectTrigger>
                         <SelectContent className="bg-white border-gray-300">
                           {roles.map((role) => (
-                            <SelectItem key={role.code} value={role.code} className="hover:bg-blue-50">
+                            <SelectItem key={role.code} value={role.code} className="hover:bg-blue-50 text-sm">
                               {role.name}
                             </SelectItem>
                           ))}
@@ -363,17 +341,17 @@ export default function AuthPage({ onLogin }: AuthProps) {
 
                 <Button 
                   type="submit" 
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 transition-all duration-200 transform hover:scale-[1.02] shadow-lg" 
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 h-9 transition-all duration-200 transform hover:scale-[1.02] shadow-lg text-sm mt-4" 
                   disabled={isLoading}
                 >
                   {isLoading ? (
-                    <div className="flex items-center gap-3">
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                       Processing...
                     </div>
                   ) : (
-                    <div className="flex items-center gap-2">
-                      {isLogin ? <LogIn className="w-5 h-5" /> : <UserPlus className="w-5 h-5" />}
+                    <div className="flex items-center gap-1.5">
+                      {isLogin ? <LogIn className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
                       {isLogin ? "Sign In" : "Create Account"}
                     </div>
                   )}

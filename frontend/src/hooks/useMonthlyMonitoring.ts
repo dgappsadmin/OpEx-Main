@@ -12,15 +12,15 @@ export interface MonthlyMonitoringEntry {
   deviationPercentage?: number;
   remarks?: string;
   category?: string;
-  isFinalized: boolean;
-  faApproval: boolean;
+  isFinalized: string; // Changed to 'Y' or 'N'
+  faApproval: string; // Changed to 'Y' or 'N'
   faRemarks?: string;
   enteredBy: string;
   createdAt?: string;
   updatedAt?: string;
 }
 
-// Mock data for testing with Oracle-compatible boolean values
+// Mock data for testing with Y/N string values
 const mockMonitoringEntries: MonthlyMonitoringEntry[] = [
   {
     id: 1,
@@ -33,8 +33,8 @@ const mockMonitoringEntries: MonthlyMonitoringEntry[] = [
     deviationPercentage: -16.67,
     remarks: "Slightly below target due to equipment maintenance",
     category: "Energy",
-    isFinalized: false,
-    faApproval: false,
+    isFinalized: "N",
+    faApproval: "N",
     enteredBy: "johndoe@company.com"
   },
   {
@@ -48,8 +48,8 @@ const mockMonitoringEntries: MonthlyMonitoringEntry[] = [
     deviationPercentage: 21.33,
     remarks: "Exceeded target after equipment optimization",
     category: "Energy",
-    isFinalized: true,
-    faApproval: true,
+    isFinalized: "Y",
+    faApproval: "Y",
     faRemarks: "Excellent performance",
     enteredBy: "johndoe@company.com"
   }
@@ -147,7 +147,7 @@ export const useUpdateFinalizationStatus = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ id, isFinalized }: { id: number; isFinalized: boolean }) => {
+    mutationFn: async ({ id, isFinalized }: { id: number; isFinalized: string }) => {
       try {
         return await monthlyMonitoringAPI.updateFinalizationStatus(id, isFinalized);
       } catch (error) {
@@ -167,13 +167,13 @@ export const useUpdateFAApproval = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ id, faApproval, faRemarks }: { 
+    mutationFn: async ({ id, faApproval, faComments }: { 
       id: number; 
-      faApproval: boolean; 
-      faRemarks?: string;
+      faApproval: string; 
+      faComments?: string;
     }) => {
       try {
-        return await monthlyMonitoringAPI.updateFAApproval(id, faApproval, faRemarks);
+        return await monthlyMonitoringAPI.updateFAApproval(id, faApproval, faComments);
       } catch (error) {
         console.error('Failed to update FA approval:', error);
         throw error;
