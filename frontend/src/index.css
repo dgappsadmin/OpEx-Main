@@ -1,0 +1,359 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* OpEx Hub Clean Design System - White & Blue Theme */
+
+@layer base {
+  :root {
+    /* Clean White & Blue Color Scheme */
+    --background: 0 0% 100%;
+    --foreground: 224 71.4% 4.1%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 224 71.4% 4.1%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 71.4% 4.1%;
+
+    /* Primary - Clean Blue */
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 98%;
+    --primary-hover: 217 91% 55%;
+
+    /* Secondary - Light Gray */
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 215.4 16.3% 46.9%;
+
+    /* Accent - Light Blue */
+    --accent: 217 91% 95%;
+    --accent-foreground: 217 91% 60%;
+
+    /* Status Colors */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 98%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 98%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    /* Neutral Colors */
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 217 91% 60%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217 91% 60%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217 91% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-size: 0.9375rem; /* 15px - optimal for 14-inch laptop */
+    line-height: 1.375;
+  }
+  
+  /* 14-inch laptop optimizations */
+  @media (min-width: 1366px) and (max-width: 1600px) {
+    .container {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+  }
+}
+
+/* Enhanced Chemical Animations */
+@keyframes fade-in {
+  from { 
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-down {
+  from { 
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-up {
+  from { 
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-slow {
+  0%, 100% { 
+    opacity: 0.3;
+  }
+  50% { 
+    opacity: 0.6;
+  }
+}
+
+@keyframes pulse-slower {
+  0%, 100% { 
+    opacity: 0.2;
+  }
+  50% { 
+    opacity: 0.4;
+  }
+}
+
+@keyframes float-molecule {
+  0%, 100% { 
+    transform: translateY(0px) translateX(0px) scale(1);
+    opacity: 0.4;
+  }
+  25% { 
+    transform: translateY(-15px) translateX(10px) scale(1.05);
+    opacity: 0.6;
+  }
+  50% { 
+    transform: translateY(-10px) translateX(-5px) scale(0.95);
+    opacity: 0.5;
+  }
+  75% { 
+    transform: translateY(5px) translateX(15px) scale(1.02);
+    opacity: 0.7;
+  }
+}
+
+@keyframes float-molecule-delayed {
+  0%, 100% { 
+    transform: translateY(0px) translateX(0px) rotate(0deg);
+    opacity: 0.3;
+  }
+  33% { 
+    transform: translateY(-20px) translateX(-10px) rotate(60deg);
+    opacity: 0.6;
+  }
+  66% { 
+    transform: translateY(10px) translateX(20px) rotate(-30deg);
+    opacity: 0.5;
+  }
+}
+
+@keyframes float-molecule-slow {
+  0%, 100% { 
+    transform: translateY(0px) translateX(0px) rotate(0deg) scale(1);
+    opacity: 0.25;
+  }
+  50% { 
+    transform: translateY(-25px) translateX(15px) rotate(180deg) scale(1.1);
+    opacity: 0.6;
+  }
+}
+
+@keyframes pulse-bond {
+  0%, 100% { 
+    opacity: 0.2;
+    transform: scaleY(1) scaleX(1);
+  }
+  50% { 
+    opacity: 0.6;
+    transform: scaleY(1.2) scaleX(1.05);
+  }
+}
+
+@keyframes pulse-bond-delayed {
+  0%, 100% { 
+    opacity: 0.15;
+    transform: scaleY(1) scaleX(1);
+  }
+  50% { 
+    opacity: 0.5;
+    transform: scaleY(1.1) scaleX(1.08);
+  }
+}
+
+/* Component-specific optimizations for 14-inch laptops */
+@layer components {
+  .btn-compact {
+    @apply px-3 py-1.5 text-sm;
+  }
+  
+  .card-compact {
+    @apply p-4 space-y-3;
+  }
+  
+  .header-compact {
+    @apply h-14;
+  }
+  
+  .sidebar-compact {
+    @apply w-56;
+  }
+  
+  .text-laptop {
+    font-size: 0.9375rem;
+    line-height: 1.375;
+  }
+  
+  .modal-laptop {
+    @apply max-w-2xl max-h-[85vh];
+  }
+  
+  .table-laptop {
+    @apply text-sm;
+  }
+  
+  .table-laptop th,
+  .table-laptop td {
+    @apply px-3 py-2;
+  }
+
+  /* Enhanced Chemical Animation Classes */
+  .animate-fade-in {
+    animation: fade-in 0.6s ease-out;
+  }
+  
+  .animate-fade-in-delayed {
+    animation: fade-in 0.8s ease-out 0.2s both;
+  }
+  
+  .animate-slide-down {
+    animation: slide-down 0.6s ease-out;
+  }
+  
+  .animate-slide-up {
+    animation: slide-up 0.6s ease-out 0.1s both;
+  }
+  
+  .animate-pulse-slow {
+    animation: pulse-slow 4s ease-in-out infinite;
+  }
+  
+  .animate-pulse-slower {
+    animation: pulse-slower 6s ease-in-out infinite 1s;
+  }
+
+  .animate-float-molecule {
+    animation: float-molecule 8s ease-in-out infinite;
+  }
+  
+  .animate-float-molecule-delayed {
+    animation: float-molecule-delayed 10s ease-in-out infinite 2s;
+  }
+  
+  .animate-float-molecule-slow {
+    animation: float-molecule-slow 12s ease-in-out infinite 4s;
+  }
+  
+  .animate-pulse-bond {
+    animation: pulse-bond 6s ease-in-out infinite;
+  }
+  
+  .animate-pulse-bond-delayed {
+    animation: pulse-bond-delayed 8s ease-in-out infinite 3s;
+  }
+
+  /* Enhanced Glassmorphism Components */
+  .clean-card {
+    @apply bg-white/80 backdrop-blur-xl shadow-2xl border border-white/50;
+  }
+  
+  .clean-input {
+    @apply bg-white/90 backdrop-blur-sm border-gray-300 focus:border-blue-500 focus:ring-blue-500/20;
+  }
+  
+  .clean-button {
+    @apply bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200;
+  }
+
+  .clean-button-secondary {
+    @apply bg-white/80 backdrop-blur-sm hover:bg-white/90 text-blue-600 border border-blue-200/60 transition-all duration-200;
+  }
+
+  /* Blue Theme Classes */
+  .text-primary-blue {
+    @apply text-blue-600;
+  }
+  
+  .text-secondary-blue {
+    @apply text-blue-400;
+  }
+  
+  .bg-primary-blue {
+    @apply bg-blue-600;
+  }
+  
+  .bg-secondary-blue {
+    @apply bg-blue-50;
+  }
+  
+  .border-primary-blue {
+    @apply border-blue-500;
+  }
+  
+  .border-secondary-blue {
+    @apply border-blue-200;
+  }
+}
