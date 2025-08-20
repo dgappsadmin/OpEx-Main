@@ -28,8 +28,8 @@ public class InitiativeRequest {
 
     private LocalDate startDate;
     private LocalDate endDate;
-    private Boolean requiresMoc = false;
-    private Boolean requiresCapex = false;
+    private String requiresMoc = "N";
+    private String requiresCapex = "N";
 
     // New fields for assumptions and additional form data
     private String assumption1;
@@ -74,11 +74,11 @@ public class InitiativeRequest {
     public LocalDate getEndDate() { return endDate; }
     public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
 
-    public Boolean getRequiresMoc() { return requiresMoc; }
-    public void setRequiresMoc(Boolean requiresMoc) { this.requiresMoc = requiresMoc; }
+    public String getRequiresMoc() { return requiresMoc; }
+    public void setRequiresMoc(String requiresMoc) { this.requiresMoc = requiresMoc; }
 
-    public Boolean getRequiresCapex() { return requiresCapex; }
-    public void setRequiresCapex(Boolean requiresCapex) { this.requiresCapex = requiresCapex; }
+    public String getRequiresCapex() { return requiresCapex; }
+    public void setRequiresCapex(String requiresCapex) { this.requiresCapex = requiresCapex; }
 
     // New getters and setters for assumptions
     public String getAssumption1() { return assumption1; }

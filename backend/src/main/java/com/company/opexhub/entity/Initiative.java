@@ -18,6 +18,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -26,17 +27,18 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 @Entity
-@Table(name = "initiatives")
+@Table(name = "OPEX_INITIATIVES")
 public class Initiative {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "initiative_seq")
+    @SequenceGenerator(name = "initiative_seq", sequenceName = "OPEX_INITIATIVE_SEQ", allocationSize = 1)
     private Long id;
 
     @NotBlank
     @Size(max = 200)
     private String title;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "CLOB")
     private String description;
 
     @NotBlank
@@ -77,11 +79,11 @@ public class Initiative {
     @Column(name = "current_stage")
     private Integer currentStage = 1;
 
-    @Column(name = "requires_moc")
-    private Boolean requiresMoc = false;
+    @Column(name = "requires_moc", columnDefinition = "CHAR(1) DEFAULT 'N'")
+    private String requiresMoc = "N";
 
-    @Column(name = "requires_capex")
-    private Boolean requiresCapex = false;
+    @Column(name = "requires_capex", columnDefinition = "CHAR(1) DEFAULT 'N'")
+    private String requiresCapex = "N";
 
     @Column(name = "moc_number")
     private String mocNumber;
@@ -90,17 +92,17 @@ public class Initiative {
     private String capexNumber;
 
     // New fields for assumptions
-    @Column(name = "assumption_1", columnDefinition = "TEXT")
+    @Column(name = "assumption_1", columnDefinition = "CLOB")
     private String assumption1;
 
-    @Column(name = "assumption_2", columnDefinition = "TEXT")
+    @Column(name = "assumption_2", columnDefinition = "CLOB")
     private String assumption2;
 
-    @Column(name = "assumption_3", columnDefinition = "TEXT")
+    @Column(name = "assumption_3", columnDefinition = "CLOB")
     private String assumption3;
 
     // New fields for additional form data
-    @Column(name = "baseline_data", columnDefinition = "TEXT")
+    @Column(name = "baseline_data", columnDefinition = "CLOB")
     private String baselineData;
 
     @Column(name = "target_outcome")
@@ -142,9 +144,6 @@ public class Initiative {
     @JsonManagedReference("initiative-comments")
     private Set<Comment> comments = new HashSet<>();
 
-    // WorkflowStage is now a master table, no direct relationship to Initiative
-    // Workflow progress is tracked via WorkflowTransaction entity
-
     // Constructors
     public Initiative() {}
 
@@ -175,6 +174,23 @@ public class Initiative {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    // Helper methods for Boolean to CHAR conversion
+    public Boolean getRequiresMocBoolean() {
+        return "Y".equals(this.requiresMoc);
+    }
+
+    public void setRequiresMocBoolean(Boolean requiresMoc) {
+        this.requiresMoc = Boolean.TRUE.equals(requiresMoc) ? "Y" : "N";
+    }
+
+    public Boolean getRequiresCapexBoolean() {
+        return "Y".equals(this.requiresCapex);
+    }
+
+    public void setRequiresCapexBoolean(Boolean requiresCapex) {
+        this.requiresCapex = Boolean.TRUE.equals(requiresCapex) ? "Y" : "N";
     }
 
     // Getters and Setters
@@ -220,11 +236,11 @@ public class Initiative {
     public Integer getCurrentStage() { return currentStage; }
     public void setCurrentStage(Integer currentStage) { this.currentStage = currentStage; }
 
-    public Boolean getRequiresMoc() { return requiresMoc; }
-    public void setRequiresMoc(Boolean requiresMoc) { this.requiresMoc = requiresMoc; }
+    public String getRequiresMoc() { return requiresMoc; }
+    public void setRequiresMoc(String requiresMoc) { this.requiresMoc = requiresMoc; }
 
-    public Boolean getRequiresCapex() { return requiresCapex; }
-    public void setRequiresCapex(Boolean requiresCapex) { this.requiresCapex = requiresCapex; }
+    public String getRequiresCapex() { return requiresCapex; }
+    public void setRequiresCapex(String requiresCapex) { this.requiresCapex = requiresCapex; }
 
     public String getMocNumber() { return mocNumber; }
     public void setMocNumber(String mocNumber) { this.mocNumber = mocNumber; }

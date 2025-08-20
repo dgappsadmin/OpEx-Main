@@ -1,90 +1,123 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { commentAPI } from '@/lib/api';
-import { mockInitiatives } from '@/lib/mockData';
+import { remarksAPI } from '@/lib/api';
 
-export const useComments = (initiativeId: number) => {
+export interface RemarksEntry {
+  id?: number;
+  content: string;
+  type?: string;
+  stageNumber?: number;
+  createdAt?: string;
+  initiativeId: number;
+  user?: {
+    id: number;
+    fullName: string;
+    email: string;
+  };
+}
+
+// Keep backward compatibility
+export interface CommentEntry extends RemarksEntry {}
+
+const mockRemarks: RemarksEntry[] = [
+  {
+    id: 1,
+    content: "Initial assessment shows promising potential for energy savings.",
+    type: "general",
+    stageNumber: 1,
+    createdAt: "2024-01-15T10:30:00Z",
+    initiativeId: 1,
+    user: {
+      id: 1,
+      fullName: "John Doe",
+      email: "john.doe@company.com"
+    }
+  },
+  {
+    id: 2,
+    content: "Approved for implementation phase. Good baseline data provided.",
+    type: "approval",
+    stageNumber: 2,
+    createdAt: "2024-01-20T14:15:00Z",
+    initiativeId: 1,
+    user: {
+      id: 2,
+      fullName: "Jane Smith",
+      email: "jane.smith@company.com"
+    }
+  }
+];
+
+export const useRemarks = (initiativeId: number) => {
   return useQuery({
-    queryKey: ['comments', initiativeId],
+    queryKey: ['remarks', initiativeId],
     queryFn: async () => {
       try {
-        // Try real API first
-        return await commentAPI.getByInitiative(initiativeId);
+        return await remarksAPI.getByInitiative(initiativeId);
       } catch (error) {
-        console.warn('Failed to fetch comments from API, using mock data:', error);
-        // Fallback to mock data
-        const initiative = mockInitiatives.find(i => Number(i.id) === initiativeId);
-        return initiative?.comments || [];
+        console.warn('Failed to fetch remarks from API, using mock data:', error);
+        return mockRemarks.filter(remark => remark.initiativeId === initiativeId);
       }
     },
     enabled: !!initiativeId,
   });
 };
 
-export const useCreateComment = () => {
+export const useCreateRemarks = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
     mutationFn: async (data: { content: string; initiativeId: number }) => {
-      console.log('useCreateComment - Sending data:', data);
       try {
-        const result = await commentAPI.create(data);
-        console.log('useCreateComment - Success:', result);
-        return result;
+        return await remarksAPI.create(data);
       } catch (error) {
-        console.error('useCreateComment - Error:', error);
-        // For mock data, we'll just return a success response
-        return {
-          id: Date.now(),
-          content: data.content,
-          user: { fullName: 'Current User' },
-          createdAt: new Date().toISOString(),
-        };
+        console.error('Failed to create remarks:', error);
+        throw error;
       }
     },
-    onSuccess: (data, variables) => {
-      console.log('useCreateComment - onSuccess called with:', data);
-      queryClient.invalidateQueries({ queryKey: ['comments', variables.initiativeId] });
-    },
-    onError: (error) => {
-      console.error('useCreateComment - onError called with:', error);
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['remarks', variables.initiativeId] });
     },
   });
 };
 
-export const useUpdateComment = () => {
+export const useUpdateRemarks = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (data: { id: number; content: string }) => {
+    mutationFn: async ({ id, content }: { id: number; content: string }) => {
       try {
-        return await commentAPI.update(data.id, data.content);
+        return await remarksAPI.update(id, content);
       } catch (error) {
-        console.error('Failed to update comment:', error);
-        // Mock success for demo
-        return { ...data, updatedAt: new Date().toISOString() };
+        console.error('Failed to update remarks:', error);
+        throw error;
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['comments'] });
+      queryClient.invalidateQueries({ queryKey: ['remarks'] });
     },
   });
 };
 
-export const useDeleteComment = () => {
+export const useDeleteRemarks = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
     mutationFn: async (id: number) => {
       try {
-        return await commentAPI.delete(id);
+        return await remarksAPI.delete(id);
       } catch (error) {
-        console.error('Failed to delete comment:', error);
-        // Mock success for demo
-        return { success: true };
+        console.error('Failed to delete remarks:', error);
+        throw error;
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['comments'] });
+      queryClient.invalidateQueries({ queryKey: ['remarks'] });
     },
   });
 };
+
+// Backward compatibility aliases
+export const useComments = useRemarks;
+export const useCreateComment = useCreateRemarks;
+export const useUpdateComment = useUpdateRemarks;
+export const useDeleteComment = useDeleteRemarks;

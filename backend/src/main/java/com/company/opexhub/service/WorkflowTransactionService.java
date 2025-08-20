@@ -221,8 +221,8 @@ public class WorkflowTransactionService {
 
     @Transactional
     public WorkflowTransaction processStageAction(Long transactionId, String action, String comment, 
-                                                String actionBy, Long assignedUserId, Boolean requiresMoc, 
-                                                String mocNumber, Boolean requiresCapex, String capexNumber) {
+                                                String actionBy, Long assignedUserId, String requiresMoc, 
+                                                String mocNumber, String requiresCapex, String capexNumber) {
         WorkflowTransaction transaction = workflowTransactionRepository.findById(transactionId)
                 .orElseThrow(() -> new RuntimeException("Workflow transaction not found"));
 

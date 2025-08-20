@@ -8,17 +8,18 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "timeline_tasks")
+@Table(name = "OPEX_TIMELINE_TASKS")
 public class TimelineTask {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "timeline_task_seq")
+    @SequenceGenerator(name = "timeline_task_seq", sequenceName = "OPEX_TIMELINE_TASK_SEQ", allocationSize = 1)
     private Long id;
 
     @NotBlank
     @Size(max = 200)
     private String title;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "CLOB")
     private String description;
 
     @Column(name = "start_date")
@@ -46,7 +47,7 @@ public class TimelineTask {
     @Size(max = 200)
     private String informed;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "remarks", columnDefinition = "CLOB")
     private String comments;
 
     @Column(name = "created_at")

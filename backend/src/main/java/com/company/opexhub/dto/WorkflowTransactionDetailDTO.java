@@ -16,9 +16,9 @@ public class WorkflowTransactionDetailDTO {
     private String requiredRole;
     private Long assignedUserId;
     private String assignedUserName;
-    private Boolean requiresMoc;
+    private String requiresMoc;
     private String mocNumber;
-    private Boolean requiresCapex;
+    private String requiresCapex;
     private String capexNumber;
     private String nextStageName;
     private String nextUser;
@@ -123,14 +123,14 @@ public class WorkflowTransactionDetailDTO {
     public Boolean getIsVisible() { return isVisible; }
     public void setIsVisible(Boolean isVisible) { this.isVisible = isVisible; }
 
-    public Boolean getRequiresMoc() { return requiresMoc; }
-    public void setRequiresMoc(Boolean requiresMoc) { this.requiresMoc = requiresMoc; }
+    public String getRequiresMoc() { return requiresMoc; }
+    public void setRequiresMoc(String requiresMoc) { this.requiresMoc = requiresMoc; }
 
     public String getMocNumber() { return mocNumber; }
     public void setMocNumber(String mocNumber) { this.mocNumber = mocNumber; }
 
-    public Boolean getRequiresCapex() { return requiresCapex; }
-    public void setRequiresCapex(Boolean requiresCapex) { this.requiresCapex = requiresCapex; }
+    public String getRequiresCapex() { return requiresCapex; }
+    public void setRequiresCapex(String requiresCapex) { this.requiresCapex = requiresCapex; }
 
     public String getCapexNumber() { return capexNumber; }
     public void setCapexNumber(String capexNumber) { this.capexNumber = capexNumber; }

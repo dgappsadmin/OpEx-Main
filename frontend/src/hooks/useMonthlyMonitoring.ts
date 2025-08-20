@@ -1,76 +1,122 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { monthlyMonitoringAPI } from '@/lib/api';
-import { toast } from 'sonner';
 
-// Mock data for Monthly Monitoring
-const mockMonitoringEntries = [
+export interface MonthlyMonitoringEntry {
+  id?: number;
+  initiativeId: number;
+  monitoringMonth: string; // YYYY-MM format
+  kpiDescription: string;
+  targetValue: number;
+  achievedValue?: number;
+  deviation?: number;
+  deviationPercentage?: number;
+  remarks?: string;
+  category?: string;
+  isFinalized: boolean;
+  faApproval: boolean;
+  faRemarks?: string;
+  enteredBy: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// Mock data for testing with Oracle-compatible boolean values
+const mockMonitoringEntries: MonthlyMonitoringEntry[] = [
   {
     id: 1,
-    kpiDescription: "Energy consumption reduction",
-    monitoringMonth: "2025-01",
-    targetValue: 500,
-    achievedValue: 450,
-    deviation: -50,
+    initiativeId: 1,
+    monitoringMonth: "2024-01",
+    kpiDescription: "Energy Efficiency Improvement",
+    targetValue: 15.0,
+    achievedValue: 12.5,
+    deviation: -2.5,
+    deviationPercentage: -16.67,
+    remarks: "Slightly below target due to equipment maintenance",
+    category: "Energy",
     isFinalized: false,
     faApproval: false,
-    enteredBy: "Site TSO"
+    enteredBy: "johndoe@company.com"
   },
   {
     id: 2,
-    kpiDescription: "Waste reduction percentage",
-    monitoringMonth: "2025-01",
-    targetValue: 20,
-    achievedValue: 25,
-    deviation: 5,
+    initiativeId: 1,
+    monitoringMonth: "2024-02",
+    kpiDescription: "Energy Efficiency Improvement",
+    targetValue: 15.0,
+    achievedValue: 18.2,
+    deviation: 3.2,
+    deviationPercentage: 21.33,
+    remarks: "Exceeded target after equipment optimization",
+    category: "Energy",
     isFinalized: true,
     faApproval: true,
-    enteredBy: "Corp TSO"
+    faRemarks: "Excellent performance",
+    enteredBy: "johndoe@company.com"
   }
 ];
 
-export const useMonitoringEntries = (initiativeId: number) => {
+export const useMonthlyMonitoring = (initiativeId: number) => {
   return useQuery({
-    queryKey: ['monitoring-entries', initiativeId],
+    queryKey: ['monthlyMonitoring', initiativeId],
     queryFn: async () => {
       try {
         return await monthlyMonitoringAPI.getMonitoringEntries(initiativeId);
       } catch (error) {
-        console.warn('API call failed, using mock data:', error);
-        return mockMonitoringEntries;
+        console.warn('Failed to fetch monthly monitoring entries from API, using mock data:', error);
+        return mockMonitoringEntries.filter(entry => entry.initiativeId === initiativeId);
       }
     },
     enabled: !!initiativeId,
   });
 };
 
-export const useMonitoringEntriesByMonth = (initiativeId: number, monthYear: string) => {
+export const useMonthlyMonitoringByMonth = (initiativeId: number, monthYear: string) => {
   return useQuery({
-    queryKey: ['monitoring-entries', initiativeId, monthYear],
-    queryFn: () => monthlyMonitoringAPI.getMonitoringEntriesByMonth(initiativeId, monthYear),
+    queryKey: ['monthlyMonitoring', initiativeId, monthYear],
+    queryFn: async () => {
+      try {
+        return await monthlyMonitoringAPI.getMonitoringEntriesByMonth(initiativeId, monthYear);
+      } catch (error) {
+        console.warn('Failed to fetch monthly monitoring entries from API, using mock data:', error);
+        return mockMonitoringEntries.filter(
+          entry => entry.initiativeId === initiativeId && entry.monitoringMonth === monthYear
+        );
+      }
+    },
     enabled: !!initiativeId && !!monthYear,
   });
 };
 
 export const useMonitoringEntry = (id: number) => {
   return useQuery({
-    queryKey: ['monitoring-entry', id],
-    queryFn: () => monthlyMonitoringAPI.getMonitoringEntryById(id),
+    queryKey: ['monitoringEntry', id],
+    queryFn: async () => {
+      try {
+        return await monthlyMonitoringAPI.getMonitoringEntryById(id);
+      } catch (error) {
+        console.warn('Failed to fetch monitoring entry from API, using mock data:', error);
+        return mockMonitoringEntries.find(entry => entry.id === id);
+      }
+    },
     enabled: !!id,
   });
 };
 
-export const useCreateMonitoringEntry = () => {
+export const useCreateMonitoringEntry = (initiativeId: number) => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: ({ initiativeId, entryData }: { initiativeId: number; entryData: any }) => 
-      monthlyMonitoringAPI.createMonitoringEntry(initiativeId, entryData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['monitoring-entries'] });
-      toast.success('Monitoring entry created successfully');
+    mutationFn: async (data: Omit<MonthlyMonitoringEntry, 'id' | 'initiativeId'>) => {
+      try {
+        return await monthlyMonitoringAPI.createMonitoringEntry(initiativeId, data);
+      } catch (error) {
+        console.error('Failed to create monitoring entry:', error);
+        throw error;
+      }
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to create monitoring entry');
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['monthlyMonitoring', initiativeId] });
+      queryClient.invalidateQueries({ queryKey: ['approvedInitiatives'] });
     },
   });
 };
@@ -79,15 +125,20 @@ export const useUpdateMonitoringEntry = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: ({ id, entryData }: { id: number; entryData: any }) => 
-      monthlyMonitoringAPI.updateMonitoringEntry(id, entryData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['monitoring-entries'] });
-      queryClient.invalidateQueries({ queryKey: ['monitoring-entry'] });
-      toast.success('Monitoring entry updated successfully');
+    mutationFn: async ({ id, data }: { id: number; data: Partial<MonthlyMonitoringEntry> }) => {
+      try {
+        return await monthlyMonitoringAPI.updateMonitoringEntry(id, data);
+      } catch (error) {
+        console.error('Failed to update monitoring entry:', error);
+        throw error;
+      }
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to update monitoring entry');
+    onSuccess: (_, { data }) => {
+      if (data.initiativeId) {
+        queryClient.invalidateQueries({ queryKey: ['monthlyMonitoring', data.initiativeId] });
+      }
+      queryClient.invalidateQueries({ queryKey: ['monitoringEntry'] });
+      queryClient.invalidateQueries({ queryKey: ['approvedInitiatives'] });
     },
   });
 };
@@ -96,15 +147,18 @@ export const useUpdateFinalizationStatus = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: ({ id, isFinalized }: { id: number; isFinalized: boolean }) => 
-      monthlyMonitoringAPI.updateFinalizationStatus(id, isFinalized),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['monitoring-entries'] });
-      queryClient.invalidateQueries({ queryKey: ['monitoring-entry'] });
-      toast.success('Finalization status updated successfully');
+    mutationFn: async ({ id, isFinalized }: { id: number; isFinalized: boolean }) => {
+      try {
+        return await monthlyMonitoringAPI.updateFinalizationStatus(id, isFinalized);
+      } catch (error) {
+        console.error('Failed to update finalization status:', error);
+        throw error;
+      }
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to update finalization status');
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['monthlyMonitoring'] });
+      queryClient.invalidateQueries({ queryKey: ['monitoringEntry'] });
+      queryClient.invalidateQueries({ queryKey: ['approvedInitiatives'] });
     },
   });
 };
@@ -113,18 +167,22 @@ export const useUpdateFAApproval = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: ({ id, faApproval, faComments }: { 
+    mutationFn: async ({ id, faApproval, faRemarks }: { 
       id: number; 
       faApproval: boolean; 
-      faComments?: string; 
-    }) => monthlyMonitoringAPI.updateFAApproval(id, faApproval, faComments),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['monitoring-entries'] });
-      queryClient.invalidateQueries({ queryKey: ['monitoring-entry'] });
-      toast.success('F&A approval updated successfully');
+      faRemarks?: string;
+    }) => {
+      try {
+        return await monthlyMonitoringAPI.updateFAApproval(id, faApproval, faRemarks);
+      } catch (error) {
+        console.error('Failed to update FA approval:', error);
+        throw error;
+      }
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to update F&A approval');
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['monthlyMonitoring'] });
+      queryClient.invalidateQueries({ queryKey: ['monitoringEntry'] });
+      queryClient.invalidateQueries({ queryKey: ['approvedInitiatives'] });
     },
   });
 };
@@ -133,21 +191,32 @@ export const useDeleteMonitoringEntry = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: (id: number) => monthlyMonitoringAPI.deleteMonitoringEntry(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['monitoring-entries'] });
-      toast.success('Monitoring entry deleted successfully');
+    mutationFn: async (id: number) => {
+      try {
+        return await monthlyMonitoringAPI.deleteMonitoringEntry(id);
+      } catch (error) {
+        console.error('Failed to delete monitoring entry:', error);
+        throw error;
+      }
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to delete monitoring entry');
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['monthlyMonitoring'] });
+      queryClient.invalidateQueries({ queryKey: ['approvedInitiatives'] });
     },
   });
 };
 
-export const usePendingFAApprovals = (initiativeId: number) => {
+export const useApprovedInitiativesForMonitoring = (userEmail: string, site: string) => {
   return useQuery({
-    queryKey: ['pending-fa-approvals', initiativeId],
-    queryFn: () => monthlyMonitoringAPI.getPendingFAApprovals(initiativeId),
-    enabled: !!initiativeId,
+    queryKey: ['approvedInitiativesForMonitoring', userEmail, site],
+    queryFn: async () => {
+      try {
+        return await monthlyMonitoringAPI.getApprovedInitiatives(userEmail, site);
+      } catch (error) {
+        console.warn('Failed to fetch approved initiatives from API:', error);
+        return [];
+      }
+    },
+    enabled: !!userEmail && !!site,
   });
 };

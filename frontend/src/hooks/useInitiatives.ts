@@ -74,3 +74,29 @@ export const useCreateInitiative = () => {
     },
   });
 };
+
+export const useUpdateInitiative = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      console.log('useUpdateInitiative - Sending data:', { id, data });
+      try {
+        const result = await initiativeAPI.update(id, data);
+        console.log('useUpdateInitiative - Success:', result);
+        return result;
+      } catch (error) {
+        console.error('useUpdateInitiative - Error:', error);
+        throw error;
+      }
+    },
+    onSuccess: (data, variables) => {
+      console.log('useUpdateInitiative - onSuccess called with:', data);
+      queryClient.invalidateQueries({ queryKey: ['initiatives'] });
+      queryClient.invalidateQueries({ queryKey: ['initiative', variables.id] });
+    },
+    onError: (error) => {
+      console.error('useUpdateInitiative - onError called with:', error);
+    },
+  });
+};

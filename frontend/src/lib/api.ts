@@ -37,6 +37,15 @@ api.interceptors.response.use(
   }
 );
 
+// Utility functions for Boolean to Y/N conversion
+const booleanToYN = (value: boolean | undefined | null): string => {
+  return value === true ? 'Y' : 'N';
+};
+
+const ynToBoolean = (value: string | undefined | null): boolean => {
+  return value === 'Y';
+};
+
 // Auth API
 export const authAPI = {
   login: async (email: string, password: string) => {
@@ -68,11 +77,31 @@ export const initiativeAPI = {
     size?: number;
   }) => {
     const response = await api.get('/initiatives', { params });
+    
+    // Convert Y/N back to boolean for frontend
+    if (response.data && response.data.content) {
+      response.data.content = response.data.content.map((initiative: any) => ({
+        ...initiative,
+        requiresMoc: ynToBoolean(initiative.requiresMoc),
+        requiresCapex: ynToBoolean(initiative.requiresCapex),
+      }));
+    }
+    
     return response.data;
   },
   
   getById: async (id: number) => {
     const response = await api.get(`/initiatives/${id}`);
+    
+    // Convert Y/N back to boolean for frontend
+    if (response.data) {
+      response.data = {
+        ...response.data,
+        requiresMoc: ynToBoolean(response.data.requiresMoc),
+        requiresCapex: ynToBoolean(response.data.requiresCapex),
+      };
+    }
+    
     return response.data;
   },
   
@@ -98,12 +127,28 @@ export const initiativeAPI = {
     estimatedCapex?: number;
     budgetType?: string;
   }) => {
-    const response = await api.post('/initiatives', initiativeData);
+    // Convert boolean to Y/N for backend
+    const backendData = {
+      ...initiativeData,
+      requiresMoc: booleanToYN(initiativeData.requiresMoc),
+      requiresCapex: booleanToYN(initiativeData.requiresCapex),
+    };
+    
+    const response = await api.post('/initiatives', backendData);
     return response.data;
   },
   
   update: async (id: number, initiativeData: any) => {
-    const response = await api.put(`/initiatives/${id}`, initiativeData);
+    // Convert boolean to Y/N for backend if present
+    const backendData = { ...initiativeData };
+    if (typeof backendData.requiresMoc === 'boolean') {
+      backendData.requiresMoc = booleanToYN(backendData.requiresMoc);
+    }
+    if (typeof backendData.requiresCapex === 'boolean') {
+      backendData.requiresCapex = booleanToYN(backendData.requiresCapex);
+    }
+    
+    const response = await api.put(`/initiatives/${id}`, backendData);
     return response.data;
   },
   
@@ -148,13 +193,13 @@ export const workflowAPI = {
     return response.data;
   },
   
-  approveStage: async (stageId: number, comments: string) => {
-    const response = await api.post(`/workflow/stage/${stageId}/approve`, { comments });
+  approveStage: async (stageId: number, remarks: string) => {
+    const response = await api.post(`/workflow/stage/${stageId}/approve`, { remarks });
     return response.data;
   },
   
-  rejectStage: async (stageId: number, comments: string) => {
-    const response = await api.post(`/workflow/stage/${stageId}/reject`, { comments });
+  rejectStage: async (stageId: number, remarks: string) => {
+    const response = await api.post(`/workflow/stage/${stageId}/reject`, { remarks });
     return response.data;
   },
   
@@ -164,31 +209,34 @@ export const workflowAPI = {
   }
 };
 
-// Comment API
-export const commentAPI = {
+// Remarks API (renamed from Comment)
+export const remarksAPI = {
   getByInitiative: async (initiativeId: number) => {
-    const response = await api.get(`/comments/initiative/${initiativeId}`);
+    const response = await api.get(`/remarks/initiative/${initiativeId}`);
     return response.data;
   },
   
-  create: async (commentData: {
+  create: async (remarksData: {
     content: string;
     initiativeId: number;
   }) => {
-    const response = await api.post('/comments', commentData);
+    const response = await api.post('/remarks', remarksData);
     return response.data;
   },
   
   update: async (id: number, content: string) => {
-    const response = await api.put(`/comments/${id}`, { content });
+    const response = await api.put(`/remarks/${id}`, { content });
     return response.data;
   },
   
   delete: async (id: number) => {
-    const response = await api.delete(`/comments/${id}`);
+    const response = await api.delete(`/remarks/${id}`);
     return response.data;
   }
 };
+
+// Keep legacy commentAPI for backward compatibility
+export const commentAPI = remarksAPI;
 
 // User API
 export const userAPI = {
@@ -233,21 +281,59 @@ export const timelineTrackerAPI = {
 
   getTimelineEntries: async (initiativeId: number) => {
     const response = await api.get(`/timeline-tracker/${initiativeId}`);
+    
+    // Convert Y/N back to boolean for frontend
+    if (response.data) {
+      response.data = response.data.map((entry: any) => ({
+        ...entry,
+        siteLeadApproval: ynToBoolean(entry.siteLeadApproval),
+        initiativeLeadApproval: ynToBoolean(entry.initiativeLeadApproval),
+      }));
+    }
+    
     return response.data;
   },
   
   getTimelineEntryById: async (id: number) => {
     const response = await api.get(`/timeline-tracker/entry/${id}`);
+    
+    // Convert Y/N back to boolean for frontend
+    if (response.data) {
+      response.data = {
+        ...response.data,
+        siteLeadApproval: ynToBoolean(response.data.siteLeadApproval),
+        initiativeLeadApproval: ynToBoolean(response.data.initiativeLeadApproval),
+      };
+    }
+    
     return response.data;
   },
   
   createTimelineEntry: async (initiativeId: number, entryData: any) => {
-    const response = await api.post(`/timeline-tracker/${initiativeId}`, entryData);
+    // Convert boolean to Y/N for backend
+    const backendData = { ...entryData };
+    if (typeof backendData.siteLeadApproval === 'boolean') {
+      backendData.siteLeadApproval = booleanToYN(backendData.siteLeadApproval);
+    }
+    if (typeof backendData.initiativeLeadApproval === 'boolean') {
+      backendData.initiativeLeadApproval = booleanToYN(backendData.initiativeLeadApproval);
+    }
+    
+    const response = await api.post(`/timeline-tracker/${initiativeId}`, backendData);
     return response.data;
   },
   
   updateTimelineEntry: async (id: number, entryData: any) => {
-    const response = await api.put(`/timeline-tracker/entry/${id}`, entryData);
+    // Convert boolean to Y/N for backend
+    const backendData = { ...entryData };
+    if (typeof backendData.siteLeadApproval === 'boolean') {
+      backendData.siteLeadApproval = booleanToYN(backendData.siteLeadApproval);
+    }
+    if (typeof backendData.initiativeLeadApproval === 'boolean') {
+      backendData.initiativeLeadApproval = booleanToYN(backendData.initiativeLeadApproval);
+    }
+    
+    const response = await api.put(`/timeline-tracker/entry/${id}`, backendData);
     return response.data;
   },
   
@@ -274,7 +360,17 @@ export const timelineTrackerAPI = {
 // Workflow Transaction API
 export const workflowTransactionAPI = {
   getTransactions: (initiativeId: number) => 
-    api.get(`/workflow-transactions/initiative/${initiativeId}`).then(res => res.data),
+    api.get(`/workflow-transactions/initiative/${initiativeId}`).then(res => {
+      // Convert Y/N back to boolean for frontend
+      if (res.data) {
+        res.data = res.data.map((transaction: any) => ({
+          ...transaction,
+          requiresMoc: ynToBoolean(transaction.requiresMoc),
+          requiresCapex: ynToBoolean(transaction.requiresCapex),
+        }));
+      }
+      return res.data;
+    }),
   
   getPendingByRole: (roleCode: string) => 
     api.get(`/workflow-transactions/pending/${roleCode}`).then(res => res.data),
@@ -294,14 +390,24 @@ export const workflowTransactionAPI = {
   processStageAction: (data: {
     transactionId: number;
     action: string;
-    comment: string;
+    remarks: string;
     assignedUserId?: number;
     mocNumber?: string;
     capexNumber?: string;
     requiresMoc?: boolean;
     requiresCapex?: boolean;
-  }) => 
-    api.post(`/workflow-transactions/${data.transactionId}/process`, data).then(res => res.data),
+  }) => {
+    // Convert boolean to Y/N for backend
+    const backendData = { ...data };
+    if (typeof backendData.requiresMoc === 'boolean') {
+      backendData.requiresMoc = booleanToYN(backendData.requiresMoc) as any;
+    }
+    if (typeof backendData.requiresCapex === 'boolean') {
+      backendData.requiresCapex = booleanToYN(backendData.requiresCapex) as any;
+    }
+    
+    return api.post(`/workflow-transactions/${data.transactionId}/process`, backendData).then(res => res.data);
+  },
   
   getInitiativesReadyForClosure: () =>
     api.get('/workflow-transactions/ready-for-closure').then(res => res.data),
@@ -317,26 +423,74 @@ export const monthlyMonitoringAPI = {
 
   getMonitoringEntries: async (initiativeId: number) => {
     const response = await api.get(`/monthly-monitoring/${initiativeId}`);
+    
+    // Convert Y/N back to boolean for frontend
+    if (response.data) {
+      response.data = response.data.map((entry: any) => ({
+        ...entry,
+        isFinalized: ynToBoolean(entry.isFinalized),
+        faApproval: ynToBoolean(entry.faApproval),
+      }));
+    }
+    
     return response.data;
   },
   
   getMonitoringEntriesByMonth: async (initiativeId: number, monthYear: string) => {
     const response = await api.get(`/monthly-monitoring/${initiativeId}/month/${monthYear}`);
+    
+    // Convert Y/N back to boolean for frontend
+    if (response.data) {
+      response.data = response.data.map((entry: any) => ({
+        ...entry,
+        isFinalized: ynToBoolean(entry.isFinalized),
+        faApproval: ynToBoolean(entry.faApproval),
+      }));
+    }
+    
     return response.data;
   },
   
   getMonitoringEntryById: async (id: number) => {
     const response = await api.get(`/monthly-monitoring/entry/${id}`);
+    
+    // Convert Y/N back to boolean for frontend
+    if (response.data) {
+      response.data = {
+        ...response.data,
+        isFinalized: ynToBoolean(response.data.isFinalized),
+        faApproval: ynToBoolean(response.data.faApproval),
+      };
+    }
+    
     return response.data;
   },
   
   createMonitoringEntry: async (initiativeId: number, entryData: any) => {
-    const response = await api.post(`/monthly-monitoring/${initiativeId}`, entryData);
+    // Convert boolean to Y/N for backend
+    const backendData = { ...entryData };
+    if (typeof backendData.isFinalized === 'boolean') {
+      backendData.isFinalized = booleanToYN(backendData.isFinalized);
+    }
+    if (typeof backendData.faApproval === 'boolean') {
+      backendData.faApproval = booleanToYN(backendData.faApproval);
+    }
+    
+    const response = await api.post(`/monthly-monitoring/${initiativeId}`, backendData);
     return response.data;
   },
   
   updateMonitoringEntry: async (id: number, entryData: any) => {
-    const response = await api.put(`/monthly-monitoring/entry/${id}`, entryData);
+    // Convert boolean to Y/N for backend
+    const backendData = { ...entryData };
+    if (typeof backendData.isFinalized === 'boolean') {
+      backendData.isFinalized = booleanToYN(backendData.isFinalized);
+    }
+    if (typeof backendData.faApproval === 'boolean') {
+      backendData.faApproval = booleanToYN(backendData.faApproval);
+    }
+    
+    const response = await api.put(`/monthly-monitoring/entry/${id}`, backendData);
     return response.data;
   },
   
@@ -345,10 +499,10 @@ export const monthlyMonitoringAPI = {
     return response.data;
   },
   
-  updateFAApproval: async (id: number, faApproval: boolean, faComments?: string) => {
+  updateFAApproval: async (id: number, faApproval: boolean, faRemarks?: string) => {
     const params = new URLSearchParams();
     params.append('faApproval', faApproval.toString());
-    if (faComments) params.append('faComments', faComments);
+    if (faRemarks) params.append('faRemarks', faRemarks);
     
     const response = await api.put(`/monthly-monitoring/entry/${id}/fa-approval?${params.toString()}`);
     return response.data;
@@ -441,5 +595,8 @@ export const reportsAPI = {
     return filename; // Return the filename for confirmation
   }
 };
+
+// Export utility functions for use in components
+export { booleanToYN, ynToBoolean };
 
 export default api;

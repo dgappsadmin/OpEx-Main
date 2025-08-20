@@ -5,10 +5,11 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
 @Entity
-@Table(name = "workflow_stages")
+@Table(name = "OPEX_WORKFLOW_STAGES")
 public class WorkflowStage {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "workflow_stage_seq")
+    @SequenceGenerator(name = "workflow_stage_seq", sequenceName = "OPEX_WF_STAGE_SEQ", allocationSize = 1)
     private Long id;
 
     @Column(name = "stage_number")
@@ -16,9 +17,11 @@ public class WorkflowStage {
 
     @NotBlank
     @Size(max = 100)
+    @Column(name = "stage_name")
     private String stageName;
 
     @Size(max = 20)
+    @Column(name = "required_role")
     private String requiredRole;
 
     @Size(max = 10)

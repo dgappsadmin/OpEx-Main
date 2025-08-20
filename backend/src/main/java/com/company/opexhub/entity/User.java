@@ -10,17 +10,19 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "users", 
+@Table(name = "OPEX_USERS", 
        uniqueConstraints = {
            @UniqueConstraint(columnNames = "email")
        })
 public class User {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "user_seq")
+    @SequenceGenerator(name = "user_seq", sequenceName = "OPEX_USER_SEQ", allocationSize = 1)
     private Long id;
 
     @NotBlank
     @Size(max = 100)
+    @Column(name = "full_name")
     private String fullName;
 
     @NotBlank
@@ -45,6 +47,7 @@ public class User {
     private String role;
 
     @Size(max = 100)
+    @Column(name = "role_name")
     private String roleName;
 
     @Column(name = "created_at")

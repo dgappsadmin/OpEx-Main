@@ -70,11 +70,11 @@ public class WorkflowTransactionController {
             }
 
             // Extract MOC/CAPEX data from request
-            Boolean requiresMoc = requestBody.get("requiresMoc") != null ? 
-                    (Boolean) requestBody.get("requiresMoc") : null;
+            String requiresMoc = requestBody.get("requiresMoc") != null ? 
+                    (String) requestBody.get("requiresMoc") : null;
             String mocNumber = (String) requestBody.get("mocNumber");
-            Boolean requiresCapex = requestBody.get("requiresCapex") != null ? 
-                    (Boolean) requestBody.get("requiresCapex") : null;
+            String requiresCapex = requestBody.get("requiresCapex") != null ? 
+                    (String) requestBody.get("requiresCapex") : null;
             String capexNumber = (String) requestBody.get("capexNumber");
 
             WorkflowTransaction transaction = workflowTransactionService.processStageAction(

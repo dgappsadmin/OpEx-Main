@@ -7,14 +7,15 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "comments")
+@Table(name = "OPEX_REMARKS")
 public class Comment {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "comment_seq")
+    @SequenceGenerator(name = "comment_seq", sequenceName = "OPEX_REMARKS_SEQ", allocationSize = 1)
     private Long id;
 
     @NotBlank
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "CLOB")
     private String content;
 
     @Size(max = 50)

@@ -134,8 +134,8 @@ public class TimelineTrackerController {
     @PutMapping("/entry/{id}/approvals")
     public ResponseEntity<ApiResponse<TimelineEntry>> updateApprovals(
             @PathVariable Long id,
-            @RequestParam(required = false) Boolean siteLeadApproval,
-            @RequestParam(required = false) Boolean initiativeLeadApproval) {
+            @RequestParam(required = false) String siteLeadApproval,
+            @RequestParam(required = false) String initiativeLeadApproval) {
         try {
             TimelineEntry updatedEntry = timelineEntryService.updateApprovals(id, siteLeadApproval, initiativeLeadApproval);
             return ResponseEntity.ok(new ApiResponse<>(true, "Approvals updated successfully", updatedEntry));

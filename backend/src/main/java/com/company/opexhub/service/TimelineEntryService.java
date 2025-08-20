@@ -58,7 +58,7 @@ public class TimelineEntryService {
     }
 
     @Transactional
-    public TimelineEntry updateApprovals(Long id, Boolean siteLeadApproval, Boolean initiativeLeadApproval) {
+    public TimelineEntry updateApprovals(Long id, String siteLeadApproval, String initiativeLeadApproval) {
         TimelineEntry entry = timelineEntryRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Timeline entry not found"));
 

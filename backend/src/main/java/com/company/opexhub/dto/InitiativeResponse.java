@@ -21,8 +21,8 @@ public class InitiativeResponse {
     private Integer progressPercentage;
     private Integer currentStage;
     private String currentStageName; // New field for current stage name
-    private Boolean requiresMoc;
-    private Boolean requiresCapex;
+    private String requiresMoc = "N";
+    private String requiresCapex = "N";
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private String createdByName;
@@ -115,11 +115,11 @@ public class InitiativeResponse {
     public String getCurrentStageName() { return currentStageName; }
     public void setCurrentStageName(String currentStageName) { this.currentStageName = currentStageName; }
 
-    public Boolean getRequiresMoc() { return requiresMoc; }
-    public void setRequiresMoc(Boolean requiresMoc) { this.requiresMoc = requiresMoc; }
+    public String getRequiresMoc() { return requiresMoc; }
+    public void setRequiresMoc(String requiresMoc) { this.requiresMoc = requiresMoc; }
 
-    public Boolean getRequiresCapex() { return requiresCapex; }
-    public void setRequiresCapex(Boolean requiresCapex) { this.requiresCapex = requiresCapex; }
+    public String getRequiresCapex() { return requiresCapex; }
+    public void setRequiresCapex(String requiresCapex) { this.requiresCapex = requiresCapex; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

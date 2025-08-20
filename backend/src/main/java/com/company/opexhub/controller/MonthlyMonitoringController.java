@@ -165,7 +165,7 @@ public class MonthlyMonitoringController {
     @PutMapping("/entry/{id}/finalize")
     public ResponseEntity<ApiResponse<MonthlyMonitoringEntry>> updateFinalizationStatus(
             @PathVariable Long id,
-            @RequestParam Boolean isFinalized) {
+            @RequestParam String isFinalized) {
         try {
             MonthlyMonitoringEntry updatedEntry = monthlyMonitoringService.updateFinalizationStatus(id, isFinalized);
             return ResponseEntity.ok(new ApiResponse<>(true, "Finalization status updated successfully", updatedEntry));
@@ -178,7 +178,7 @@ public class MonthlyMonitoringController {
     @PutMapping("/entry/{id}/fa-approval")
     public ResponseEntity<ApiResponse<MonthlyMonitoringEntry>> updateFAApproval(
             @PathVariable Long id,
-            @RequestParam Boolean faApproval,
+            @RequestParam String faApproval,
             @RequestParam(required = false) String faComments) {
         try {
             MonthlyMonitoringEntry updatedEntry = monthlyMonitoringService.updateFAApproval(id, faApproval, faComments);

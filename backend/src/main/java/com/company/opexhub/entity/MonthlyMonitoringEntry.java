@@ -14,16 +14,18 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
-@Table(name = "monthly_monitoring_entries")
+@Table(name = "OPEX_MONTHLY_MONITORING_ENTRIES")
 public class MonthlyMonitoringEntry {
     
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "monthly_monitoring_seq")
+    @SequenceGenerator(name = "monthly_monitoring_seq", sequenceName = "OPEX_MONTHLY_MON_SEQ", allocationSize = 1)
     private Long id;
     
     @ManyToOne(fetch = FetchType.LAZY)
@@ -31,22 +33,22 @@ public class MonthlyMonitoringEntry {
     @JsonIgnore
     private Initiative initiative;
     
-    @Column(nullable = false)
+    @Column(name = "monitoring_month", nullable = false)
     private YearMonth monitoringMonth;
     
-    @Column(nullable = false)
+    @Column(name = "kpi_description", nullable = false)
     private String kpiDescription;
     
-    @Column(nullable = false, precision = 15, scale = 2)
+    @Column(name = "target_value", nullable = false, precision = 15, scale = 2)
     private BigDecimal targetValue;
     
-    @Column(precision = 15, scale = 2)
+    @Column(name = "achieved_value", precision = 15, scale = 2)
     private BigDecimal achievedValue;
     
     @Column(precision = 15, scale = 2)
     private BigDecimal deviation;
     
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "CLOB")
     private String remarks;
     
     @Column(name = "category")
@@ -55,22 +57,22 @@ public class MonthlyMonitoringEntry {
     @Column(name = "deviation_percentage", precision = 5, scale = 2)
     private BigDecimal deviationPercentage;
     
-    @Column(nullable = false)
-    private Boolean isFinalized = false;
+    @Column(name = "is_finalized", nullable = false, columnDefinition = "CHAR(1) DEFAULT 'N'")
+    private String isFinalized = "N";
     
-    @Column(nullable = false)
-    private Boolean faApproval = false;
+    @Column(name = "fa_approval", nullable = false, columnDefinition = "CHAR(1) DEFAULT 'N'")
+    private String faApproval = "N";
     
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "fa_remarks", columnDefinition = "CLOB")
     private String faComments;
     
-    @Column(nullable = false)
+    @Column(name = "entered_by", nullable = false)
     private String enteredBy; // User role who entered the data
     
-    @Column(nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
     
-    @Column(nullable = false)
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
     
     // Constructors
@@ -109,6 +111,23 @@ public class MonthlyMonitoringEntry {
         }
     }
     
+    // Helper methods for Boolean to CHAR conversion
+    public Boolean getIsFinalizedBoolean() {
+        return "Y".equals(this.isFinalized);
+    }
+
+    public void setIsFinalizedBoolean(Boolean isFinalized) {
+        this.isFinalized = Boolean.TRUE.equals(isFinalized) ? "Y" : "N";
+    }
+
+    public Boolean getFaApprovalBoolean() {
+        return "Y".equals(this.faApproval);
+    }
+
+    public void setFaApprovalBoolean(Boolean faApproval) {
+        this.faApproval = Boolean.TRUE.equals(faApproval) ? "Y" : "N";
+    }
+    
     // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -140,11 +159,11 @@ public class MonthlyMonitoringEntry {
     public String getRemarks() { return remarks; }
     public void setRemarks(String remarks) { this.remarks = remarks; }
     
-    public Boolean getIsFinalized() { return isFinalized; }
-    public void setIsFinalized(Boolean isFinalized) { this.isFinalized = isFinalized; }
+    public String getIsFinalized() { return isFinalized; }
+    public void setIsFinalized(String isFinalized) { this.isFinalized = isFinalized; }
     
-    public Boolean getFaApproval() { return faApproval; }
-    public void setFaApproval(Boolean faApproval) { this.faApproval = faApproval; }
+    public String getFaApproval() { return faApproval; }
+    public void setFaApproval(String faApproval) { this.faApproval = faApproval; }
     
     public String getFaComments() { return faComments; }
     public void setFaComments(String faComments) { this.faComments = faComments; }

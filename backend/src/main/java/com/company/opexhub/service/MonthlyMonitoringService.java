@@ -58,7 +58,7 @@ public class MonthlyMonitoringService {
     }
 
     @Transactional
-    public MonthlyMonitoringEntry updateFinalizationStatus(Long id, Boolean isFinalized) {
+    public MonthlyMonitoringEntry updateFinalizationStatus(Long id, String isFinalized) {
         MonthlyMonitoringEntry entry = monthlyMonitoringRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Monthly monitoring entry not found"));
 
@@ -67,7 +67,7 @@ public class MonthlyMonitoringService {
     }
 
     @Transactional
-    public MonthlyMonitoringEntry updateFAApproval(Long id, Boolean faApproval, String faComments) {
+    public MonthlyMonitoringEntry updateFAApproval(Long id, String faApproval, String faComments) {
         MonthlyMonitoringEntry entry = monthlyMonitoringRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Monthly monitoring entry not found"));
 

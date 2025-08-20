@@ -1,44 +1,61 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { timelineTrackerAPI } from '@/lib/api';
-import { toast } from 'sonner';
 
-// Mock data for Timeline Tracker
-const mockTimelineEntries = [
+export interface TimelineEntry {
+  id?: number;
+  initiativeId?: number;
+  stageName: string;
+  plannedStartDate: string;
+  plannedEndDate: string;
+  actualStartDate?: string;
+  actualEndDate?: string;
+  responsiblePerson: string;
+  remarks?: string;
+  status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED';
+  siteLeadApproval: boolean;
+  initiativeLeadApproval: boolean;
+  documentPath?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// Mock data for testing with Oracle-compatible boolean values
+const mockTimelineEntries: TimelineEntry[] = [
   {
     id: 1,
-    stageName: "Project Planning",
-    plannedStartDate: "2025-01-01",
-    plannedEndDate: "2025-01-15",
-    actualStartDate: "2025-01-01",
-    actualEndDate: "2025-01-14",
-    status: "COMPLETED",
+    stageName: "Planning Phase",
+    plannedStartDate: "2024-01-01",
+    plannedEndDate: "2024-01-31",
+    actualStartDate: "2024-01-01",
+    actualEndDate: "2024-01-28",
     responsiblePerson: "John Doe",
-    remarks: "Completed ahead of schedule",
+    remarks: "Planning completed ahead of schedule",
+    status: "COMPLETED",
     siteLeadApproval: true,
     initiativeLeadApproval: true
   },
   {
     id: 2,
-    stageName: "Implementation Phase 1",
-    plannedStartDate: "2025-01-16",
-    plannedEndDate: "2025-02-15",
-    actualStartDate: "2025-01-16",
-    status: "IN_PROGRESS",
+    stageName: "Implementation Phase",
+    plannedStartDate: "2024-02-01",
+    plannedEndDate: "2024-03-31",
+    actualStartDate: "2024-02-01",
     responsiblePerson: "Jane Smith",
-    remarks: "On track",
+    remarks: "Implementation in progress",
+    status: "IN_PROGRESS",
     siteLeadApproval: false,
     initiativeLeadApproval: false
   }
 ];
 
-export const useTimelineEntries = (initiativeId: number) => {
+export const useTimelineTracker = (initiativeId: number) => {
   return useQuery({
-    queryKey: ['timeline-entries', initiativeId],
+    queryKey: ['timelineTracker', initiativeId],
     queryFn: async () => {
       try {
         return await timelineTrackerAPI.getTimelineEntries(initiativeId);
       } catch (error) {
-        console.warn('API call failed, using mock data:', error);
+        console.warn('Failed to fetch timeline entries from API, using mock data:', error);
         return mockTimelineEntries;
       }
     },
@@ -48,24 +65,34 @@ export const useTimelineEntries = (initiativeId: number) => {
 
 export const useTimelineEntry = (id: number) => {
   return useQuery({
-    queryKey: ['timeline-entry', id],
-    queryFn: () => timelineTrackerAPI.getTimelineEntryById(id),
+    queryKey: ['timelineEntry', id],
+    queryFn: async () => {
+      try {
+        return await timelineTrackerAPI.getTimelineEntryById(id);
+      } catch (error) {
+        console.warn('Failed to fetch timeline entry from API, using mock data:', error);
+        return mockTimelineEntries.find(entry => entry.id === id);
+      }
+    },
     enabled: !!id,
   });
 };
 
-export const useCreateTimelineEntry = () => {
+export const useCreateTimelineEntry = (initiativeId: number) => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: ({ initiativeId, entryData }: { initiativeId: number; entryData: any }) => 
-      timelineTrackerAPI.createTimelineEntry(initiativeId, entryData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['timeline-entries'] });
-      toast.success('Timeline entry created successfully');
+    mutationFn: async (entryData: Omit<TimelineEntry, 'id' | 'initiativeId'>) => {
+      try {
+        return await timelineTrackerAPI.createTimelineEntry(initiativeId, entryData);
+      } catch (error) {
+        console.error('Failed to create timeline entry:', error);
+        throw error;
+      }
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to create timeline entry');
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['timelineTracker', initiativeId] });
+      queryClient.invalidateQueries({ queryKey: ['approvedInitiatives'] });
     },
   });
 };
@@ -74,15 +101,20 @@ export const useUpdateTimelineEntry = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: ({ id, entryData }: { id: number; entryData: any }) => 
-      timelineTrackerAPI.updateTimelineEntry(id, entryData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['timeline-entries'] });
-      queryClient.invalidateQueries({ queryKey: ['timeline-entry'] });
-      toast.success('Timeline entry updated successfully');
+    mutationFn: async ({ id, entryData }: { id: number; entryData: Partial<TimelineEntry> }) => {
+      try {
+        return await timelineTrackerAPI.updateTimelineEntry(id, entryData);
+      } catch (error) {
+        console.error('Failed to update timeline entry:', error);
+        throw error;
+      }
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to update timeline entry');
+    onSuccess: (_, { entryData }) => {
+      if (entryData.initiativeId) {
+        queryClient.invalidateQueries({ queryKey: ['timelineTracker', entryData.initiativeId] });
+      }
+      queryClient.invalidateQueries({ queryKey: ['timelineEntry'] });
+      queryClient.invalidateQueries({ queryKey: ['approvedInitiatives'] });
     },
   });
 };
@@ -91,18 +123,22 @@ export const useUpdateApprovals = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: ({ id, siteLeadApproval, initiativeLeadApproval }: { 
+    mutationFn: async ({ id, siteLeadApproval, initiativeLeadApproval }: { 
       id: number; 
       siteLeadApproval?: boolean; 
-      initiativeLeadApproval?: boolean; 
-    }) => timelineTrackerAPI.updateApprovals(id, siteLeadApproval, initiativeLeadApproval),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['timeline-entries'] });
-      queryClient.invalidateQueries({ queryKey: ['timeline-entry'] });
-      toast.success('Approvals updated successfully');
+      initiativeLeadApproval?: boolean;
+    }) => {
+      try {
+        return await timelineTrackerAPI.updateApprovals(id, siteLeadApproval, initiativeLeadApproval);
+      } catch (error) {
+        console.error('Failed to update approvals:', error);
+        throw error;
+      }
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to update approvals');
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['timelineTracker'] });
+      queryClient.invalidateQueries({ queryKey: ['timelineEntry'] });
+      queryClient.invalidateQueries({ queryKey: ['approvedInitiatives'] });
     },
   });
 };
@@ -111,21 +147,32 @@ export const useDeleteTimelineEntry = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: (id: number) => timelineTrackerAPI.deleteTimelineEntry(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['timeline-entries'] });
-      toast.success('Timeline entry deleted successfully');
+    mutationFn: async (id: number) => {
+      try {
+        return await timelineTrackerAPI.deleteTimelineEntry(id);
+      } catch (error) {
+        console.error('Failed to delete timeline entry:', error);
+        throw error;
+      }
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to delete timeline entry');
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['timelineTracker'] });
+      queryClient.invalidateQueries({ queryKey: ['approvedInitiatives'] });
     },
   });
 };
 
-export const usePendingApprovals = (initiativeId: number) => {
+export const useApprovedInitiatives = (userEmail: string, site: string) => {
   return useQuery({
-    queryKey: ['pending-approvals', initiativeId],
-    queryFn: () => timelineTrackerAPI.getPendingApprovals(initiativeId),
-    enabled: !!initiativeId,
+    queryKey: ['approvedInitiatives', userEmail, site],
+    queryFn: async () => {
+      try {
+        return await timelineTrackerAPI.getApprovedInitiatives(userEmail, site);
+      } catch (error) {
+        console.warn('Failed to fetch approved initiatives from API:', error);
+        return [];
+      }
+    },
+    enabled: !!userEmail && !!site,
   });
 };
