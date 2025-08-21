@@ -388,6 +388,8 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                         <SelectItem value="Cost Savings">Cost Savings</SelectItem>
                         <SelectItem value="Quality Improvement">Quality Improvement</SelectItem>
                         <SelectItem value="Process Efficiency">Process Efficiency</SelectItem>
+                        <SelectItem value="Safety Metrics">RMC (Raw Material Cost)</SelectItem>
+                         <SelectItem value="Safety Metrics">Spent Acid</SelectItem>
                         <SelectItem value="Safety Metrics">Safety Metrics</SelectItem>
                         <SelectItem value="Environmental">Environmental</SelectItem>
                       </SelectContent>
