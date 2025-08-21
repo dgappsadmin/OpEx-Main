@@ -59,14 +59,14 @@ export default function WorkflowStageModal({
     }
     
     if (transaction.stageNumber === 4) {
-      data.requiresMoc = mocRequired === "yes";
+      data.requiresMoc = mocRequired === "yes" ? "Y" : "N";
       if (mocRequired === "yes" && mocNumber) {
         data.mocNumber = mocNumber;
       }
     }
     
     if (transaction.stageNumber === 5) {
-      data.requiresCapex = capexRequired === "yes";
+      data.requiresCapex = capexRequired === "yes" ? "Y" : "N";
       if (capexRequired === "yes" && capexNumber) {
         data.capexNumber = capexNumber;
       }

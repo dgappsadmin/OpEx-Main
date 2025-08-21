@@ -116,7 +116,10 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
   // Basic implementation: only check for createdBy user ID
   const { data: createdByUser } = useUser(initiative?.createdBy);
 
-  const actualProgress = progressData?.progressPercentage ?? initiative?.progress ?? 0;
+  // Calculate Progress Percentage using NewWorkflow.tsx logic
+  const progressPercentage = Math.round(((initiative?.currentStage || 1) - 1) * 100 / 11);
+
+  const actualProgress = progressData?.progressPercentage ?? progressPercentage;
   const currentStageName = currentStageData?.stageName || 
     WORKFLOW_STAGE_NAMES[initiative?.currentStage || 1] || 
     'Register Initiative';

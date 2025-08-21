@@ -1,5 +1,7 @@
 package com.company.opexhub.controller;
 
+import java.util.Map;
+import java.util.HashMap;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -128,5 +130,27 @@ public class InitiativeController {
         response.setInitiatorName(initiative.getInitiatorName());
         
         return response;
+    }
+    
+    // Add this method to handle MOC/CAPEX updates for Stage 6 approval
+    @PutMapping("/{id}/moc-capex")
+    public ResponseEntity<ApiResponse> updateMocCapexRequirements(
+            @PathVariable Long id, 
+            @RequestBody Map<String, Object> mocCapexData,
+            @AuthenticationPrincipal UserPrincipal currentUser) {
+        
+        try {
+            boolean updated = initiativeService.updateMocCapexRequirements(id, mocCapexData);
+            
+            if (updated) {
+                return ResponseEntity.ok(new ApiResponse(true, 
+                    "Initiative MOC/CAPEX requirements updated successfully"));
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse(false, "Error updating MOC/CAPEX requirements: " + e.getMessage()));
+        }
     }
 }

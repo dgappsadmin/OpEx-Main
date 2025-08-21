@@ -1,6 +1,7 @@
 package com.company.opexhub.service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -222,5 +223,47 @@ public class InitiativeService {
             default:
                 return "OT"; // Default to Others
         }
+    }
+    
+    // Add this method to handle MOC/CAPEX updates when Stage 6 is approved
+    @Transactional
+    public boolean updateMocCapexRequirements(Long initiativeId, Map<String, Object> mocCapexData) {
+        Optional<Initiative> initiativeOpt = initiativeRepository.findById(initiativeId);
+        
+        if (initiativeOpt.isPresent()) {
+            Initiative initiative = initiativeOpt.get();
+            
+            // Update MOC requirements - Handle String values ('Y'/'N')
+            if (mocCapexData.containsKey("requiresMoc")) {
+                String requiresMoc = (String) mocCapexData.get("requiresMoc");
+                initiative.setRequiresMoc(requiresMoc); // Set as String 'Y' or 'N'
+            }
+            
+            if (mocCapexData.containsKey("mocNumber")) {
+                String mocNumber = (String) mocCapexData.get("mocNumber");
+                initiative.setMocNumber(mocNumber);
+            }
+            
+            // Update CAPEX requirements - Handle String values ('Y'/'N')
+            if (mocCapexData.containsKey("requiresCapex")) {
+                String requiresCapex = (String) mocCapexData.get("requiresCapex");
+                initiative.setRequiresCapex(requiresCapex); // Set as String 'Y' or 'N'
+            }
+            
+            if (mocCapexData.containsKey("capexNumber")) {
+                String capexNumber = (String) mocCapexData.get("capexNumber");
+                initiative.setCapexNumber(capexNumber);
+            }
+            
+            // Save the updated initiative
+            initiativeRepository.save(initiative);
+            
+            // Log the update
+            System.out.println("Updated OPEX_INITIATIVES ID " + initiativeId + " with MOC/CAPEX data: " + mocCapexData);
+            
+            return true;
+        }
+        
+        return false;
     }
 }

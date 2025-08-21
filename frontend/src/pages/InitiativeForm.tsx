@@ -229,20 +229,14 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-sm font-medium">Site *</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger className="h-9 text-sm">
-                                <SelectValue placeholder="Select site" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {sites.map((site) => (
-                                <SelectItem key={site.code} value={site.code} className="text-sm">
-                                  {site.code} - {site.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <FormControl>
+                            <Input
+                              placeholder="Your site"
+                              {...field}
+                              disabled
+                              className="h-9 text-sm bg-muted text-muted-foreground"
+                            />
+                          </FormControl>
                           <FormMessage className="text-xs" />
                         </FormItem>
                       )}

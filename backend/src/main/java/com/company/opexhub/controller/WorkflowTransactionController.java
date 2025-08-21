@@ -89,7 +89,21 @@ public class WorkflowTransactionController {
                     .body(new ApiResponse<>(false, e.getMessage()));
         }
     }
+    // ADD THIS METHOD TO THE EXISTING WorkflowTransactionController.java
+
+// Add this method to fetch workflow transactions by initiative ID
+@GetMapping("/{initiativeId}")
+public ResponseEntity<List<WorkflowTransactionDetailDTO>> getWorkflowTransactionsByInitiative(
+        @PathVariable Long initiativeId) {
     
+    try {
+        List<WorkflowTransactionDetailDTO> transactions = workflowTransactionService
+                .getVisibleWorkflowTransactions(initiativeId);
+        return ResponseEntity.ok(transactions);
+    } catch (Exception e) {
+        return ResponseEntity.badRequest().build();
+    }
+}
     @GetMapping("/ready-for-closure")
     public List<WorkflowTransactionDetailDTO> getInitiativesReadyForClosure() {
         return workflowTransactionService.getInitiativesReadyForClosure();
