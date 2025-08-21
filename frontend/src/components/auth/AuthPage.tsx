@@ -5,9 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2, User, Lock, Mail, LogIn, UserPlus } from "lucide-react";
+import { Building2, User, Lock, Mail, LogIn, UserPlus, ArrowLeft, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { authAPI } from "@/lib/api";
 
 const sites = [
   { code: "NDS", name: "NDS" },
@@ -41,6 +42,8 @@ interface AuthProps {
 
 export default function AuthPage({ onLogin }: AuthProps) {
   const [isLogin, setIsLogin] = useState(true);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotPasswordStep, setForgotPasswordStep] = useState(1); // 1: email, 2: code, 3: new password
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -48,6 +51,12 @@ export default function AuthPage({ onLogin }: AuthProps) {
     site: "",
     discipline: "",
     role: ""
+  });
+  const [forgotPasswordData, setForgotPasswordData] = useState({
+    email: "",
+    code: "",
+    newPassword: "",
+    confirmPassword: ""
   });
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -129,114 +138,291 @@ export default function AuthPage({ onLogin }: AuthProps) {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleForgotPasswordInputChange = (field: string, value: string) => {
+    setForgotPasswordData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSendResetCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!forgotPasswordData.email) {
+      toast({
+        title: "Error",
+        description: "Please enter your email address",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const result = await authAPI.sendResetCode(forgotPasswordData.email);
+      if (result.success) {
+        toast({
+          title: "Code Sent",
+          description: "A 6-digit verification code has been sent to your email",
+        });
+        setForgotPasswordStep(2);
+      } else {
+        toast({
+          title: "Error",
+          description: result.message || "Failed to send reset code",
+          variant: "destructive"
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to send reset code",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!forgotPasswordData.code) {
+      toast({
+        title: "Error",
+        description: "Please enter the verification code",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const result = await authAPI.verifyResetCode(forgotPasswordData.email, forgotPasswordData.code);
+      if (result.success) {
+        toast({
+          title: "Code Verified",
+          description: "Please enter your new password",
+        });
+        setForgotPasswordStep(3);
+      } else {
+        toast({
+          title: "Error",
+          description: result.message || "Invalid verification code",
+          variant: "destructive"
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Invalid verification code",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!forgotPasswordData.newPassword || !forgotPasswordData.confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Please fill in both password fields",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (forgotPasswordData.newPassword !== forgotPasswordData.confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Passwords do not match",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (forgotPasswordData.newPassword.length < 6) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 6 characters long",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const result = await authAPI.resetPassword(
+        forgotPasswordData.email, 
+        forgotPasswordData.code, 
+        forgotPasswordData.newPassword
+      );
+      
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: "Password reset successfully! Please sign in with your new password",
+        });
+        
+        // Reset all states and go back to login
+        setShowForgotPassword(false);
+        setForgotPasswordStep(1);
+        setForgotPasswordData({
+          email: "",
+          code: "",
+          newPassword: "",
+          confirmPassword: ""
+        });
+        setIsLogin(true);
+      } else {
+        toast({
+          title: "Error",
+          description: result.message || "Failed to reset password",
+          variant: "destructive"
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to reset password",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const resetForgotPasswordFlow = () => {
+    setShowForgotPassword(false);
+    setForgotPasswordStep(1);
+    setForgotPasswordData({
+      email: "",
+      code: "",
+      newPassword: "",
+      confirmPassword: ""
+    });
+  };
+
   return (
-    <div className="h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-white relative overflow-hidden">
+    <div className="h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-white relative overflow-hidden p-4">
       {/* Simplified Background */}
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-100/20 via-white/40 to-blue-50/30"></div>
         
         {/* Minimal Chemical Molecules - Reduced for performance */}
         <div className="absolute inset-0">
-          <div className="absolute top-1/4 left-1/4 w-12 h-12 bg-blue-200/30 rounded-full blur-sm animate-float-molecule"></div>
-          <div className="absolute top-3/4 right-1/4 w-8 h-8 bg-blue-300/25 rounded-full blur-sm animate-float-molecule-delayed"></div>
-          <div className="absolute bottom-1/3 left-1/3 w-14 h-14 bg-blue-100/40 rounded-full blur-sm animate-float-molecule-slow"></div>
+          <div className="absolute top-1/4 left-1/4 w-8 h-8 bg-blue-200/30 rounded-full blur-sm animate-float-molecule"></div>
+          <div className="absolute top-3/4 right-1/4 w-6 h-6 bg-blue-300/25 rounded-full blur-sm animate-float-molecule-delayed"></div>
+          <div className="absolute bottom-1/3 left-1/3 w-10 h-10 bg-blue-100/40 rounded-full blur-sm animate-float-molecule-slow"></div>
           
           {/* Minimal bonds */}
-          <div className="absolute top-1/4 left-1/4 w-20 h-0.5 bg-gradient-to-r from-transparent via-blue-300/25 to-transparent rotate-45 animate-pulse-bond"></div>
-          <div className="absolute bottom-1/3 right-1/3 w-16 h-0.5 bg-gradient-to-r from-transparent via-blue-200/30 to-transparent -rotate-12 animate-pulse-bond-delayed"></div>
+          <div className="absolute top-1/4 left-1/4 w-16 h-0.5 bg-gradient-to-r from-transparent via-blue-300/25 to-transparent rotate-45 animate-pulse-bond"></div>
+          <div className="absolute bottom-1/3 right-1/3 w-12 h-0.5 bg-gradient-to-r from-transparent via-blue-200/30 to-transparent -rotate-12 animate-pulse-bond-delayed"></div>
         </div>
         
         <div className="absolute inset-0 backdrop-blur-[0.5px] bg-white/10"></div>
       </div>
       
       {/* Compact Login Container */}
-      <div className="relative w-full max-w-md mx-4 z-10">
-        <Card className="bg-white/80 backdrop-blur-xl shadow-2xl border border-white/50 animate-fade-in">
-          <CardHeader className="text-center pb-4">
+      <div className="relative w-full max-w-sm mx-auto z-10">
+        <Card className="bg-white/80 backdrop-blur-xl shadow-xl border border-white/50 animate-fade-in">
+          <CardHeader className="text-center pb-2 px-4 pt-4">
             {/* Compact Logo Section */}
-            <div className="flex items-center justify-center mb-4">
+            <div className="flex items-center justify-center mb-2">
               <div className="relative animate-slide-down">
                 <img
                   src="https://www.godeepak.com/wp-content/uploads/2024/01/DNL-Logo.png"
                   alt="DNL Logo"
-                  className="h-10 w-auto"
+                  className="h-8 w-auto"
                 />
               </div>
             </div>
             
             {/* Compact Title Section */}
-            <div className="mb-3 animate-slide-up">
-              <h1 className="text-2xl font-bold text-gray-900 mb-1">OpEx Hub</h1>
-              <p className="text-blue-600 text-sm font-medium">Operational Excellence Platform</p>
-              <div className="w-12 h-0.5 bg-blue-500 mx-auto mt-2"></div>
+            <div className="mb-2 animate-slide-up">
+              <h1 className="text-xl font-bold text-gray-900 mb-0.5">OpEx Hub</h1>
+              <p className="text-blue-600 text-xs font-medium">Operational Excellence Platform</p>
+              <div className="w-10 h-0.5 bg-blue-500 mx-auto mt-1"></div>
             </div>
             
-            <CardTitle className="text-xl text-gray-900 mb-1">
-              {isLogin ? "Sign In" : "Create Account"}
+            <CardTitle className="text-lg text-gray-900 mb-0.5">
+              {!showForgotPassword ? (isLogin ? "Sign In" : "Create Account") : "Reset Password"}
             </CardTitle>
-            <CardDescription className="text-gray-600 text-sm">
-              {isLogin 
-                ? "Enter your credentials to access OpEx Hub" 
-                : "Fill in your details to create your account"
+            <CardDescription className="text-gray-600 text-xs">
+              {!showForgotPassword 
+                ? (isLogin 
+                  ? "Enter your credentials to access OpEx Hub" 
+                  : "Fill in your details to create your account"
+                ) 
+                : "Follow the steps to reset your password"
               }
             </CardDescription>
           </CardHeader>
 
-          <CardContent className="animate-fade-in-delayed pt-0">
-            <Tabs value={isLogin ? "login" : "signup"} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-4 bg-gray-100 h-9">
-                <TabsTrigger 
-                  value="login" 
-                  onClick={() => setIsLogin(true)}
-                  className="text-gray-700 data-[state=active]:bg-blue-500 data-[state=active]:text-white transition-all duration-200 text-sm py-1"
-                >
-                  <LogIn className="w-3 h-3 mr-1" />
-                  Sign In
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="signup" 
-                  onClick={() => setIsLogin(false)}
-                  className="text-gray-700 data-[state=active]:bg-blue-500 data-[state=active]:text-white transition-all duration-200 text-sm py-1"
-                >
-                  <UserPlus className="w-3 h-3 mr-1" />
-                  Sign Up
-                </TabsTrigger>
-              </TabsList>
+          <CardContent className="animate-fade-in-delayed pt-0 px-4 pb-4">
+            {!showForgotPassword ? (
+              <Tabs value={isLogin ? "login" : "signup"} className="w-full">
+                <TabsList className="grid w-full grid-cols-2 mb-4 bg-gray-100 h-9">
+                  <TabsTrigger 
+                    value="login" 
+                    onClick={() => setIsLogin(true)}
+                    className="text-gray-700 data-[state=active]:bg-blue-500 data-[state=active]:text-white transition-all duration-200 text-sm py-1"
+                  >
+                    <LogIn className="w-3 h-3 mr-1" />
+                    Sign In
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="signup" 
+                    onClick={() => setIsLogin(false)}
+                    className="text-gray-700 data-[state=active]:bg-blue-500 data-[state=active]:text-white transition-all duration-200 text-sm py-1"
+                  >
+                    <UserPlus className="w-3 h-3 mr-1" />
+                    Sign Up
+                  </TabsTrigger>
+                </TabsList>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <TabsContent value="login" className="space-y-4 mt-0">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="email" className="text-gray-700 font-medium text-sm">Email</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-400" />
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="Enter your email"
-                        className="pl-9 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 transition-colors duration-200 h-9 text-sm"
-                        value={formData.email}
-                        onChange={(e) => handleInputChange("email", e.target.value)}
-                        required
-                      />
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <TabsContent value="login" className="space-y-4 mt-0">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="email" className="text-gray-700 font-medium text-sm">Email</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-400" />
+                        <Input
+                          id="email"
+                          type="email"
+                          placeholder="Enter your email"
+                          className="pl-9 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 transition-colors duration-200 h-9 text-sm"
+                          value={formData.email}
+                          onChange={(e) => handleInputChange("email", e.target.value)}
+                          required
+                        />
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="space-y-1.5">
-                    <Label htmlFor="password" className="text-gray-700 font-medium text-sm">Password</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-400" />
-                      <Input
-                        id="password"
-                        type="password"
-                        placeholder="Enter your password"
-                        className="pl-9 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 transition-colors duration-200 h-9 text-sm"
-                        value={formData.password}
-                        onChange={(e) => handleInputChange("password", e.target.value)}
-                        required
-                      />
+                    <div className="space-y-1.5">
+                      <Label htmlFor="password" className="text-gray-700 font-medium text-sm">Password</Label>
+                      <div className="relative">
+                        <Lock className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-400" />
+                        <Input
+                          id="password"
+                          type="password"
+                          placeholder="Enter your password"
+                          className="pl-9 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 transition-colors duration-200 h-9 text-sm"
+                          value={formData.password}
+                          onChange={(e) => handleInputChange("password", e.target.value)}
+                          required
+                        />
+                      </div>
                     </div>
-                  </div>
-                </TabsContent>
+
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => setShowForgotPassword(true)}
+                        className="text-sm text-blue-600 hover:text-blue-700 hover:underline transition-colors"
+                      >
+                        Forgot password?
+                      </button>
+                    </div>
+                  </TabsContent>
 
                 <TabsContent value="signup" className="space-y-3 mt-0">
                   <div className="grid grid-cols-2 gap-3">
@@ -358,6 +544,178 @@ export default function AuthPage({ onLogin }: AuthProps) {
                 </Button>
               </form>
             </Tabs>
+            ) : (
+              // Forgot Password Flow
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={resetForgotPasswordFlow}
+                    className="p-1 h-8 w-8"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                  </Button>
+                  <h3 className="text-lg font-semibold text-gray-900">Reset Password</h3>
+                </div>
+
+                {forgotPasswordStep === 1 && (
+                  <form onSubmit={handleSendResetCode} className="space-y-4">
+                    <div className="text-center mb-4">
+                      <Shield className="w-12 h-12 text-blue-500 mx-auto mb-2" />
+                      <p className="text-gray-600 text-sm">
+                        Enter your email address and we'll send you a verification code to reset your password.
+                      </p>
+                    </div>
+                    
+                    <div className="space-y-1.5">
+                      <Label htmlFor="forgot-email" className="text-gray-700 font-medium text-sm">Email Address</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-400" />
+                        <Input
+                          id="forgot-email"
+                          type="email"
+                          placeholder="Enter your email"
+                          className="pl-9 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 transition-colors duration-200 h-9 text-sm"
+                          value={forgotPasswordData.email}
+                          onChange={(e) => handleForgotPasswordInputChange("email", e.target.value)}
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <Button 
+                      type="submit" 
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 h-9 transition-all duration-200 text-sm" 
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                          Sending Code...
+                        </div>
+                      ) : (
+                        "Send Verification Code"
+                      )}
+                    </Button>
+                  </form>
+                )}
+
+                {forgotPasswordStep === 2 && (
+                  <form onSubmit={handleVerifyCode} className="space-y-4">
+                    <div className="text-center mb-4">
+                      <Mail className="w-12 h-12 text-green-500 mx-auto mb-2" />
+                      <p className="text-gray-600 text-sm">
+                        We've sent a 6-digit verification code to <strong>{forgotPasswordData.email}</strong>
+                      </p>
+                      <p className="text-gray-500 text-xs mt-1">Code expires in 15 minutes</p>
+                    </div>
+                    
+                    <div className="space-y-1.5">
+                      <Label htmlFor="verification-code" className="text-gray-700 font-medium text-sm">Verification Code</Label>
+                      <Input
+                        id="verification-code"
+                        type="text"
+                        placeholder="Enter 6-digit code"
+                        className="text-center text-lg font-mono bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 transition-colors duration-200 h-12"
+                        value={forgotPasswordData.code}
+                        onChange={(e) => handleForgotPasswordInputChange("code", e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        maxLength={6}
+                        required
+                      />
+                    </div>
+
+                    <Button 
+                      type="submit" 
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 h-9 transition-all duration-200 text-sm" 
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                          Verifying...
+                        </div>
+                      ) : (
+                        "Verify Code"
+                      )}
+                    </Button>
+
+                    <div className="text-center">
+                      <button
+                        type="button"
+                        onClick={() => setForgotPasswordStep(1)}
+                        className="text-sm text-blue-600 hover:text-blue-700 hover:underline transition-colors"
+                      >
+                        Didn't receive the code? Try again
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {forgotPasswordStep === 3 && (
+                  <form onSubmit={handleResetPassword} className="space-y-4">
+                    <div className="text-center mb-4">
+                      <Lock className="w-12 h-12 text-blue-500 mx-auto mb-2" />
+                      <p className="text-gray-600 text-sm">
+                        Create your new password. Make sure it's strong and secure.
+                      </p>
+                    </div>
+                    
+                    <div className="space-y-1.5">
+                      <Label htmlFor="new-password" className="text-gray-700 font-medium text-sm">New Password</Label>
+                      <div className="relative">
+                        <Lock className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-400" />
+                        <Input
+                          id="new-password"
+                          type="password"
+                          placeholder="Enter new password"
+                          className="pl-9 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 transition-colors duration-200 h-9 text-sm"
+                          value={forgotPasswordData.newPassword}
+                          onChange={(e) => handleForgotPasswordInputChange("newPassword", e.target.value)}
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="confirm-password" className="text-gray-700 font-medium text-sm">Confirm Password</Label>
+                      <div className="relative">
+                        <Lock className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-400" />
+                        <Input
+                          id="confirm-password"
+                          type="password"
+                          placeholder="Confirm new password"
+                          className="pl-9 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 transition-colors duration-200 h-9 text-sm"
+                          value={forgotPasswordData.confirmPassword}
+                          onChange={(e) => handleForgotPasswordInputChange("confirmPassword", e.target.value)}
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    {forgotPasswordData.newPassword && forgotPasswordData.confirmPassword && forgotPasswordData.newPassword !== forgotPasswordData.confirmPassword && (
+                      <p className="text-red-500 text-xs">Passwords do not match</p>
+                    )}
+
+                    <Button 
+                      type="submit" 
+                      className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 h-9 transition-all duration-200 text-sm" 
+                      disabled={isLoading || forgotPasswordData.newPassword !== forgotPasswordData.confirmPassword}
+                    >
+                      {isLoading ? (
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                          Resetting Password...
+                        </div>
+                      ) : (
+                        "Reset Password"
+                      )}
+                    </Button>
+                  </form>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

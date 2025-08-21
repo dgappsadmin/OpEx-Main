@@ -117,7 +117,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
   const { data: createdByUser } = useUser(initiative?.createdBy);
 
   // Calculate Progress Percentage using NewWorkflow.tsx logic
-  const progressPercentage = Math.round(((initiative?.currentStage || 1) - 1) * 100 / 11);
+  const progressPercentage = Math.round(((initiative?.currentStage || 1) - 1) * 100 / 10);
 
   const actualProgress = progressData?.progressPercentage ?? progressPercentage;
   const currentStageName = currentStageData?.stageName || 
@@ -631,14 +631,6 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                       <p className="text-sm text-muted-foreground">Submitted Date</p>
                       <p className="font-medium">{initiative?.submittedDate}</p>
                     </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Last Updated</p>
-                      <p className="font-medium">{initiative?.lastUpdated}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Initiative ID</p>
-                      <p className="font-medium font-mono">{initiative?.id}</p>
-                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -672,18 +664,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                         )}
                       </div>
                     </div>
-                    
-                    <Separator />
-                    
-                    <div>
-                      <p className="text-sm font-medium mb-2">Current Workflow Stage</p>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary">
-                          Stage {initiative?.currentStage || 1}
-                        </Badge>
-                        <span className="text-sm text-muted-foreground">{currentStageName}</span>
-                      </div>
-                    </div>
+                  
                   </div>
                 </CardContent>
               </Card>

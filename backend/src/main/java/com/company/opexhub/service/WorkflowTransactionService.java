@@ -18,6 +18,10 @@ import com.company.opexhub.repository.InitiativeRepository;
 import com.company.opexhub.repository.UserRepository;
 import com.company.opexhub.repository.WfMasterRepository;
 import com.company.opexhub.repository.WorkflowTransactionRepository;
+import mailhelper.MailHelper;
+import java.io.IOException;
+import java.util.logging.Logger;
+import java.util.logging.Level;
 
 @Service
 public class WorkflowTransactionService {
@@ -33,6 +37,151 @@ public class WorkflowTransactionService {
 
     @Autowired
     private WfMasterRepository wfMasterRepository;
+
+    /**
+     * Create simple email template for workflow notifications (Outlook Classic friendly)
+     */
+    private String createWorkflowEmailTemplate(String recipientName, String initiativeTitle, 
+                                             String initiativeNumber, String currentStageName, 
+                                             String nextStageName, String senderName, String site,
+                                             String expectedSavings, String dashboardUrl) {
+        
+        return String.format("""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Workflow Approval Required</title>
+            </head>
+            <body style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.4; color: #333;">
+                
+                <h2 style="color: #2c5aa0; margin-bottom: 20px;">Workflow Approval Required</h2>
+                
+                <p>Dear <strong>%s</strong>,</p>
+                
+                <p>A workflow stage requires your approval. Please review the details below and take the necessary action.</p>
+                
+                <h3 style="color: #2c5aa0; margin-top: 25px; margin-bottom: 15px;">Initiative Details</h3>
+                
+                <table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%%; max-width: 600px; border: 1px solid #ccc;">
+                    <tr style="background-color: #f5f5f5;">
+                        <td style="font-weight: bold; width: 30%%;">Initiative Title</td>
+                        <td>%s</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: bold; background-color: #f5f5f5;">Initiative Number</td>
+                        <td>%s</td>
+                    </tr>
+                    <tr style="background-color: #f5f5f5;">
+                        <td style="font-weight: bold;">Site</td>
+                        <td>%s</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: bold; background-color: #f5f5f5;">Expected Savings</td>
+                        <td>₹%s K</td>
+                    </tr>
+                    <tr style="background-color: #f5f5f5;">
+                        <td style="font-weight: bold;">Last Approved By</td>
+                        <td>%s</td>
+                    </tr>
+                </table>
+                
+                <h3 style="color: #2c5aa0; margin-top: 25px; margin-bottom: 15px;">Workflow Status</h3>
+                
+                <table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%%; max-width: 600px; border: 1px solid #ccc;">
+                    <tr style="background-color: #f5f5f5;">
+                        <td style="font-weight: bold; width: 30%%;">Completed Stage</td>
+                        <td style="color: #28a745;">%s ✓</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: bold; background-color: #f5f5f5;">Pending Stage</td>
+                        <td style="color: #dc3545; font-weight: bold;">%s (Awaiting Your Action)</td>
+                    </tr>
+                </table>
+                
+                <h3 style="color: #2c5aa0; margin-top: 25px; margin-bottom: 15px;">Next Steps</h3>
+                
+                <ol style="line-height: 1.6;">
+                    <li>Access the OPEX Dashboard using the link below</li>
+                    <li>Navigate to Workflow Management section</li>
+                    <li>Locate this initiative and review the details</li>
+                    <li>Add your comments and approve or reject the stage</li>
+                </ol>
+                
+                <p style="margin-top: 20px;">
+                    <a href="%s" style="background-color: #2c5aa0; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">Access Dashboard</a>
+                </p>
+                
+                <hr style="margin: 30px 0; border: none; border-top: 1px solid #ccc;">
+                
+                <p style="font-size: 12px; color: #666;">
+                    <strong>OPEX Initiative Management System</strong><br>
+                    This is an automated notification. Please do not reply to this email.<br>
+                    For support, contact: support@company.com
+                </p>
+                
+            </body>
+            </html>
+            """, 
+            recipientName, initiativeTitle, initiativeNumber, site, expectedSavings, senderName,
+            currentStageName, nextStageName, dashboardUrl);
+    }
+
+    /**
+     * Send workflow notification email to next approver
+     */
+    private void sendWorkflowNotificationEmail(WorkflowTransaction approvedTransaction, WorkflowTransaction nextTransaction, 
+                                             Initiative initiative, String approverName) {
+        if (nextTransaction == null || nextTransaction.getPendingWith() == null) {
+            return; // No next user to notify
+        }
+        
+        try {
+            // Get next user details
+            Optional<User> nextUser = userRepository.findByEmail(nextTransaction.getPendingWith());
+            String recipientName = nextUser.map(User::getFullName).orElse("Team Member");
+            
+            // Prepare email details
+            String subject = String.format("Workflow Approval Required - %s (Stage %d: %s)", 
+                initiative.getInitiativeNumber() != null ? initiative.getInitiativeNumber() : initiative.getTitle(),
+                nextTransaction.getStageNumber(),
+                nextTransaction.getStageName());
+                
+            String dashboardUrl = "http://localhost:3000/dashboard";
+            
+            String emailTemplate = createWorkflowEmailTemplate(
+                recipientName,
+                initiative.getTitle(),
+                initiative.getInitiativeNumber() != null ? initiative.getInitiativeNumber() : "N/A",
+                approvedTransaction.getStageName(),
+                nextTransaction.getStageName(),
+                approverName,
+                initiative.getSite(),
+                initiative.getExpectedSavings() != null ? initiative.getExpectedSavings().toString() : "0",
+                dashboardUrl
+            );
+            
+            String toEmail = nextTransaction.getPendingWith();
+            String cc = null; // Add CC emails if needed (e.g., site head, initiative lead)
+            String bcc = null; // Add BCC emails if needed (e.g., opex team)
+            
+            // Send email
+            MailHelper.send(subject, emailTemplate, toEmail, cc, bcc);
+            
+            Logger.getLogger(this.getClass().getName()).info(
+                String.format("✅ Workflow notification email sent successfully to %s for initiative %s, stage %d (%s)", 
+                    toEmail, initiative.getInitiativeNumber(), nextTransaction.getStageNumber(), nextTransaction.getStageName()));
+                    
+        } catch (IOException e) {
+            Logger.getLogger(this.getClass().getName()).log(Level.SEVERE, 
+                String.format("❌ Failed to send workflow notification email for initiative %s: %s", 
+                    initiative.getInitiativeNumber(), e.getMessage()), e);
+        } catch (Exception e) {
+            Logger.getLogger(this.getClass().getName()).log(Level.WARNING, 
+                String.format("⚠️ Error in email notification process for initiative %s: %s", 
+                    initiative.getInitiativeNumber(), e.getMessage()), e);
+        }
+    }
 
     public List<WorkflowTransaction> getWorkflowTransactions(Long initiativeId) {
         return workflowTransactionRepository.findByInitiativeIdOrderByStageNumber(initiativeId);
@@ -181,6 +330,24 @@ public class WorkflowTransactionService {
                 
                 // Create Stage 2 as pending
                 createNextStage(initiative.getId(), 2);
+                
+                // Send email notification to Stage 2 approver
+                Optional<WorkflowTransaction> stage2Transaction = workflowTransactionRepository
+                        .findByInitiativeIdAndStageNumber(initiative.getId(), 2);
+                        
+                if (stage2Transaction.isPresent() && stage2Transaction.get().getPendingWith() != null) {
+                    sendWorkflowNotificationEmail(transaction, stage2Transaction.get(), initiative, 
+                        initiative.getCreatedBy().getFullName());
+                    
+                    Logger.getLogger(this.getClass().getName()).info(
+                        String.format("📧 Initial workflow email sent for new initiative %s to %s", 
+                            initiative.getInitiativeNumber(), stage2Transaction.get().getPendingWith()));
+                } else {
+                    Logger.getLogger(this.getClass().getName()).warning(
+                        String.format("⚠️ Could not send initial workflow email for initiative %s - no Stage 2 approver found", 
+                            initiative.getInitiativeNumber()));
+                }
+                
                 break;
             }
         }
@@ -288,22 +455,42 @@ public class WorkflowTransactionService {
             } else if (currentStageNumber == 10) {
                 // After Stage 10 (Validation), create Stage 11 for STLD (final closure)
                 createStageForRole(initiative.getId(), 11, "Initiative Closure", "STLD");
-            } else {
+            } else if (currentStageNumber < 11) {
                 // For other stages beyond our defined workflow, try to get from wf_master
                 createNextStage(initiative.getId(), currentStageNumber + 1);
             }
             
-            // Update initiative current stage
-            initiative.setCurrentStage(currentStageNumber + 1);
+            // Update initiative current stage - Cap at stage 11 (final stage)
+            if (currentStageNumber < 11) {
+                initiative.setCurrentStage(currentStageNumber + 1);
+                initiative.setStatus("In Progress");
+            } else if (currentStageNumber == 11) {
+                // Stage 11 is the final stage, don't increment beyond 11
+                initiative.setCurrentStage(11);
+                initiative.setStatus("Completed");
+            }
             
-            // Check if this is the last stage
+            // Legacy check for dynamic stages (keeping for backward compatibility)
             Integer totalStages = wfMasterRepository.findBySiteAndIsActiveOrderByStageNumber(
                 initiative.getSite(), "Y").size();
             
-            if (currentStageNumber >= totalStages) {
+            if (totalStages > 11 && currentStageNumber >= totalStages) {
                 initiative.setStatus("Completed");
+            }
+            
+            // Send email notification to next user (only if not the final stage)
+            if (currentStageNumber < 11) {
+                Optional<WorkflowTransaction> nextTransaction = workflowTransactionRepository
+                        .findByInitiativeIdAndStageNumber(initiative.getId(), currentStageNumber + 1);
+                
+                if (nextTransaction.isPresent() && nextTransaction.get().getPendingWith() != null) {
+                    sendWorkflowNotificationEmail(savedTransaction, nextTransaction.get(), initiative, actionBy);
+                }
             } else {
-                initiative.setStatus("In Progress");
+                // Final stage completed - log completion
+                Logger.getLogger(this.getClass().getName()).info(
+                    String.format("🎉 Initiative %s has been completed successfully (Stage 11 approved)", 
+                        initiative.getInitiativeNumber()));
             }
         } else {
             // Rejected

@@ -25,6 +25,7 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [initiativeTransactions, setInitiativeTransactions] = useState<{[key: number]: any[]}>({});
   const { toast } = useToast();
   
   const { data: initiativesData } = useInitiatives();
@@ -33,8 +34,16 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
   
   // Function to get stage name from workflow transactions
   const getStageName = (stageNumber: number, initiativeId?: number) => {
-    // If we have an initiative ID and it's the selected one, use workflow transactions
-    if (initiativeId && initiativeId === selectedInitiative && workflowTransactions.length > 0) {
+    // If we have an initiative ID and workflow transactions loaded, use them
+    if (initiativeId && workflowTransactions.length > 0) {
+      const transaction = workflowTransactions.find((t: any) => t.stageNumber === stageNumber);
+      if (transaction && transaction.stageName) {
+        return transaction.stageName;
+      }
+    }
+    
+    // For the selected initiative, always try to get from transactions first
+    if (initiativeId === selectedInitiative && workflowTransactions.length > 0) {
       const transaction = workflowTransactions.find((t: any) => t.stageNumber === stageNumber);
       if (transaction && transaction.stageName) {
         return transaction.stageName;
@@ -212,16 +221,16 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
                             </div>
                             <div>
                               <span className="text-muted-foreground">Expected Savings:</span>
-                              <p className="font-medium">₹{initiative.expectedSavings || 0}K</p>
+                              <p className="font-medium">₹{initiative.expectedSavings || 0}</p>
                             </div>
                           </div>
                           
                           <div className="space-y-0.5">
                             <div className="flex justify-between text-2xs">
                               <span>Progress</span>
-                              <span>{Math.round(((initiative.currentStage || 1) - 1) * 100 / 11)}%</span>
+                              <span>{Math.round(((initiative.currentStage || 1) - 1) * 100 / 10)}%</span>
                             </div>
-                            <Progress value={Math.round(((initiative.currentStage || 1) - 1) * 100 / 11)} className="h-1" />
+                            <Progress value={Math.round(((initiative.currentStage || 1) - 1) * 100 / 10)} className="h-1" />
                           </div>
                         </div>
                         
@@ -465,7 +474,7 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
                             </div>
                             <div>
                               <span className="text-muted-foreground">Expected Savings:</span>
-                              <p className="font-medium">₹{initiative.expectedSavings || 0}K</p>
+                              <p className="font-medium">₹{initiative.expectedSavings || 0}</p>
                             </div>
                           </div>
                         </div>

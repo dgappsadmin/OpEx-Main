@@ -14,9 +14,11 @@
     <name>opex-hub</name>
     <description>OpEx Hub - Operational Excellence Management System</description>
     
-    <properties>
-        <java.version>1.8</java.version>
-    </properties>
+ <properties>
+    <maven.compiler.source>15</maven.compiler.source>
+    <maven.compiler.target>15</maven.compiler.target>
+</properties>
+
     
     <dependencies>
         <!-- Spring Boot Starters -->
