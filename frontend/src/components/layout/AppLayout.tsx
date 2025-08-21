@@ -34,21 +34,21 @@ export function AppLayout({ children, user, onLogout }: AppLayoutProps) {
             <div className="flex items-center gap-2">
               <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
               <div className="relative max-w-sm">
-                <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-muted-foreground h-3.5 w-3.5" />
+                {/* <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-muted-foreground h-3.5 w-3.5" />
                 <Input 
                   placeholder="Search initiatives..." 
                   className="pl-8 w-56 text-xs h-8"
-                />
+                /> */}
               </div>
             </div>
             
             <div className="flex items-center gap-1.5">
-              <Button variant="ghost" size="sm" className="relative h-8 w-8 p-0">
+              {/* <Button variant="ghost" size="sm" className="relative h-8 w-8 p-0">
                 <Bell className="h-3.5 w-3.5" />
                 <span className="absolute -top-1 -right-1 h-2 w-2 bg-primary rounded-full text-xs text-primary-foreground flex items-center justify-center">
                   3
                 </span>
-              </Button>
+              </Button> */}
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

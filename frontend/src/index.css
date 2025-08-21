@@ -106,6 +106,8 @@
     line-height: 1.25;
   }
   
+
+  
   /* 14-inch laptop optimizations - prevent scrolling */
   html, body {
     height: 100%;
