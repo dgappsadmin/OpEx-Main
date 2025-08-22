@@ -250,19 +250,42 @@ public class WorkflowTransactionService {
     }
     
     private void setNextStageInfo(WorkflowTransactionDetailDTO dto, WorkflowTransaction transaction) {
-        Optional<WfMaster> nextStageConfig = wfMasterRepository
-                .findBySiteAndStageNumberAndIsActive(transaction.getSite(), 
-                    transaction.getStageNumber() + 1, "Y");
+        Integer nextStageNumber = transaction.getStageNumber() + 1;
+        
+        // Check if next stage is an IL stage (4, 5, 6) - handle dynamically
+        if (nextStageNumber >= 4 && nextStageNumber <= 6) {
+            // For IL stages, get info from existing WorkflowTransaction if it exists
+            Optional<WorkflowTransaction> nextTransaction = workflowTransactionRepository
+                    .findByInitiativeIdAndStageNumber(transaction.getInitiativeId(), nextStageNumber);
                     
-        if (nextStageConfig.isPresent()) {
-            WfMaster nextStage = nextStageConfig.get();
-            dto.setNextStageName(nextStage.getStageName());
-            dto.setNextUserEmail(nextStage.getUserEmail());
-            
-            // Get next user name
-            Optional<User> nextUser = userRepository.findByEmail(nextStage.getUserEmail());
-            if (nextUser.isPresent()) {
-                dto.setNextUser(nextUser.get().getFullName());
+            if (nextTransaction.isPresent()) {
+                WorkflowTransaction nextStage = nextTransaction.get();
+                dto.setNextStageName(nextStage.getStageName());
+                
+                // Get assigned user dynamically
+                if (nextStage.getAssignedUserId() != null) {
+                    Optional<User> assignedUser = userRepository.findById(nextStage.getAssignedUserId());
+                    if (assignedUser.isPresent()) {
+                        dto.setNextUserEmail(assignedUser.get().getEmail());
+                        dto.setNextUser(assignedUser.get().getFullName());
+                    }
+                }
+            }
+        } else {
+            // For non-IL stages, use WfMaster as before
+            Optional<WfMaster> nextStageConfig = wfMasterRepository
+                    .findBySiteAndStageNumberAndIsActive(transaction.getSite(), nextStageNumber, "Y");
+                    
+            if (nextStageConfig.isPresent()) {
+                WfMaster nextStage = nextStageConfig.get();
+                dto.setNextStageName(nextStage.getStageName());
+                dto.setNextUserEmail(nextStage.getUserEmail());
+                
+                // Get next user name
+                Optional<User> nextUser = userRepository.findByEmail(nextStage.getUserEmail());
+                if (nextUser.isPresent()) {
+                    dto.setNextUser(nextUser.get().getFullName());
+                }
             }
         }
     }
@@ -355,6 +378,11 @@ public class WorkflowTransactionService {
     
     @Transactional
     private void createNextStage(Long initiativeId, Integer stageNumber) {
+        // Skip IL stages (4, 5, 6) as they are created dynamically by createStagesWithAssignedIL
+        if (stageNumber >= 4 && stageNumber <= 6) {
+            return; // IL stages are handled separately
+        }
+        
         // Get the workflow configuration for the next stage
         Initiative initiative = initiativeRepository.findById(initiativeId)
                 .orElseThrow(() -> new RuntimeException("Initiative not found"));
@@ -511,6 +539,7 @@ public class WorkflowTransactionService {
                 .orElseThrow(() -> new RuntimeException("Initiative not found"));
 
         // Create IL stages 4, 5, 6 dynamically with the selected IL
+        // DO NOT create WfMaster entries - keep workflow dynamic
         String[][] ilStages = {
             {"4", "MOC Stage", "IL"},
             {"5", "CAPEX Stage", "IL"},
@@ -533,7 +562,7 @@ public class WorkflowTransactionService {
                     stageName,
                     initiative.getSite(),
                     roleCode,
-                    assignedUser.getEmail()  // Use assigned IL's email
+                    assignedUser.getEmail()  // Use assigned IL's email for reference
                 );
                 
                 if (stageNumber == 4) {
@@ -546,23 +575,12 @@ public class WorkflowTransactionService {
                     transaction.setPendingWith(null);
                 }
                 
+                // Store assigned user ID for dynamic user resolution
                 transaction.setAssignedUserId(assignedUserId);
                 workflowTransactionRepository.save(transaction);
                 
-                // Also create corresponding WfMaster entry dynamically
-                Optional<WfMaster> existingWfMaster = wfMasterRepository
-                        .findBySiteAndStageNumberAndIsActive(initiative.getSite(), stageNumber, "Y");
-                        
-                if (!existingWfMaster.isPresent()) {
-                    WfMaster wfMaster = new WfMaster(
-                        stageNumber,
-                        stageName,
-                        roleCode,
-                        initiative.getSite(),
-                        assignedUser.getEmail()
-                    );
-                    wfMasterRepository.save(wfMaster);
-                }
+                // REMOVED: WfMaster creation to keep workflow dynamic
+                // This allows future IL changes without being locked to specific users
             }
         }
     }
