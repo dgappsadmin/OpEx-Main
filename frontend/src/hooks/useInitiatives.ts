@@ -26,7 +26,8 @@ export const useInitiatives = (filters?: {
         if (filters?.search) {
           filtered = filtered.filter(i => 
             i.title.toLowerCase().includes(filters.search!.toLowerCase()) ||
-            i.description.toLowerCase().includes(filters.search!.toLowerCase())
+            i.description.toLowerCase().includes(filters.search!.toLowerCase()) ||
+            (i.initiativeNumber && i.initiativeNumber.toLowerCase().includes(filters.search!.toLowerCase()))
           );
         }
         return { content: filtered, totalElements: filtered.length };

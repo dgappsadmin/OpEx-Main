@@ -10,7 +10,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckCircle, XCircle, Clock, ArrowLeft, User as UserIcon } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CheckCircle, XCircle, Clock, ArrowLeft, User as UserIcon, Search, Filter } from "lucide-react";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { useToast } from "@/hooks/use-toast";
 import WorkflowStageModal from "@/components/workflow/WorkflowStageModal";
@@ -26,9 +28,17 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [initiativeTransactions, setInitiativeTransactions] = useState<{[key: number]: any[]}>({});
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("default"); // "default" or "completed"
   const { toast } = useToast();
   
-  const { data: initiativesData } = useInitiatives();
+  // Prepare filters for API call - corrected parameter names and status values
+  const apiFilters = {
+    search: searchTerm.trim() || undefined, // Backend expects 'search' parameter
+    status: statusFilter === "completed" ? "Completed" : undefined, // Default shows all non-completed (Pending & In Progress)
+  };
+  
+  const { data: initiativesData } = useInitiatives(apiFilters);
   const { data: workflowTransactions = [], refetch: refetchTransactions } = useWorkflowTransactions(selectedInitiative || 0);
   const processStageAction = useProcessStageAction();
   
@@ -68,37 +78,37 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
     return stageNames[stageNumber] || `Stage ${stageNumber}`;
   };
   
-  // Mock data fallback
-  const mockInitiatives = [
-    {
-      id: 1,
-      title: "Process Improvement Initiative",
-      status: "IN_PROGRESS",
-      site: "Mumbai",
-      initiativeLead: "John Doe",
-      expectedSavings: 150,
-      currentStage: 2
-    },
-    {
-      id: 2,
-      title: "Cost Reduction Program",
-      status: "PLANNING",
-      site: "Delhi",
-      initiativeLead: "Jane Smith",
-      expectedSavings: 200,
-      currentStage: 1
-    }
-  ];
+  // Mock data fallback - removed to use only real API data
+  const mockInitiatives: any[] = [];
   
+  // Use only real API data, no mock fallback
   const initiatives = (Array.isArray(initiativesData?.content) && initiativesData.content.length > 0) 
     ? initiativesData.content 
     : (Array.isArray(initiativesData) && initiativesData.length > 0) 
     ? initiativesData 
-    : mockInitiatives;
+    : []; // Empty array if no real data
 
-  const itemsPerPage = 8;
-  const totalPages = Math.ceil(initiatives.length / itemsPerPage);
-  const paginatedInitiatives = initiatives.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  // Sort initiatives by creation date (recently created first)
+  const sortedInitiatives = [...initiatives].sort((a, b) => {
+    const dateA = new Date(a.submittedDate || a.createdDate || '');
+    const dateB = new Date(b.submittedDate || b.createdDate || '');
+    return dateB.getTime() - dateA.getTime(); // Most recent first
+  });
+
+  const itemsPerPage = 10;
+  const totalPages = Math.ceil(sortedInitiatives.length / itemsPerPage);
+  const paginatedInitiatives = sortedInitiatives.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  // Reset current page when filters change
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
+
+  const handleStatusFilterChange = (value: string) => {
+    setStatusFilter(value);
+    setCurrentPage(1);
+  };
 
   const handleProcessStage = (data: any) => {
     processStageAction.mutate(data, {
@@ -179,6 +189,60 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
         <TabsContent value="stages" className="space-y-2">
           {!selectedInitiative ? (
             <div className="space-y-2">
+              {/* Search and Filter Controls - At the very top */}
+              <div className="bg-gradient-to-r from-background via-background to-primary/5 p-3 rounded-lg border space-y-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-primary/10 text-primary">
+                    <Search className="w-3 h-3" />
+                  </div>
+                  <h3 className="text-sm font-semibold text-foreground">Search & Filter Initiatives</h3>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {/* Search by Initiative Number */}
+                  <div className="space-y-1">
+                    <label className="text-2xs font-medium text-muted-foreground">Search by Initiative Number</label>
+                    <div className="relative">
+                      <Search className="absolute left-2.5 top-2.5 h-3 w-3 text-muted-foreground" />
+                      <Input
+                        type="text"
+                        placeholder="Enter initiative number..."
+                        value={searchTerm}
+                        onChange={(e) => handleSearchChange(e.target.value)}
+                        className="pl-8 h-8 text-xs"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Status Filter */}
+                  <div className="space-y-1">
+                    <label className="text-2xs font-medium text-muted-foreground">Status Filter</label>
+                    <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
+                      <SelectTrigger className="h-8 text-xs">
+                        <div className="flex items-center gap-2">
+                          <Filter className="h-3 w-3" />
+                          <SelectValue placeholder="Select status filter" />
+                        </div>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="default">Default (Pending & In Progress)</SelectItem>
+                        <SelectItem value="completed">Completed Only</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Results summary */}
+                <div className="flex items-center justify-between text-2xs text-muted-foreground">
+                  <span>
+                    Showing {sortedInitiatives.length} initiative{sortedInitiatives.length !== 1 ? 's' : ''} 
+                    {searchTerm && ` matching "${searchTerm}"`}
+                    {statusFilter === "completed" ? " with Completed status" : " (Pending & In Progress only)"}
+                  </span>
+                  <span>Sorted by: Recently Created</span>
+                </div>
+              </div>
+
               <div className="text-center py-4">
                 <div className="flex items-center justify-center w-8 h-8 mx-auto mb-2 rounded-full bg-primary/10">
                   <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -432,6 +496,60 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
         <TabsContent value="dynamic" className="space-y-2">
           {!selectedInitiative ? (
             <div className="space-y-2">
+              {/* Search and Filter Controls - At the very top */}
+              <div className="bg-gradient-to-r from-background via-background to-primary/5 p-3 rounded-lg border space-y-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-primary/10 text-primary">
+                    <Search className="w-3 h-3" />
+                  </div>
+                  <h3 className="text-sm font-semibold text-foreground">Search & Filter Initiatives</h3>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {/* Search by Initiative Number */}
+                  <div className="space-y-1">
+                    <label className="text-2xs font-medium text-muted-foreground">Search by Initiative Number</label>
+                    <div className="relative">
+                      <Search className="absolute left-2.5 top-2.5 h-3 w-3 text-muted-foreground" />
+                      <Input
+                        type="text"
+                        placeholder="Enter initiative number..."
+                        value={searchTerm}
+                        onChange={(e) => handleSearchChange(e.target.value)}
+                        className="pl-8 h-8 text-xs"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Status Filter */}
+                  <div className="space-y-1">
+                    <label className="text-2xs font-medium text-muted-foreground">Status Filter</label>
+                    <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
+                      <SelectTrigger className="h-8 text-xs">
+                        <div className="flex items-center gap-2">
+                          <Filter className="h-3 w-3" />
+                          <SelectValue placeholder="Select status filter" />
+                        </div>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="default">Default (Pending & In Progress)</SelectItem>
+                        <SelectItem value="completed">Completed Only</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Results summary */}
+                <div className="flex items-center justify-between text-2xs text-muted-foreground">
+                  <span>
+                    Showing {sortedInitiatives.length} initiative{sortedInitiatives.length !== 1 ? 's' : ''} 
+                    {searchTerm && ` matching "${searchTerm}"`}
+                    {statusFilter === "completed" ? " with Completed status" : " (Pending & In Progress only)"}
+                  </span>
+                  <span>Sorted by: Recently Created</span>
+                </div>
+              </div>
+
               <div className="text-center py-4">
                 <div className="flex items-center justify-center w-8 h-8 mx-auto mb-2 rounded-full bg-primary/10">
                   <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -41,11 +41,23 @@ public class InitiativeService {
         return initiativeRepository.findBySite(site, pageable);
     }
 
-    public Page<Initiative> searchInitiatives(String status, String site, String title, Pageable pageable) {
-        if (status != null && site != null && title != null) {
-            return initiativeRepository.findByStatusAndSiteAndTitleContaining(status, site, title, pageable);
-        } else if (title != null) {
-            return initiativeRepository.findByTitleContaining(title, pageable);
+    public Page<Initiative> searchInitiatives(String status, String site, String search, Pageable pageable) {
+        // Determine if search term looks like initiative number (contains slash or alphanumeric pattern)
+        boolean isInitiativeNumberSearch = search != null && 
+            (search.contains("/") || search.matches(".*[A-Z]+.*[0-9]+.*") || search.matches(".*[0-9]+.*[A-Z]+.*"));
+        
+        if (status != null && site != null && search != null) {
+            if (isInitiativeNumberSearch) {
+                return initiativeRepository.findByStatusAndSiteAndInitiativeNumberContaining(status, site, search, pageable);
+            } else {
+                return initiativeRepository.findByStatusAndSiteAndTitleContaining(status, site, search, pageable);
+            }
+        } else if (search != null) {
+            if (isInitiativeNumberSearch) {
+                return initiativeRepository.findByInitiativeNumberContaining(search, pageable);
+            } else {
+                return initiativeRepository.findByTitleContaining(search, pageable);
+            }
         } else if (status != null && site != null) {
             return initiativeRepository.findByStatusAndSite(status, site, pageable);
         } else if (status != null) {

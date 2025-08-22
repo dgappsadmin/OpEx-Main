@@ -25,11 +25,30 @@ public interface InitiativeRepository extends JpaRepository<Initiative, Long> {
     @Query("SELECT i FROM Initiative i WHERE i.title LIKE %:title%")
     Page<Initiative> findByTitleContaining(@Param("title") String title, Pageable pageable);
     
+    @Query("SELECT i FROM Initiative i WHERE i.initiativeNumber LIKE %:initiativeNumber%")
+    Page<Initiative> findByInitiativeNumberContaining(@Param("initiativeNumber") String initiativeNumber, Pageable pageable);
+    
     @Query("SELECT i FROM Initiative i WHERE i.status = :status AND i.site = :site AND i.title LIKE %:title%")
     Page<Initiative> findByStatusAndSiteAndTitleContaining(@Param("status") String status, 
                                                           @Param("site") String site, 
                                                           @Param("title") String title, 
                                                           Pageable pageable);
+    
+    @Query("SELECT i FROM Initiative i WHERE i.status = :status AND i.site = :site AND i.initiativeNumber LIKE %:initiativeNumber%")
+    Page<Initiative> findByStatusAndSiteAndInitiativeNumberContaining(@Param("status") String status, 
+                                                                     @Param("site") String site, 
+                                                                     @Param("initiativeNumber") String initiativeNumber, 
+                                                                     Pageable pageable);
+    
+    @Query("SELECT i FROM Initiative i WHERE i.status = :status AND i.initiativeNumber LIKE %:initiativeNumber%")
+    Page<Initiative> findByStatusAndInitiativeNumberContaining(@Param("status") String status, 
+                                                              @Param("initiativeNumber") String initiativeNumber, 
+                                                              Pageable pageable);
+    
+    @Query("SELECT i FROM Initiative i WHERE i.site = :site AND i.initiativeNumber LIKE %:initiativeNumber%")
+    Page<Initiative> findBySiteAndInitiativeNumberContaining(@Param("site") String site, 
+                                                            @Param("initiativeNumber") String initiativeNumber, 
+                                                            Pageable pageable);
     
     List<Initiative> findByPriority(String priority);
     
