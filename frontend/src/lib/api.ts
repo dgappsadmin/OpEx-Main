@@ -882,4 +882,31 @@ export const reportsAPI = {
   }
 };
 
+// Dashboard API
+export const dashboardAPI = {
+  // Get overall dashboard statistics
+  getStats: async () => {
+    const response = await api.get('/dashboard/stats');
+    return response.data;
+  },
+
+  // Get dashboard statistics for a specific site
+  getStatsBySite: async (site: string) => {
+    const response = await api.get(`/dashboard/stats/${site}`);
+    return response.data;
+  },
+
+  // Get recent initiatives (latest 5)
+  getRecentInitiatives: async () => {
+    const response = await api.get('/dashboard/recent-initiatives');
+    return response.data;
+  },
+
+  // Get recent initiatives for a specific site
+  getRecentInitiativesBySite: async (site: string) => {
+    const response = await api.get(`/dashboard/recent-initiatives/${site}`);
+    return response.data;
+  }
+};
+
 export default api;

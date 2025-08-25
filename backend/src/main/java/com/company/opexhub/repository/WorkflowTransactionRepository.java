@@ -47,4 +47,10 @@ public interface WorkflowTransactionRepository extends JpaRepository<WorkflowTra
     List<WorkflowTransaction> findByStageNumberAndApproveStatusAndSite(@Param("stageNumber") Integer stageNumber, 
                                                                       @Param("approveStatus") String approveStatus, 
                                                                       @Param("site") String site);
+    
+    @Query("SELECT COUNT(wt) FROM WorkflowTransaction wt WHERE wt.approveStatus = :approveStatus AND wt.pendingWith IS NOT NULL")
+    Long countByApproveStatusAndPendingWithIsNotNull(@Param("approveStatus") String approveStatus);
+    
+    @Query("SELECT COUNT(wt) FROM WorkflowTransaction wt WHERE wt.site = :site AND wt.approveStatus = :approveStatus AND wt.pendingWith IS NOT NULL")
+    Long countBySiteAndApproveStatusAndPendingWithIsNotNull(@Param("site") String site, @Param("approveStatus") String approveStatus);
 }

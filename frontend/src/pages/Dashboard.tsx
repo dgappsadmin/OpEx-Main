@@ -13,8 +13,8 @@ import {
   Plus
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { mockInitiatives, User } from "@/lib/mockData";
-import { useInitiatives } from "@/hooks/useInitiatives";
+import { User } from "@/lib/mockData";
+import { useDashboardStats, useRecentInitiatives } from "@/hooks/useDashboard";
 
 interface DashboardProps {
   user: User;
@@ -22,23 +22,27 @@ interface DashboardProps {
 
 export default function Dashboard({ user }: DashboardProps) {
   const navigate = useNavigate();
-  const { data: initiativesData } = useInitiatives();
   
-  // Use API data if available, otherwise fallback to mock
-  const initiatives = initiativesData?.content || mockInitiatives;
+  // Use site-specific data if user has a site, otherwise get overall stats
+  const userSite = user.site !== 'ALL' ? user.site : undefined;
+  
+  // Fetch real dashboard data
+  const { data: dashboardStats, isLoading: statsLoading, error: statsError } = useDashboardStats(userSite);
+  const { data: recentInitiativesData, isLoading: initiativesLoading, error: initiativesError } = useRecentInitiatives(userSite);
 
+  // Create stats array from API data
   const stats = [
     {
       title: "Total Initiatives",
-      value: "127",
+      value: statsLoading ? "..." : (dashboardStats?.totalInitiatives || 0).toString(),
       change: "+12%",
       trend: "up",
       icon: FileText,
       color: "text-primary"
     },
     {
-      title: "Annual Savings",
-      value: "₹45.2L",
+      title: "Actual Savings",
+      value: statsLoading ? "..." : `₹${(dashboardStats?.actualSavings || 0)}K`,
       change: "+28%",
       trend: "up",
       icon: IndianRupee,
@@ -46,7 +50,7 @@ export default function Dashboard({ user }: DashboardProps) {
     },
     {
       title: "Completed",
-      value: "89",
+      value: statsLoading ? "..." : (dashboardStats?.completedInitiatives || 0).toString(),
       change: "+5%",
       trend: "up",
       icon: CheckCircle,
@@ -54,7 +58,7 @@ export default function Dashboard({ user }: DashboardProps) {
     },
     {
       title: "Pending Approval",
-      value: "23",
+      value: statsLoading ? "..." : (dashboardStats?.pendingApprovals || 0).toString(),
       change: "-2%",
       trend: "down",
       icon: Clock,
@@ -62,13 +66,14 @@ export default function Dashboard({ user }: DashboardProps) {
     }
   ];
 
-  const recentInitiatives = mockInitiatives.slice(0, 3).map(initiative => ({
+  // Format recent initiatives from API data
+  const recentInitiatives = initiativesLoading ? [] : (recentInitiativesData || []).slice(0, 3).map((initiative: any) => ({
     id: initiative.id,
     title: initiative.initiativeNumber || initiative.title,
     site: initiative.site,
     status: initiative.status,
-    savings: initiative.expectedSavings,
-    progress: initiative.progress,
+    savings: `₹${initiative.expectedSavings || 0}K`,
+    progress: Math.round(((initiative.currentStage || 1) - 1) * 100 / 10), // Calculate progress based on current stage
     priority: initiative.priority
   }));
 
@@ -106,25 +111,42 @@ export default function Dashboard({ user }: DashboardProps) {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat) => (
-          <Card key={stat.title}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {stat.title}
-              </CardTitle>
-              <stat.icon className={`h-4 w-4 ${stat.color}`} />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-              <p className={`text-xs flex items-center gap-1 ${
-                stat.trend === 'up' ? 'text-success' : 'text-destructive'
-              }`}>
-                <TrendingUp className="h-3 w-3" />
-                {stat.change} from last month
-              </p>
-            </CardContent>
-          </Card>
-        ))}
+        {statsError ? (
+          <div className="col-span-full">
+            <Card className="border-destructive/20 bg-destructive/10">
+              <CardContent className="p-6 text-center">
+                <AlertTriangle className="h-8 w-8 text-destructive mx-auto mb-2" />
+                <p className="text-sm text-destructive">Failed to load dashboard statistics</p>
+              </CardContent>
+            </Card>
+          </div>
+        ) : (
+          stats.map((stat) => (
+            <Card key={stat.title}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  {stat.title}
+                </CardTitle>
+                <stat.icon className={`h-4 w-4 ${stat.color}`} />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {statsLoading ? (
+                    <div className="h-8 w-16 bg-muted animate-pulse rounded"></div>
+                  ) : (
+                    stat.value
+                  )}
+                </div>
+                <p className={`text-xs flex items-center gap-1 ${
+                  stat.trend === 'up' ? 'text-success' : 'text-destructive'
+                }`}>
+                  <TrendingUp className="h-3 w-3" />
+                  {stat.change} from last month
+                </p>
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
 
       {/* Recent Initiatives */}
@@ -140,42 +162,70 @@ export default function Dashboard({ user }: DashboardProps) {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {recentInitiatives.map((initiative) => (
-              <div key={initiative.id} className="p-4 border border-border rounded-lg space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="font-mono text-xs">
-                      {initiative.id}
-                    </Badge>
-                    <Badge className={getPriorityColor(initiative.priority)}>
-                      {initiative.priority}
+            {initiativesLoading ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="p-4 border border-border rounded-lg space-y-3 animate-pulse">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="h-5 w-12 bg-muted rounded"></div>
+                        <div className="h-5 w-16 bg-muted rounded"></div>
+                      </div>
+                      <div className="h-5 w-20 bg-muted rounded"></div>
+                    </div>
+                    <div className="h-4 w-3/4 bg-muted rounded"></div>
+                    <div className="h-2 w-full bg-muted rounded"></div>
+                  </div>
+                ))}
+              </div>
+            ) : initiativesError ? (
+              <div className="p-4 border border-destructive/20 bg-destructive/10 rounded-lg text-center">
+                <AlertTriangle className="h-8 w-8 text-destructive mx-auto mb-2" />
+                <p className="text-sm text-destructive">Failed to load recent initiatives</p>
+              </div>
+            ) : recentInitiatives.length === 0 ? (
+              <div className="p-4 border border-dashed border-border rounded-lg text-center">
+                <FileText className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">No recent initiatives found</p>
+              </div>
+            ) : (
+              recentInitiatives.map((initiative) => (
+                <div key={initiative.id} className="p-4 border border-border rounded-lg space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="font-mono text-xs">
+                        {initiative.id}
+                      </Badge>
+                      <Badge className={getPriorityColor(initiative.priority)}>
+                        {initiative.priority}
+                      </Badge>
+                    </div>
+                    <Badge className={getStatusColor(initiative.status)}>
+                      {initiative.status}
                     </Badge>
                   </div>
-                  <Badge className={getStatusColor(initiative.status)}>
-                    {initiative.status}
-                  </Badge>
+                  
+                   <h4 className="font-semibold text-foreground">{initiative.title}</h4>
+                  
+                  <div className="flex items-center justify-between text-sm text-muted-foreground">
+                    <span>Site: {initiative.site}</span>
+                    <span className="font-semibold text-success">{initiative.savings}</span>
+                  </div>
+                  
+                  <div className="w-full bg-muted rounded-full h-2">
+                    <div 
+                      className="bg-primary h-2 rounded-full transition-all" 
+                      style={{ width: `${initiative.progress}%` }}
+                    ></div>
+                  </div>
+                  
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>Progress</span>
+                    <span>{initiative.progress}%</span>
+                  </div>
                 </div>
-                
-                 <h4 className="font-semibold text-foreground">{initiative.title}</h4>
-                
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                  <span>Site: {initiative.site}</span>
-                  <span className="font-semibold text-success">{initiative.savings}</span>
-                </div>
-                
-                <div className="w-full bg-muted rounded-full h-2">
-                  <div 
-                    className="bg-primary h-2 rounded-full transition-all" 
-                    style={{ width: `${initiative.progress}%` }}
-                  ></div>
-                </div>
-                
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Progress</span>
-                  <span>{initiative.progress}%</span>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </CardContent>
         </Card>
 
@@ -237,23 +287,50 @@ export default function Dashboard({ user }: DashboardProps) {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            <div className="flex items-start gap-3 p-3 border border-warning/20 bg-warning/10 rounded-lg">
-              <AlertTriangle className="h-4 w-4 text-warning mt-0.5" />
-              <div className="flex-1">
-                <p className="font-semibold text-foreground">3 initiatives pending your approval</p>
-                <p className="text-sm text-muted-foreground">Review required for HSD2/25/OP/AB/004 and 2 others</p>
+            {!statsLoading && dashboardStats && dashboardStats.pendingApprovals > 0 && (
+              <div className="flex items-start gap-3 p-3 border border-warning/20 bg-warning/10 rounded-lg">
+                <AlertTriangle className="h-4 w-4 text-warning mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-semibold text-foreground">
+                    {dashboardStats.pendingApprovals} initiative{dashboardStats.pendingApprovals !== 1 ? 's' : ''} pending approval
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {dashboardStats.pendingApprovals === 1 ? 'Review required' : 'Reviews required'} for workflow stages
+                  </p>
+                </div>
+                <Button size="sm" variant="outline" onClick={() => navigate('/workflow')}>
+                  View
+                </Button>
               </div>
-              <Button size="sm" variant="outline">View</Button>
-            </div>
+            )}
             
-            <div className="flex items-start gap-3 p-3 border border-primary/20 bg-primary/10 rounded-lg">
+            {/* <div className="flex items-start gap-3 p-3 border border-primary/20 bg-primary/10 rounded-lg">
               <Clock className="h-4 w-4 text-primary mt-0.5" />
               <div className="flex-1">
                 <p className="font-semibold text-foreground">Monthly review meeting scheduled</p>
                 <p className="text-sm text-muted-foreground">CMO review scheduled for tomorrow at 2:00 PM</p>
               </div>
               <Button size="sm" variant="outline">Details</Button>
-            </div>
+            </div> */}
+            
+            {statsLoading && (
+              <div className="space-y-3">
+                <div className="h-16 bg-muted animate-pulse rounded-lg"></div>
+                <div className="h-16 bg-muted animate-pulse rounded-lg"></div>
+              </div>
+            )}
+            
+            {!statsLoading && (!dashboardStats || dashboardStats.pendingApprovals === 0) && (
+              <div className="p-3 border border-success/20 bg-success/10 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <CheckCircle className="h-4 w-4 text-success mt-0.5" />
+                  <div className="flex-1">
+                    <p className="font-semibold text-foreground">All caught up!</p>
+                    <p className="text-sm text-muted-foreground">No pending approvals at this time</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
