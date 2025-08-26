@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { User } from "@/lib/mockData";
 import { useInitiatives } from "@/hooks/useInitiatives";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,13 +15,80 @@ interface ReportsProps {
   user: User;
 }
 
+interface MonthlyData {
+  month: string;
+  initiatives: number;
+  savings: number;
+  completed: number;
+}
+
 export default function Reports({ user }: ReportsProps) {
   const [selectedPeriod, setSelectedPeriod] = useState<string>('yearly'); // Default to yearly
   const [selectedSite, setSelectedSite] = useState<string>('all');
+  const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
   const { data: initiativesData, isLoading } = useInitiatives();
   
   // Handle both API response format and mock data format
   const initiatives = initiativesData?.content || initiativesData || [];
+
+  // Generate dynamic monthly data based on current fiscal year
+  useEffect(() => {
+    const generateDynamicMonthlyData = () => {
+      const currentDate = new Date();
+      const currentMonth = currentDate.getMonth();
+      const currentYear = currentDate.getFullYear();
+      
+      // Fiscal year starts from April (month 3 in 0-indexed)
+      const fiscalYearStart = currentMonth >= 3 ? currentYear : currentYear - 1;
+      
+      const months = [
+        'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
+        'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'
+      ];
+      
+      const dynamicData: MonthlyData[] = [];
+      
+      for (let i = 0; i < months.length; i++) {
+        const monthIndex = (3 + i) % 12; // Start from April (index 3)
+        const year = monthIndex < 3 ? fiscalYearStart + 1 : fiscalYearStart;
+        
+        // Only include months up to current month in current fiscal year
+        const isCurrentFiscalYear = (currentMonth >= 3 && year === currentYear) || 
+                                   (currentMonth < 3 && year === currentYear);
+        const isPastMonth = isCurrentFiscalYear ? 
+                           (monthIndex < currentMonth || (currentMonth < 3 && monthIndex >= 3)) :
+                           true;
+        
+        if (isPastMonth || monthIndex === currentMonth) {
+          // Calculate dynamic values based on filtered initiatives for the month
+          const monthInitiatives = initiatives.filter((initiative: any) => {
+            const startDate = new Date(initiative.submittedDate || initiative.startDate);
+            return startDate.getMonth() === monthIndex && startDate.getFullYear() === year;
+          });
+          
+          const savings = monthInitiatives.reduce((sum: number, initiative: any) => {
+            const savingsValue = typeof initiative.expectedSavings === 'string' 
+              ? parseFloat(initiative.expectedSavings.replace(/[₹L,]/g, '')) || 0
+              : initiative.expectedSavings || 0;
+            return sum + savingsValue;
+          }, 0);
+          
+          const completedCount = monthInitiatives.filter((i: any) => i.status === 'Completed').length;
+          
+          dynamicData.push({
+            month: months[i],
+            initiatives: monthInitiatives.length,
+            savings: savings,
+            completed: completedCount
+          });
+        }
+      }
+      
+      return dynamicData;
+    };
+
+    setMonthlyData(generateDynamicMonthlyData());
+  }, [initiatives]);
 
   if (isLoading) {
     return <div className="p-6">Loading reports data...</div>;
@@ -35,17 +102,7 @@ export default function Reports({ user }: ReportsProps) {
   // Get unique sites for filter
   const sites = [...new Set(initiatives.map((i: any) => i.site))];
 
-  // Generate monthly data (mock for demonstration)
-  const monthlyData = [
-    { month: 'Jan', initiatives: 12, savings: 45000, completed: 8 },
-    { month: 'Feb', initiatives: 15, savings: 52000, completed: 10 },
-    { month: 'Mar', initiatives: 18, savings: 67000, completed: 12 },
-    { month: 'Apr', initiatives: 20, savings: 73000, completed: 15 },
-    { month: 'May', initiatives: 22, savings: 81000, completed: 18 },
-    { month: 'Jun', initiatives: 25, savings: 95000, completed: 20 },
-  ];
-
-  // Calculate summary statistics
+  // Calculate summary statistics from real data
   const totalSavings = filteredInitiatives.reduce((sum: number, i: any) => {
     const savings = typeof i.expectedSavings === 'string' 
       ? parseFloat(i.expectedSavings.replace(/[₹L,]/g, '')) || 0
@@ -68,7 +125,7 @@ export default function Reports({ user }: ReportsProps) {
         });
         
         console.log(`Successfully downloaded DNL Plant Initiatives PDF report: ${filename} for ${selectedSite} site(s) - ${selectedPeriod} period (${currentYear})`);
-        alert(`DNL Plant Initiatives PDF report "${filename}" downloaded successfully for year ${currentYear}! Data includes savings till current month (August).`);
+        alert(`DNL Plant Initiatives PDF report "${filename}" downloaded successfully for year ${currentYear}! Data includes savings till current month (${getCurrentMonth()}).`);
       } catch (error) {
         console.error('Error downloading DNL Plant Initiatives PDF report:', error);
         alert('Failed to download DNL Plant Initiatives PDF report. Please try again.');
@@ -106,10 +163,23 @@ export default function Reports({ user }: ReportsProps) {
     }
   };
 
+  // Dynamic method to get current month
   const getCurrentMonth = () => {
     const now = new Date();
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return months[now.getMonth()];
+  };
+
+  // Dynamic method to get current fiscal year
+  const getCurrentFiscalYear = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    // Fiscal year starts from April, so if current month is Jan-Mar, FY is previous year
+    if (now.getMonth() >= 3) {
+      return String(year + 1).slice(-2); // e.g., "26" for 2026
+    } else {
+      return String(year).slice(-2); // e.g., "25" for 2025
+    }
   };
 
   return (
@@ -236,7 +306,7 @@ export default function Reports({ user }: ReportsProps) {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Monthly Initiative Trends</CardTitle>
+                <CardTitle>Monthly Initiative Trends (FY'{getCurrentFiscalYear()})</CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -254,7 +324,7 @@ export default function Reports({ user }: ReportsProps) {
 
             <Card>
               <CardHeader>
-                <CardTitle>Monthly Savings Trends</CardTitle>
+                <CardTitle>Monthly Savings Trends (FY'{getCurrentFiscalYear()})</CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>

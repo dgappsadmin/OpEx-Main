@@ -2,53 +2,31 @@ package com.company.opexhub.service;
 
 import com.company.opexhub.dto.DNLReportDataDTO;
 import com.company.opexhub.entity.Initiative;
-import com.company.opexhub.entity.MonthlyMonitoringEntry;
 import com.company.opexhub.repository.InitiativeRepository;
 import com.company.opexhub.repository.MonthlyMonitoringEntryRepository;
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.ss.util.CellRangeAddress;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.apache.poi.xwpf.usermodel.XWPFDocument;
-import org.apache.poi.xwpf.usermodel.XWPFTable;
-import org.apache.poi.xwpf.usermodel.XWPFTableRow;
-import org.apache.poi.xwpf.usermodel.XWPFTableCell;
-import org.apache.poi.xwpf.usermodel.XWPFParagraph;
-import org.apache.poi.xwpf.usermodel.XWPFRun;
-import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-// PDF Generation imports
+import com.itextpdf.io.font.constants.StandardFonts;
+import com.itextpdf.kernel.colors.Color;
+import com.itextpdf.kernel.colors.ColorConstants;
+import com.itextpdf.kernel.colors.DeviceRgb;
+import com.itextpdf.kernel.font.PdfFont;
+import com.itextpdf.kernel.font.PdfFontFactory;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Table;
-// Note: PDF Cell class is fully qualified as com.itextpdf.layout.element.Cell
-import com.itextpdf.layout.element.Image;
 import com.itextpdf.layout.properties.TextAlignment;
 import com.itextpdf.layout.properties.UnitValue;
-import com.itextpdf.layout.properties.HorizontalAlignment;
-import com.itextpdf.kernel.font.PdfFont;
-import com.itextpdf.kernel.font.PdfFontFactory;
-import com.itextpdf.kernel.colors.Color;
-import com.itextpdf.kernel.colors.ColorConstants;
-import com.itextpdf.kernel.colors.DeviceRgb;
-import com.itextpdf.io.image.ImageDataFactory;
 
-// JFreeChart imports for chart generation
-import org.jfree.chart.ChartFactory;
-import org.jfree.chart.JFreeChart;
-import org.jfree.chart.plot.CategoryPlot;
-import org.jfree.chart.plot.PlotOrientation;
-import org.jfree.chart.renderer.category.BarRenderer;
-import org.jfree.data.category.DefaultCategoryDataset;
-import org.jfree.chart.ChartUtils;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.xwpf.usermodel.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
-import java.awt.Paint;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -61,124 +39,48 @@ public class ReportsService {
 
     @Autowired
     private MonthlyMonitoringEntryRepository monthlyMonitoringEntryRepository;
-    
-    // New method for DNL Plant Initiatives PDF report
+
     public ByteArrayOutputStream generateDNLPlantInitiativesPDF(String site, String period, String year) throws IOException {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         PdfWriter writer = new PdfWriter(outputStream);
-        PdfDocument pdfDoc = new PdfDocument(writer);
-        Document document = new Document(pdfDoc);
-        
-        try {
-            // Get report data till current month (August)
-            DNLReportDataDTO reportData = getDNLReportData(site, period, year);
-            
-            // Create the PDF content matching the image exactly
-            createDNLPlantInitiativesPDF(document, reportData, year);
-            
-            document.close();
-        } catch (Exception e) {
-            throw new IOException("Error generating PDF report", e);
-        }
-        
+        PdfDocument pdf = new PdfDocument(writer);
+        Document document = new Document(pdf);
+
+        // Create font
+        PdfFont font = PdfFontFactory.createFont(StandardFonts.HELVETICA);
+        PdfFont boldFont = PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD);
+
+        // Get report data
+        DNLReportDataDTO reportData = getDNLReportData(site, period, year);
+
+        // Title
+        document.add(new Paragraph("DNL - Plant Initiatives")
+            .setFont(boldFont)
+            .setFontSize(16)
+            .setTextAlignment(TextAlignment.CENTER)
+            .setMarginBottom(10));
+
+        // Dynamic subtitle with current month and year
+        document.add(new Paragraph("Initiative saving till " + getCurrentMonthYear() + " (Rs. Lacs)")
+            .setFont(boldFont)
+            .setFontSize(14)
+            .setTextAlignment(TextAlignment.CENTER)
+            .setMarginBottom(20));
+
+        // Chart Area Label
+        document.add(new Paragraph("Chart Area")
+            .setFont(boldFont)
+            .setFontSize(12)
+            .setMarginBottom(10));
+
+        // Create chart representation and data table
+        createChartAndTable(document, font, reportData.getProcessedData());
+
+        document.close();
         return outputStream;
     }
-    
-    private void createDNLPlantInitiativesPDF(Document document, DNLReportDataDTO reportData, String year) throws IOException {
-        try {
-            // Get current year and month
-            LocalDate now = LocalDate.now();
-            int currentYear = year != null ? Integer.parseInt(year) : now.getYear();
-            String currentMonth = now.getMonth().toString().toLowerCase();
-            currentMonth = currentMonth.substring(0, 1).toUpperCase() + currentMonth.substring(1);
-            
-            // Create fonts
-            PdfFont titleFont = PdfFontFactory.createFont();
-            PdfFont normalFont = PdfFontFactory.createFont();
-            
-            // Title - "Initiative saving till Aug'25 (Rs. Lacs)"
-            Paragraph title = new Paragraph("Initiative saving till " + currentMonth + "'" + String.valueOf(currentYear).substring(2) + " (Rs. Lacs)")
-                .setFont(titleFont)
-                .setFontSize(16)
-                .setBold()
-                .setTextAlignment(TextAlignment.CENTER)
-                .setMarginBottom(20);
-            document.add(title);
-            
-            // Generate and add bar chart
-            byte[] chartImageBytes = generateBarChart(reportData);
-            Image chartImage = new Image(ImageDataFactory.create(chartImageBytes));
-            chartImage.setWidth(500);
-            chartImage.setHeight(300);
-            chartImage.setHorizontalAlignment(HorizontalAlignment.CENTER);
-            chartImage.setMarginBottom(20);
-            document.add(chartImage);
-            
-            // Create data table matching the image
-            createDataTable(document, reportData, normalFont);
-            
-        } catch (Exception e) {
-            throw new IOException("Error creating PDF content", e);
-        }
-    }
-    
-    private byte[] generateBarChart(DNLReportDataDTO reportData) throws IOException {
-        // Create dataset
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        double[][] data = reportData.getProcessedData();
-        
-        // Categories and data from the image
-        String[] categories = {"RMC", "Spent Acid", "Environment", "Total"};
-        String[] series = {"FY'26 Budgeted Saving", "FY'26 Non Budgeted Saving"};
-        
-        // Add data to dataset
-        for (int i = 0; i < categories.length; i++) {
-            dataset.addValue(data[i][0], series[0], categories[i]); // Budgeted values
-            dataset.addValue(data[i][1], series[1], categories[i]); // Non-budgeted values
-        }
-        
-        // Create chart
-        JFreeChart chart = ChartFactory.createBarChart(
-            null, // No title (we handle it separately)
-            null, // No x-axis label
-            null, // No y-axis label
-            dataset,
-            PlotOrientation.VERTICAL,
-            false, // No legend (we handle colors manually)
-            false, // No tooltips
-            false  // No URLs
-        );
-        
-        // Customize chart appearance to match the image
-        CategoryPlot plot = chart.getCategoryPlot();
-        plot.setBackgroundPaint(java.awt.Color.WHITE);
-        plot.setDomainGridlinesVisible(false);
-        plot.setRangeGridlinesVisible(true);
-        plot.setRangeGridlinePaint(java.awt.Color.LIGHT_GRAY);
-        
-        // Set custom colors to match the image
-        BarRenderer renderer = (BarRenderer) plot.getRenderer();
-        
-        // Colors matching the image: RMC=Dark Blue, Spent Acid=Orange, Environment=Green, Total=Light Blue
-        Paint[] colors = {
-            new java.awt.Color(31, 78, 121),   // Dark Blue for RMC
-            new java.awt.Color(255, 102, 0),   // Orange for Spent Acid  
-            new java.awt.Color(112, 173, 71),  // Green for Environment
-            new java.awt.Color(91, 155, 213)   // Light Blue for Total
-        };
-        
-        for (int i = 0; i < colors.length; i++) {
-            renderer.setSeriesPaint(0, colors[i]); // All bars use category-specific colors
-        }
-        
-        // Convert chart to byte array
-        ByteArrayOutputStream chartOutputStream = new ByteArrayOutputStream();
-        ChartUtils.writeChartAsPNG(chartOutputStream, chart, 500, 300);
-        return chartOutputStream.toByteArray();
-    }
-    
-    private void createDataTable(Document document, DNLReportDataDTO reportData, PdfFont font) {
-        double[][] data = reportData.getProcessedData();
+
+    private void createChartAndTable(Document document, PdfFont font, double[][] data) {
         String[] categories = {"RMC", "Spent Acid", "Environment", "Total"};
         
         // Create table with 7 columns as shown in the image
@@ -194,8 +96,16 @@ public class ReportsService {
             new DeviceRgb(91, 155, 213)   // Light Blue for Total
         };
         
-        // Table headers exactly as shown in the image
-        String[] headers = {"", "FY'26 Budgeted Saving", "FY'26 Non Budgeted Saving", "Budgeted", "Non-Budgeted", "Savings till " + getCurrentMonthYear(), "Total"};
+        // Dynamic table headers based on current fiscal year and current month
+        String currentFY = getCurrentFiscalYear();
+        String currentMonth = getCurrentMonthYear();
+        String[] headers = {"", 
+            "FY'" + currentFY + " Budgeted Saving", 
+            "FY'" + currentFY + " Non Budgeted Saving", 
+            "Budgeted", 
+            "Non-budgeted", 
+            "Savings till " + currentMonth, 
+            "Total"};
         
         // Add header row
         for (String header : headers) {
@@ -225,11 +135,24 @@ public class ReportsService {
         document.add(table);
     }
     
+    // Dynamic method to get current month and year in desired format
     private String getCurrentMonthYear() {
         LocalDate now = LocalDate.now();
         String month = now.getMonth().toString().toLowerCase();
         month = month.substring(0, 1).toUpperCase() + month.substring(1);
         return month + "'" + String.valueOf(now.getYear()).substring(2);
+    }
+    
+    // Dynamic method to get current fiscal year
+    private String getCurrentFiscalYear() {
+        LocalDate now = LocalDate.now();
+        int year = now.getYear();
+        // Fiscal year starts from April, so if current month is Jan-Mar, FY is previous year
+        if (now.getMonthValue() >= 4) {
+            return String.valueOf(year + 1).substring(2); // e.g., "26" for 2026
+        } else {
+            return String.valueOf(year).substring(2); // e.g., "25" for 2025
+        }
     }
     
     private DNLReportDataDTO getDNLReportData(String site, String period, String year) {
@@ -259,14 +182,19 @@ public class ReportsService {
                 break;
         }
         
-        // Get aggregated data from repository
+        // Get aggregated data from repository - fetching from ACHIEVED_VALUE column
         List<Object[]> monitoringData = monthlyMonitoringEntryRepository.findDNLPlantInitiativesData(site, startDate, endDate);
         List<Object[]> budgetTargets = monthlyMonitoringEntryRepository.findBudgetTargetsByType(site);
         
         return new DNLReportDataDTO(monitoringData, budgetTargets);
     }
     
-    // Keep existing Excel generation methods
+    // Public method to expose savings data for API endpoint
+    public DNLReportDataDTO getDNLSavingsData(String site, String period, String year) {
+        return getDNLReportData(site, period, year);
+    }
+    
+    // Keep existing Excel generation methods with dynamic updates
     public ByteArrayOutputStream generateDNLPlantInitiativesReport(String site, String period, String year) throws IOException {
         // Create workbook
         XSSFWorkbook workbook = new XSSFWorkbook();
@@ -308,7 +236,7 @@ public class ReportsService {
         titleCell.setCellStyle(titleStyle);
         sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 6));
         
-        // Subtitle row with current month instead of June
+        // Dynamic subtitle row with current month instead of hardcoded
         Row subtitleRow = sheet.createRow(rowNum++);
         org.apache.poi.ss.usermodel.Cell subtitleCell = subtitleRow.createCell(0);
         subtitleCell.setCellValue("Initiative saving till " + getCurrentMonthYear() + " (Rs. Lacs)");
@@ -358,10 +286,17 @@ public class ReportsService {
         sheet.createRow(rowNum++);
         sheet.createRow(rowNum++);
         
-        // Headers for data table with current month
+        // Dynamic headers for data table with current fiscal year and month
         Row headerRow = sheet.createRow(rowNum++);
-        String[] headers = {"Category", "FY'26 Budgeted Saving", "FY'26 Non Budgeted Saving", 
-                           "Budgeted", "Non-budgeted", "Savings till " + getCurrentMonthYear(), "Total"};
+        String currentFY = getCurrentFiscalYear();
+        String currentMonth = getCurrentMonthYear();
+        String[] headers = {"Category", 
+            "FY'" + currentFY + " Budgeted Saving", 
+            "FY'" + currentFY + " Non Budgeted Saving", 
+            "Budgeted", 
+            "Non-budgeted", 
+            "Savings till " + currentMonth, 
+            "Total"};
         
         for (int i = 0; i < headers.length; i++) {
             org.apache.poi.ss.usermodel.Cell headerCell = headerRow.createCell(i);
@@ -455,11 +390,8 @@ public class ReportsService {
         // Create workbook
         XSSFWorkbook workbook = new XSSFWorkbook();
         
-        // Define months for sheets
-        String[] months = {
-            "Apr.25", "May.25", "June.25", "Jul.25", "Aug.25", "Sept.25",
-            "Oct.25", "Nov.25", "Dec.25", "Jan.26", "Feb.26", "Mar.26"
-        };
+        // Define months dynamically based on fiscal year
+        String[] months = generateMonthsForFiscalYear(year);
         
         // Get current date for filtering (if year is specified)
         LocalDate currentDate = LocalDate.now();
@@ -484,6 +416,28 @@ public class ReportsService {
         workbook.close();
         
         return outputStream;
+    }
+    
+    // Dynamic method to generate months for fiscal year
+    private String[] generateMonthsForFiscalYear(String year) {
+        LocalDate now = LocalDate.now();
+        int currentYear = year != null ? Integer.parseInt(year) : now.getYear();
+        
+        // For Indian fiscal year (April to March)
+        return new String[] {
+            "Apr." + String.valueOf(currentYear).substring(2), 
+            "May." + String.valueOf(currentYear).substring(2), 
+            "June." + String.valueOf(currentYear).substring(2), 
+            "Jul." + String.valueOf(currentYear).substring(2), 
+            "Aug." + String.valueOf(currentYear).substring(2), 
+            "Sept." + String.valueOf(currentYear).substring(2),
+            "Oct." + String.valueOf(currentYear).substring(2), 
+            "Nov." + String.valueOf(currentYear).substring(2), 
+            "Dec." + String.valueOf(currentYear).substring(2), 
+            "Jan." + String.valueOf(currentYear + 1).substring(2), 
+            "Feb." + String.valueOf(currentYear + 1).substring(2), 
+            "Mar." + String.valueOf(currentYear + 1).substring(2)
+        };
     }
     
     private void createMonthlySheet(XSSFWorkbook workbook, String monthName, List<Initiative> initiatives, int filterYear) {
@@ -523,7 +477,7 @@ public class ReportsService {
         // Row 2: Empty
         Row emptyRow1 = sheet.createRow(rowNum++);
         
-        // Row 3 (A3): Tracker updated on Date with form reference
+        // Row 3 (A3): Dynamic tracker updated date
         Row dateRow = sheet.createRow(rowNum++);
         org.apache.poi.ss.usermodel.Cell dateLabelCell = dateRow.createCell(0);
         dateLabelCell.setCellValue("Tracker updated on Date:");
@@ -547,7 +501,7 @@ public class ReportsService {
         String[] headers = {
             "Sr. No.", "Description of Initiative", "Category", "Initiative No.", 
             "Initiation Date", "Initiative Leader", "Target Date", "Modification or CAPEX Cost", 
-            "Current Status", "Expected Savings", "Actual Savings", "Annualized Value FY25-26", "Remarks"
+            "Current Status", "Expected Savings", "Actual Savings", "Annualized Value FY" + getCurrentFiscalYear() + "-" + (Integer.parseInt(getCurrentFiscalYear()) + 1), "Remarks"
         };
         
         for (int i = 0; i < headers.length; i++) {
