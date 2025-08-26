@@ -290,7 +290,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
       ...formData,
       isFinalized: 'N', // Changed to 'N' string
       faApproval: 'N',  // Changed to 'N' string
-      category: formData.category || 'General'
+      category: formData.category || 'RMC'
     } as MonthlyMonitoringEntry;
 
     if (editingEntry) {
@@ -377,21 +377,16 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                   <div>
                     <Label htmlFor="category">Category</Label>
                     <Select 
-                      value={formData.category || 'General'} 
+                      value={formData.category || 'RMC'} 
                       onValueChange={(value) => setFormData({ ...formData, category: value })}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="General">General</SelectItem>
-                        <SelectItem value="Cost Savings">Cost Savings</SelectItem>
-                        <SelectItem value="Quality Improvement">Quality Improvement</SelectItem>
-                        <SelectItem value="Process Efficiency">Process Efficiency</SelectItem>
-                        <SelectItem value="Safety Metrics">RMC (Raw Material Cost)</SelectItem>
-                         <SelectItem value="Safety Metrics">Spent Acid</SelectItem>
-                        <SelectItem value="Safety Metrics">Safety Metrics</SelectItem>
-                        <SelectItem value="Environmental">Environmental</SelectItem>
+                        <SelectItem value="RMC">RMC (Raw Material Cost)</SelectItem>
+                        <SelectItem value="Spent Acid">Spent Acid</SelectItem>
+                        <SelectItem value="Environment">Environment</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

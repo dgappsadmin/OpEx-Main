@@ -47,6 +47,36 @@ public class ReportsController {
         }
     }
 
+    @GetMapping("/export/dnl-plant-initiatives")
+    public ResponseEntity<ByteArrayResource> exportDNLPlantInitiatives(
+            @RequestParam(required = false) String site,
+            @RequestParam(required = false) String period,
+            @RequestParam(required = false) String year) {
+        
+        try {
+            // Generate the DNL Plant Initiatives Excel report
+            ByteArrayOutputStream outputStream = reportsService.generateDNLPlantInitiativesReport(site, period, year);
+            
+            // Create response with proper headers
+            ByteArrayResource resource = new ByteArrayResource(outputStream.toByteArray());
+            
+            // Generate filename with timestamp and year
+            String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+            String reportYear = year != null ? year : String.valueOf(new Date().getYear() + 1900);
+            String filename = String.format("DNL_Plant_Initiatives_Report_%s_%s.xlsx", reportYear, timestamp);
+            
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                    .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                    .contentLength(resource.contentLength())
+                    .body(resource);
+                    
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
     @GetMapping("/export/initiative-form/{initiativeId}")
     public ResponseEntity<ByteArrayResource> exportInitiativeForm(@PathVariable String initiativeId) {
         try {

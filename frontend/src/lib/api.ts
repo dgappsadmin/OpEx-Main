@@ -853,6 +853,45 @@ export const reportsAPI = {
     return filename;
   },
 
+  downloadDNLPlantInitiatives: async (params?: { site?: string; period?: string; year?: string }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.site && params.site !== 'all') {
+      queryParams.append('site', params.site);
+    }
+    if (params?.period) {
+      queryParams.append('period', params.period);
+    }
+    if (params?.year) {
+      queryParams.append('year', params.year);
+    }
+    
+    const response = await api.get(`/reports/export/dnl-plant-initiatives?${queryParams.toString()}`, {
+      responseType: 'blob',
+    });
+    
+    const blob = new Blob([response.data], { 
+      type: response.headers['content-type'] || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+    });
+    const url = window.URL.createObjectURL(blob);
+    
+    const contentDisposition = response.headers['content-disposition'];
+    let filename = 'dnl-plant-initiatives-report.xlsx';
+    if (contentDisposition && contentDisposition.includes('filename=')) {
+      filename = contentDisposition.split('filename=')[1].replace(/"/g, '');
+    }
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    window.URL.revokeObjectURL(url);
+    
+    return filename;
+  },
+
   downloadInitiativeForm: async (initiativeId: string) => {
     const response = await api.get(`/reports/export/initiative-form/${initiativeId}`, {
       responseType: 'blob',

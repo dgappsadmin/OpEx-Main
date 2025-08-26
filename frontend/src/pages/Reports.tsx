@@ -16,7 +16,7 @@ interface ReportsProps {
 }
 
 export default function Reports({ user }: ReportsProps) {
-  const [selectedPeriod, setSelectedPeriod] = useState<string>('monthly');
+  const [selectedPeriod, setSelectedPeriod] = useState<string>('yearly'); // Default to yearly
   const [selectedSite, setSelectedSite] = useState<string>('all');
   const { data: initiativesData, isLoading } = useInitiatives();
   
@@ -57,7 +57,23 @@ export default function Reports({ user }: ReportsProps) {
   const avgSavingsPerInitiative = filteredInitiatives.length > 0 ? totalSavings / filteredInitiatives.length : 0;
 
   const handleDownloadReport = async (reportType: string) => {
-    if (reportType === 'Detailed Report (Excel)') {
+    if (reportType === 'Executive Summary') {
+      try {
+        // Use the new DNL Plant Initiatives export with current year as default
+        const currentYear = new Date().getFullYear();
+        const filename = await reportsAPI.downloadDNLPlantInitiatives({
+          site: selectedSite,
+          period: selectedPeriod === 'yearly' ? 'yearly' : selectedPeriod,
+          year: currentYear.toString()
+        });
+        
+        console.log(`Successfully downloaded DNL Plant Initiatives report: ${filename} for ${selectedSite} site(s) - ${selectedPeriod} period (${currentYear})`);
+        alert(`DNL Plant Initiatives report "${filename}" downloaded successfully for year ${currentYear}!`);
+      } catch (error) {
+        console.error('Error downloading DNL Plant Initiatives report:', error);
+        alert('Failed to download DNL Plant Initiatives report. Please try again.');
+      }
+    } else if (reportType === 'Detailed Report (Excel)') {
       try {
         // Use the centralized API with proper authentication
         const filename = await reportsAPI.downloadDetailedExcel({
@@ -100,7 +116,7 @@ export default function Reports({ user }: ReportsProps) {
         <div className="flex gap-2">
           <Button onClick={() => handleDownloadReport('Executive Summary')}>
             <Download className="h-4 w-4 mr-2" />
-            Download Executive Report
+            Download DNL Plant Initiatives Report
           </Button>
         </div>
       </div>
@@ -311,7 +327,7 @@ export default function Reports({ user }: ReportsProps) {
                   className="w-full"
                 >
                   <Download className="h-4 w-4 mr-2" />
-                  Executive Summary (PDF)
+                  DNL Plant Initiatives Report (Excel)
                 </Button>
                 
                 <Button 

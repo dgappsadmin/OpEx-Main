@@ -40,4 +40,27 @@ public interface MonthlyMonitoringEntryRepository extends JpaRepository<MonthlyM
     List<MonthlyMonitoringEntry> findByIsFinalizedOrderByMonitoringMonthDesc(String isFinalized);
     
     List<MonthlyMonitoringEntry> findByFaApprovalOrderByMonitoringMonthDesc(String faApproval);
+    
+    // DNL Plant Initiatives Report - Aggregate data by category and budget type
+    @Query("SELECT mme.category, i.budgetType, " +
+           "SUM(CASE WHEN mme.achievedValue IS NOT NULL THEN mme.achievedValue ELSE 0 END) as totalSavings, " +
+           "COUNT(mme) as entryCount " +
+           "FROM MonthlyMonitoringEntry mme " +
+           "JOIN mme.initiative i " +
+           "WHERE mme.category IN ('RMC', 'Spent Acid', 'Environment') " +
+           "AND (:site IS NULL OR :site = 'all' OR i.site = :site) " +
+           "AND (:startDate IS NULL OR mme.monitoringMonth >= :startDate) " +
+           "AND (:endDate IS NULL OR mme.monitoringMonth <= :endDate) " +
+           "GROUP BY mme.category, i.budgetType")
+    List<Object[]> findDNLPlantInitiativesData(@Param("site") String site, 
+                                               @Param("startDate") String startDate, 
+                                               @Param("endDate") String endDate);
+                                               
+    // Additional query for total budget targets from initiatives
+    @Query("SELECT i.budgetType, SUM(i.expectedSavings) as totalTarget " +
+           "FROM Initiative i " +
+           "WHERE (:site IS NULL OR :site = 'all' OR i.site = :site) " +
+           "AND i.budgetType IN ('budgeted', 'non-budgeted') " +
+           "GROUP BY i.budgetType")
+    List<Object[]> findBudgetTargetsByType(@Param("site") String site);
 }

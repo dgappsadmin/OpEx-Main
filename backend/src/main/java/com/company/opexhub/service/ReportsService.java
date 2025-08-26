@@ -1,5 +1,6 @@
 package com.company.opexhub.service;
 
+import com.company.opexhub.dto.DNLReportDataDTO;
 import com.company.opexhub.entity.Initiative;
 import com.company.opexhub.entity.MonthlyMonitoringEntry;
 import com.company.opexhub.repository.InitiativeRepository;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -31,7 +33,226 @@ public class ReportsService {
 
     @Autowired
     private MonthlyMonitoringEntryRepository monthlyMonitoringEntryRepository;
-
+    
+    // New method for DNL Plant Initiatives report
+    public ByteArrayOutputStream generateDNLPlantInitiativesReport(String site, String period, String year) throws IOException {
+        // Create workbook
+        XSSFWorkbook workbook = new XSSFWorkbook();
+        Sheet sheet = workbook.createSheet("DNL - Plant Initiatives");
+        
+        // Get report data
+        DNLReportDataDTO reportData = getDNLReportData(site, period, year);
+        
+        // Create the report
+        createDNLPlantInitiativesSheet(workbook, sheet, reportData, year);
+        
+        // Write to output stream
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        workbook.write(outputStream);
+        workbook.close();
+        
+        return outputStream;
+    }
+    
+    private DNLReportDataDTO getDNLReportData(String site, String period, String year) {
+        // Calculate date range based on period - Default to yearly for current year
+        String startDate = null;
+        String endDate = null;
+        
+        LocalDate now = LocalDate.now();
+        int targetYear = year != null ? Integer.parseInt(year) : now.getYear();
+        
+        switch (period != null ? period.toLowerCase() : "yearly") {
+            case "weekly":
+                startDate = now.minusWeeks(1).toString().substring(0, 7); // YYYY-MM format
+                endDate = now.toString().substring(0, 7);
+                break;
+            case "monthly":
+                startDate = now.minusMonths(1).toString().substring(0, 7);
+                endDate = now.toString().substring(0, 7);
+                break;
+            case "quarterly":
+                startDate = now.minusMonths(3).toString().substring(0, 7);
+                endDate = now.toString().substring(0, 7);
+                break;
+            default: // yearly - Default option for specified year (current year if not provided)
+                startDate = targetYear + "-01"; // January of target year
+                endDate = targetYear + "-12";   // December of target year
+                break;
+        }
+        
+        // Get aggregated data from repository
+        List<Object[]> monitoringData = monthlyMonitoringEntryRepository.findDNLPlantInitiativesData(site, startDate, endDate);
+        List<Object[]> budgetTargets = monthlyMonitoringEntryRepository.findBudgetTargetsByType(site);
+        
+        return new DNLReportDataDTO(monitoringData, budgetTargets);
+    }
+    
+    private void createDNLPlantInitiativesSheet(XSSFWorkbook workbook, Sheet sheet, DNLReportDataDTO reportData, String year) {
+        // Create styles
+        CellStyle titleStyle = createTitleStyle(workbook);
+        CellStyle headerStyle = createHeaderStyle(workbook);
+        CellStyle dataStyle = createDataStyle(workbook);
+        
+        // Create colored styles for chart representation
+        CellStyle rmcStyle = createColoredStyle(workbook, "1F4E79"); // Dark Blue
+        CellStyle spentAcidStyle = createColoredStyle(workbook, "FF6600"); // Orange  
+        CellStyle environmentStyle = createColoredStyle(workbook, "70AD47"); // Green
+        CellStyle totalStyle = createColoredStyle(workbook, "5B9BD5"); // Light Blue
+        
+        int rowNum = 0;
+        int currentYear = year != null ? Integer.parseInt(year) : LocalDate.now().getYear();
+        
+        // Title row
+        Row titleRow = sheet.createRow(rowNum++);
+        Cell titleCell = titleRow.createCell(0);
+        titleCell.setCellValue("DNL - Plant Initiatives");
+        titleCell.setCellStyle(titleStyle);
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 6));
+        
+        // Subtitle row with dynamic year
+        Row subtitleRow = sheet.createRow(rowNum++);
+        Cell subtitleCell = subtitleRow.createCell(0);
+        subtitleCell.setCellValue("Initiative saving till June " + currentYear + " (Rs. Lacs)");
+        subtitleCell.setCellStyle(titleStyle);
+        sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 6));
+        
+        // Empty row
+        sheet.createRow(rowNum++);
+        
+        // Chart Area Label
+        Row chartLabelRow = sheet.createRow(rowNum++);
+        Cell chartLabelCell = chartLabelRow.createCell(0);
+        chartLabelCell.setCellValue("Chart Area");
+        chartLabelCell.setCellStyle(createChartLabelStyle(workbook));
+        
+        // Process data for chart representation
+        double[][] data = reportData.getProcessedData();
+        String[] categories = {"RMC", "Spent Acid", "Environment", "Total"};
+        CellStyle[] categoryStyles = {rmcStyle, spentAcidStyle, environmentStyle, totalStyle};
+        
+        // Create visual chart representation using cells
+        for (int i = 0; i < categories.length; i++) {
+            Row chartRow = sheet.createRow(rowNum++);
+            
+            // Category name
+            Cell categoryCell = chartRow.createCell(0);
+            categoryCell.setCellValue(categories[i]);
+            categoryCell.setCellStyle(categoryStyles[i]);
+            
+            // Visual bar representation using total value
+            double totalValue = data[i][5]; // Total column
+            int barLength = (int) Math.min(10, Math.max(1, totalValue / 100)); // Scale bar length
+            
+            for (int j = 1; j <= barLength; j++) {
+                Cell barCell = chartRow.createCell(j);
+                barCell.setCellValue("█"); // Block character for bar
+                barCell.setCellStyle(categoryStyles[i]);
+            }
+            
+            // Add value at the end
+            Cell valueCell = chartRow.createCell(barLength + 2);
+            valueCell.setCellValue(totalValue);
+            valueCell.setCellStyle(dataStyle);
+        }
+        
+        // Empty rows for spacing
+        sheet.createRow(rowNum++);
+        sheet.createRow(rowNum++);
+        
+        // Headers for data table
+        Row headerRow = sheet.createRow(rowNum++);
+        String[] headers = {"Category", "FY'26 Budgeted Saving", "FY'26 Non Budgeted Saving", 
+                           "Budgeted", "Non-budgeted", "Savings till June'25", "Total"};
+        
+        for (int i = 0; i < headers.length; i++) {
+            Cell headerCell = headerRow.createCell(i);
+            headerCell.setCellValue(headers[i]);
+            headerCell.setCellStyle(headerStyle);
+        }
+        
+        // Process data and create table rows with colors
+        for (int i = 0; i < categories.length; i++) {
+            Row dataRow = sheet.createRow(rowNum++);
+            
+            // Category name with color
+            Cell categoryCell = dataRow.createCell(0);
+            categoryCell.setCellValue(categories[i]);
+            categoryCell.setCellStyle(categoryStyles[i]);
+            
+            // Data values
+            for (int j = 0; j < 6; j++) {
+                Cell cell = dataRow.createCell(j + 1);
+                cell.setCellValue(data[i][j]);
+                if (j == 5) { // Total column
+                    cell.setCellStyle(categoryStyles[i]);
+                } else {
+                    cell.setCellStyle(dataStyle);
+                }
+            }
+        }
+        
+        // Auto-size columns
+        for (int i = 0; i < 12; i++) {
+            sheet.autoSizeColumn(i);
+        }
+    }
+    
+    private CellStyle createColoredStyle(XSSFWorkbook workbook, String hexColor) {
+        CellStyle style = workbook.createCellStyle();
+        Font font = workbook.createFont();
+        font.setBold(true);
+        font.setFontHeightInPoints((short) 10);
+        font.setColor(IndexedColors.WHITE.getIndex());
+        style.setFont(font);
+        
+        // Set background color using indexed colors for better compatibility
+        IndexedColors bgColor;
+        switch(hexColor) {
+            case "1F4E79": // Dark Blue for RMC
+                bgColor = IndexedColors.DARK_BLUE;
+                break;
+            case "FF6600": // Orange for Spent Acid
+                bgColor = IndexedColors.ORANGE;
+                break;
+            case "70AD47": // Green for Environment
+                bgColor = IndexedColors.GREEN;
+                break;
+            case "5B9BD5": // Light Blue for Total
+                bgColor = IndexedColors.LIGHT_BLUE;
+                break;
+            default:
+                bgColor = IndexedColors.GREY_25_PERCENT;
+                break;
+        }
+        
+        style.setFillForegroundColor(bgColor.getIndex());
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        
+        // Add borders
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
+        
+        // Center alignment
+        style.setAlignment(HorizontalAlignment.CENTER);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        
+        return style;
+    }
+    
+    private CellStyle createChartLabelStyle(XSSFWorkbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        Font font = workbook.createFont();
+        font.setBold(true);
+        font.setFontHeightInPoints((short) 12);
+        style.setFont(font);
+        style.setAlignment(HorizontalAlignment.LEFT);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        return style;
+    }
+    
     public ByteArrayOutputStream generateDetailedExcelReport(String site, String year) throws IOException {
         // Create workbook
         XSSFWorkbook workbook = new XSSFWorkbook();
