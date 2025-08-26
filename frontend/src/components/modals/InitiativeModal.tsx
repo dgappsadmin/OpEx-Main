@@ -50,8 +50,10 @@ interface Initiative {
   startDate?: string;
   endDate?: string;
   currentStage?: number;
-  requiresMoc?: boolean;
-  requiresCapex?: boolean;
+  requiresMoc?: boolean | string; // Legacy field (boolean) for backward compatibility
+  requiresCapex?: boolean | string; // Legacy field (boolean) for backward compatibility
+  mocNumber?: string; // New field - MOC Number from OPEX_INITIATIVES table
+  capexNumber?: string; // New field - CAPEX Number from OPEX_INITIATIVES table
   createdByName?: string;
   createdByEmail?: string;
   createdBy?: number | string; // User ID who created the initiative
@@ -139,6 +141,12 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
     isEditing, 
     initiativeId: initiative?.id,
     modalTitle: isEditing ? 'Edit Initiative' : 'Initiative Details',
+    mocCapexData: {
+      requiresMoc: initiative?.requiresMoc,
+      mocNumber: initiative?.mocNumber,
+      requiresCapex: initiative?.requiresCapex,
+      capexNumber: initiative?.capexNumber
+    },
     initiativeData: {
       initiatorName: initiative?.initiatorName,
       createdByName: initiative?.createdByName,
@@ -645,22 +653,110 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                 <CardContent>
                   <div className="space-y-4">
                     <div>
-                      <p className="text-sm font-medium mb-3">Special Requirements</p>
+                      <p className="text-sm font-medium mb-3">MOC & CAPEX Requirements</p>
+                      
+                      {/* MOC Requirements Section */}
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium">MOC Required</Label>
+                          <div className="flex items-center gap-2">
+                            <Badge 
+                              variant={
+                                initiative?.requiresMoc === 'Y' ? 'default' : 
+                                initiative?.requiresMoc === 'N' ? 'secondary' : 
+                                'outline'
+                              }
+                              className="flex items-center gap-1"
+                            >
+                              {initiative?.requiresMoc === 'Y' ? (
+                                <>
+                                  <CheckCircle2 className="h-3 w-3" />
+                                  Yes
+                                </>
+                              ) : initiative?.requiresMoc === 'N' ? (
+                                <>
+                                  <X className="h-3 w-3" />
+                                  No
+                                </>
+                              ) : (
+                                <>
+                                  <Clock className="h-3 w-3" />
+                                  Decision Pending
+                                </>
+                              )}
+                            </Badge>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium">MOC Number</Label>
+                          <Input
+                            value={initiative?.mocNumber || 'N/A'}
+                            disabled
+                            className="bg-muted"
+                          />
+                        </div>
+                      </div>
+
+                      {/* CAPEX Requirements Section */}
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium">CAPEX Required</Label>
+                          <div className="flex items-center gap-2">
+                            <Badge 
+                              variant={
+                                initiative?.requiresCapex === 'Y' ? 'default' : 
+                                initiative?.requiresCapex === 'N' ? 'secondary' : 
+                                'outline'
+                              }
+                              className="flex items-center gap-1"
+                            >
+                              {initiative?.requiresCapex === 'Y' ? (
+                                <>
+                                  <CheckCircle2 className="h-3 w-3" />
+                                  Yes
+                                </>
+                              ) : initiative?.requiresCapex === 'N' ? (
+                                <>
+                                  <X className="h-3 w-3" />
+                                  No
+                                </>
+                              ) : (
+                                <>
+                                  <Clock className="h-3 w-3" />
+                                  Decision Pending
+                                </>
+                              )}
+                            </Badge>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium">CAPEX Number</Label>
+                          <Input
+                            value={initiative?.capexNumber || 'N/A'}
+                            disabled
+                            className="bg-muted"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="pt-4 border-t">
+                      <p className="text-sm font-medium mb-3">Legacy Requirements (for reference)</p>
                       <div className="flex flex-wrap gap-2">
                         {initiative?.requiresMoc && (
                           <Badge variant="outline" className="flex items-center gap-1">
                             <CheckCircle2 className="h-3 w-3" />
-                            MoC Required
+                            MoC Required (Legacy)
                           </Badge>
                         )}
                         {initiative?.requiresCapex && (
                           <Badge variant="outline" className="flex items-center gap-1">
                             <CheckCircle2 className="h-3 w-3" />
-                            CAPEX Required
+                            CAPEX Required (Legacy)
                           </Badge>
                         )}
                         {!initiative?.requiresMoc && !initiative?.requiresCapex && (
-                          <p className="text-sm text-muted-foreground">No special requirements</p>
+                          <p className="text-sm text-muted-foreground">No legacy requirements</p>
                         )}
                       </div>
                     </div>

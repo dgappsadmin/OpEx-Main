@@ -234,11 +234,14 @@ public class WorkflowTransactionService {
             }
         }
         
-        // Set MOC/CAPEX information
-        dto.setRequiresMoc(transaction.getRequiresMoc());
-        dto.setMocNumber(transaction.getMocNumber());
-        dto.setRequiresCapex(transaction.getRequiresCapex());
-        dto.setCapexNumber(transaction.getCapexNumber());
+        // Set MOC/CAPEX information from Initiative entity instead of WorkflowTransaction
+        if (initiative.isPresent()) {
+            Initiative init = initiative.get();
+            dto.setRequiresMoc(init.getRequiresMoc());
+            dto.setMocNumber(init.getMocNumber());
+            dto.setRequiresCapex(init.getRequiresCapex());
+            dto.setCapexNumber(init.getCapexNumber());
+        }
         
         // Set next stage information
         setNextStageInfo(dto, transaction);
@@ -416,8 +419,7 @@ public class WorkflowTransactionService {
 
     @Transactional
     public WorkflowTransaction processStageAction(Long transactionId, String action, String comment, 
-                                                String actionBy, Long assignedUserId, String requiresMoc, 
-                                                String mocNumber, String requiresCapex, String capexNumber) {
+                                                String actionBy, Long assignedUserId) {
         WorkflowTransaction transaction = workflowTransactionRepository.findById(transactionId)
                 .orElseThrow(() -> new RuntimeException("Workflow transaction not found"));
 
@@ -434,20 +436,6 @@ public class WorkflowTransactionService {
         // Store additional data based on stage
         if (assignedUserId != null) {
             transaction.setAssignedUserId(assignedUserId);
-        }
-        
-        // Store MOC/CAPEX information
-        if (requiresMoc != null) {
-            transaction.setRequiresMoc(requiresMoc);
-        }
-        if (mocNumber != null) {
-            transaction.setMocNumber(mocNumber);
-        }
-        if (requiresCapex != null) {
-            transaction.setRequiresCapex(requiresCapex);
-        }
-        if (capexNumber != null) {
-            transaction.setCapexNumber(capexNumber);
         }
 
         WorkflowTransaction savedTransaction = workflowTransactionRepository.save(transaction);

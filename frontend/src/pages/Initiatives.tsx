@@ -44,8 +44,10 @@ interface Initiative {
   endDate?: string;
   currentStage?: number;
   currentStageName?: string; // Stage name from API
-  requiresMoc?: boolean;
-  requiresCapex?: boolean;
+  requiresMoc?: boolean | string; // Legacy field for backward compatibility
+  requiresCapex?: boolean | string; // Legacy field for backward compatibility
+  mocNumber?: string; // New field - MOC Number from OPEX_INITIATIVES table
+  capexNumber?: string; // New field - CAPEX Number from OPEX_INITIATIVES table
   createdByName?: string;
   createdByEmail?: string;
   createdBy?: number | string; // User ID who created the initiative
@@ -119,6 +121,8 @@ export default function Initiatives({ user }: InitiativesProps) {
           : (item.currentStageName || WORKFLOW_STAGE_NAMES[Math.min(item.currentStage || 1, 11)] || `Stage ${Math.min(item.currentStage || 1, 11)}`),
         requiresMoc: item.requiresMoc,
         requiresCapex: item.requiresCapex,
+        mocNumber: item.mocNumber,
+        capexNumber: item.capexNumber,
         createdByName: item.createdBy?.fullName || item.createdByName,
         createdByEmail: item.createdBy?.email || item.createdByEmail,
         initiatorName: item.initiatorName,

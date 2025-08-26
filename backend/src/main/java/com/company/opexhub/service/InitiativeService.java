@@ -240,40 +240,63 @@ public class InitiativeService {
     // Add this method to handle MOC/CAPEX updates when Stage 6 is approved
     @Transactional
     public boolean updateMocCapexRequirements(Long initiativeId, Map<String, Object> mocCapexData) {
+        System.out.println("=== UPDATING MOC/CAPEX REQUIREMENTS ===");
+        System.out.println("Initiative ID: " + initiativeId);
+        System.out.println("MOC/CAPEX Data: " + mocCapexData);
+        
         Optional<Initiative> initiativeOpt = initiativeRepository.findById(initiativeId);
         
         if (initiativeOpt.isPresent()) {
             Initiative initiative = initiativeOpt.get();
             
+            System.out.println("Found initiative: " + initiative.getId() + " - " + initiative.getTitle());
+            System.out.println("Current MOC values - Requires: " + initiative.getRequiresMoc() + ", Number: " + initiative.getMocNumber());
+            System.out.println("Current CAPEX values - Requires: " + initiative.getRequiresCapex() + ", Number: " + initiative.getCapexNumber());
+            
             // Update MOC requirements - Handle String values ('Y'/'N')
             if (mocCapexData.containsKey("requiresMoc")) {
                 String requiresMoc = (String) mocCapexData.get("requiresMoc");
+                System.out.println("Setting requiresMoc to: " + requiresMoc);
                 initiative.setRequiresMoc(requiresMoc); // Set as String 'Y' or 'N'
             }
             
             if (mocCapexData.containsKey("mocNumber")) {
                 String mocNumber = (String) mocCapexData.get("mocNumber");
+                System.out.println("Setting mocNumber to: " + mocNumber);
                 initiative.setMocNumber(mocNumber);
             }
             
             // Update CAPEX requirements - Handle String values ('Y'/'N')
             if (mocCapexData.containsKey("requiresCapex")) {
                 String requiresCapex = (String) mocCapexData.get("requiresCapex");
+                System.out.println("Setting requiresCapex to: " + requiresCapex);
                 initiative.setRequiresCapex(requiresCapex); // Set as String 'Y' or 'N'
             }
             
             if (mocCapexData.containsKey("capexNumber")) {
                 String capexNumber = (String) mocCapexData.get("capexNumber");
+                System.out.println("Setting capexNumber to: " + capexNumber);
                 initiative.setCapexNumber(capexNumber);
             }
             
-            // Save the updated initiative
-            initiativeRepository.save(initiative);
-            
-            // Log the update
-            System.out.println("Updated OPEX_INITIATIVES ID " + initiativeId + " with MOC/CAPEX data: " + mocCapexData);
-            
-            return true;
+            try {
+                // Save the updated initiative
+                Initiative savedInitiative = initiativeRepository.save(initiative);
+                System.out.println("Successfully saved initiative with updated MOC/CAPEX data");
+                System.out.println("Updated MOC values - Requires: " + savedInitiative.getRequiresMoc() + ", Number: " + savedInitiative.getMocNumber());
+                System.out.println("Updated CAPEX values - Requires: " + savedInitiative.getRequiresCapex() + ", Number: " + savedInitiative.getCapexNumber());
+                
+                // Log the update
+                System.out.println("Updated OPEX_INITIATIVES ID " + initiativeId + " with MOC/CAPEX data: " + mocCapexData);
+                
+                return true;
+            } catch (Exception e) {
+                System.err.println("Error saving initiative: " + e.getMessage());
+                e.printStackTrace();
+                throw e;
+            }
+        } else {
+            System.err.println("Initiative not found with ID: " + initiativeId);
         }
         
         return false;

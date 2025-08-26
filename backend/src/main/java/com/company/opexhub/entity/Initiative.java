@@ -79,10 +79,10 @@ public class Initiative {
     @Column(name = "current_stage")
     private Integer currentStage = 1;
 
-    @Column(name = "requires_moc", columnDefinition = "CHAR(1) DEFAULT 'N'")
+    @Column(name = "requires_moc", columnDefinition = "VARCHAR2(4) DEFAULT 'N'")
     private String requiresMoc = "N";
 
-    @Column(name = "requires_capex", columnDefinition = "CHAR(1) DEFAULT 'N'")
+    @Column(name = "requires_capex", columnDefinition = "VARCHAR2(4) DEFAULT 'N'")
     private String requiresCapex = "N";
 
     @Column(name = "moc_number")

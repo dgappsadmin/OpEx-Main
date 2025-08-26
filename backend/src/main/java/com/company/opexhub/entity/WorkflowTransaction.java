@@ -49,17 +49,7 @@ public class WorkflowTransaction {
     @Column(name = "assigned_user_id")
     private Long assignedUserId; // for IL assignment
 
-    @Column(name = "requires_moc", columnDefinition = "CHAR(1) DEFAULT 'N'")
-    private String requiresMoc = "N";
 
-    @Column(name = "moc_number")
-    private String mocNumber;
-
-    @Column(name = "requires_capex", columnDefinition = "CHAR(1) DEFAULT 'N'")
-    private String requiresCapex = "N";
-
-    @Column(name = "capex_number")
-    private String capexNumber;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -94,22 +84,7 @@ public class WorkflowTransaction {
         updatedAt = LocalDateTime.now();
     }
 
-    // Helper methods for Boolean to CHAR conversion
-    public Boolean getRequiresMocBoolean() {
-        return "Y".equals(this.requiresMoc);
-    }
 
-    public void setRequiresMocBoolean(Boolean requiresMoc) {
-        this.requiresMoc = Boolean.TRUE.equals(requiresMoc) ? "Y" : "N";
-    }
-
-    public Boolean getRequiresCapexBoolean() {
-        return "Y".equals(this.requiresCapex);
-    }
-
-    public void setRequiresCapexBoolean(Boolean requiresCapex) {
-        this.requiresCapex = Boolean.TRUE.equals(requiresCapex) ? "Y" : "N";
-    }
 
     // Getters and Setters
     public Long getId() { return id; }
@@ -154,15 +129,5 @@ public class WorkflowTransaction {
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 
-    public String getRequiresMoc() { return requiresMoc; }
-    public void setRequiresMoc(String requiresMoc) { this.requiresMoc = requiresMoc; }
 
-    public String getMocNumber() { return mocNumber; }
-    public void setMocNumber(String mocNumber) { this.mocNumber = mocNumber; }
-
-    public String getRequiresCapex() { return requiresCapex; }
-    public void setRequiresCapex(String requiresCapex) { this.requiresCapex = requiresCapex; }
-
-    public String getCapexNumber() { return capexNumber; }
-    public void setCapexNumber(String capexNumber) { this.capexNumber = capexNumber; }
 }

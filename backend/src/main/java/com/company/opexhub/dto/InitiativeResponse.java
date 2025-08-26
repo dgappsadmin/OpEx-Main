@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import javax.persistence.Column;
+
 public class InitiativeResponse {
     private Long id;
     private String title;
@@ -27,7 +29,8 @@ public class InitiativeResponse {
     private LocalDateTime updatedAt;
     private String createdByName;
     private String createdByEmail;
-
+    private String mocNumber;
+    private String capexNumber;
     // New fields for assumptions and additional form data
     private String assumption1;
     private String assumption2;
@@ -93,6 +96,12 @@ public class InitiativeResponse {
 
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }
+
+     public String getMocNumber() { return mocNumber; }
+    public void setMocNumber(String mocNumber) { this.mocNumber = mocNumber; }
+
+    public String getCapexNumber() { return capexNumber; }
+    public void setCapexNumber(String capexNumber) { this.capexNumber = capexNumber; }
 
     public String getInitiativeNumber() { return initiativeNumber; }
     public void setInitiativeNumber(String initiativeNumber) { this.initiativeNumber = initiativeNumber; }
