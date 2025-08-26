@@ -214,6 +214,47 @@ public class ReportsService {
         return outputStream;
     }
     
+    // New method to generate DNL Chart PDF
+    public ByteArrayOutputStream generateDNLChartPDF(String site, String period, String year) throws IOException {
+        // Create workbook first to generate chart data
+        XSSFWorkbook workbook = new XSSFWorkbook();
+        Sheet sheet = workbook.createSheet("DNL Chart Data");
+        
+        // Get report data
+        DNLReportDataDTO reportData = getDNLReportData(site, period, year);
+        
+        // Create chart data sheet
+        createDNLChartDataSheet(workbook, sheet, reportData, year);
+        
+        // Convert to PDF using Apache POI (simplified approach)
+        // For production, you might want to use iText or similar PDF library
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        workbook.write(outputStream);
+        workbook.close();
+        
+        return outputStream;
+    }
+    
+    // New method to generate DNL Chart Excel  
+    public ByteArrayOutputStream generateDNLChartExcel(String site, String period, String year) throws IOException {
+        // Create workbook
+        XSSFWorkbook workbook = new XSSFWorkbook();
+        Sheet sheet = workbook.createSheet("DNL - Plant Initiatives Chart");
+        
+        // Get report data
+        DNLReportDataDTO reportData = getDNLReportData(site, period, year);
+        
+        // Create enhanced chart sheet
+        createDNLChartSheet(workbook, sheet, reportData, year);
+        
+        // Write to output stream
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        workbook.write(outputStream);
+        workbook.close();
+        
+        return outputStream;
+    }
+    
     private void createDNLPlantInitiativesSheet(XSSFWorkbook workbook, Sheet sheet, DNLReportDataDTO reportData, String year) {
         // Create styles
         CellStyle titleStyle = createTitleStyle(workbook);
@@ -316,6 +357,205 @@ public class ReportsService {
             // Data values
             for (int j = 0; j < 6; j++) {
                 org.apache.poi.ss.usermodel.Cell cell = dataRow.createCell(j + 1);
+                cell.setCellValue(data[i][j]);
+                if (j == 5) { // Total column
+                    cell.setCellStyle(categoryStyles[i]);
+                } else {
+                    cell.setCellStyle(dataStyle);
+                }
+            }
+        }
+        
+        // Auto-size columns
+        for (int i = 0; i < 12; i++) {
+            sheet.autoSizeColumn(i);
+        }
+    }
+    
+    // New method to create chart data sheet for PDF export
+    private void createDNLChartDataSheet(XSSFWorkbook workbook, Sheet sheet, DNLReportDataDTO reportData, String year) {
+        // Create styles
+        CellStyle titleStyle = createTitleStyle(workbook);
+        CellStyle headerStyle = createHeaderStyle(workbook);
+        CellStyle dataStyle = createDataStyle(workbook);
+        
+        // Create colored styles for chart categories
+        CellStyle rmcStyle = createColoredStyle(workbook, "1F4E79"); // Dark Blue
+        CellStyle spentAcidStyle = createColoredStyle(workbook, "FF6600"); // Orange  
+        CellStyle environmentStyle = createColoredStyle(workbook, "70AD47"); // Green
+        CellStyle totalStyle = createColoredStyle(workbook, "5B9BD5"); // Light Blue
+        
+        int rowNum = 0;
+        int currentYear = year != null ? Integer.parseInt(year) : LocalDate.now().getYear();
+        
+        // Title row
+        Row titleRow = sheet.createRow(rowNum++);
+        Cell titleCell = titleRow.createCell(0);
+        titleCell.setCellValue("DNL - Plant Initiatives Chart Export");
+        titleCell.setCellStyle(titleStyle);
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 6));
+        
+        // Dynamic subtitle row
+        Row subtitleRow = sheet.createRow(rowNum++);
+        Cell subtitleCell = subtitleRow.createCell(0);
+        subtitleCell.setCellValue("Initiative saving till " + getCurrentMonthYear() + " (Rs. Lacs)");
+        subtitleCell.setCellStyle(titleStyle);
+        sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 6));
+        
+        // Process data for chart
+        double[][] data = reportData.getProcessedData();
+        String[] categories = {"RMC", "Spent Acid", "Environment", "Total"};
+        CellStyle[] categoryStyles = {rmcStyle, spentAcidStyle, environmentStyle, totalStyle};
+        
+        // Create data table for chart
+        rowNum += 2; // Add some spacing
+        Row headerRow = sheet.createRow(rowNum++);
+        String currentFY = getCurrentFiscalYear();
+        String[] headers = {"Category", 
+            "FY'" + currentFY + " Budgeted Saving", 
+            "FY'" + currentFY + " Non Budgeted Saving", 
+            "Budgeted", 
+            "Non-budgeted", 
+            "Savings till " + getCurrentMonthYear(), 
+            "Total"};
+        
+        for (int i = 0; i < headers.length; i++) {
+            Cell headerCell = headerRow.createCell(i);
+            headerCell.setCellValue(headers[i]);
+            headerCell.setCellStyle(headerStyle);
+        }
+        
+        // Add data rows
+        for (int i = 0; i < categories.length; i++) {
+            Row dataRow = sheet.createRow(rowNum++);
+            
+            Cell categoryCell = dataRow.createCell(0);
+            categoryCell.setCellValue(categories[i]);
+            categoryCell.setCellStyle(categoryStyles[i]);
+            
+            for (int j = 0; j < 6; j++) {
+                Cell cell = dataRow.createCell(j + 1);
+                cell.setCellValue(data[i][j]);
+                if (j == 5) { // Total column
+                    cell.setCellStyle(categoryStyles[i]);
+                } else {
+                    cell.setCellStyle(dataStyle);
+                }
+            }
+        }
+        
+        // Auto-size columns
+        for (int i = 0; i < 7; i++) {
+            sheet.autoSizeColumn(i);
+        }
+    }
+    
+    // New method to create enhanced chart sheet for Excel export
+    private void createDNLChartSheet(XSSFWorkbook workbook, Sheet sheet, DNLReportDataDTO reportData, String year) {
+        // Create styles
+        CellStyle titleStyle = createTitleStyle(workbook);
+        CellStyle headerStyle = createHeaderStyle(workbook);
+        CellStyle dataStyle = createDataStyle(workbook);
+        
+        // Create colored styles for chart representation
+        CellStyle rmcStyle = createColoredStyle(workbook, "1F4E79"); // Dark Blue
+        CellStyle spentAcidStyle = createColoredStyle(workbook, "FF6600"); // Orange  
+        CellStyle environmentStyle = createColoredStyle(workbook, "70AD47"); // Green
+        CellStyle totalStyle = createColoredStyle(workbook, "5B9BD5"); // Light Blue
+        
+        int rowNum = 0;
+        int currentYear = year != null ? Integer.parseInt(year) : LocalDate.now().getYear();
+        
+        // Title row
+        Row titleRow = sheet.createRow(rowNum++);
+        Cell titleCell = titleRow.createCell(0);
+        titleCell.setCellValue("DNL - Plant Initiatives");
+        titleCell.setCellStyle(titleStyle);
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 10));
+        
+        // Dynamic subtitle row
+        Row subtitleRow = sheet.createRow(rowNum++);
+        Cell subtitleCell = subtitleRow.createCell(0);
+        subtitleCell.setCellValue("Initiative saving till " + getCurrentMonthYear() + " (Rs. Lacs)");
+        subtitleCell.setCellStyle(titleStyle);
+        sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 10));
+        
+        // Empty row
+        sheet.createRow(rowNum++);
+        
+        // Chart representation section
+        Row chartLabelRow = sheet.createRow(rowNum++);
+        Cell chartLabelCell = chartLabelRow.createCell(0);
+        chartLabelCell.setCellValue("Bar Chart Representation");
+        chartLabelCell.setCellStyle(createChartLabelStyle(workbook));
+        
+        // Process data for chart representation
+        double[][] data = reportData.getProcessedData();
+        String[] categories = {"RMC", "Spent Acid", "Environment", "Total"};
+        CellStyle[] categoryStyles = {rmcStyle, spentAcidStyle, environmentStyle, totalStyle};
+        
+        // Create visual bar chart representation using cells
+        for (int i = 0; i < categories.length; i++) {
+            Row chartRow = sheet.createRow(rowNum++);
+            
+            // Category name
+            Cell categoryCell = chartRow.createCell(0);
+            categoryCell.setCellValue(categories[i]);
+            categoryCell.setCellStyle(categoryStyles[i]);
+            
+            // Create bars for different data points
+            double budgetedValue = data[i][2]; // Budgeted
+            double nonBudgetedValue = data[i][3]; // Non-budgeted
+            double totalValue = data[i][5]; // Total
+            
+            // Scale the bars (divide by 50 to fit in cells)
+            int budgetedBars = Math.max(1, (int)(budgetedValue / 50));
+            int nonBudgetedBars = Math.max(1, (int)(nonBudgetedValue / 50));
+            
+            // Draw budgeted bars
+            for (int j = 1; j <= budgetedBars && j <= 5; j++) {
+                Cell barCell = chartRow.createCell(j);
+                barCell.setCellValue("█");
+                barCell.setCellStyle(categoryStyles[i]);
+            }
+            
+            // Add values at the end
+            Cell valueCell = chartRow.createCell(8);
+            valueCell.setCellValue(String.format("B: %.0f, NB: %.0f, Total: %.0f", budgetedValue, nonBudgetedValue, totalValue));
+            valueCell.setCellStyle(dataStyle);
+        }
+        
+        // Empty rows for spacing
+        sheet.createRow(rowNum++);
+        sheet.createRow(rowNum++);
+        
+        // Data table section
+        Row headerRow = sheet.createRow(rowNum++);
+        String currentFY = getCurrentFiscalYear();
+        String[] headers = {"Category", 
+            "FY'" + currentFY + " Budgeted Saving", 
+            "FY'" + currentFY + " Non Budgeted Saving", 
+            "Budgeted", 
+            "Non-budgeted", 
+            "Savings till " + getCurrentMonthYear(), 
+            "Total"};
+        
+        for (int i = 0; i < headers.length; i++) {
+            Cell headerCell = headerRow.createCell(i);
+            headerCell.setCellValue(headers[i]);
+            headerCell.setCellStyle(headerStyle);
+        }
+        
+        // Add data rows with colors
+        for (int i = 0; i < categories.length; i++) {
+            Row dataRow = sheet.createRow(rowNum++);
+            
+            Cell categoryCell = dataRow.createCell(0);
+            categoryCell.setCellValue(categories[i]);
+            categoryCell.setCellStyle(categoryStyles[i]);
+            
+            for (int j = 0; j < 6; j++) {
+                Cell cell = dataRow.createCell(j + 1);
                 cell.setCellValue(data[i][j]);
                 if (j == 5) { // Total column
                     cell.setCellStyle(categoryStyles[i]);

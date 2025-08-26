@@ -54,6 +54,11 @@ public class DNLReportDataDTO {
         return data;
     }
     
+    // Method to return processed data for JSON serialization (frontend consumption)
+    public double[][] getProcessedDataForChart() {
+        return getProcessedData();
+    }
+    
     // Getters
     public List<Object[]> getMonitoringData() {
         return monitoringData;
@@ -61,5 +66,10 @@ public class DNLReportDataDTO {
     
     public List<Object[]> getBudgetTargets() {
         return budgetTargets;
+    }
+    
+    // Add getter for frontend
+    public double[][] getProcessedData2() {
+        return getProcessedData();
     }
 }

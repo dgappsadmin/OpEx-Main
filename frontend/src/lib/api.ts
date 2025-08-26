@@ -1855,8 +1855,25 @@ export const monthlyMonitoringAPI = {
   }
 };
 
-// Reports API - Updated to fetch dynamic data from ACHIEVED_VALUE
+// Reports API
 export const reportsAPI = {
+  // Get DNL savings data for charts
+  getDNLSavingsData: async (params?: { site?: string; period?: string; year?: string }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.site && params.site !== 'all') {
+      queryParams.append('site', params.site);
+    }
+    if (params?.period) {
+      queryParams.append('period', params.period);
+    }
+    if (params?.year) {
+      queryParams.append('year', params.year);
+    }
+
+    const response = await api.get(`/reports/dnl-savings-data?${queryParams.toString()}`);
+    return response.data;
+  },
+
   downloadDetailedExcel: async (params?: { site?: string; year?: string }) => {
     const queryParams = new URLSearchParams();
     if (params?.site && params.site !== 'all') {
@@ -1893,7 +1910,6 @@ export const reportsAPI = {
     return filename;
   },
 
-  // Updated DNL Plant Initiatives API to fetch dynamic data from ACHIEVED_VALUE
   downloadDNLPlantInitiatives: async (params?: { site?: string; period?: string; year?: string }) => {
     const queryParams = new URLSearchParams();
     if (params?.site && params.site !== 'all') {
@@ -1911,16 +1927,91 @@ export const reportsAPI = {
     });
     
     const blob = new Blob([response.data], { 
+      type: response.headers['content-type'] || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+    });
+    const url = window.URL.createObjectURL(blob);
+    
+    const contentDisposition = response.headers['content-disposition'];
+    let filename = 'dnl-plant-initiatives.xlsx';
+    if (contentDisposition && contentDisposition.includes('filename=')) {
+      filename = contentDisposition.split('filename=')[1].replace(/"/g, '');
+    }
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    window.URL.revokeObjectURL(url);
+    
+    return filename;
+  },
+
+  // New chart export methods
+  downloadDNLChartPDF: async (params?: { site?: string; period?: string; year?: string }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.site && params.site !== 'all') {
+      queryParams.append('site', params.site);
+    }
+    if (params?.period) {
+      queryParams.append('period', params.period);
+    }
+    if (params?.year) {
+      queryParams.append('year', params.year);
+    }
+    
+    const response = await api.get(`/reports/export/dnl-chart-pdf?${queryParams.toString()}`, {
+      responseType: 'blob',
+    });
+    
+    const blob = new Blob([response.data], { 
       type: response.headers['content-type'] || 'application/pdf' 
     });
     const url = window.URL.createObjectURL(blob);
     
     const contentDisposition = response.headers['content-disposition'];
-    const currentDate = new Date();
-    const currentMonth = currentDate.toLocaleString('default', { month: 'short' });
-    const currentYear = currentDate.getFullYear().toString().slice(-2);
+    let filename = 'dnl-chart-report.pdf';
+    if (contentDisposition && contentDisposition.includes('filename=')) {
+      filename = contentDisposition.split('filename=')[1].replace(/"/g, '');
+    }
     
-    let filename = `dnl-plant-initiatives-${currentMonth}${currentYear}.pdf`;
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    window.URL.revokeObjectURL(url);
+    
+    return filename;
+  },
+
+  downloadDNLChartExcel: async (params?: { site?: string; period?: string; year?: string }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.site && params.site !== 'all') {
+      queryParams.append('site', params.site);
+    }
+    if (params?.period) {
+      queryParams.append('period', params.period);
+    }
+    if (params?.year) {
+      queryParams.append('year', params.year);
+    }
+    
+    const response = await api.get(`/reports/export/dnl-chart-excel?${queryParams.toString()}`, {
+      responseType: 'blob',
+    });
+    
+    const blob = new Blob([response.data], { 
+      type: response.headers['content-type'] || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+    });
+    const url = window.URL.createObjectURL(blob);
+    
+    const contentDisposition = response.headers['content-disposition'];
+    let filename = 'dnl-chart-report.xlsx';
     if (contentDisposition && contentDisposition.includes('filename=')) {
       filename = contentDisposition.split('filename=')[1].replace(/"/g, '');
     }
@@ -1963,23 +2054,6 @@ export const reportsAPI = {
     window.URL.revokeObjectURL(url);
     
     return filename;
-  },
-
-  // New API to get dynamic savings data from ACHIEVED_VALUE
-  getSavingsData: async (params?: { site?: string; period?: string; year?: string }) => {
-    const queryParams = new URLSearchParams();
-    if (params?.site && params.site !== 'all') {
-      queryParams.append('site', params.site);
-    }
-    if (params?.period) {
-      queryParams.append('period', params.period);
-    }
-    if (params?.year) {
-      queryParams.append('year', params.year);
-    }
-    
-    const response = await api.get(`/reports/savings-data?${queryParams.toString()}`);
-    return response.data;
   }
 };
 

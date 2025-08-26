@@ -12,13 +12,18 @@ import org.springframework.web.bind.annotation.*;
 import java.io.ByteArrayOutputStream;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/api/reports")
 @CrossOrigin(origins = "*")
 public class ReportsController {
 
+    private static final Logger logger = LoggerFactory.getLogger(ReportsController.class);
+    
     @Autowired
     private ReportsService reportsService;
 
@@ -117,17 +122,71 @@ public class ReportsController {
         }
     }
 
-    // New endpoint to get dynamic savings data from ACHIEVED_VALUE
-    @GetMapping("/savings-data")
-    public ResponseEntity<DNLReportDataDTO> getSavingsData(
-            @RequestParam(required = false) String site,
-            @RequestParam(required = false) String period,
-            @RequestParam(required = false) String year) {
+    // Public method to expose savings data for API endpoint
+    @GetMapping("/dnl-savings-data")
+    public ResponseEntity<DNLReportDataDTO> getDNLSavingsData(
+            @RequestParam(value = "site", required = false) String site,
+            @RequestParam(value = "period", required = false, defaultValue = "yearly") String period,
+            @RequestParam(value = "year", required = false) String year) {
+        
+        DNLReportDataDTO data = reportsService.getDNLSavingsData(site, period, year);
+        return ResponseEntity.ok(data);
+    }
+    
+    // Export DNL Plant Initiatives with Bar Chart as PDF
+    @GetMapping("/export/dnl-chart-pdf")
+    public ResponseEntity<byte[]> downloadDNLChartPDF(
+            @RequestParam(value = "site", required = false) String site,
+            @RequestParam(value = "period", required = false, defaultValue = "yearly") String period,
+            @RequestParam(value = "year", required = false) String year) {
+        
         try {
-            DNLReportDataDTO savingsData = reportsService.getDNLSavingsData(site, period, year);
-            return ResponseEntity.ok(savingsData);
+            ByteArrayOutputStream outputStream = reportsService.generateDNLChartPDF(site, period, year);
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            
+            // Dynamic filename with current date and year
+            String currentYear = year != null ? year : String.valueOf(LocalDate.now().getYear());
+            String filename = String.format("DNL_Plant_Initiatives_Chart_%s_%s.pdf", 
+                currentYear, 
+                LocalDate.now().format(DateTimeFormatter.ofPattern("ddMMyyyy")));
+            headers.setContentDispositionFormData("attachment", filename);
+            
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(outputStream.toByteArray());
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error generating DNL Chart PDF report", e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+    
+    // Export DNL Plant Initiatives with Bar Chart as Excel
+    @GetMapping("/export/dnl-chart-excel")
+    public ResponseEntity<byte[]> downloadDNLChartExcel(
+            @RequestParam(value = "site", required = false) String site,
+            @RequestParam(value = "period", required = false, defaultValue = "yearly") String period,
+            @RequestParam(value = "year", required = false) String year) {
+        
+        try {
+            ByteArrayOutputStream outputStream = reportsService.generateDNLChartExcel(site, period, year);
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+            
+            // Dynamic filename with current date and year
+            String currentYear = year != null ? year : String.valueOf(LocalDate.now().getYear());
+            String filename = String.format("DNL_Plant_Initiatives_Chart_%s_%s.xlsx", 
+                currentYear, 
+                LocalDate.now().format(DateTimeFormatter.ofPattern("ddMMyyyy")));
+            headers.setContentDispositionFormData("attachment", filename);
+            
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(outputStream.toByteArray());
+        } catch (Exception e) {
+            logger.error("Error generating DNL Chart Excel report", e);
             return ResponseEntity.internalServerError().build();
         }
     }

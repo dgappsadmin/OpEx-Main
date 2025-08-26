@@ -9,6 +9,7 @@ import { Building2, User, Lock, Mail, LogIn, UserPlus, ArrowLeft, Shield } from 
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { authAPI } from "@/lib/api";
+import GlassmorphLoader from "@/components/ui/GlassmorphLoader";
 
 const sites = [
   { code: "NDS", name: "NDS" },
@@ -59,6 +60,8 @@ export default function AuthPage({ onLogin }: AuthProps) {
     confirmPassword: ""
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("Authenticating");
+  const [loadingSubmessage, setLoadingSubmessage] = useState("Please wait while we verify your credentials...");
   const { toast } = useToast();
   const { login, register } = useAuth();
 
@@ -68,11 +71,17 @@ export default function AuthPage({ onLogin }: AuthProps) {
     
     try {
       if (isLogin) {
+        setLoadingMessage("Signing In");
+        setLoadingSubmessage("Please wait while we verify your credentials...");
+        
         console.log('Attempting login with:', formData.email);
         const result = await login(formData.email, formData.password);
         console.log('Login result:', result);
         
         if (result.success) {
+          setLoadingMessage("Welcome Back!");
+          setLoadingSubmessage("Redirecting to your dashboard...");
+          
           console.log('AuthPage: Login successful - navigation should happen automatically');
           toast({
             title: "Login Successful",
@@ -88,6 +97,9 @@ export default function AuthPage({ onLogin }: AuthProps) {
           });
         }
       } else {
+        setLoadingMessage("Creating Account");
+        setLoadingSubmessage("Setting up your OpEx Hub account...");
+        
         if (!formData.fullName || !formData.site || !formData.discipline || !formData.role) {
           toast({
             title: "Signup Failed",
@@ -110,6 +122,9 @@ export default function AuthPage({ onLogin }: AuthProps) {
         const result = await register(userData);
         
         if (result.success) {
+          setLoadingMessage("Account Created!");
+          setLoadingSubmessage("Please sign in with your new credentials...");
+          
           toast({
             title: "Signup Successful",
             description: "Account created successfully! Please sign in.",
@@ -154,9 +169,15 @@ export default function AuthPage({ onLogin }: AuthProps) {
     }
 
     setIsLoading(true);
+    setLoadingMessage("Sending Code");
+    setLoadingSubmessage("Please wait while we send a verification code to your email...");
+    
     try {
       const result = await authAPI.sendResetCode(forgotPasswordData.email);
       if (result.success) {
+        setLoadingMessage("Code Sent!");
+        setLoadingSubmessage("Check your email for the verification code...");
+        
         toast({
           title: "Code Sent",
           description: "A 6-digit verification code has been sent to your email",
@@ -192,9 +213,15 @@ export default function AuthPage({ onLogin }: AuthProps) {
     }
 
     setIsLoading(true);
+    setLoadingMessage("Verifying Code");
+    setLoadingSubmessage("Checking your verification code...");
+    
     try {
       const result = await authAPI.verifyResetCode(forgotPasswordData.email, forgotPasswordData.code);
       if (result.success) {
+        setLoadingMessage("Code Verified!");
+        setLoadingSubmessage("Please create your new password...");
+        
         toast({
           title: "Code Verified",
           description: "Please enter your new password",
@@ -249,6 +276,9 @@ export default function AuthPage({ onLogin }: AuthProps) {
     }
 
     setIsLoading(true);
+    setLoadingMessage("Resetting Password");
+    setLoadingSubmessage("Updating your password securely...");
+    
     try {
       const result = await authAPI.resetPassword(
         forgotPasswordData.email, 
@@ -257,6 +287,9 @@ export default function AuthPage({ onLogin }: AuthProps) {
       );
       
       if (result.success) {
+        setLoadingMessage("Password Reset!");
+        setLoadingSubmessage("You can now sign in with your new password...");
+        
         toast({
           title: "Success",
           description: "Password reset successfully! Please sign in with your new password",
@@ -302,7 +335,15 @@ export default function AuthPage({ onLogin }: AuthProps) {
   };
 
   return (
-    <div className="h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-white relative overflow-hidden p-4">
+    <>
+      {/* Glassmorphism Loader */}
+      <GlassmorphLoader 
+        show={isLoading} 
+        message={loadingMessage}
+        submessage={loadingSubmessage}
+      />
+      
+      <div className="h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-white relative overflow-hidden p-4">
       {/* Simplified Background */}
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-100/20 via-white/40 to-blue-50/30"></div>
@@ -530,17 +571,10 @@ export default function AuthPage({ onLogin }: AuthProps) {
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 h-9 transition-all duration-200 transform hover:scale-[1.02] shadow-lg text-sm mt-4" 
                   disabled={isLoading}
                 >
-                  {isLoading ? (
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                      Processing...
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-1.5">
-                      {isLogin ? <LogIn className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
-                      {isLogin ? "Sign In" : "Create Account"}
-                    </div>
-                  )}
+                  <div className="flex items-center gap-1.5">
+                    {isLogin ? <LogIn className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
+                    {isLogin ? "Sign In" : "Create Account"}
+                  </div>
                 </Button>
               </form>
             </Tabs>
@@ -590,14 +624,7 @@ export default function AuthPage({ onLogin }: AuthProps) {
                       className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 h-9 transition-all duration-200 text-sm" 
                       disabled={isLoading}
                     >
-                      {isLoading ? (
-                        <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                          Sending Code...
-                        </div>
-                      ) : (
-                        "Send Verification Code"
-                      )}
+                      Send Verification Code
                     </Button>
                   </form>
                 )}
@@ -631,14 +658,7 @@ export default function AuthPage({ onLogin }: AuthProps) {
                       className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 h-9 transition-all duration-200 text-sm" 
                       disabled={isLoading}
                     >
-                      {isLoading ? (
-                        <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                          Verifying...
-                        </div>
-                      ) : (
-                        "Verify Code"
-                      )}
+                      Verify Code
                     </Button>
 
                     <div className="text-center">
@@ -703,14 +723,7 @@ export default function AuthPage({ onLogin }: AuthProps) {
                       className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 h-9 transition-all duration-200 text-sm" 
                       disabled={isLoading || forgotPasswordData.newPassword !== forgotPasswordData.confirmPassword}
                     >
-                      {isLoading ? (
-                        <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                          Resetting Password...
-                        </div>
-                      ) : (
-                        "Reset Password"
-                      )}
+                      Reset Password
                     </Button>
                   </form>
                 )}
@@ -720,5 +733,6 @@ export default function AuthPage({ onLogin }: AuthProps) {
         </Card>
       </div>
     </div>
+    </>
   );
 }

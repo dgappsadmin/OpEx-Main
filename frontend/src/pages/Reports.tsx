@@ -8,8 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
-import { Download, Calendar, TrendingUp, FileText, Filter } from "lucide-react";
+import { Download, Calendar, TrendingUp, FileText, Filter, BarChart3 } from "lucide-react";
 import { reportsAPI } from "@/lib/api";
+import DNLBarChart from "@/components/DNLBarChart";
 
 interface ReportsProps {
   user: User;
@@ -22,10 +23,17 @@ interface MonthlyData {
   completed: number;
 }
 
+interface DNLChartData {
+  processedData: number[][];
+}
+
 export default function Reports({ user }: ReportsProps) {
   const [selectedPeriod, setSelectedPeriod] = useState<string>('yearly'); // Default to yearly
   const [selectedSite, setSelectedSite] = useState<string>('all');
+  const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
+  const [dnlChartData, setDnlChartData] = useState<DNLChartData | null>(null);
+  const [loadingChart, setLoadingChart] = useState<boolean>(false);
   const { data: initiativesData, isLoading } = useInitiatives();
   
   // Handle both API response format and mock data format
@@ -90,6 +98,27 @@ export default function Reports({ user }: ReportsProps) {
     setMonthlyData(generateDynamicMonthlyData());
   }, [initiatives]);
 
+  // Fetch DNL chart data when filters change
+  useEffect(() => {
+    const fetchDNLChartData = async () => {
+      setLoadingChart(true);
+      try {
+        const data = await reportsAPI.getDNLSavingsData({
+          site: selectedSite !== 'all' ? selectedSite : undefined,
+          period: selectedPeriod,
+          year: selectedYear
+        });
+        setDnlChartData(data);
+      } catch (error) {
+        console.error('Error fetching DNL chart data:', error);
+      } finally {
+        setLoadingChart(false);
+      }
+    };
+
+    fetchDNLChartData();
+  }, [selectedSite, selectedPeriod, selectedYear]);
+
   if (isLoading) {
     return <div className="p-6">Loading reports data...</div>;
   }
@@ -121,21 +150,49 @@ export default function Reports({ user }: ReportsProps) {
         const filename = await reportsAPI.downloadDNLPlantInitiatives({
           site: selectedSite,
           period: selectedPeriod === 'yearly' ? 'yearly' : selectedPeriod,
-          year: currentYear.toString()
+          year: selectedYear || currentYear.toString()
         });
         
-        console.log(`Successfully downloaded DNL Plant Initiatives PDF report: ${filename} for ${selectedSite} site(s) - ${selectedPeriod} period (${currentYear})`);
-        alert(`DNL Plant Initiatives PDF report "${filename}" downloaded successfully for year ${currentYear}! Data includes savings till current month (${getCurrentMonth()}).`);
+        console.log(`Successfully downloaded DNL Plant Initiatives PDF report: ${filename} for ${selectedSite} site(s) - ${selectedPeriod} period (${selectedYear})`);
+        alert(`DNL Plant Initiatives PDF report "${filename}" downloaded successfully for year ${selectedYear}! Data includes savings till current month (${getCurrentMonth()}).`);
       } catch (error) {
         console.error('Error downloading DNL Plant Initiatives PDF report:', error);
         alert('Failed to download DNL Plant Initiatives PDF report. Please try again.');
+      }
+    } else if (reportType === 'DNL Chart PDF') {
+      try {
+        const filename = await reportsAPI.downloadDNLChartPDF({
+          site: selectedSite !== 'all' ? selectedSite : undefined,
+          period: selectedPeriod,
+          year: selectedYear
+        });
+        
+        console.log(`Successfully downloaded DNL Chart PDF: ${filename}`);
+        alert(`DNL Chart PDF "${filename}" downloaded successfully!`);
+      } catch (error) {
+        console.error('Error downloading DNL Chart PDF:', error);
+        alert('Failed to download DNL Chart PDF. Please try again.');
+      }
+    } else if (reportType === 'DNL Chart Excel') {
+      try {
+        const filename = await reportsAPI.downloadDNLChartExcel({
+          site: selectedSite !== 'all' ? selectedSite : undefined,
+          period: selectedPeriod,
+          year: selectedYear
+        });
+        
+        console.log(`Successfully downloaded DNL Chart Excel: ${filename}`);
+        alert(`DNL Chart Excel "${filename}" downloaded successfully!`);
+      } catch (error) {
+        console.error('Error downloading DNL Chart Excel:', error);
+        alert('Failed to download DNL Chart Excel. Please try again.');
       }
     } else if (reportType === 'Detailed Report (Excel)') {
       try {
         // Use the centralized API with proper authentication
         const filename = await reportsAPI.downloadDetailedExcel({
           site: selectedSite,
-          year: new Date().getFullYear().toString()
+          year: selectedYear || new Date().getFullYear().toString()
         });
         
         console.log(`Successfully downloaded detailed Excel report: ${filename} for ${selectedSite} site(s)`);
@@ -190,9 +247,13 @@ export default function Reports({ user }: ReportsProps) {
           <p className="text-muted-foreground">Generate and analyze initiative performance reports (Data till {getCurrentMonth()} {new Date().getFullYear()})</p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={() => handleDownloadReport('DNL Plant Initiatives PDF')}>
+          <Button onClick={() => handleDownloadReport('DNL Chart PDF')} variant="outline">
             <Download className="h-4 w-4 mr-2" />
-            Download DNL Plant Initiatives Report (PDF)
+            Download Chart (PDF)
+          </Button>
+          <Button onClick={() => handleDownloadReport('DNL Chart Excel')} variant="outline">
+            <Download className="h-4 w-4 mr-2" />
+            Download Chart (Excel)
           </Button>
         </div>
       </div>
@@ -232,6 +293,24 @@ export default function Reports({ user }: ReportsProps) {
                 {sites.map((site: string) => (
                   <SelectItem key={site} value={site}>{site}</SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+            </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Year</label>
+            <Select value={selectedYear} onValueChange={setSelectedYear}>
+              <SelectTrigger className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.from({ length: 5 }, (_, i) => {
+                  const year = new Date().getFullYear() - i;
+                  return (
+                    <SelectItem key={year} value={year.toString()}>
+                      {year}
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>
@@ -298,6 +377,7 @@ export default function Reports({ user }: ReportsProps) {
       <Tabs defaultValue="trends" className="w-full">
         <TabsList>
           <TabsTrigger value="trends">Trends</TabsTrigger>
+          <TabsTrigger value="dnl-chart">DNL Chart</TabsTrigger>
           <TabsTrigger value="detailed">Detailed Report</TabsTrigger>
           <TabsTrigger value="export">Export Options</TabsTrigger>
         </TabsList>
@@ -339,6 +419,69 @@ export default function Reports({ user }: ReportsProps) {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="dnl-chart" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5" />
+                DNL Plant Initiatives Chart (FY'{getCurrentFiscalYear()})
+              </CardTitle>
+              <p className="text-muted-foreground">
+                Initiative savings by category - {selectedSite !== 'all' ? selectedSite : 'All Sites'} 
+                {selectedYear && ` - Year ${selectedYear}`}
+              </p>
+            </CardHeader>
+            <CardContent>
+              {loadingChart ? (
+                <div className="flex items-center justify-center h-96">
+                  <div className="text-muted-foreground">Loading chart data...</div>
+                </div>
+              ) : dnlChartData ? (
+                <DNLBarChart 
+                  data={dnlChartData} 
+                  title={`Initiative saving till ${getCurrentMonth()} ${selectedYear} (Rs. Lacs)`}
+                  year={selectedYear}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-96">
+                  <div className="text-muted-foreground">No chart data available</div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Chart Export Options</CardTitle>
+              <p className="text-muted-foreground">
+                Download the DNL chart in various formats
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Button 
+                  onClick={() => handleDownloadReport('DNL Chart PDF')}
+                  className="w-full"
+                  disabled={loadingChart || !dnlChartData}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download Chart (PDF)
+                </Button>
+                
+                <Button 
+                  onClick={() => handleDownloadReport('DNL Chart Excel')}
+                  variant="outline"
+                  className="w-full"
+                  disabled={loadingChart || !dnlChartData}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download Chart (Excel)
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="detailed" className="space-y-4">
@@ -403,7 +546,7 @@ export default function Reports({ user }: ReportsProps) {
                   className="w-full"
                 >
                   <Download className="h-4 w-4 mr-2" />
-                  DNL Plant Initiatives Report (PDF)
+                  DNL Plant Initiatives Report (Excel)
                 </Button>
                 
                 <Button 
@@ -438,5 +581,6 @@ export default function Reports({ user }: ReportsProps) {
         </TabsContent>
       </Tabs>
     </div>
+    
   );
 }
