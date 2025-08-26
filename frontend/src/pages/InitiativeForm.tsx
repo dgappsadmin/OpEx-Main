@@ -41,6 +41,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { sites, disciplines, User } from "@/lib/mockData";
 import { useCreateInitiative } from "@/hooks/useInitiatives";
+import GlassmorphLoader from "@/components/ui/GlassmorphLoader";
 
 interface InitiativeFormProps {
   user: User;
@@ -90,6 +91,8 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
   }
 
   const createInitiativeMutation = useCreateInitiative();
+  const isSubmitting = createInitiativeMutation.isPending;
+  
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -166,423 +169,444 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-4">
-      <div className="max-w-5xl mx-auto px-4">
-        <div className="mb-4">
-          <h1 className="text-xl font-bold text-foreground">New Initiative</h1>
-          <p className="text-sm text-muted-foreground">
-            Submit a new operational excellence initiative
-          </p>
-        </div>
+    <>
+      {/* Loading Overlay */}
+      <GlassmorphLoader
+        show={isSubmitting}
+        message="Submitting Initiative..."
+        submessage="Please wait while we process your initiative..."
+      />
+      
+      <div className="min-h-screen bg-gray-50 py-4">
+        <div className="max-w-5xl mx-auto px-4">
+          <div className="mb-4">
+            <h1 className="text-xl font-bold text-foreground">New Initiative</h1>
+            <p className="text-sm text-muted-foreground">
+              Submit a new operational excellence initiative
+            </p>
+          </div>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {/* Basic Information */}
-            <Card className="shadow-sm">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Basic Information</CardTitle>
-                <CardDescription className="text-sm">
-                  Provide the fundamental details of your initiative
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="grid grid-cols-1 gap-3">
-                  <FormField
-                    control={form.control}
-                    name="title"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-medium">Initiative Title *</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Enter a descriptive title"
-                            {...field}
-                            className="h-9 text-sm"
-                          />
-                        </FormControl>
-                        <FormMessage className="text-xs" />
-                      </FormItem>
-                    )}
-                  />
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              {/* Basic Information */}
+              <Card className="shadow-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Basic Information</CardTitle>
+                  <CardDescription className="text-sm">
+                    Provide the fundamental details of your initiative
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="grid grid-cols-1 gap-3">
                     <FormField
                       control={form.control}
-                      name="initiatorName"
+                      name="title"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-sm font-medium">Initiator Name *</FormLabel>
+                          <FormLabel className="text-sm font-medium">Initiative Title *</FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="Your full name"
+                              placeholder="Enter a descriptive title"
                               {...field}
-                              disabled
-                              className="h-9 text-sm bg-muted text-muted-foreground"
+                              className="h-9 text-sm"
+                              disabled={isSubmitting}
                             />
                           </FormControl>
                           <FormMessage className="text-xs" />
                         </FormItem>
                       )}
                     />
-                    <FormField
-                      control={form.control}
-                      name="site"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm font-medium">Site *</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="Your site"
-                              {...field}
-                              disabled
-                              className="h-9 text-sm bg-muted text-muted-foreground"
-                            />
-                          </FormControl>
-                          <FormMessage className="text-xs" />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <FormField
-                      control={form.control}
-                      name="discipline"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm font-medium">Discipline *</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <FormField
+                        control={form.control}
+                        name="initiatorName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium">Initiator Name *</FormLabel>
                             <FormControl>
-                              <SelectTrigger className="h-9 text-sm">
-                                <SelectValue placeholder="Select discipline" />
-                              </SelectTrigger>
+                              <Input
+                                placeholder="Your full name"
+                                {...field}
+                                disabled
+                                className="h-9 text-sm bg-muted text-muted-foreground"
+                              />
                             </FormControl>
-                            <SelectContent>
-                              {disciplines.map((discipline) => (
-                                <SelectItem key={discipline.code} value={discipline.code} className="text-sm">
-                                  <div className="flex flex-col">
-                                    <span className="font-medium">
-                                      {discipline.name} ({discipline.code})
-                                    </span>
-                                    <span className="text-xs text-muted-foreground">
-                                      {discipline.details}
-                                    </span>
-                                  </div>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage className="text-xs" />
-                        </FormItem>
-                      )}
-                    />
+                            <FormMessage className="text-xs" />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="site"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium">Site *</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Your site"
+                                {...field}
+                                disabled
+                                className="h-9 text-sm bg-muted text-muted-foreground"
+                              />
+                            </FormControl>
+                            <FormMessage className="text-xs" />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <FormField
+                        control={form.control}
+                        name="discipline"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium">Discipline *</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting}>
+                              <FormControl>
+                                <SelectTrigger className="h-9 text-sm">
+                                  <SelectValue placeholder="Select discipline" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {disciplines.map((discipline) => (
+                                  <SelectItem key={discipline.code} value={discipline.code} className="text-sm">
+                                    <div className="flex flex-col">
+                                      <span className="font-medium">
+                                        {discipline.name} ({discipline.code})
+                                      </span>
+                                      <span className="text-xs text-muted-foreground">
+                                        {discipline.details}
+                                      </span>
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage className="text-xs" />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="date"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium">Initiative Date *</FormLabel>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant="outline"
+                                    className={cn(
+                                      "w-full h-9 pl-3 text-left font-normal text-sm",
+                                      !field.value && "text-muted-foreground"
+                                    )}
+                                    disabled={isSubmitting}
+                                  >
+                                    {field.value ? (
+                                      format(field.value, "PPP")
+                                    ) : (
+                                      <span>Pick a date</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={field.value}
+                                  onSelect={field.onChange}
+                                  disabled={(date) => date > new Date() || date < new Date("2020-01-01")}
+                                  initialFocus
+                                  className="p-2"
+                                  style={{ width: "auto", maxWidth: "350px" }}
+                                />
+                              </PopoverContent>
+                            </Popover>
+                            <FormMessage className="text-xs" />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                     <FormField
                       control={form.control}
-                      name="date"
+                      name="description"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-sm font-medium">Initiative Date *</FormLabel>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button
-                                  variant="outline"
-                                  className={cn(
-                                    "w-full h-9 pl-3 text-left font-normal text-sm",
-                                    !field.value && "text-muted-foreground"
-                                  )}
-                                >
-                                  {field.value ? (
-                                    format(field.value, "PPP")
-                                  ) : (
-                                    <span>Pick a date</span>
-                                  )}
-                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
-                                disabled={(date) => date > new Date() || date < new Date("2020-01-01")}
-                                initialFocus
-                                className="p-2"
-                                style={{ width: "auto", maxWidth: "350px" }}
-                              />
-                            </PopoverContent>
-                          </Popover>
+                          <FormLabel className="text-sm font-medium">Description *</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Provide a detailed description of the initiative..."
+                              className="min-h-[100px] text-sm"
+                              {...field}
+                              disabled={isSubmitting}
+                            />
+                          </FormControl>
                           <FormMessage className="text-xs" />
                         </FormItem>
                       )}
                     />
                   </div>
+                </CardContent>
+              </Card>
+
+              {/* Target & Financial Information */}
+              <Card className="shadow-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Target & Financial Information</CardTitle>
+                  <CardDescription className="text-sm">
+                    Define measurable outcomes and financial expectations
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
                   <FormField
                     control={form.control}
-                    name="description"
+                    name="baselineData"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-medium">Description *</FormLabel>
+                        <FormLabel className="text-sm font-medium">
+                          Baseline Data (12-month historical) *
+                        </FormLabel>
                         <FormControl>
                           <Textarea
-                            placeholder="Provide a detailed description of the initiative..."
-                            className="min-h-[100px] text-sm"
+                            placeholder="Provide 12-month historical data..."
+                            className="min-h-[80px] text-sm"
                             {...field}
+                            disabled={isSubmitting}
                           />
                         </FormControl>
                         <FormMessage className="text-xs" />
                       </FormItem>
                     )}
                   />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Target & Financial Information */}
-            <Card className="shadow-sm">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Target & Financial Information</CardTitle>
-                <CardDescription className="text-sm">
-                  Define measurable outcomes and financial expectations
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <FormField
-                  control={form.control}
-                  name="baselineData"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm font-medium">
-                        Baseline Data (12-month historical) *
-                      </FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Provide 12-month historical data..."
-                          className="min-h-[80px] text-sm"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage className="text-xs" />
-                    </FormItem>
-                  )}
-                />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <FormField
+                      control={form.control}
+                      name="targetOutcome"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium">Target Outcome *</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="e.g., Reduce energy consumption by 15%"
+                              {...field}
+                              className="h-9 text-sm"
+                              disabled={isSubmitting}
+                            />
+                          </FormControl>
+                          <FormMessage className="text-xs" />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="targetValue"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium">Target Value (Numeric) *</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="0"
+                              {...field}
+                              onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                              className="h-9 text-sm"
+                              disabled={isSubmitting}
+                            />
+                          </FormControl>
+                          <FormMessage className="text-xs" />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <FormField
+                      control={form.control}
+                      name="expectedValue"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium">Expected Value (₹ Lakhs) *</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="0"
+                              {...field}
+                              onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                              className="h-9 text-sm"
+                              disabled={isSubmitting}
+                            />
+                          </FormControl>
+                          <FormMessage className="text-xs" />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="confidenceLevel"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium">Confidence Level (%) *</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min="1"
+                              max="100"
+                              placeholder="80"
+                              {...field}
+                              onChange={(e) => field.onChange(parseInt(e.target.value) || 80)}
+                              className="h-9 text-sm"
+                              disabled={isSubmitting}
+                            />
+                          </FormControl>
+                          <FormMessage className="text-xs" />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="estimatedCapex"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium">Estimated CAPEX (₹ Lakhs) *</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="0"
+                              {...field}
+                              onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                              className="h-9 text-sm"
+                              disabled={isSubmitting}
+                            />
+                          </FormControl>
+                          <FormMessage className="text-xs" />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                   <FormField
                     control={form.control}
-                    name="targetOutcome"
+                    name="budgetType"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-medium">Target Outcome *</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="e.g., Reduce energy consumption by 15%"
-                            {...field}
-                            className="h-9 text-sm"
-                          />
-                        </FormControl>
-                        <FormMessage className="text-xs" />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="targetValue"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-medium">Target Value (Numeric) *</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            placeholder="0"
-                            {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                            className="h-9 text-sm"
-                          />
-                        </FormControl>
-                        <FormMessage className="text-xs" />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <FormField
-                    control={form.control}
-                    name="expectedValue"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-medium">Expected Value (₹ Lakhs) *</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            placeholder="0"
-                            {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                            className="h-9 text-sm"
-                          />
-                        </FormControl>
-                        <FormMessage className="text-xs" />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="confidenceLevel"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-medium">Confidence Level (%) *</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            min="1"
-                            max="100"
-                            placeholder="80"
-                            {...field}
-                            onChange={(e) => field.onChange(parseInt(e.target.value) || 80)}
-                            className="h-9 text-sm"
-                          />
-                        </FormControl>
-                        <FormMessage className="text-xs" />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="estimatedCapex"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-medium">Estimated CAPEX (₹ Lakhs) *</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            placeholder="0"
-                            {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                            className="h-9 text-sm"
-                          />
-                        </FormControl>
-                        <FormMessage className="text-xs" />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <FormField
-                  control={form.control}
-                  name="budgetType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm font-medium">Budget Type *</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger className="h-9 text-sm">
-                            <SelectValue placeholder="Select budget type" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="budgeted" className="text-sm focus:bg-accent">
-                            <div className="flex items-center gap-2">
-                              <Banknote className="h-4 w-4 text-green-500" />
-                              <div className="flex flex-col">
-                                <span className="font-medium">Budgeted</span>
-                                <span className="text-xs text-muted-foreground">
-                                  Funds allocated in current budget
-                                </span>
+                        <FormLabel className="text-sm font-medium">Budget Type *</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting}>
+                          <FormControl>
+                            <SelectTrigger className="h-9 text-sm">
+                              <SelectValue placeholder="Select budget type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="budgeted" className="text-sm focus:bg-accent">
+                              <div className="flex items-center gap-2">
+                                <Banknote className="h-4 w-4 text-green-500" />
+                                <div className="flex flex-col">
+                                  <span className="font-medium">Budgeted</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    Funds allocated in current budget
+                                  </span>
+                                </div>
                               </div>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="non-budgeted" className="text-sm focus:bg-accent">
-                            <div className="flex items-center gap-2">
-                              <IndianRupee className="h-4 w-4 text-red-500" />
-                              <div className="flex flex-col">
-                                <span className="font-medium">Non-Budgeted</span>
-                                <span className="text-xs text-muted-foreground">
-                                  Additional funding required
-                                </span>
+                            </SelectItem>
+                            <SelectItem value="non-budgeted" className="text-sm focus:bg-accent">
+                              <div className="flex items-center gap-2">
+                                <IndianRupee className="h-4 w-4 text-red-500" />
+                                <div className="flex flex-col">
+                                  <span className="font-medium">Non-Budgeted</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    Additional funding required
+                                  </span>
+                                </div>
                               </div>
-                            </div>
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage className="text-xs" />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage className="text-xs" />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
 
-            {/* Key Assumptions */}
-            <Card className="shadow-sm">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Key Assumptions</CardTitle>
-                <CardDescription className="text-sm">
-                  List the three most critical assumptions for this initiative
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="grid grid-cols-1 gap-3">
-                  <FormField
-                    control={form.control}
-                    name="assumption1"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-medium">Assumption 1 *</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="e.g., Current production volume remains stable"
-                            {...field}
-                            className="h-9 text-sm"
-                          />
-                        </FormControl>
-                        <FormMessage className="text-xs" />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="assumption2"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-medium">Assumption 2 *</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="e.g., Energy prices increase by 10% annually"
-                            {...field}
-                            className="h-9 text-sm"
-                          />
-                        </FormControl>
-                        <FormMessage className="text-xs" />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="assumption3"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-medium">Assumption 3 *</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="e.g., Technology implementation completed within 6 months"
-                            {...field}
-                            className="h-9 text-sm"
-                          />
-                        </FormControl>
-                        <FormMessage className="text-xs" />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </CardContent>
-            </Card>
+              {/* Key Assumptions */}
+              <Card className="shadow-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Key Assumptions</CardTitle>
+                  <CardDescription className="text-sm">
+                    List the three most critical assumptions for this initiative
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="grid grid-cols-1 gap-3">
+                    <FormField
+                      control={form.control}
+                      name="assumption1"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium">Assumption 1 *</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="e.g., Current production volume remains stable"
+                              {...field}
+                              className="h-9 text-sm"
+                              disabled={isSubmitting}
+                            />
+                          </FormControl>
+                          <FormMessage className="text-xs" />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="assumption2"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium">Assumption 2 *</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="e.g., Energy prices increase by 10% annually"
+                              {...field}
+                              className="h-9 text-sm"
+                              disabled={isSubmitting}
+                            />
+                          </FormControl>
+                          <FormMessage className="text-xs" />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="assumption3"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium">Assumption 3 *</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="e.g., Technology implementation completed within 6 months"
+                              {...field}
+                              className="h-9 text-sm"
+                              disabled={isSubmitting}
+                            />
+                          </FormControl>
+                          <FormMessage className="text-xs" />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
 
-            {/* Submit Button */}
-            <div className="flex justify-end pt-4">
-              <Button type="submit" className="h-9 px-4 text-sm">
-                <Send className="h-4 w-4 mr-2" />
-                Submit for Approval
-              </Button>
-            </div>
-          </form>
-        </Form>
+              {/* Submit Button */}
+              <div className="flex justify-end pt-4">
+                <Button type="submit" className="h-9 px-4 text-sm" disabled={isSubmitting}>
+                  <Send className="h-4 w-4 mr-2" />
+                  Submit for Approval
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
