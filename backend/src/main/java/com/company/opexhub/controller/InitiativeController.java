@@ -129,6 +129,10 @@ public class InitiativeController {
         response.setBudgetType(initiative.getBudgetType());
         response.setInitiatorName(initiative.getInitiatorName());
         
+        // Set MOC and CAPEX numbers - FIXED: These were missing!
+        response.setMocNumber(initiative.getMocNumber());
+        response.setCapexNumber(initiative.getCapexNumber());
+        
         return response;
     }
     

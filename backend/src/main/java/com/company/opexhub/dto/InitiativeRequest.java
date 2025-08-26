@@ -30,6 +30,8 @@ public class InitiativeRequest {
     private LocalDate endDate;
     private String requiresMoc = "N";
     private String requiresCapex = "N";
+    private String mocNumber;
+    private String capexNumber;
 
     // New fields for assumptions and additional form data
     private String assumption1;
@@ -79,6 +81,12 @@ public class InitiativeRequest {
 
     public String getRequiresCapex() { return requiresCapex; }
     public void setRequiresCapex(String requiresCapex) { this.requiresCapex = requiresCapex; }
+
+    public String getMocNumber() { return mocNumber; }
+    public void setMocNumber(String mocNumber) { this.mocNumber = mocNumber; }
+
+    public String getCapexNumber() { return capexNumber; }
+    public void setCapexNumber(String capexNumber) { this.capexNumber = capexNumber; }
 
     // New getters and setters for assumptions
     public String getAssumption1() { return assumption1; }

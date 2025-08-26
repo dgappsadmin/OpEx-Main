@@ -168,6 +168,8 @@ public class InitiativeService {
         initiative.setEndDate(request.getEndDate());
         initiative.setRequiresMoc(request.getRequiresMoc());
         initiative.setRequiresCapex(request.getRequiresCapex());
+        initiative.setMocNumber(request.getMocNumber());
+        initiative.setCapexNumber(request.getCapexNumber());
         initiative.setInitiatorName(request.getInitiatorName());
 
         // Update new fields for assumptions and additional form data
