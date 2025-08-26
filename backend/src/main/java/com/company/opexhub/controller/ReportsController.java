@@ -14,30 +14,31 @@ import java.util.Date;
 
 @RestController
 @RequestMapping("/api/reports")
+@CrossOrigin(origins = "*")
 public class ReportsController {
 
     @Autowired
     private ReportsService reportsService;
 
-    @GetMapping("/export/detailed-excel")
-    public ResponseEntity<ByteArrayResource> exportDetailedExcel(
+    @GetMapping("/export/dnl-plant-initiatives")
+    public ResponseEntity<ByteArrayResource> exportDNLPlantInitiatives(
             @RequestParam(required = false) String site,
+            @RequestParam(required = false) String period,
             @RequestParam(required = false) String year) {
-        
         try {
-            // Generate the Excel report
-            ByteArrayOutputStream outputStream = reportsService.generateDetailedExcelReport(site, year);
+            // Generate the PDF report
+            ByteArrayOutputStream outputStream = reportsService.generateDNLPlantInitiativesPDF(site, period, year);
             
             // Create response with proper headers
             ByteArrayResource resource = new ByteArrayResource(outputStream.toByteArray());
             
-            // Generate filename with timestamp
+            // Generate filename with current timestamp
             String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-            String filename = String.format("Monthly_Initiative_Report_%s.xlsx", timestamp);
+            String filename = String.format("DNL_Plant_Initiatives_Report_%s.pdf", timestamp);
             
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
-                    .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                    .contentType(MediaType.APPLICATION_PDF)
                     .contentLength(resource.contentLength())
                     .body(resource);
                     
@@ -47,23 +48,20 @@ public class ReportsController {
         }
     }
 
-    @GetMapping("/export/dnl-plant-initiatives")
-    public ResponseEntity<ByteArrayResource> exportDNLPlantInitiatives(
+    @GetMapping("/export/detailed-excel")
+    public ResponseEntity<ByteArrayResource> exportDetailedExcel(
             @RequestParam(required = false) String site,
-            @RequestParam(required = false) String period,
             @RequestParam(required = false) String year) {
-        
         try {
-            // Generate the DNL Plant Initiatives Excel report
-            ByteArrayOutputStream outputStream = reportsService.generateDNLPlantInitiativesReport(site, period, year);
+            // Generate the Excel report using existing logic
+            ByteArrayOutputStream outputStream = reportsService.generateDetailedExcelReport(site, year);
             
             // Create response with proper headers
             ByteArrayResource resource = new ByteArrayResource(outputStream.toByteArray());
             
-            // Generate filename with timestamp and year
+            // Generate filename
             String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-            String reportYear = year != null ? year : String.valueOf(new Date().getYear() + 1900);
-            String filename = String.format("DNL_Plant_Initiatives_Report_%s_%s.xlsx", reportYear, timestamp);
+            String filename = String.format("Detailed_Report_%s.xlsx", timestamp);
             
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")

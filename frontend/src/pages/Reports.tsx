@@ -57,9 +57,9 @@ export default function Reports({ user }: ReportsProps) {
   const avgSavingsPerInitiative = filteredInitiatives.length > 0 ? totalSavings / filteredInitiatives.length : 0;
 
   const handleDownloadReport = async (reportType: string) => {
-    if (reportType === 'Executive Summary') {
+    if (reportType === 'DNL Plant Initiatives PDF') {
       try {
-        // Use the new DNL Plant Initiatives export with current year as default
+        // Use the new DNL Plant Initiatives PDF export with current year as default
         const currentYear = new Date().getFullYear();
         const filename = await reportsAPI.downloadDNLPlantInitiatives({
           site: selectedSite,
@@ -67,11 +67,11 @@ export default function Reports({ user }: ReportsProps) {
           year: currentYear.toString()
         });
         
-        console.log(`Successfully downloaded DNL Plant Initiatives report: ${filename} for ${selectedSite} site(s) - ${selectedPeriod} period (${currentYear})`);
-        alert(`DNL Plant Initiatives report "${filename}" downloaded successfully for year ${currentYear}!`);
+        console.log(`Successfully downloaded DNL Plant Initiatives PDF report: ${filename} for ${selectedSite} site(s) - ${selectedPeriod} period (${currentYear})`);
+        alert(`DNL Plant Initiatives PDF report "${filename}" downloaded successfully for year ${currentYear}! Data includes savings till current month (August).`);
       } catch (error) {
-        console.error('Error downloading DNL Plant Initiatives report:', error);
-        alert('Failed to download DNL Plant Initiatives report. Please try again.');
+        console.error('Error downloading DNL Plant Initiatives PDF report:', error);
+        alert('Failed to download DNL Plant Initiatives PDF report. Please try again.');
       }
     } else if (reportType === 'Detailed Report (Excel)') {
       try {
@@ -106,17 +106,23 @@ export default function Reports({ user }: ReportsProps) {
     }
   };
 
+  const getCurrentMonth = () => {
+    const now = new Date();
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return months[now.getMonth()];
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Monthly Reports</h1>
-          <p className="text-muted-foreground">Generate and analyze initiative performance reports</p>
+          <p className="text-muted-foreground">Generate and analyze initiative performance reports (Data till {getCurrentMonth()} {new Date().getFullYear()})</p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={() => handleDownloadReport('Executive Summary')}>
+          <Button onClick={() => handleDownloadReport('DNL Plant Initiatives PDF')}>
             <Download className="h-4 w-4 mr-2" />
-            Download DNL Plant Initiatives Report
+            Download DNL Plant Initiatives Report (PDF)
           </Button>
         </div>
       </div>
@@ -140,7 +146,7 @@ export default function Reports({ user }: ReportsProps) {
                 <SelectItem value="weekly">Weekly</SelectItem>
                 <SelectItem value="monthly">Monthly</SelectItem>
                 <SelectItem value="quarterly">Quarterly</SelectItem>
-                <SelectItem value="yearly">Yearly</SelectItem>
+                <SelectItem value="yearly">Yearly (Till {getCurrentMonth()})</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -317,17 +323,17 @@ export default function Reports({ user }: ReportsProps) {
             <CardHeader>
               <CardTitle>Export Reports</CardTitle>
               <p className="text-muted-foreground">
-                Download detailed reports in various formats
+                Download detailed reports in various formats (Data includes current month: {getCurrentMonth()} {new Date().getFullYear()})
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Button 
-                  onClick={() => handleDownloadReport('Executive Summary')}
+                  onClick={() => handleDownloadReport('DNL Plant Initiatives PDF')}
                   className="w-full"
                 >
                   <Download className="h-4 w-4 mr-2" />
-                  DNL Plant Initiatives Report (Excel)
+                  DNL Plant Initiatives Report (PDF)
                 </Button>
                 
                 <Button 
