@@ -4,6 +4,7 @@ import com.company.opexhub.entity.User;
 import com.company.opexhub.repository.UserRepository;
 import mailhelper.MailHelper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -19,6 +20,9 @@ public class EmailVerificationService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     // In-memory storage for verification codes (in production, use Redis or database)
     private final Map<String, VerificationCodeData> verificationCodes = new ConcurrentHashMap<>();
@@ -90,10 +94,13 @@ public class EmailVerificationService {
             // Generate 6-digit code
             String verificationCode = generateVerificationCode();
             
+            // Encode password before storing temporarily
+            String encodedPassword = passwordEncoder.encode(password);
+            
             // Store code with 15-minute expiry and user data
             LocalDateTime expiryTime = LocalDateTime.now().plusMinutes(15);
             verificationCodes.put(email.toLowerCase(), 
-                new VerificationCodeData(verificationCode, expiryTime, fullName, site, discipline, role, roleName, password));
+                new VerificationCodeData(verificationCode, expiryTime, fullName, site, discipline, role, roleName, encodedPassword));
 
             // Send email
             String subject = "Email Verification Code - OPEX Hub Registration";
@@ -169,7 +176,7 @@ public class EmailVerificationService {
             newUser.setDiscipline(verificationData.getDiscipline());
             newUser.setRole(verificationData.getRole());
             newUser.setRoleName(verificationData.getRoleName());
-            newUser.setPassword(verificationData.getPassword()); // Password should already be encoded
+            newUser.setPassword(verificationData.getPassword()); // Password is already encoded
             
             User savedUser = userRepository.save(newUser);
             
@@ -209,100 +216,61 @@ public class EmailVerificationService {
             </head>
             <body style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.4; color: #333;">
                 
-                <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-                    
-                    <div style="text-align: center; margin-bottom: 30px;">
-                        <h1 style="color: #2c5aa0; margin-bottom: 10px; font-size: 28px;">Welcome to OPEX Hub!</h1>
-                        <div style="width: 60px; height: 4px; background-color: #2c5aa0; margin: 0 auto;"></div>
-                    </div>
+                <h2 style="color: #2c5aa0; margin-bottom: 20px;">Email Verification Required</h2>
                 
-                    <h2 style="color: #2c5aa0; margin-bottom: 20px; font-size: 22px;">Email Verification Required</h2>
-                    
-                    <p style="font-size: 16px; margin-bottom: 20px;">Dear <strong>%s</strong>,</p>
-                    
-                    <p style="margin-bottom: 20px;">Thank you for registering with OPEX Hub - Operational Excellence Platform. To complete your registration and secure your account, please verify your email address using the code below.</p>
-                    
-                    <table border="1" cellpadding="20" cellspacing="0" style="border-collapse: collapse; margin: 25px auto; border: 3px solid #2c5aa0; border-radius: 8px; background: linear-gradient(135deg, #f8f9ff 0%%, #e8f0ff 100%%);">
-                        <tr>
-                            <td style="text-align: center;">
-                                <h3 style="color: #2c5aa0; margin: 0 0 15px 0; font-size: 20px;">Your Verification Code</h3>
-                                <div style="font-size: 42px; font-weight: bold; color: #2c5aa0; letter-spacing: 6px; margin: 15px 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.1);">%s</div>
-                                <p style="margin: 15px 0 0 0; font-size: 14px; color: #666;">⏰ This code will expire in <strong>15 minutes</strong></p>
-                            </td>
-                        </tr>
-                    </table>
-                    
-                    <h3 style="color: #2c5aa0; margin-top: 30px; margin-bottom: 15px; font-size: 18px;">📧 Registration Details</h3>
-                    
-                    <table border="1" cellpadding="12" cellspacing="0" style="border-collapse: collapse; width: 100%%; border: 1px solid #ddd; border-radius: 6px;">
-                        <tr style="background-color: #f8f9ff;">
-                            <td style="font-weight: bold; width: 35%%; color: #2c5aa0;">Email Address</td>
-                            <td>%s</td>
-                        </tr>
-                        <tr style="background-color: #ffffff;">
-                            <td style="font-weight: bold; color: #2c5aa0;">Registration Time</td>
-                            <td>%s</td>
-                        </tr>
-                        <tr style="background-color: #f8f9ff;">
-                            <td style="font-weight: bold; color: #2c5aa0;">Code Validity</td>
-                            <td>15 minutes from registration</td>
-                        </tr>
-                        <tr style="background-color: #ffffff;">
-                            <td style="font-weight: bold; color: #2c5aa0;">Security Level</td>
-                            <td>One-time use only</td>
-                        </tr>
-                    </table>
-                    
-                    <h3 style="color: #2c5aa0; margin-top: 30px; margin-bottom: 15px; font-size: 18px;">🚀 Next Steps</h3>
-                    
-                    <div style="background-color: #f8f9ff; padding: 20px; border-radius: 8px; border-left: 4px solid #2c5aa0; margin: 20px 0;">
-                        <ol style="line-height: 1.8; margin: 0; padding-left: 20px;">
-                            <li><strong>Return to the OPEX Hub registration page</strong></li>
-                            <li><strong>Enter the 6-digit verification code shown above</strong></li>
-                            <li><strong>Complete your account setup</strong></li>
-                            <li><strong>Start using OPEX Hub to drive operational excellence!</strong></li>
-                        </ol>
-                    </div>
-                    
-                    <h3 style="color: #2c5aa0; margin-top: 30px; margin-bottom: 15px; font-size: 18px;">🎯 About OPEX Hub</h3>
-                    
-                    <div style="background-color: #e8f5e8; padding: 15px; border-radius: 6px; margin: 20px 0;">
-                        <p style="margin: 0; color: #2d5a2d; font-size: 15px; line-height: 1.6;">
-                            <strong>OPEX Hub</strong> is your comprehensive platform for managing operational excellence initiatives, 
-                            tracking performance metrics, and driving continuous improvement across your organization.
-                        </p>
-                    </div>
-                    
-                    <div style="background-color: #fff9e6; border: 2px solid #ffd700; padding: 20px; border-radius: 8px; margin: 25px 0;">
-                        <h4 style="margin: 0 0 10px 0; color: #b8860b; font-size: 16px;">🔒 Security Notice</h4>
-                        <p style="margin: 0; color: #8b7355; font-size: 14px; line-height: 1.5;">
-                            If you did not create an account with OPEX Hub, please ignore this email. 
-                            Your email address will not be registered and no account will be created. 
-                            For security concerns, contact our support team immediately.
-                        </p>
-                    </div>
-                    
-                    <hr style="margin: 40px 0; border: none; border-top: 2px solid #e0e0e0;">
-                    
-                    <div style="text-align: center; margin-top: 30px;">
-                        <div style="background-color: #2c5aa0; color: white; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
-                            <h4 style="margin: 0 0 5px 0; font-size: 18px;">OPEX Hub - Operational Excellence Platform</h4>
-                            <p style="margin: 0; font-size: 14px; opacity: 0.9;">Driving Excellence Through Innovation</p>
-                        </div>
-                        
-                        <p style="font-size: 12px; color: #666; margin: 0; line-height: 1.4;">
-                            <strong>🏢 DNL - Operational Excellence Initiative Management System</strong><br>
-                            📧 This is an automated notification. Please do not reply to this email.<br>
-                            🆘 For support, contact: <a href="mailto:support@godeepak.com" style="color: #2c5aa0;">support@godeepak.com</a><br>
-                            🌐 Visit us: <a href="https://www.godeepak.com" style="color: #2c5aa0;">www.godeepak.com</a>
-                        </p>
-                    </div>
-                    
+                <p>Dear <strong>%s</strong>,</p>
+                
+                <p>Thank you for registering with OPEX Hub - Operational Excellence Platform. To complete your registration and secure your account, please use the verification code below.</p>
+                
+                <table border="1" cellpadding="15" cellspacing="0" style="border-collapse: collapse; margin: 20px 0; border: 2px solid #2c5aa0;">
+                    <tr style="background-color: #f8f9ff;">
+                        <td style="text-align: center;">
+                            <h3 style="color: #2c5aa0; margin: 0; font-size: 18px;">Your Verification Code</h3>
+                            <div style="font-size: 32px; font-weight: bold; color: #2c5aa0; letter-spacing: 4px; margin: 10px 0;">%s</div>
+                            <p style="margin: 0; font-size: 12px; color: #666;">This code will expire in 15 minutes</p>
+                        </td>
+                    </tr>
+                </table>
+                
+                <h3 style="color: #2c5aa0; margin-top: 25px; margin-bottom: 15px;">Registration Information</h3>
+                
+                <table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%%; max-width: 500px; border: 1px solid #ccc;">
+                    <tr style="background-color: #f5f5f5;">
+                        <td style="font-weight: bold; width: 30%%;">Email Address</td>
+                        <td>%s</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: bold; background-color: #f5f5f5;">Code Validity</td>
+                        <td>15 minutes from now</td>
+                    </tr>
+                    <tr style="background-color: #f5f5f5;">
+                        <td style="font-weight: bold;">Security</td>
+                        <td>One-time use only</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: bold; background-color: #f5f5f5;">Action Required</td>
+                        <td>Enter this code in the registration form</td>
+                    </tr>
+                </table>
+                
+                <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 4px; margin: 20px 0;">
+                    <p style="margin: 0; color: #856404;">
+                        <strong>Security Notice:</strong> If you did not create an account with OPEX Hub, please ignore this email. 
+                        Your email address will not be registered and no account will be created.
+                    </p>
                 </div>
+                
+                <hr style="margin: 30px 0; border: none; border-top: 1px solid #ccc;">
+                
+                <p style="font-size: 12px; color: #666;">
+                    <strong>OPEX Hub - Operational Excellence Platform</strong><br>
+                    This is an automated notification. Please do not reply to this email.<br>
+                    For support, contact: dnsharma@godeepak.com
+                </p>
                 
             </body>
             </html>
-            """, userName, verificationCode, email, LocalDateTime.now().toString());
+            """, userName, verificationCode, email);
     }
 
     /**
@@ -314,14 +282,14 @@ public class EmailVerificationService {
             return false;
         }
         
-        // Generate new code and update
+        // Generate new code and update (keep existing encoded password)
         String newCode = generateVerificationCode();
         LocalDateTime expiryTime = LocalDateTime.now().plusMinutes(15);
         
         verificationCodes.put(email.toLowerCase(), 
             new VerificationCodeData(newCode, expiryTime, existingData.getFullName(), 
             existingData.getSite(), existingData.getDiscipline(), existingData.getRole(), 
-            existingData.getRoleName(), existingData.getPassword()));
+            existingData.getRoleName(), existingData.getPassword())); // Keep encoded password
         
         try {
             String subject = "Email Verification Code - OPEX Hub Registration (Resent)";

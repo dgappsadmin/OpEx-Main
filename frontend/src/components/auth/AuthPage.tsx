@@ -177,6 +177,96 @@ export default function AuthPage({ onLogin }: AuthProps) {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleVerificationInputChange = (field: string, value: string) => {
+    setVerificationData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleVerifyRegistrationCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!verificationData.code) {
+      toast({
+        title: "Error",
+        description: "Please enter the verification code",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    setLoadingMessage("Verifying Code");
+    setLoadingSubmessage("Completing your registration...");
+    
+    try {
+      const result = await authAPI.verifyEmail(verificationData.email, verificationData.code);
+      if (result.success) {
+        setLoadingMessage("Registration Complete!");
+        setLoadingSubmessage("Welcome to OPEX Hub!");
+        
+        toast({
+          title: "Registration Successful",
+          description: "Your account has been created successfully. Please sign in to continue.",
+        });
+        
+        // Reset states and go back to login
+        setShowEmailVerification(false);
+        setVerificationData({ email: "", code: "" });
+        setFormData({
+          email: "",
+          password: "",
+          fullName: "",
+          site: "",
+          discipline: "",
+          role: "VIEWER"
+        });
+        setIsLogin(true);
+      } else {
+        toast({
+          title: "Verification Failed",
+          description: result.message || "Invalid or expired verification code",
+          variant: "destructive"
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Verification Failed",
+        description: error.response?.data?.message || "Invalid or expired verification code",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResendRegistrationCode = async () => {
+    setIsLoading(true);
+    setLoadingMessage("Resending Code");
+    setLoadingSubmessage("Please wait...");
+    
+    try {
+      const result = await authAPI.resendVerificationCode(verificationData.email);
+      if (result.success) {
+        toast({
+          title: "Code Resent",
+          description: "A new verification code has been sent to your email",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: result.message || "Failed to resend verification code",
+          variant: "destructive"
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to resend verification code",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleForgotPasswordInputChange = (field: string, value: string) => {
     setForgotPasswordData(prev => ({ ...prev, [field]: value }));
   };
@@ -423,7 +513,7 @@ export default function AuthPage({ onLogin }: AuthProps) {
           </CardHeader>
 
           <CardContent className="animate-fade-in-delayed pt-0 px-4 pb-4">
-            {!showForgotPassword ? (
+            {!showForgotPassword && !showEmailVerification ? (
               <Tabs value={isLogin ? "login" : "signup"} className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-4 bg-gray-100 h-9">
                   <TabsTrigger 
@@ -602,6 +692,68 @@ export default function AuthPage({ onLogin }: AuthProps) {
                 </Button>
               </form>
             </Tabs>
+            ) : showEmailVerification ? (
+              // Email Verification Flow
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setShowEmailVerification(false);
+                      setVerificationData({ email: "", code: "" });
+                    }}
+                    className="p-1 h-8 w-8"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                  </Button>
+                  <h3 className="text-lg font-semibold text-gray-900">Verify Your Email</h3>
+                </div>
+
+                <form onSubmit={handleVerifyRegistrationCode} className="space-y-4">
+                  <div className="text-center mb-4">
+                    <Mail className="w-12 h-12 text-green-500 mx-auto mb-2" />
+                    <p className="text-gray-600 text-sm">
+                      We've sent a 6-digit verification code to <strong>{verificationData.email}</strong>
+                    </p>
+                    <p className="text-gray-500 text-xs mt-1">Code expires in 15 minutes</p>
+                  </div>
+                  
+                  <div className="space-y-1.5">
+                    <Label htmlFor="email-verification-code" className="text-gray-700 font-medium text-sm">Verification Code</Label>
+                    <Input
+                      id="email-verification-code"
+                      type="text"
+                      placeholder="Enter 6-digit code"
+                      className="text-center text-lg font-mono bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 transition-colors duration-200 h-12"
+                      value={verificationData.code}
+                      onChange={(e) => handleVerificationInputChange("code", e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      maxLength={6}
+                      required
+                    />
+                  </div>
+
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 h-9 transition-all duration-200 text-sm" 
+                    disabled={isLoading}
+                  >
+                    Complete Registration
+                  </Button>
+
+                  <div className="text-center">
+                    <button
+                      type="button"
+                      onClick={handleResendRegistrationCode}
+                      className="text-sm text-blue-600 hover:text-blue-700 hover:underline transition-colors"
+                      disabled={isLoading}
+                    >
+                      Didn't receive the code? Resend
+                    </button>
+                  </div>
+                </form>
+              </div>
             ) : (
               // Forgot Password Flow
               <div className="space-y-4">

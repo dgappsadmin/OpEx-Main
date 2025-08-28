@@ -61,7 +61,7 @@ const formSchema = z.object({
     required_error: "Budget type is required",
   }),
   expectedValue: z.number().min(0, "Expected value must be positive"),
-  confidenceLevel: z.number().min(1).max(100),
+  // confidenceLevel: z.number().min(1).max(100),
   assumption1: z.string().min(1, "First assumption is required"),
   assumption2: z.string().min(1, "Second assumption is required"),
   assumption3: z.string().min(1, "Third assumption is required"),
@@ -110,7 +110,7 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
       baselineData: "",
       targetOutcome: "",
       budgetType: "budgeted",
-      confidenceLevel: 80,
+      // confidenceLevel: 80,
       targetValue: 0,
       expectedValue: 0,
       estimatedCapex: 0,
@@ -139,7 +139,7 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
       baselineData: data.baselineData,
       targetOutcome: data.targetOutcome,
       targetValue: data.targetValue,
-      confidenceLevel: data.confidenceLevel,
+      // confidenceLevel: data.confidenceLevel,
       estimatedCapex: data.estimatedCapex,
       assumption1: data.assumption1,
       assumption2: data.assumption2,
@@ -425,7 +425,7 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                       )}
                     />
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <FormField
                       control={form.control}
                       name="expectedValue"
@@ -446,7 +446,7 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                         </FormItem>
                       )}
                     />
-                    <FormField
+                    {/* <FormField
                       control={form.control}
                       name="confidenceLevel"
                       render={({ field }) => (
@@ -467,7 +467,7 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                           <FormMessage className="text-xs" />
                         </FormItem>
                       )}
-                    />
+                    /> */}
                     <FormField
                       control={form.control}
                       name="estimatedCapex"
