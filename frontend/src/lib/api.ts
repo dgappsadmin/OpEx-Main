@@ -1447,7 +1447,27 @@
 
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:9090/api';
+// Function to determine API base URL based on current location
+const getApiBaseUrl = (): string => {
+  const hostname = window.location.hostname;
+  const protocol = window.location.protocol;
+  
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    // Development environment
+    return 'http://localhost:9090/opexhub/api';
+  } else if (hostname === 'dgapps.godeepak.com') {
+    // Production environment
+    return 'https://dgapps.godeepak.com/opexhub/api';
+  } else if (hostname === 'dgpilotapps.godeepak.com') {
+    // Pilot environment
+    return 'https://dgpilotapps.godeepak.com/opexhub/api';
+  } else {
+    // Fallback to localhost for unknown environments
+    return 'http://localhost:9090/opexhub/api';
+  }
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 // Create axios instance with default config
 const api = axios.create({

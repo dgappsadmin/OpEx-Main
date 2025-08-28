@@ -215,7 +215,7 @@ export default function WorkflowStageModal({
             <div className="flex items-center gap-2">
               <CheckCircle className="h-5 w-5 text-blue-600" />
               <p className="text-blue-800 font-medium">
-                Simple approval process - Review and provide your decision with comments.
+                Review and provide your decision with comments.
               </p>
             </div>
           </div>

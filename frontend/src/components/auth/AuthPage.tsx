@@ -486,7 +486,7 @@ export default function AuthPage({ onLogin }: AuthProps) {
                 <img
                   src="https://www.godeepak.com/wp-content/uploads/2024/01/DNL-Logo.png"
                   alt="DNL Logo"
-                  className="h-8 w-auto"
+                  className="h-10 w-auto"
                 />
               </div>
             </div>
