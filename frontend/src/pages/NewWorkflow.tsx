@@ -12,7 +12,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CheckCircle, XCircle, Clock, ArrowLeft, User as UserIcon, Search, Filter } from "lucide-react";
+import { CheckCircle, XCircle, Clock, ArrowLeft, User as UserIcon, Search, Filter, MapPin } from "lucide-react";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { useToast } from "@/hooks/use-toast";
 import WorkflowStageModal from "@/components/workflow/WorkflowStageModal";
@@ -30,12 +30,25 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
   const [initiativeTransactions, setInitiativeTransactions] = useState<{[key: number]: any[]}>({});
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("default"); // "default" or "completed"
+  const [siteFilter, setSiteFilter] = useState(user.site || ""); // Default to user's site
   const { toast } = useToast();
+  
+  // Site options
+  const sites = [
+    { code: "NDS", name: "NDS" },
+    { code: "HSD1", name: "HSD1" },
+    { code: "HSD2", name: "HSD2" },
+    { code: "HSD3", name: "HSD3" },
+    { code: "DHJ", name: "DHJ" },
+    { code: "APL", name: "APL" },
+    { code: "TCD", name: "TCD" }
+  ];
   
   // Prepare filters for API call - corrected parameter names and status values
   const apiFilters = {
     search: searchTerm.trim() || undefined, // Backend expects 'search' parameter
     status: statusFilter === "completed" ? "Completed" : undefined, // Default shows all non-completed (Pending & In Progress)
+    site: siteFilter && siteFilter !== "all" ? siteFilter : undefined, // Filter by site, skip if "all" is selected
   };
   
   const { data: initiativesData } = useInitiatives(apiFilters);
@@ -107,6 +120,11 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
 
   const handleStatusFilterChange = (value: string) => {
     setStatusFilter(value);
+    setCurrentPage(1);
+  };
+
+  const handleSiteFilterChange = (value: string) => {
+    setSiteFilter(value);
     setCurrentPage(1);
   };
 
@@ -198,7 +216,7 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
                   <h3 className="text-sm font-semibold text-foreground">Search & Filter Initiatives</h3>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   {/* Search by Initiative Number */}
                   <div className="space-y-1">
                     <label className="text-2xs font-medium text-muted-foreground">Search by Initiative Number</label>
@@ -212,6 +230,27 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
                         className="pl-8 h-8 text-xs"
                       />
                     </div>
+                  </div>
+
+                  {/* Site Filter */}
+                  <div className="space-y-1">
+                    <label className="text-2xs font-medium text-muted-foreground">Site Filter</label>
+                    <Select value={siteFilter} onValueChange={handleSiteFilterChange}>
+                      <SelectTrigger className="h-8 text-xs">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-3 w-3" />
+                          <SelectValue placeholder="Select site" />
+                        </div>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Sites</SelectItem>
+                        {sites.map((site) => (
+                          <SelectItem key={site.code} value={site.code}>
+                            {site.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   {/* Status Filter */}
@@ -237,6 +276,7 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
                   <span>
                     Showing {sortedInitiatives.length} initiative{sortedInitiatives.length !== 1 ? 's' : ''} 
                     {searchTerm && ` matching "${searchTerm}"`}
+                    {siteFilter && siteFilter !== "all" && ` for site ${siteFilter}`}
                     {statusFilter === "completed" ? " with Completed status" : " (Pending & In Progress only)"}
                   </span>
                   <span>Sorted by: Recently Created</span>
@@ -505,7 +545,7 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
                   <h3 className="text-sm font-semibold text-foreground">Search & Filter Initiatives</h3>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   {/* Search by Initiative Number */}
                   <div className="space-y-1">
                     <label className="text-2xs font-medium text-muted-foreground">Search by Initiative Number</label>
@@ -519,6 +559,27 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
                         className="pl-8 h-8 text-xs"
                       />
                     </div>
+                  </div>
+
+                  {/* Site Filter */}
+                  <div className="space-y-1">
+                    <label className="text-2xs font-medium text-muted-foreground">Site Filter</label>
+                    <Select value={siteFilter} onValueChange={handleSiteFilterChange}>
+                      <SelectTrigger className="h-8 text-xs">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-3 w-3" />
+                          <SelectValue placeholder="Select site" />
+                        </div>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Sites</SelectItem>
+                        {sites.map((site) => (
+                          <SelectItem key={site.code} value={site.code}>
+                            {site.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   {/* Status Filter */}
@@ -544,6 +605,7 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
                   <span>
                     Showing {sortedInitiatives.length} initiative{sortedInitiatives.length !== 1 ? 's' : ''} 
                     {searchTerm && ` matching "${searchTerm}"`}
+                    {siteFilter && siteFilter !== "all" && ` for site ${siteFilter}`}
                     {statusFilter === "completed" ? " with Completed status" : " (Pending & In Progress only)"}
                   </span>
                   <span>Sorted by: Recently Created</span>

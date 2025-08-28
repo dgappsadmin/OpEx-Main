@@ -209,7 +209,7 @@ export default function KPI({ user }: KPIProps) {
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="sites">By Sites</TabsTrigger>
-          <TabsTrigger value="priority">By Priority</TabsTrigger>
+          {/* <TabsTrigger value="priority">By Priority</TabsTrigger> */}
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">

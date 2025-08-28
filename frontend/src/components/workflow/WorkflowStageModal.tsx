@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { CheckCircle, XCircle, Users, AlertTriangle, MapPin } from "lucide-react";
+import { CheckCircle, XCircle, Users, AlertTriangle, MapPin, Loader2 } from "lucide-react";
 import { useUsers, useInitiativeLeadsBySite } from "@/hooks/useUsers";
 
 interface WorkflowStageModalProps {
@@ -309,18 +309,39 @@ export default function WorkflowStageModal({
                 disabled={!comment.trim() || isLoading}
                 className="bg-red-600 hover:bg-red-700 flex-1 text-sm"
               >
-                <CheckCircle className="h-4 w-4 mr-2" />
-                {isLoading ? "Processing..." : "Close Initiative"}
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Close Initiative
+                  </>
+                )}
               </Button>
-              <Button 
-                variant="destructive"
-                onClick={handleReject}
-                disabled={!comment.trim() || isLoading}
-                className="flex-1 text-sm"
-              >
-                <XCircle className="h-4 w-4 mr-2" />
-                {isLoading ? "Processing..." : "Reject"}
-              </Button>
+              {/* Only show reject button for stages 2 and 3 */}
+              {(transaction.stageNumber === 2 || transaction.stageNumber === 3) && (
+                <Button 
+                  variant="destructive"
+                  onClick={handleReject}
+                  disabled={!comment.trim() || isLoading}
+                  className="flex-1 text-sm"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="h-4 w-4 mr-2" />
+                      Reject
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
           ) : (
             <div className="flex gap-2 laptop-14:gap-3">
@@ -329,18 +350,39 @@ export default function WorkflowStageModal({
                 disabled={!isFormValid() || isLoading}
                 className="bg-green-600 hover:bg-green-700 flex-1 text-sm"
               >
-                <CheckCircle className="h-4 w-4 mr-2" />
-                {isLoading ? "Processing..." : "Approve & Continue"}
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Approve & Continue
+                  </>
+                )}
               </Button>
-              <Button 
-                variant="destructive"
-                onClick={handleReject}
-                disabled={!comment.trim() || isLoading}
-                className="flex-1 text-sm"
-              >
-                <XCircle className="h-4 w-4 mr-2" />
-                {isLoading ? "Processing..." : "Reject"}
-              </Button>
+              {/* Only show reject button for stages 2 and 3 */}
+              {(transaction.stageNumber === 2 || transaction.stageNumber === 3) && (
+                <Button 
+                  variant="destructive"
+                  onClick={handleReject}
+                  disabled={!comment.trim() || isLoading}
+                  className="flex-1 text-sm"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="h-4 w-4 mr-2" />
+                      Reject
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
           )}
         </div>

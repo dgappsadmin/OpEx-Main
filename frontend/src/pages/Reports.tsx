@@ -246,7 +246,7 @@ export default function Reports({ user }: ReportsProps) {
           <h1 className="text-3xl font-bold">Monthly Reports</h1>
           <p className="text-muted-foreground">Generate and analyze initiative performance reports (Data till {getCurrentMonth()} {new Date().getFullYear()})</p>
         </div>
-        <div className="flex gap-2">
+        {/* <div className="flex gap-2">
           <Button onClick={() => handleDownloadReport('DNL Chart PDF')} variant="outline">
             <Download className="h-4 w-4 mr-2" />
             Download Chart (PDF)
@@ -255,7 +255,7 @@ export default function Reports({ user }: ReportsProps) {
             <Download className="h-4 w-4 mr-2" />
             Download Chart (Excel)
           </Button>
-        </div>
+        </div> */}
       </div>
 
       {/* Filters */}
@@ -558,7 +558,7 @@ export default function Reports({ user }: ReportsProps) {
                   Detailed Report (Excel)
                 </Button>
                 
-                <Button 
+                {/* <Button 
                   onClick={() => handleDownloadReport('Financial Analysis')}
                   variant="outline"
                   className="w-full"
@@ -566,15 +566,15 @@ export default function Reports({ user }: ReportsProps) {
                   <Download className="h-4 w-4 mr-2" />
                   Financial Analysis (PDF)
                 </Button>
-                
-                <Button 
+                 */}
+                {/* <Button 
                   onClick={() => handleDownloadReport('Raw Data')}
                   variant="outline"
                   className="w-full"
                 >
                   <Download className="h-4 w-4 mr-2" />
                   Raw Data (CSV)
-                </Button>
+                </Button> */}
               </div>
             </CardContent>
           </Card>
