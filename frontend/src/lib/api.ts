@@ -1504,6 +1504,30 @@ export const authAPI = {
     return response.data;
   },
 
+  // Email Verification APIs for Registration
+  sendVerificationCode: async (userData: {
+    fullName: string;
+    email: string;
+    password: string;
+    site: string;
+    discipline: string;
+    role: string;
+    roleName: string;
+  }) => {
+    const response = await api.post('/auth/send-verification-code', userData);
+    return response.data;
+  },
+
+  verifyEmail: async (email: string, code: string) => {
+    const response = await api.post('/auth/verify-email', { email, code });
+    return response.data;
+  },
+
+  resendVerificationCode: async (email: string) => {
+    const response = await api.post('/auth/resend-verification-code', { email });
+    return response.data;
+  },
+
   // Password Reset APIs
   sendResetCode: async (email: string) => {
     const response = await api.post('/auth/password-reset/send-code', { email });

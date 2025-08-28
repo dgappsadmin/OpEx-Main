@@ -67,6 +67,7 @@ interface InitiativeModalProps {
   initiative: Initiative | null;
   mode: 'view' | 'edit';
   onSave?: (data: any) => void;
+  user?: { role?: string; [key: string]: any }; // Add user prop
 }
 
 // Correct workflow stage names matching backend
@@ -84,7 +85,7 @@ const WORKFLOW_STAGE_NAMES: { [key: number]: string } = {
   11: 'Initiative Closure'
 };
 
-export default function InitiativeModal({ isOpen, onClose, initiative, mode, onSave }: InitiativeModalProps) {
+export default function InitiativeModal({ isOpen, onClose, initiative, mode, onSave, user }: InitiativeModalProps) {
   const [isEditing, setIsEditing] = useState(mode === 'edit');
   const [formData, setFormData] = useState<any>(initiative || {});
   const [activeTab, setActiveTab] = useState('overview');
@@ -92,16 +93,26 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
 
   // Update isEditing state when mode prop changes
   useEffect(() => {
-    setIsEditing(mode === 'edit');
-  }, [mode]);
+    // VIEWER role cannot edit - force view mode
+    if (user?.role === 'VIEWER') {
+      setIsEditing(false);
+    } else {
+      setIsEditing(mode === 'edit');
+    }
+  }, [mode, user]);
 
   // Reset state when modal opens/closes
   useEffect(() => {
     if (isOpen) {
-      setIsEditing(mode === 'edit');
+      // VIEWER role cannot edit - force view mode
+      if (user?.role === 'VIEWER') {
+        setIsEditing(false);
+      } else {
+        setIsEditing(mode === 'edit');
+      }
       setActiveTab('overview');
     }
-  }, [isOpen, mode]);
+  }, [isOpen, mode, user]);
 
   // Update formData when initiative changes
   useEffect(() => {
@@ -249,17 +260,19 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                 </p>
                 <div className="flex items-center gap-2 mt-1">
                   <div className={`px-2 py-0.5 rounded text-xs font-medium ${
-                    isEditing 
-                      ? 'bg-orange-100 text-orange-800' 
-                      : 'bg-blue-100 text-blue-800'
+                    user?.role === 'VIEWER'
+                      ? 'bg-blue-100 text-blue-800' 
+                      : isEditing 
+                        ? 'bg-orange-100 text-orange-800' 
+                        : 'bg-blue-100 text-blue-800'
                   }`}>
-                    {isEditing ? 'Edit Mode' : 'View Mode'}
+                    {user?.role === 'VIEWER' ? 'Read-Only Mode' : (isEditing ? 'Edit Mode' : 'View Mode')}
                   </div>
                 </div>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {!isEditing && mode !== 'edit' && (
+              {!isEditing && mode !== 'edit' && user?.role !== 'VIEWER' && (
                 <Button variant="outline" size="sm" onClick={() => setIsEditing(true)} className="min-w-[70px] h-8">
                   <Edit className="h-3 w-3 mr-1" />
                   Edit

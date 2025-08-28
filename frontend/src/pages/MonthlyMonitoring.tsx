@@ -307,16 +307,22 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
   };
 
   const canEdit = (entry: MonthlyMonitoringEntry) => {
+    // VIEWER role cannot edit anything
+    if (user.role === 'VIEWER') return false;
     return (user.role === 'STLD' && user.email === entry.enteredBy) || 
            user.role === 'F&A Approver' || 
            user.role === 'ADMIN';
   };
 
   const canApprove = () => {
+    // VIEWER role cannot approve anything
+    if (user.role === 'VIEWER') return false;
     return user.role === 'F&A Approver' || user.role === 'ADMIN';
   };
 
   const canFinalize = (entry: MonthlyMonitoringEntry) => {
+    // VIEWER role cannot finalize anything
+    if (user.role === 'VIEWER') return false;
     return (user.role === 'STLD' && user.email === entry.enteredBy) || user.role === 'ADMIN';
   };
 
@@ -336,7 +342,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
           <h1 className="text-3xl font-bold">Savings Monitoring Sheet</h1>
           <p className="text-muted-foreground mt-1">Stage 9: Monthly monitoring and validation</p>
         </div>
-        {selectedInitiativeId && (
+        {selectedInitiativeId && user.role !== 'VIEWER' && (
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button onClick={() => { setEditingEntry(null); setFormData({}); }}>
@@ -710,14 +716,16 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                                       <Target className="h-3 w-3" />
                                     </Button>
                                   )}
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => deleteMutation.mutate(entry.id!)}
-                                    className="text-red-600 hover:text-red-700"
-                                  >
-                                    <Trash2 className="h-3 w-3" />
-                                  </Button>
+                                  {user.role !== 'VIEWER' && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => deleteMutation.mutate(entry.id!)}
+                                      className="text-red-600 hover:text-red-700"
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </Button>
+                                  )}
                                 </div>
                               </TableCell>
                             </TableRow>

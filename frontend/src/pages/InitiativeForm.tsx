@@ -84,6 +84,11 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
               Only users with SITE TSD LEAD role can create new initiatives.
             </p>
             <p className="text-xs text-muted-foreground mt-1">Your current role: {user.role}</p>
+            {user.role === "VIEWER" && (
+              <p className="text-xs text-blue-600 mt-2">
+                As a Viewer, you have read-only access to view initiatives and data.
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>

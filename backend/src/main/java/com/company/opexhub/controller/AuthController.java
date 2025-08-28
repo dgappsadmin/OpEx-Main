@@ -3,11 +3,13 @@ package com.company.opexhub.controller;
 import com.company.opexhub.dto.*;
 import com.company.opexhub.entity.User;
 import com.company.opexhub.service.AuthService;
+import com.company.opexhub.service.EmailVerificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -15,6 +17,9 @@ public class AuthController {
 
     @Autowired
     AuthService authService;
+
+    @Autowired
+    EmailVerificationService emailVerificationService;
 
     @PostMapping("/signin")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
@@ -52,6 +57,114 @@ public class AuthController {
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body(new ApiResponse(false, e.getMessage()));
+        }
+    }
+
+    /**
+     * Send email verification code for new registration
+     */
+    @PostMapping("/send-verification-code")
+    public ResponseEntity<?> sendVerificationCode(@RequestBody Map<String, String> request) {
+        try {
+            String email = request.get("email");
+            String fullName = request.get("fullName");
+            String site = request.get("site");
+            String discipline = request.get("discipline");
+            String role = request.get("role");
+            String roleName = request.get("roleName");
+            String password = request.get("password");
+
+            // Validate required fields
+            if (email == null || fullName == null || site == null || discipline == null || 
+                role == null || roleName == null || password == null) {
+                return ResponseEntity.badRequest()
+                        .body(new ApiResponse(false, "All registration fields are required"));
+            }
+
+            // Validate email domain
+            if (!emailVerificationService.isValidEmailDomain(email)) {
+                return ResponseEntity.badRequest()
+                        .body(new ApiResponse(false, "Only @godeepak.com email addresses are allowed for registration"));
+            }
+
+            boolean sent = emailVerificationService.sendVerificationCode(email, fullName, site, discipline, role, roleName, password);
+            
+            if (sent) {
+                return ResponseEntity.ok(new ApiResponse(true, "Verification code sent to your email"));
+            } else {
+                return ResponseEntity.badRequest()
+                        .body(new ApiResponse(false, "Failed to send verification code. User may already exist."));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse(false, "Error sending verification code"));
+        }
+    }
+
+    /**
+     * Verify email verification code and complete registration
+     */
+    @PostMapping("/verify-email")
+    public ResponseEntity<?> verifyEmail(@RequestBody Map<String, String> request) {
+        try {
+            String email = request.get("email");
+            String code = request.get("code");
+
+            if (email == null || code == null) {
+                return ResponseEntity.badRequest()
+                        .body(new ApiResponse(false, "Email and verification code are required"));
+            }
+
+            // Validate email domain
+            if (!emailVerificationService.isValidEmailDomain(email)) {
+                return ResponseEntity.badRequest()
+                        .body(new ApiResponse(false, "Invalid email domain"));
+            }
+
+            User newUser = emailVerificationService.completeRegistration(email, code);
+            
+            if (newUser != null) {
+                return ResponseEntity.ok(new ApiResponse(true, "Email verified successfully. Registration completed!", newUser));
+            } else {
+                return ResponseEntity.badRequest()
+                        .body(new ApiResponse(false, "Invalid or expired verification code"));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse(false, "Error verifying email"));
+        }
+    }
+
+    /**
+     * Resend email verification code
+     */
+    @PostMapping("/resend-verification-code")
+    public ResponseEntity<?> resendVerificationCode(@RequestBody Map<String, String> request) {
+        try {
+            String email = request.get("email");
+
+            if (email == null) {
+                return ResponseEntity.badRequest()
+                        .body(new ApiResponse(false, "Email is required"));
+            }
+
+            // Validate email domain
+            if (!emailVerificationService.isValidEmailDomain(email)) {
+                return ResponseEntity.badRequest()
+                        .body(new ApiResponse(false, "Invalid email domain"));
+            }
+
+            boolean sent = emailVerificationService.resendVerificationCode(email);
+            
+            if (sent) {
+                return ResponseEntity.ok(new ApiResponse(true, "Verification code resent to your email"));
+            } else {
+                return ResponseEntity.badRequest()
+                        .body(new ApiResponse(false, "Failed to resend verification code"));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse(false, "Error resending verification code"));
         }
     }
 }

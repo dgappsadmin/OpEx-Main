@@ -337,7 +337,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
           <h1 className="text-3xl font-bold">Initiative Timeline Tracker</h1>
           <p className="text-muted-foreground mt-1">Stage 6: Manage and track initiative timelines</p>
         </div>
-        {selectedInitiativeId && (
+        {selectedInitiativeId && user.role !== 'VIEWER' && (
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button 
@@ -632,17 +632,21 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                               </div>
                               <div className="flex items-center space-x-2">
                                 <Badge variant="outline">{entry.status}</Badge>
-                                <Button size="sm" variant="outline" onClick={() => handleEdit(entry)}>
-                                  <Edit className="h-3 w-3" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => deleteMutation.mutate(entry.id!)}
-                                  className="text-red-600 hover:text-red-700"
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
+                                {user.role !== 'VIEWER' && (
+                                  <>
+                                    <Button size="sm" variant="outline" onClick={() => handleEdit(entry)}>
+                                      <Edit className="h-3 w-3" />
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => deleteMutation.mutate(entry.id!)}
+                                      className="text-red-600 hover:text-red-700"
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </Button>
+                                  </>
+                                )}
                               </div>
                             </div>
                           </CardHeader>
@@ -696,28 +700,32 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                                 </Badge>
                               </div>
                               <div className="flex space-x-1 ml-auto">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => approvalMutation.mutate({ 
-                                    id: entry.id!, 
-                                    siteLeadApproval: entry.siteLeadApproval === 'Y' ? 'N' : 'Y' 
-                                  })}
-                                  disabled={user.role !== 'STLD'}
-                                >
-                                  Site Lead
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => approvalMutation.mutate({ 
-                                    id: entry.id!, 
-                                    initiativeLeadApproval: entry.initiativeLeadApproval === 'Y' ? 'N' : 'Y' 
-                                  })}
-                                  disabled={user.role !== 'IL'}
-                                >
-                                  IL Approve
-                                </Button>
+                                {user.role !== 'VIEWER' && (
+                                  <>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => approvalMutation.mutate({ 
+                                        id: entry.id!, 
+                                        siteLeadApproval: entry.siteLeadApproval === 'Y' ? 'N' : 'Y' 
+                                      })}
+                                      disabled={user.role !== 'STLD'}
+                                    >
+                                      Site Lead
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => approvalMutation.mutate({ 
+                                        id: entry.id!, 
+                                        initiativeLeadApproval: entry.initiativeLeadApproval === 'Y' ? 'N' : 'Y' 
+                                      })}
+                                      disabled={user.role !== 'IL'}
+                                    >
+                                      IL Approve
+                                    </Button>
+                                  </>
+                                )}
                               </div>
                             </div>
                           </CardContent>

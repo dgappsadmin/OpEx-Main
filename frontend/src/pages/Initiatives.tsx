@@ -382,15 +382,17 @@ export default function Initiatives({ user }: InitiativesProps) {
                           >
                             <Eye className="h-2.5 w-2.5" />
                           </Button>
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            className="h-5 w-5 p-0 hover:bg-secondary hover:text-secondary-foreground transition-colors"
-                            onClick={() => handleEditInitiative(initiative)}
-                            title="Edit Initiative"
-                          >
-                            <Edit className="h-2.5 w-2.5" />
-                          </Button>
+                          {user.role !== 'VIEWER' && (
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="h-5 w-5 p-0 hover:bg-secondary hover:text-secondary-foreground transition-colors"
+                              onClick={() => handleEditInitiative(initiative)}
+                              title="Edit Initiative"
+                            >
+                              <Edit className="h-2.5 w-2.5" />
+                            </Button>
+                          )}
                           <Button 
                             size="sm" 
                             variant="outline" 
@@ -469,15 +471,17 @@ export default function Initiatives({ user }: InitiativesProps) {
                       >
                         <Eye className="h-2.5 w-2.5" />
                       </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="h-5 w-5 p-0 hover:bg-secondary hover:text-secondary-foreground"
-                        onClick={() => handleEditInitiative(initiative)}
-                        title="Edit"
-                      >
-                        <Edit className="h-2.5 w-2.5" />
-                      </Button>
+                      {user.role !== 'VIEWER' && (
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="h-5 w-5 p-0 hover:bg-secondary hover:text-secondary-foreground"
+                          onClick={() => handleEditInitiative(initiative)}
+                          title="Edit"
+                        >
+                          <Edit className="h-2.5 w-2.5" />
+                        </Button>
+                      )}
                       <Button 
                         size="sm" 
                         variant="outline" 
@@ -548,6 +552,7 @@ export default function Initiatives({ user }: InitiativesProps) {
         initiative={selectedInitiative}
         mode={modalMode}
         onSave={handleSaveInitiative}
+        user={user}
       />
     </div>
   );

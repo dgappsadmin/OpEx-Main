@@ -31,10 +31,11 @@ const disciplines = [
 ];
 
 const roles = [
-  { code: "IL", name: "Initiative Lead" },
-  { code: "STLD", name: "Site TSD Lead" },
-  { code: "EH", name: "Engineering Head" },
-  { code: "CTSD", name: "Corp TSD" }
+  // { code: "IL", name: "Initiative Lead" },
+  // { code: "STLD", name: "Site TSD Lead" },
+  // { code: "EH", name: "Engineering Head" },
+  // { code: "CTSD", name: "Corp TSD" },
+  { code: "VIEWER", name: "View" }
 ];
 
 interface AuthProps {
@@ -44,6 +45,7 @@ interface AuthProps {
 export default function AuthPage({ onLogin }: AuthProps) {
   const [isLogin, setIsLogin] = useState(true);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showEmailVerification, setShowEmailVerification] = useState(false);
   const [forgotPasswordStep, setForgotPasswordStep] = useState(1); // 1: email, 2: code, 3: new password
   const [formData, setFormData] = useState({
     email: "",
@@ -51,7 +53,7 @@ export default function AuthPage({ onLogin }: AuthProps) {
     fullName: "",
     site: "",
     discipline: "",
-    role: ""
+    role: "VIEWER"
   });
   const [forgotPasswordData, setForgotPasswordData] = useState({
     email: "",
@@ -59,11 +61,20 @@ export default function AuthPage({ onLogin }: AuthProps) {
     newPassword: "",
     confirmPassword: ""
   });
+  const [verificationData, setVerificationData] = useState({
+    email: "",
+    code: ""
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("Authenticating");
   const [loadingSubmessage, setLoadingSubmessage] = useState("Please wait while we verify your credentials...");
   const { toast } = useToast();
   const { login, register } = useAuth();
+
+  const validateEmail = (email: string) => {
+    if (!email) return false;
+    return email.toLowerCase().trim().endsWith('@godeepak.com');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,8 +108,18 @@ export default function AuthPage({ onLogin }: AuthProps) {
           });
         }
       } else {
-        setLoadingMessage("Creating Account");
-        setLoadingSubmessage("Setting up your OpEx Hub account...");
+        // Validate email domain for signup
+        if (!validateEmail(formData.email)) {
+          toast({
+            title: "Invalid Email Domain",
+            description: "Only @godeepak.com email addresses are allowed for registration.",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        setLoadingMessage("Sending Verification Code");
+        setLoadingSubmessage("Please wait while we send the verification code to your email...");
         
         if (!formData.fullName || !formData.site || !formData.discipline || !formData.role) {
           toast({
@@ -119,29 +140,32 @@ export default function AuthPage({ onLogin }: AuthProps) {
           roleName: roles.find(r => r.code === formData.role)?.name || ""
         };
 
-        const result = await register(userData);
+        // Send verification code instead of direct registration
+        const result = await authAPI.sendVerificationCode(userData);
         
         if (result.success) {
-          setLoadingMessage("Account Created!");
-          setLoadingSubmessage("Please sign in with your new credentials...");
+          setLoadingMessage("Verification Code Sent!");
+          setLoadingSubmessage("Please check your email and enter the verification code...");
+          
+          setVerificationData({ email: formData.email, code: "" });
+          setShowEmailVerification(true);
           
           toast({
-            title: "Signup Successful",
-            description: "Account created successfully! Please sign in.",
+            title: "Verification Code Sent",
+            description: "A 6-digit verification code has been sent to your email.",
           });
-          setIsLogin(true);
         } else {
           toast({
             title: "Signup Failed",
-            description: result.error || "Registration failed",
+            description: result.message || "Failed to send verification code",
             variant: "destructive"
           });
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: isLogin ? "Login Failed" : "Signup Failed",
-        description: "An unexpected error occurred. Please try again.",
+        description: error.response?.data?.message || "An unexpected error occurred. Please try again.",
         variant: "destructive"
       });
     } finally {
