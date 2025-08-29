@@ -129,8 +129,17 @@ public class ReportsController {
             @RequestParam(value = "period", required = false, defaultValue = "yearly") String period,
             @RequestParam(value = "year", required = false) String year) {
         
-        DNLReportDataDTO data = reportsService.getDNLSavingsData(site, period, year);
-        return ResponseEntity.ok(data);
+        try {
+            logger.info("🔍 DNL API Request - site: {}, period: {}, year: {}", site, period, year);
+            
+            DNLReportDataDTO data = reportsService.getDNLSavingsData(site, period, year);
+            
+            logger.info("✅ DNL API Response - Data retrieved successfully");
+            return ResponseEntity.ok(data);
+        } catch (Exception e) {
+            logger.error("❌ Error in getDNLSavingsData API: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().build();
+        }
     }
     
     // Export DNL Plant Initiatives with Bar Chart as PDF

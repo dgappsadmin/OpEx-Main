@@ -42,25 +42,42 @@ public interface MonthlyMonitoringEntryRepository extends JpaRepository<MonthlyM
     List<MonthlyMonitoringEntry> findByFaApprovalOrderByMonitoringMonthDesc(String faApproval);
     
     // DNL Plant Initiatives Report - Aggregate data by category and budget type
-    @Query("SELECT mme.category, i.budgetType, " +
+    @Query("SELECT LOWER(mme.category) as category, " +
+           "COALESCE(LOWER(i.budgetType), 'budgeted') as budgetType, " +
            "SUM(CASE WHEN mme.achievedValue IS NOT NULL THEN mme.achievedValue ELSE 0 END) as totalSavings, " +
            "COUNT(mme) as entryCount " +
            "FROM MonthlyMonitoringEntry mme " +
            "JOIN mme.initiative i " +
-           "WHERE mme.category IN ('RMC', 'Spent Acid', 'Environment') " +
+           "WHERE LOWER(mme.category) IN ('rmc', 'spent acid', 'environment') " +
            "AND (:site IS NULL OR :site = 'all' OR i.site = :site) " +
            "AND (:startDate IS NULL OR mme.monitoringMonth >= :startDate) " +
            "AND (:endDate IS NULL OR mme.monitoringMonth <= :endDate) " +
-           "GROUP BY mme.category, i.budgetType")
+           "GROUP BY LOWER(mme.category), COALESCE(LOWER(i.budgetType), 'budgeted')")
     List<Object[]> findDNLPlantInitiativesData(@Param("site") String site, 
                                                @Param("startDate") String startDate, 
                                                @Param("endDate") String endDate);
                                                
     // Additional query for total budget targets from initiatives
-    @Query("SELECT i.budgetType, SUM(i.expectedSavings) as totalTarget " +
+    @Query("SELECT COALESCE(LOWER(i.budgetType), 'budgeted') as budgetType, SUM(i.expectedSavings) as totalTarget " +
            "FROM Initiative i " +
            "WHERE (:site IS NULL OR :site = 'all' OR i.site = :site) " +
-           "AND i.budgetType IN ('budgeted', 'non-budgeted') " +
-           "GROUP BY i.budgetType")
+           "AND COALESCE(LOWER(i.budgetType), 'budgeted') IN ('budgeted', 'non-budgeted') " +
+           "GROUP BY COALESCE(LOWER(i.budgetType), 'budgeted')")
     List<Object[]> findBudgetTargetsByType(@Param("site") String site);
+    
+    // Debug query to check available categories
+    @Query("SELECT DISTINCT mme.category, COUNT(mme) " +
+           "FROM MonthlyMonitoringEntry mme " +
+           "GROUP BY mme.category")
+    List<Object[]> findAllCategories();
+    
+    // Debug query to check available data in date range
+    @Query("SELECT mme.monitoringMonth, COUNT(mme) " +
+           "FROM MonthlyMonitoringEntry mme " +
+           "WHERE (:startDate IS NULL OR mme.monitoringMonth >= :startDate) " +
+           "AND (:endDate IS NULL OR mme.monitoringMonth <= :endDate) " +
+           "GROUP BY mme.monitoringMonth " +
+           "ORDER BY mme.monitoringMonth")
+    List<Object[]> findDataByDateRange(@Param("startDate") String startDate, 
+                                       @Param("endDate") String endDate);
 }

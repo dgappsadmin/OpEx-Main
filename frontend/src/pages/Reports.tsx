@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { User } from "@/lib/mockData";
 import { useInitiatives } from "@/hooks/useInitiatives";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,71 +28,94 @@ interface DNLChartData {
 }
 
 export default function Reports({ user }: ReportsProps) {
+  // Debug render cycles
+  console.log('🔄 Reports component render - timestamp:', Date.now());
+  
   const [selectedPeriod, setSelectedPeriod] = useState<string>('yearly'); // Default to yearly
   const [selectedSite, setSelectedSite] = useState<string>('all');
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
   const [dnlChartData, setDnlChartData] = useState<DNLChartData | null>(null);
   const [loadingChart, setLoadingChart] = useState<boolean>(false);
+  const [chartError, setChartError] = useState<string | null>(null);
   const { data: initiativesData, isLoading } = useInitiatives();
   
-  // Handle both API response format and mock data format
-  const initiatives = initiativesData?.content || initiativesData || [];
+  // Memoize initiatives to prevent infinite re-renders
+  const initiatives = useMemo(() => {
+    const result = initiativesData?.content || initiativesData || [];
+    console.log('🔄 Initiatives memoized, length:', result.length);
+    return result;
+  }, [initiativesData]);
 
   // Generate dynamic monthly data based on current fiscal year
   useEffect(() => {
     const generateDynamicMonthlyData = () => {
-      const currentDate = new Date();
-      const currentMonth = currentDate.getMonth();
-      const currentYear = currentDate.getFullYear();
-      
-      // Fiscal year starts from April (month 3 in 0-indexed)
-      const fiscalYearStart = currentMonth >= 3 ? currentYear : currentYear - 1;
-      
-      const months = [
-        'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
-        'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'
-      ];
-      
-      const dynamicData: MonthlyData[] = [];
-      
-      for (let i = 0; i < months.length; i++) {
-        const monthIndex = (3 + i) % 12; // Start from April (index 3)
-        const year = monthIndex < 3 ? fiscalYearStart + 1 : fiscalYearStart;
+      try {
+        const currentDate = new Date();
+        const currentMonth = currentDate.getMonth();
+        const currentYear = currentDate.getFullYear();
         
-        // Only include months up to current month in current fiscal year
-        const isCurrentFiscalYear = (currentMonth >= 3 && year === currentYear) || 
-                                   (currentMonth < 3 && year === currentYear);
-        const isPastMonth = isCurrentFiscalYear ? 
-                           (monthIndex < currentMonth || (currentMonth < 3 && monthIndex >= 3)) :
-                           true;
+        // Fiscal year starts from April (month 3 in 0-indexed)
+        const fiscalYearStart = currentMonth >= 3 ? currentYear : currentYear - 1;
         
-        if (isPastMonth || monthIndex === currentMonth) {
-          // Calculate dynamic values based on filtered initiatives for the month
-          const monthInitiatives = initiatives.filter((initiative: any) => {
-            const startDate = new Date(initiative.submittedDate || initiative.startDate);
-            return startDate.getMonth() === monthIndex && startDate.getFullYear() === year;
-          });
+        const months = [
+          'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
+          'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'
+        ];
+        
+        const dynamicData: MonthlyData[] = [];
+        
+        for (let i = 0; i < months.length; i++) {
+          const monthIndex = (3 + i) % 12; // Start from April (index 3)
+          const year = monthIndex < 3 ? fiscalYearStart + 1 : fiscalYearStart;
           
-          const savings = monthInitiatives.reduce((sum: number, initiative: any) => {
-            const savingsValue = typeof initiative.expectedSavings === 'string' 
-              ? parseFloat(initiative.expectedSavings.replace(/[₹L,]/g, '')) || 0
-              : initiative.expectedSavings || 0;
-            return sum + savingsValue;
-          }, 0);
+          // Only include months up to current month in current fiscal year
+          const isCurrentFiscalYear = (currentMonth >= 3 && year === currentYear) || 
+                                     (currentMonth < 3 && year === currentYear);
+          const isPastMonth = isCurrentFiscalYear ? 
+                             (monthIndex < currentMonth || (currentMonth < 3 && monthIndex >= 3)) :
+                             true;
           
-          const completedCount = monthInitiatives.filter((i: any) => i.status === 'Completed').length;
-          
-          dynamicData.push({
-            month: months[i],
-            initiatives: monthInitiatives.length,
-            savings: savings,
-            completed: completedCount
-          });
+          if (isPastMonth || monthIndex === currentMonth) {
+            // Calculate dynamic values based on filtered initiatives for the month
+            const monthInitiatives = initiatives.filter((initiative: any) => {
+              try {
+                const startDate = new Date(initiative.submittedDate || initiative.startDate);
+                return startDate.getMonth() === monthIndex && startDate.getFullYear() === year;
+              } catch (e) {
+                console.warn('Error parsing initiative date:', e);
+                return false;
+              }
+            });
+            
+            const savings = monthInitiatives.reduce((sum: number, initiative: any) => {
+              try {
+                const savingsValue = typeof initiative.expectedSavings === 'string' 
+                  ? parseFloat(initiative.expectedSavings.replace(/[₹L,]/g, '')) || 0
+                  : initiative.expectedSavings || 0;
+                return sum + savingsValue;
+              } catch (e) {
+                console.warn('Error parsing savings value:', e);
+                return sum;
+              }
+            }, 0);
+            
+            const completedCount = monthInitiatives.filter((i: any) => i.status === 'Completed').length;
+            
+            dynamicData.push({
+              month: months[i],
+              initiatives: monthInitiatives.length,
+              savings: savings,
+              completed: completedCount
+            });
+          }
         }
+        
+        return dynamicData;
+      } catch (error) {
+        console.error('Error generating monthly data:', error);
+        return []; // Return empty array on error
       }
-      
-      return dynamicData;
     };
 
     setMonthlyData(generateDynamicMonthlyData());
@@ -104,6 +127,7 @@ export default function Reports({ user }: ReportsProps) {
     
     const fetchDNLChartData = async () => {
       setLoadingChart(true);
+      setChartError(null); // Clear previous errors
       try {
         const data = await reportsAPI.getDNLSavingsData({
           site: selectedSite !== 'all' ? selectedSite : undefined,
@@ -114,11 +138,20 @@ export default function Reports({ user }: ReportsProps) {
         // Only update state if component is still mounted
         if (isMounted) {
           setDnlChartData(data);
+          setChartError(null);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching DNL chart data:', error);
         if (isMounted) {
           setDnlChartData(null);
+          // Set user-friendly error message
+          if (error?.response?.status === 500) {
+            setChartError('Server error: Unable to fetch chart data. Please try again later or contact support.');
+          } else if (error?.response?.status === 404) {
+            setChartError('No data found for the selected filters.');
+          } else {
+            setChartError('Failed to load chart data. Please check your connection and try again.');
+          }
         }
       } finally {
         if (isMounted) {
@@ -454,6 +487,20 @@ export default function Reports({ user }: ReportsProps) {
                 <div className="flex items-center justify-center h-96">
                   <div className="text-muted-foreground">Loading chart data...</div>
                 </div>
+              ) : chartError ? (
+                <div className="flex flex-col items-center justify-center h-96 space-y-4">
+                  <div className="text-red-600 text-center">
+                    <p className="font-medium">Chart Data Unavailable</p>
+                    <p className="text-sm mt-2">{chartError}</p>
+                  </div>
+                  <Button 
+                    onClick={() => window.location.reload()} 
+                    variant="outline" 
+                    size="sm"
+                  >
+                    Retry
+                  </Button>
+                </div>
               ) : dnlChartData ? (
                 <DNLBarChart 
                   data={dnlChartData} 
@@ -480,7 +527,7 @@ export default function Reports({ user }: ReportsProps) {
                 <Button 
                   onClick={() => handleDownloadReport('DNL Chart PDF')}
                   className="w-full"
-                  disabled={loadingChart || !dnlChartData}
+                  disabled={loadingChart || !dnlChartData || !!chartError}
                 >
                   <Download className="h-4 w-4 mr-2" />
                   Download Chart (PDF)
@@ -490,7 +537,7 @@ export default function Reports({ user }: ReportsProps) {
                   onClick={() => handleDownloadReport('DNL Chart Excel')}
                   variant="outline"
                   className="w-full"
-                  disabled={loadingChart || !dnlChartData}
+                  disabled={loadingChart || !dnlChartData || !!chartError}
                 >
                   <Download className="h-4 w-4 mr-2" />
                   Download Chart (Excel)

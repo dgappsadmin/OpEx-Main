@@ -22,7 +22,7 @@ ChartJS.register(
 interface DNLBarChartProps {
   data: {
     processedData: number[][];
-  };
+  } | null;
   title?: string;
   year?: string;
 }
@@ -39,6 +39,15 @@ export default function DNLBarChart({ data, title = "DNL Plant Initiatives", yea
     Total: '#5B9BD5'        // Light Blue
   };
 
+  // Handle null or undefined data
+  if (!data) {
+    return (
+      <div className="w-full h-96 flex items-center justify-center">
+        <div className="text-muted-foreground">No chart data available</div>
+      </div>
+    );
+  }
+
   // Process the data for Chart.js format - handle both API response and direct data
   let processedData = data?.processedData || [];
   
@@ -49,9 +58,32 @@ export default function DNLBarChart({ data, title = "DNL Plant Initiatives", yea
   
   // Extract values for each category based on backend structure
   // Backend array structure: [FY'XX Budgeted, FY'XX Non Budgeted, Budgeted, Non-budgeted, Savings till month, Total]
-  const budgetedData = categories.map((_, index) => processedData[index]?.[2] || 0); // Budgeted values (column 2)
-  const nonBudgetedData = categories.map((_, index) => processedData[index]?.[3] || 0); // Non-budgeted values (column 3)
-  const totalData = categories.map((_, index) => processedData[index]?.[5] || 0); // Total values (column 5)
+  const budgetedData = categories.map((_, index) => {
+    try {
+      return processedData[index]?.[2] || 0; // Budgeted values (column 2)
+    } catch (e) {
+      console.warn(`Error processing budgeted data for category ${index}:`, e);
+      return 0;
+    }
+  });
+  
+  const nonBudgetedData = categories.map((_, index) => {
+    try {
+      return processedData[index]?.[3] || 0; // Non-budgeted values (column 3)
+    } catch (e) {
+      console.warn(`Error processing non-budgeted data for category ${index}:`, e);
+      return 0;
+    }
+  });
+  
+  const totalData = categories.map((_, index) => {
+    try {
+      return processedData[index]?.[5] || 0; // Total values (column 5)
+    } catch (e) {
+      console.warn(`Error processing total data for category ${index}:`, e);
+      return 0;
+    }
+  });
 
   const chartData = {
     labels: categories,
@@ -101,7 +133,8 @@ export default function DNLBarChart({ data, title = "DNL Plant Initiatives", yea
           label: function(context: any) {
             const datasetLabel = context.dataset.label || '';
             const value = context.parsed.y;
-            return `${datasetLabel}: ${value.toLocaleString()} Rs. Lacs`;
+            // Format in Indian rupee style with proper intervals
+            return `${datasetLabel}: ₹${value.toLocaleString('en-IN')} Lacs`;
           }
         }
       }
@@ -109,14 +142,19 @@ export default function DNLBarChart({ data, title = "DNL Plant Initiatives", yea
     scales: {
       y: {
         beginAtZero: true,
+        // Set intervals of 500 up to 3000
+        min: 0,
+        max: 3000,
+        ticks: {
+          stepSize: 500,
+          callback: function(value: any) {
+            // Format as Indian rupee
+            return '₹' + value.toLocaleString('en-IN');
+          }
+        },
         title: {
           display: true,
-          text: 'Savings (Rs. Lacs)'
-        },
-        ticks: {
-          callback: function(value: any) {
-            return value.toLocaleString();
-          }
+          text: 'Savings (₹ Lacs)'
         }
       },
       x: {

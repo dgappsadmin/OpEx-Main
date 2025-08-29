@@ -10,6 +10,5 @@ public class OpexHubApplication {
     public static void main(String[] args) {
         SpringApplication.run(OpexHubApplication.class, args);
         System.out.println("Application is running and up!");
- 
     }
 }
