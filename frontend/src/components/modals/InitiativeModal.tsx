@@ -29,6 +29,7 @@ import {
 import { useProgressPercentage, useCurrentPendingStage } from '@/hooks/useWorkflowTransactions';
 import { useUser } from '@/hooks/useUsers';
 import { initiativeAPI } from '@/lib/api';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface Initiative {
   id: string | number;
@@ -86,6 +87,7 @@ const WORKFLOW_STAGE_NAMES: { [key: number]: string } = {
 };
 
 export default function InitiativeModal({ isOpen, onClose, initiative, mode, onSave, user }: InitiativeModalProps) {
+  const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(mode === 'edit');
   const [formData, setFormData] = useState<any>(initiative || {});
   const [activeTab, setActiveTab] = useState('overview');
@@ -196,13 +198,14 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
       // Call API to update initiative
       await initiativeAPI.update(Number(initiative.id), updateData);
       
+      // Invalidate and refetch initiatives data instead of full page reload
+      await queryClient.invalidateQueries({ queryKey: ['initiatives'] });
+      await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      
       if (onSave) {
         onSave(formData);
       }
       setIsEditing(false);
-      
-      // Refresh the page to show updated data
-      window.location.reload();
     } catch (error) {
       console.error('Error updating initiative:', error);
       alert('Failed to update initiative. Please try again.');
