@@ -27,18 +27,26 @@ interface DNLBarChartProps {
   year?: string;
 }
 
-export default function DNLBarChart({ data, title = "DNL Plant Initiatives", year }: DNLBarChartProps) {
-  // Categories matching the backend
-  const categories = ['RMC', 'Spent Acid', 'Environment', 'Total'];
-  
-  // Colors matching the provided image and backend
-  const colors = {
-    RMC: '#1F4E79',        // Dark Blue
-    'Spent Acid': '#FF6600', // Orange
-    Environment: '#70AD47',  // Green
-    Total: '#5B9BD5'        // Light Blue
-  };
+// Helper function to get current month dynamically
+const getCurrentMonth = () => {
+  const now = new Date();
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return months[now.getMonth()];
+};
 
+// Helper function to get current fiscal year  
+const getCurrentFiscalYear = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  // Fiscal year starts from April, so if current month is Jan-Mar, FY is previous year
+  if (now.getMonth() >= 3) {
+    return String(year + 1).slice(-2); // e.g., "26" for 2026
+  } else {
+    return String(year).slice(-2); // e.g., "25" for 2025
+  }
+};
+
+export default function DNLBarChart({ data, title = "DNL Plant Initiatives", year }: DNLBarChartProps) {
   // Handle null or undefined data
   if (!data) {
     return (
@@ -55,58 +63,61 @@ export default function DNLBarChart({ data, title = "DNL Plant Initiatives", yea
   if (!processedData || processedData.length === 0) {
     processedData = [[0,0,0,0,0,0], [0,0,0,0,0,0], [0,0,0,0,0,0], [0,0,0,0,0,0]];
   }
+
+  // Categories matching the backend  
+  const categories = ['RMC', 'Spent Acid', 'Environment', 'Total'];
   
-  // Extract values for each category based on backend structure
-  // Backend array structure: [FY'XX Budgeted, FY'XX Non Budgeted, Budgeted, Non-budgeted, Savings till month, Total]
-  const budgetedData = categories.map((_, index) => {
+  // Colors matching the provided image and backend
+  const colors = {
+    RMC: '#1F4E79',        // Dark Blue
+    'Spent Acid': '#FF6600', // Orange
+    Environment: '#70AD47',  // Green
+    Total: '#5B9BD5'        // Light Blue
+  };
+
+  // Get dynamic fiscal year and month
+  const currentFY = getCurrentFiscalYear();
+  const currentMonth = getCurrentMonth();
+
+  // Create the 6 time periods as shown in the image
+  const timePeriods = [
+    `FY'${currentFY} Budgeted Saving`,
+    `FY'${currentFY} Non Budgeted Saving`, 
+    'Budgeted',
+    'Non-budgeted',
+    `Savings till ${currentMonth}'${String(new Date().getFullYear()).slice(-2)}`,
+    'Total'
+  ];
+
+  // Extract values for each category and time period
+  const chartDatasets = categories.map((category, categoryIndex) => {
+    // Get values for all 6 periods for this category
+    const values = [];
     try {
-      return processedData[index]?.[2] || 0; // Budgeted values (column 2)
+      values.push(processedData[categoryIndex]?.[0] || 0); // FY'XX Budgeted Saving
+      values.push(processedData[categoryIndex]?.[1] || 0); // FY'XX Non Budgeted Saving
+      values.push(processedData[categoryIndex]?.[2] || 0); // Budgeted
+      values.push(processedData[categoryIndex]?.[3] || 0); // Non-budgeted  
+      values.push(processedData[categoryIndex]?.[4] || 0); // Savings till current month
+      values.push(processedData[categoryIndex]?.[5] || 0); // Total
     } catch (e) {
-      console.warn(`Error processing budgeted data for category ${index}:`, e);
-      return 0;
+      console.warn(`Error processing data for category ${category}:`, e);
+      // Fill with zeros on error
+      for(let i = 0; i < 6; i++) values.push(0);
     }
-  });
-  
-  const nonBudgetedData = categories.map((_, index) => {
-    try {
-      return processedData[index]?.[3] || 0; // Non-budgeted values (column 3)
-    } catch (e) {
-      console.warn(`Error processing non-budgeted data for category ${index}:`, e);
-      return 0;
-    }
-  });
-  
-  const totalData = categories.map((_, index) => {
-    try {
-      return processedData[index]?.[5] || 0; // Total values (column 5)
-    } catch (e) {
-      console.warn(`Error processing total data for category ${index}:`, e);
-      return 0;
-    }
+
+    return {
+      label: category,
+      data: values,
+      backgroundColor: colors[category as keyof typeof colors],
+      borderColor: colors[category as keyof typeof colors],
+      borderWidth: 1,
+    };
   });
 
   const chartData = {
-    labels: categories,
-    datasets: [
-      {
-        label: `FY'${year ? year.slice(-2) : '25'} Budgeted Saving`,
-        data: budgetedData,
-        backgroundColor: categories.map(cat => colors[cat as keyof typeof colors]),
-        borderColor: categories.map(cat => colors[cat as keyof typeof colors]),
-        borderWidth: 1,
-      },
-      {
-        label: `FY'${year ? year.slice(-2) : '25'} Non Budgeted Saving`,
-        data: nonBudgetedData,
-        backgroundColor: categories.map(cat => {
-          const baseColor = colors[cat as keyof typeof colors];
-          // Make non-budgeted bars slightly transparent
-          return baseColor + '80'; // Add 50% opacity
-        }),
-        borderColor: categories.map(cat => colors[cat as keyof typeof colors]),
-        borderWidth: 1,
-      }
-    ],
+    labels: timePeriods,
+    datasets: chartDatasets,
   };
 
   const options = {
@@ -133,8 +144,8 @@ export default function DNLBarChart({ data, title = "DNL Plant Initiatives", yea
           label: function(context: any) {
             const datasetLabel = context.dataset.label || '';
             const value = context.parsed.y;
-            // Format in Indian rupee style with proper intervals
-            return `${datasetLabel}: ₹${value.toLocaleString('en-IN')} Lacs`;
+            // Format in Indian style with lakhs
+            return `${datasetLabel}: ${value.toLocaleString('en-IN')} L`;
           }
         }
       }
@@ -142,25 +153,27 @@ export default function DNLBarChart({ data, title = "DNL Plant Initiatives", yea
     scales: {
       y: {
         beginAtZero: true,
-        // Set intervals of 500 up to 3000
+        // Set intervals of 500 up to 3000 as per image
         min: 0,
         max: 3000,
         ticks: {
           stepSize: 500,
           callback: function(value: any) {
-            // Format as Indian rupee
-            return '₹' + value.toLocaleString('en-IN');
+            // Format as plain numbers (lakhs are implicit)
+            return value.toLocaleString('en-IN');
           }
         },
         title: {
-          display: true,
-          text: 'Savings (₹ Lacs)'
+          display: false, // Remove y-axis title as per image
         }
       },
       x: {
         title: {
-          display: true,
-          text: 'Categories'
+          display: false, // Remove x-axis title as per image
+        },
+        ticks: {
+          maxRotation: 45,
+          minRotation: 0
         }
       }
     },
@@ -170,9 +183,49 @@ export default function DNLBarChart({ data, title = "DNL Plant Initiatives", yea
     },
   };
 
+  // Create data table below the chart matching the image
+  const createDataTable = () => {
+    return (
+      <div className="mt-6 border border-gray-300 rounded">
+        <table className="w-full text-sm border-collapse">
+          <thead>
+            <tr className="bg-gray-100 border-b">
+              <th className="border-r border-gray-300 p-2 text-left font-medium"></th>
+              {timePeriods.map((period, index) => (
+                <th key={index} className="border-r border-gray-300 p-2 text-center font-medium text-xs">
+                  {period}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {categories.map((category, categoryIndex) => (
+              <tr key={category} className="border-b">
+                <td 
+                  className="border-r border-gray-300 p-2 text-white font-bold text-center"
+                  style={{ backgroundColor: colors[category as keyof typeof colors] }}
+                >
+                  {category}
+                </td>
+                {timePeriods.map((_, periodIndex) => (
+                  <td key={periodIndex} className="border-r border-gray-300 p-2 text-center">
+                    {Math.round(processedData[categoryIndex]?.[periodIndex] || 0)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
   return (
-    <div className="w-full h-96">
-      <Bar data={chartData} options={options} />
+    <div className="w-full">
+      <div className="h-96 mb-4">
+        <Bar data={chartData} options={options} />
+      </div>
+      {createDataTable()}
     </div>
   );
 }

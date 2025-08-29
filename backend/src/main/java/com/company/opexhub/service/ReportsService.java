@@ -10,8 +10,10 @@ import com.itextpdf.kernel.colors.ColorConstants;
 import com.itextpdf.kernel.colors.DeviceRgb;
 import com.itextpdf.kernel.font.PdfFont;
 import com.itextpdf.kernel.font.PdfFontFactory;
+import com.itextpdf.kernel.geom.PageSize;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.kernel.pdf.canvas.PdfCanvas;
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Table;
@@ -20,7 +22,9 @@ import com.itextpdf.layout.properties.UnitValue;
 
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.xssf.usermodel.*;
+import org.apache.poi.xddf.usermodel.chart.*;
+import org.apache.poi.xddf.usermodel.*;
 import org.apache.poi.xwpf.usermodel.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -73,20 +77,191 @@ public class ReportsService {
             .setFontSize(12)
             .setMarginBottom(10));
 
-        // Create chart representation and data table
-        createChartAndTable(document, font, reportData.getProcessedData());
+        // Create visual chart representation and data table
+        createVisualChartAndTable(document, pdf, font, boldFont, reportData.getProcessedData());
 
         document.close();
         return outputStream;
     }
 
-    private void createChartAndTable(Document document, PdfFont font, double[][] data) {
+    private void createVisualChartAndTable(Document document, PdfDocument pdf, PdfFont font, PdfFont boldFont, double[][] data) {
+        // Add chart area label
+        document.add(new Paragraph("Bar Chart")
+            .setFont(boldFont)
+            .setFontSize(12)
+            .setMarginBottom(10));
+        
+        // Create visual bar chart using canvas
+        createPDFBarChart(document, pdf, data);
+        
+        // Add sufficient spacing between chart and table (about 350 points to clear the chart area)
+        for (int i = 0; i < 18; i++) {
+            document.add(new Paragraph(" ").setMarginBottom(2));
+        }
+        
+        // Add data table label
+        document.add(new Paragraph("Data Table")
+            .setFont(boldFont)
+            .setFontSize(12)
+            .setMarginBottom(10));
+        
+        // Create data table below chart
+        createDataTable(document, font, data);
+    }
+    
+    private void createPDFBarChart(Document document, PdfDocument pdf, double[][] data) {
+        try {
+            String[] categories = {"RMC", "Spent Acid", "Environment", "Total"};
+            String currentFY = getCurrentFiscalYear();
+            String currentMonth = getCurrentMonthYear();
+            
+            String[] periods = {
+                "FY'" + currentFY + " Budgeted Saving",
+                "FY'" + currentFY + " Non Budgeted Saving", 
+                "Budgeted",
+                "Non-budgeted",
+                "Savings till " + currentMonth,
+                "Total"
+            };
+            
+            // Chart dimensions and position - position higher on page to avoid table overlap
+            float chartX = 50;
+            float chartY = 450; // Moved up to provide space for table below
+            float chartWidth = 500;
+            float chartHeight = 200; // Reduced height to fit better
+            
+            PdfCanvas canvas = new PdfCanvas(pdf.getLastPage());
+            
+            // Define colors for categories
+            DeviceRgb[] categoryColors = {
+                new DeviceRgb(31, 78, 121),   // Dark Blue for RMC
+                new DeviceRgb(255, 102, 0),   // Orange for Spent Acid
+                new DeviceRgb(112, 173, 71),  // Green for Environment  
+                new DeviceRgb(91, 155, 213)   // Light Blue for Total
+            };
+            
+            // Draw chart background
+            canvas.setFillColor(ColorConstants.WHITE)
+                  .rectangle(chartX, chartY, chartWidth, chartHeight)
+                  .fill();
+                  
+            // Draw chart border
+            canvas.setStrokeColor(ColorConstants.BLACK)
+                  .setLineWidth(1)
+                  .rectangle(chartX, chartY, chartWidth, chartHeight)
+                  .stroke();
+            
+            // Calculate bar dimensions
+            float groupWidth = chartWidth / periods.length;
+            float barWidth = groupWidth / (categories.length + 1); // +1 for spacing
+            float maxValue = 3000; // As per the reference image
+            
+            // Draw Y-axis labels and grid lines
+            for (int i = 0; i <= 6; i++) {
+                float value = i * 500;
+                float y = chartY + (value / maxValue) * chartHeight;
+                
+                // Grid line
+                canvas.setStrokeColor(ColorConstants.LIGHT_GRAY)
+                      .setLineWidth(0.5f)
+                      .moveTo(chartX, y)
+                      .lineTo(chartX + chartWidth, y)
+                      .stroke();
+                      
+                // Y-axis label
+                canvas.beginText()
+                      .setFontAndSize(PdfFontFactory.createFont(StandardFonts.HELVETICA), 8)
+                      .setTextMatrix(chartX - 30, y - 3)
+                      .showText(String.valueOf((int)value))
+                      .endText();
+            }
+            
+            // Draw bars for each period
+            for (int periodIndex = 0; periodIndex < periods.length && periodIndex < data[0].length; periodIndex++) {
+                float groupStartX = chartX + (periodIndex * groupWidth) + (groupWidth - (barWidth * categories.length)) / 2;
+                
+                for (int categoryIndex = 0; categoryIndex < categories.length; categoryIndex++) {
+                    double value = data[categoryIndex][periodIndex];
+                    float barHeight = (float) ((value / maxValue) * chartHeight);
+                    float barX = groupStartX + (categoryIndex * barWidth);
+                    float barY = chartY;
+                    
+                    // Draw bar
+                    canvas.setFillColor(categoryColors[categoryIndex])
+                          .rectangle(barX, barY, barWidth - 2, barHeight) // -2 for spacing between bars
+                          .fill();
+                    
+                    // Add value label on top of bar if space allows
+                    if (barHeight > 15) {
+                        canvas.beginText()
+                              .setFontAndSize(PdfFontFactory.createFont(StandardFonts.HELVETICA), 7)
+                              .setFillColor(ColorConstants.BLACK)
+                              .setTextMatrix(barX + 2, barY + barHeight + 2)
+                              .showText(String.valueOf((int)value))
+                              .endText();
+                    }
+                }
+            }
+            
+            // Draw X-axis labels
+            for (int i = 0; i < periods.length; i++) {
+                float labelX = chartX + (i * groupWidth) + groupWidth / 2;
+                canvas.beginText()
+                      .setFontAndSize(PdfFontFactory.createFont(StandardFonts.HELVETICA), 8)
+                      .setTextMatrix(labelX - 30, chartY - 15)
+                      .showText(periods[i].length() > 15 ? periods[i].substring(0, 15) + "..." : periods[i])
+                      .endText();
+            }
+            
+            // Draw legend below the chart with proper spacing
+            float legendY = chartY - 30;
+            for (int i = 0; i < categories.length; i++) {
+                float legendX = chartX + (i * 120);
+                
+                // Legend color box
+                canvas.setFillColor(categoryColors[i])
+                      .rectangle(legendX, legendY, 15, 10)
+                      .fill();
+                      
+                // Legend text
+                canvas.beginText()
+                      .setFontAndSize(PdfFontFactory.createFont(StandardFonts.HELVETICA), 9)
+                      .setFillColor(ColorConstants.BLACK)
+                      .setTextMatrix(legendX + 20, legendY + 2)
+                      .showText(categories[i])
+                      .endText();
+            }
+            
+            // Add axis titles
+            // X-axis title
+            canvas.beginText()
+                  .setFontAndSize(PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD), 10)
+                  .setFillColor(ColorConstants.BLACK)
+                  .setTextMatrix(chartX + chartWidth/2 - 30, chartY - 80)
+                  .showText("Time Periods")
+                  .endText();
+                  
+            // Y-axis title (rotated)
+            canvas.beginText()
+                  .setFontAndSize(PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD), 10)
+                  .setFillColor(ColorConstants.BLACK)
+                  .setTextMatrix(chartX - 45, chartY + chartHeight/2 - 20)
+                  .showText("Savings")
+                  .endText();
+            
+        } catch (Exception e) {
+            System.err.println("Error creating PDF bar chart: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    private void createDataTable(Document document, PdfFont font, double[][] data) {
         String[] categories = {"RMC", "Spent Acid", "Environment", "Total"};
         
         // Create table with 7 columns as shown in the image
         Table table = new Table(UnitValue.createPercentArray(new float[]{2, 2, 2, 1.5f, 1.5f, 2, 1.5f}));
         table.setWidth(UnitValue.createPercentValue(100));
-        table.setMarginTop(20);
+        table.setMarginTop(30); // Increased margin to ensure separation from chart
         
         // Define colors matching the image
         Color[] categoryColors = {
@@ -214,43 +389,102 @@ public class ReportsService {
         return outputStream;
     }
     
-    // New method to generate DNL Chart PDF
+    // New method to generate DNL Chart PDF with proper PDF generation
     public ByteArrayOutputStream generateDNLChartPDF(String site, String period, String year) throws IOException {
-        // Create workbook first to generate chart data
-        XSSFWorkbook workbook = new XSSFWorkbook();
-        Sheet sheet = workbook.createSheet("DNL Chart Data");
-        
-        // Get report data
-        DNLReportDataDTO reportData = getDNLReportData(site, period, year);
-        
-        // Create chart data sheet
-        createDNLChartDataSheet(workbook, sheet, reportData, year);
-        
-        // Convert to PDF using Apache POI (simplified approach)
-        // For production, you might want to use iText or similar PDF library
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        workbook.write(outputStream);
-        workbook.close();
+        
+        try {
+            // Use iText for proper PDF generation
+            PdfWriter writer = new PdfWriter(outputStream);
+            PdfDocument pdf = new PdfDocument(writer);
+            Document document = new Document(pdf);
+
+            // Create font
+            PdfFont font = PdfFontFactory.createFont(StandardFonts.HELVETICA);
+            PdfFont boldFont = PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD);
+
+            // Get report data
+            DNLReportDataDTO reportData = getDNLReportData(site, period, year);
+            
+            // Validate data
+            if (reportData == null) {
+                throw new IOException("No report data available for the given parameters");
+            }
+
+            // Title
+            document.add(new Paragraph("DNL - Plant Initiatives Chart")
+                .setFont(boldFont)
+                .setFontSize(18)
+                .setTextAlignment(TextAlignment.CENTER)
+                .setMarginBottom(10));
+
+            // Dynamic subtitle with current month and year
+            document.add(new Paragraph("Initiative saving till " + getCurrentMonthYear() + " (Rs. Lacs)")
+                .setFont(boldFont)
+                .setFontSize(14)
+                .setTextAlignment(TextAlignment.CENTER)
+                .setMarginBottom(20));
+
+            // Create visual bar chart and data table
+            createVisualChartAndTable(document, pdf, font, boldFont, reportData.getProcessedData());
+
+            // Add metadata for better PDF compatibility
+            pdf.getDocumentInfo().setTitle("DNL Plant Initiatives Chart");
+            pdf.getDocumentInfo().setAuthor("OpEx Hub System");
+            pdf.getDocumentInfo().setCreator("OpEx Hub Report Generator");
+
+            document.close();
+            
+        } catch (Exception e) {
+            throw new IOException("Failed to generate PDF: " + e.getMessage(), e);
+        }
         
         return outputStream;
     }
     
-    // New method to generate DNL Chart Excel  
+    // New method to generate DNL Chart Excel with embedded charts
     public ByteArrayOutputStream generateDNLChartExcel(String site, String period, String year) throws IOException {
-        // Create workbook
-        XSSFWorkbook workbook = new XSSFWorkbook();
-        Sheet sheet = workbook.createSheet("DNL - Plant Initiatives Chart");
-        
-        // Get report data
-        DNLReportDataDTO reportData = getDNLReportData(site, period, year);
-        
-        // Create enhanced chart sheet
-        createDNLChartSheet(workbook, sheet, reportData, year);
-        
-        // Write to output stream
+        XSSFWorkbook workbook = null;
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        workbook.write(outputStream);
-        workbook.close();
+        
+        try {
+            // Create workbook
+            workbook = new XSSFWorkbook();
+            
+            // Get report data
+            DNLReportDataDTO reportData = getDNLReportData(site, period, year);
+            
+            // Validate data
+            if (reportData == null) {
+                throw new IOException("No report data available for the given parameters");
+            }
+            
+            // Create chart sheet with embedded charts
+            Sheet chartSheet = workbook.createSheet("DNL Chart & Data");
+            createDNLChartSheetWithEmbeddedChart(workbook, chartSheet, reportData, year);
+            
+            // Create raw data sheet
+            Sheet dataSheet = workbook.createSheet("Raw Data");
+            createRawDataSheet(workbook, dataSheet, reportData, year);
+            
+            // Set the chart sheet as active
+            workbook.setActiveSheet(0);
+            
+            // Write to output stream
+            workbook.write(outputStream);
+            
+        } catch (Exception e) {
+            throw new IOException("Failed to generate Excel with charts: " + e.getMessage(), e);
+        } finally {
+            if (workbook != null) {
+                try {
+                    workbook.close();
+                } catch (IOException e) {
+                    // Log but don't throw - we want to return the data we have
+                    System.err.println("Warning: Failed to close workbook: " + e.getMessage());
+                }
+            }
+        }
         
         return outputStream;
     }
@@ -917,6 +1151,234 @@ public class ReportsService {
         style.setAlignment(org.apache.poi.ss.usermodel.HorizontalAlignment.LEFT);
         style.setVerticalAlignment(VerticalAlignment.CENTER);
         return style;
+    }
+    
+    // New method to create Excel sheet with actual embedded charts
+    private void createDNLChartSheetWithEmbeddedChart(XSSFWorkbook workbook, Sheet sheet, DNLReportDataDTO reportData, String year) {
+        // Create styles
+        CellStyle titleStyle = createTitleStyle(workbook);
+        CellStyle headerStyle = createHeaderStyle(workbook);
+        CellStyle dataStyle = createDataStyle(workbook);
+        
+        // Create colored styles for chart representation
+        CellStyle rmcStyle = createColoredStyle(workbook, "1F4E79"); // Dark Blue
+        CellStyle spentAcidStyle = createColoredStyle(workbook, "FF6600"); // Orange  
+        CellStyle environmentStyle = createColoredStyle(workbook, "70AD47"); // Green
+        CellStyle totalStyle = createColoredStyle(workbook, "5B9BD5"); // Light Blue
+        
+        int rowNum = 0;
+        int currentYear = year != null ? Integer.parseInt(year) : LocalDate.now().getYear();
+        
+        // Title row
+        Row titleRow = sheet.createRow(rowNum++);
+        Cell titleCell = titleRow.createCell(0);
+        titleCell.setCellValue("DNL - Plant Initiatives");
+        titleCell.setCellStyle(titleStyle);
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 10));
+        
+        // Dynamic subtitle row
+        Row subtitleRow = sheet.createRow(rowNum++);
+        Cell subtitleCell = subtitleRow.createCell(0);
+        subtitleCell.setCellValue("Initiative saving till " + getCurrentMonthYear() + " (Rs. Lacs)");
+        subtitleCell.setCellStyle(titleStyle);
+        sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 10));
+        
+        // Empty row for spacing
+        rowNum += 2;
+        
+        // Process data for chart representation
+        double[][] data = reportData.getProcessedData();
+        String[] categories = {"RMC", "Spent Acid", "Environment", "Total"};
+        CellStyle[] categoryStyles = {rmcStyle, spentAcidStyle, environmentStyle, totalStyle};
+        
+        // Create data table for chart
+        Row headerRow = sheet.createRow(rowNum++);
+        String currentFY = getCurrentFiscalYear();
+        String[] headers = {"Category", 
+            "FY'" + currentFY + " Budgeted Saving", 
+            "FY'" + currentFY + " Non Budgeted Saving", 
+            "Budgeted", 
+            "Non-budgeted", 
+            "Savings till " + getCurrentMonthYear(), 
+            "Total"};
+        
+        for (int i = 0; i < headers.length; i++) {
+            Cell headerCell = headerRow.createCell(i);
+            headerCell.setCellValue(headers[i]);
+            headerCell.setCellStyle(headerStyle);
+        }
+        
+        // Add data rows with colors
+        for (int i = 0; i < categories.length; i++) {
+            Row dataRow = sheet.createRow(rowNum++);
+            
+            Cell categoryCell = dataRow.createCell(0);
+            categoryCell.setCellValue(categories[i]);
+            categoryCell.setCellStyle(categoryStyles[i]);
+            
+            for (int j = 0; j < 6; j++) {
+                Cell cell = dataRow.createCell(j + 1);
+                cell.setCellValue(data[i][j]);
+                if (j == 5) { // Total column
+                    cell.setCellStyle(categoryStyles[i]);
+                } else {
+                    cell.setCellStyle(dataStyle);
+                }
+            }
+        }
+        
+        // Add spacing rows before chart
+        rowNum += 2;
+        Row spacingRow1 = sheet.createRow(rowNum++);
+        Row spacingRow2 = sheet.createRow(rowNum++);
+        
+        // Add chart label
+        Row chartLabelRow = sheet.createRow(rowNum++);
+        Cell chartLabelCell = chartLabelRow.createCell(0);
+        chartLabelCell.setCellValue("Bar Chart Visualization");
+        chartLabelCell.setCellStyle(createChartLabelStyle(workbook));
+        
+        // Create actual Excel bar chart
+        createExcelBarChart(workbook, sheet, data, rowNum);
+        
+        // Auto-size columns
+        for (int i = 0; i < 7; i++) {
+            sheet.autoSizeColumn(i);
+        }
+    }
+    
+    // Method to create actual Excel bar chart
+    private void createExcelBarChart(XSSFWorkbook workbook, Sheet sheet, double[][] data, int startRow) {
+        try {
+            XSSFDrawing drawing = (XSSFDrawing) sheet.createDrawingPatriarch();
+            
+            // Create chart anchor - position and size (properly sized chart)
+            XSSFClientAnchor anchor = drawing.createAnchor(0, 0, 0, 0, 1, startRow + 1, 9, startRow + 18);
+            
+            // Create chart
+            XSSFChart chart = drawing.createChart(anchor);
+            chart.setTitleText("DNL Plant Initiatives - Savings by Category (Rs. Lacs)");
+            chart.setTitleOverlay(false);
+            
+            // Create data for the chart
+            String[] categories = {"RMC", "Spent Acid", "Environment", "Total"};
+            String currentFY = getCurrentFiscalYear();
+            String currentMonth = getCurrentMonthYear();
+            
+            String[] periods = {
+                "FY'" + currentFY + " Budgeted",
+                "FY'" + currentFY + " Non Budgeted", 
+                "Budgeted",
+                "Non-budgeted",
+                "Savings till " + currentMonth,
+                "Total"
+            };
+            
+            // Create chart legend
+            XDDFChartLegend legend = chart.getOrAddLegend();
+            legend.setPosition(LegendPosition.BOTTOM);
+            
+            // Create category axis (X-axis)
+            XDDFCategoryAxis bottomAxis = chart.createCategoryAxis(AxisPosition.BOTTOM);
+            bottomAxis.setTitle("Time Periods");
+            
+            // Create value axis (Y-axis)  
+            XDDFValueAxis leftAxis = chart.createValueAxis(AxisPosition.LEFT);
+            leftAxis.setTitle("Savings (Rs. Lacs)");
+            leftAxis.setMinimum(0.0);
+            leftAxis.setMaximum(3000.0);
+            
+            // Add major grid lines at 500 intervals like in the reference image
+            leftAxis.setMajorUnit(500.0);
+            leftAxis.setMinorUnit(100.0);
+            
+            // Create data sources for periods (X-axis labels)
+            XDDFDataSource<String> periodDataSource = XDDFDataSourcesFactory.fromArray(periods);
+            
+            // Create bar chart data
+            XDDFChartData chartData = chart.createData(ChartTypes.BAR, bottomAxis, leftAxis);
+            
+            // Add data series for each category
+            for (int categoryIndex = 0; categoryIndex < categories.length; categoryIndex++) {
+                // Extract values for this category across all periods
+                Double[] values = new Double[Math.min(periods.length, data[categoryIndex].length)];
+                for (int periodIndex = 0; periodIndex < values.length; periodIndex++) {
+                    values[periodIndex] = data[categoryIndex][periodIndex];
+                }
+                
+                XDDFNumericalDataSource<Double> valuesDataSource = XDDFDataSourcesFactory.fromArray(values);
+                XDDFChartData.Series series = chartData.addSeries(periodDataSource, valuesDataSource);
+                series.setTitle(categories[categoryIndex], null);
+            }
+            
+            // Plot the chart
+            chart.plot(chartData);
+            
+            // Set bar chart direction to column (vertical bars)
+            if (chartData instanceof XDDFBarChartData) {
+                XDDFBarChartData barChartData = (XDDFBarChartData) chartData;
+                barChartData.setBarDirection(BarDirection.COL);
+                barChartData.setBarGrouping(BarGrouping.CLUSTERED);
+            }
+            
+            // Enable major gridlines for better readability like in reference image
+            chart.getCTChart().getPlotArea().getValAxArray(0).addNewMajorGridlines();
+            
+            // Note: Chart will use default Excel colors which are visually distinct
+            // Custom colors in Apache POI require complex configuration, using defaults for compatibility
+            
+        } catch (Exception e) {
+            System.err.println("Error creating Excel bar chart: " + e.getMessage());
+            e.printStackTrace();
+            
+            // Add a note if chart creation fails
+            Row noteRow = sheet.createRow(startRow);
+            Cell noteCell = noteRow.createCell(0);
+            noteCell.setCellValue("Chart creation failed. Please use the data table above to create charts manually.");
+        }
+    }
+    
+    // Method to create raw data sheet
+    private void createRawDataSheet(XSSFWorkbook workbook, Sheet sheet, DNLReportDataDTO reportData, String year) {
+        CellStyle headerStyle = createHeaderStyle(workbook);
+        CellStyle dataStyle = createDataStyle(workbook);
+        
+        int rowNum = 0;
+        
+        // Header
+        Row headerRow = sheet.createRow(rowNum++);
+        String[] rawHeaders = {"Category", "Budget Type", "Achieved Value", "Notes"};
+        
+        for (int i = 0; i < rawHeaders.length; i++) {
+            Cell headerCell = headerRow.createCell(i);
+            headerCell.setCellValue(rawHeaders[i]);
+            headerCell.setCellStyle(headerStyle);
+        }
+        
+        // Add raw monitoring data if available
+        if (reportData.getMonitoringData() != null) {
+            for (Object[] rowData : reportData.getMonitoringData()) {
+                Row dataRow = sheet.createRow(rowNum++);
+                
+                for (int i = 0; i < Math.min(rowData.length, 3); i++) {
+                    Cell cell = dataRow.createCell(i);
+                    if (rowData[i] != null) {
+                        cell.setCellValue(rowData[i].toString());
+                    }
+                    cell.setCellStyle(dataStyle);
+                }
+                
+                // Add notes column
+                Cell notesCell = dataRow.createCell(3);
+                notesCell.setCellValue("Raw data from monitoring entries");
+                notesCell.setCellStyle(dataStyle);
+            }
+        }
+        
+        // Auto-size columns
+        for (int i = 0; i < 4; i++) {
+            sheet.autoSizeColumn(i);
+        }
     }
     
     public ByteArrayOutputStream generateInitiativeForm(String initiativeId) throws IOException {

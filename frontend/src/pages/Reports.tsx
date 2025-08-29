@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
-import { Download, Calendar, TrendingUp, FileText, Filter, BarChart3 } from "lucide-react";
+import { Download, Calendar, TrendingUp, FileText, Filter, BarChart3, AlertCircle, RefreshCw } from "lucide-react";
 import { reportsAPI } from "@/lib/api";
 import DNLBarChart from "@/components/DNLBarChart";
 
@@ -204,9 +204,17 @@ export default function Reports({ user }: ReportsProps) {
         
         console.log(`Successfully downloaded DNL Plant Initiatives PDF report: ${filename} for ${selectedSite} site(s) - ${selectedPeriod} period (${selectedYear})`);
         alert(`DNL Plant Initiatives PDF report "${filename}" downloaded successfully for year ${selectedYear}! Data includes savings till current month (${getCurrentMonth()}).`);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error downloading DNL Plant Initiatives PDF report:', error);
-        alert('Failed to download DNL Plant Initiatives PDF report. Please try again.');
+        let errorMessage = 'Failed to download DNL Plant Initiatives PDF report. ';
+        if (error?.response?.status === 500) {
+          errorMessage += 'Server error occurred. Please try again later.';
+        } else if (error?.response?.status === 404) {
+          errorMessage += 'No data found for selected filters.';
+        } else {
+          errorMessage += 'Please check your connection and try again.';
+        }
+        alert(errorMessage);
       }
     } else if (reportType === 'DNL Chart PDF') {
       try {
@@ -218,9 +226,17 @@ export default function Reports({ user }: ReportsProps) {
         
         console.log(`Successfully downloaded DNL Chart PDF: ${filename}`);
         alert(`DNL Chart PDF "${filename}" downloaded successfully!`);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error downloading DNL Chart PDF:', error);
-        alert('Failed to download DNL Chart PDF. Please try again.');
+        let errorMessage = 'Failed to download DNL Chart PDF. ';
+        if (error?.response?.status === 500) {
+          errorMessage += 'Server error: PDF generation failed. This might be due to chart rendering issues. Please contact support.';
+        } else if (error?.response?.status === 404) {
+          errorMessage += 'No data found for selected filters.';
+        } else {
+          errorMessage += 'Please check your connection and try again.';
+        }
+        alert(errorMessage);
       }
     } else if (reportType === 'DNL Chart Excel') {
       try {
@@ -231,10 +247,18 @@ export default function Reports({ user }: ReportsProps) {
         });
         
         console.log(`Successfully downloaded DNL Chart Excel: ${filename}`);
-        alert(`DNL Chart Excel "${filename}" downloaded successfully!`);
-      } catch (error) {
+        alert(`DNL Chart Excel "${filename}" downloaded successfully with embedded charts and data table!`);
+      } catch (error: any) {
         console.error('Error downloading DNL Chart Excel:', error);
-        alert('Failed to download DNL Chart Excel. Please try again.');
+        let errorMessage = 'Failed to download DNL Chart Excel. ';
+        if (error?.response?.status === 500) {
+          errorMessage += 'Server error: Excel generation failed. This might be due to chart embedding issues. Please contact support.';
+        } else if (error?.response?.status === 404) {
+          errorMessage += 'No data found for selected filters.';
+        } else {
+          errorMessage += 'Please check your connection and try again.';
+        }
+        alert(errorMessage);
       }
     } else if (reportType === 'Detailed Report (Excel)') {
       try {
@@ -248,9 +272,17 @@ export default function Reports({ user }: ReportsProps) {
         // Optional: Show success message instead of alert
         // You can replace this with a toast notification if you have one
         alert(`Excel report "${filename}" downloaded successfully!`);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error downloading Excel report:', error);
-        alert('Failed to download Excel report. Please try again.');
+        let errorMessage = 'Failed to download Excel report. ';
+        if (error?.response?.status === 500) {
+          errorMessage += 'Server error occurred. Please try again later.';
+        } else if (error?.response?.status === 404) {
+          errorMessage += 'No data found for selected filters.';
+        } else {
+          errorMessage += 'Please check your connection and try again.';
+        }
+        alert(errorMessage);
       }
     } else {
       // Mock download functionality for other reports
@@ -295,16 +327,6 @@ export default function Reports({ user }: ReportsProps) {
           <h1 className="text-3xl font-bold">Monthly Reports</h1>
           <p className="text-muted-foreground">Generate and analyze initiative performance reports (Data till {getCurrentMonth()} {new Date().getFullYear()})</p>
         </div>
-        {/* <div className="flex gap-2">
-          <Button onClick={() => handleDownloadReport('DNL Chart PDF')} variant="outline">
-            <Download className="h-4 w-4 mr-2" />
-            Download Chart (PDF)
-          </Button>
-          <Button onClick={() => handleDownloadReport('DNL Chart Excel')} variant="outline">
-            <Download className="h-4 w-4 mr-2" />
-            Download Chart (Excel)
-          </Button>
-        </div> */}
       </div>
 
       {/* Filters */}
@@ -485,19 +507,24 @@ export default function Reports({ user }: ReportsProps) {
             <CardContent>
               {loadingChart ? (
                 <div className="flex items-center justify-center h-96">
-                  <div className="text-muted-foreground">Loading chart data...</div>
+                  <div className="flex items-center space-x-2 text-muted-foreground">
+                    <RefreshCw className="h-5 w-5 animate-spin" />
+                    <span>Loading chart data...</span>
+                  </div>
                 </div>
               ) : chartError ? (
                 <div className="flex flex-col items-center justify-center h-96 space-y-4">
                   <div className="text-red-600 text-center">
+                    <AlertCircle className="h-12 w-12 mx-auto mb-4" />
                     <p className="font-medium">Chart Data Unavailable</p>
-                    <p className="text-sm mt-2">{chartError}</p>
+                    <p className="text-sm mt-2 max-w-md">{chartError}</p>
                   </div>
                   <Button 
                     onClick={() => window.location.reload()} 
                     variant="outline" 
                     size="sm"
                   >
+                    <RefreshCw className="h-4 w-4 mr-2" />
                     Retry
                   </Button>
                 </div>
@@ -518,20 +545,20 @@ export default function Reports({ user }: ReportsProps) {
           <Card>
             <CardHeader>
               <CardTitle>Chart Export Options</CardTitle>
-              <p className="text-muted-foreground">
-                Download the DNL chart in various formats
-              </p>
+              {/* <p className="text-muted-foreground">
+                Download the DNL chart in various formats with enhanced error handling
+              </p> */}
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Button 
+                {/* <Button 
                   onClick={() => handleDownloadReport('DNL Chart PDF')}
                   className="w-full"
                   disabled={loadingChart || !dnlChartData || !!chartError}
                 >
                   <Download className="h-4 w-4 mr-2" />
                   Download Chart (PDF)
-                </Button>
+                </Button> */}
                 
                 <Button 
                   onClick={() => handleDownloadReport('DNL Chart Excel')}
@@ -543,6 +570,11 @@ export default function Reports({ user }: ReportsProps) {
                   Download Chart (Excel)
                 </Button>
               </div>
+              {(loadingChart || !dnlChartData || !!chartError) && (
+                <p className="text-sm text-muted-foreground text-center">
+                  Chart exports are disabled when chart data is unavailable
+                </p>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -620,24 +652,6 @@ export default function Reports({ user }: ReportsProps) {
                   <Download className="h-4 w-4 mr-2" />
                   Detailed Report (Excel)
                 </Button>
-                
-                {/* <Button 
-                  onClick={() => handleDownloadReport('Financial Analysis')}
-                  variant="outline"
-                  className="w-full"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Financial Analysis (PDF)
-                </Button>
-                 */}
-                {/* <Button 
-                  onClick={() => handleDownloadReport('Raw Data')}
-                  variant="outline"
-                  className="w-full"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Raw Data (CSV)
-                </Button> */}
               </div>
             </CardContent>
           </Card>
