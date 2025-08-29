@@ -2585,6 +2585,103 @@ export const monthlyMonitoringAPI = {
 
 // Reports API - Updated for PDF DNL Plant Initiatives Report
 export const reportsAPI = {
+  // Get DNL Savings Data for Chart
+  getDNLSavingsData: async (params?: { site?: string; period?: string; year?: string }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.site && params.site !== 'all') {
+      queryParams.append('site', params.site);
+    }
+    if (params?.period) {
+      queryParams.append('period', params.period);
+    }
+    if (params?.year) {
+      queryParams.append('year', params.year);
+    }
+    
+    const response = await api.get(`/reports/dnl-savings-data?${queryParams.toString()}`);
+    return response.data;
+  },
+
+  // Download DNL Chart as PDF
+  downloadDNLChartPDF: async (params?: { site?: string; period?: string; year?: string }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.site && params.site !== 'all') {
+      queryParams.append('site', params.site);
+    }
+    if (params?.period) {
+      queryParams.append('period', params.period);
+    }
+    if (params?.year) {
+      queryParams.append('year', params.year);
+    }
+    
+    const response = await api.get(`/reports/export/dnl-chart-pdf?${queryParams.toString()}`, {
+      responseType: 'blob',
+    });
+    
+    const blob = new Blob([response.data], { 
+      type: response.headers['content-type'] || 'application/pdf' 
+    });
+    const url = window.URL.createObjectURL(blob);
+    
+    const contentDisposition = response.headers['content-disposition'];
+    let filename = 'DNL_Plant_Initiatives_Chart.pdf';
+    if (contentDisposition && contentDisposition.includes('filename=')) {
+      filename = contentDisposition.split('filename=')[1].replace(/"/g, '');
+    }
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    window.URL.revokeObjectURL(url);
+    
+    return filename;
+  },
+
+  // Download DNL Chart as Excel
+  downloadDNLChartExcel: async (params?: { site?: string; period?: string; year?: string }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.site && params.site !== 'all') {
+      queryParams.append('site', params.site);
+    }
+    if (params?.period) {
+      queryParams.append('period', params.period);
+    }
+    if (params?.year) {
+      queryParams.append('year', params.year);
+    }
+    
+    const response = await api.get(`/reports/export/dnl-chart-excel?${queryParams.toString()}`, {
+      responseType: 'blob',
+    });
+    
+    const blob = new Blob([response.data], { 
+      type: response.headers['content-type'] || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+    });
+    const url = window.URL.createObjectURL(blob);
+    
+    const contentDisposition = response.headers['content-disposition'];
+    let filename = 'DNL_Plant_Initiatives_Chart.xlsx';
+    if (contentDisposition && contentDisposition.includes('filename=')) {
+      filename = contentDisposition.split('filename=')[1].replace(/"/g, '');
+    }
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    window.URL.revokeObjectURL(url);
+    
+    return filename;
+  },
+
   // New PDF DNL Plant Initiatives Report
   downloadDNLPlantInitiatives: async (params?: { site?: string; period?: string; year?: string }) => {
     const queryParams = new URLSearchParams();

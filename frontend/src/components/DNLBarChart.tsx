@@ -28,10 +28,10 @@ interface DNLBarChartProps {
 }
 
 export default function DNLBarChart({ data, title = "DNL Plant Initiatives", year }: DNLBarChartProps) {
-  // Categories matching the image
+  // Categories matching the backend
   const categories = ['RMC', 'Spent Acid', 'Environment', 'Total'];
   
-  // Colors matching the provided image
+  // Colors matching the provided image and backend
   const colors = {
     RMC: '#1F4E79',        // Dark Blue
     'Spent Acid': '#FF6600', // Orange
@@ -39,13 +39,19 @@ export default function DNLBarChart({ data, title = "DNL Plant Initiatives", yea
     Total: '#5B9BD5'        // Light Blue
   };
 
-  // Process the data for Chart.js format
-  const processedData = data.processedData || [];
+  // Process the data for Chart.js format - handle both API response and direct data
+  let processedData = data?.processedData || [];
   
-  // Extract values for each category
-  const budgetedData = categories.map((_, index) => processedData[index]?.[2] || 0); // Budgeted values
-  const nonBudgetedData = categories.map((_, index) => processedData[index]?.[3] || 0); // Non-budgeted values
-  const totalData = categories.map((_, index) => processedData[index]?.[5] || 0); // Total values
+  // If data is empty, create default structure
+  if (!processedData || processedData.length === 0) {
+    processedData = [[0,0,0,0,0,0], [0,0,0,0,0,0], [0,0,0,0,0,0], [0,0,0,0,0,0]];
+  }
+  
+  // Extract values for each category based on backend structure
+  // Backend array structure: [FY'XX Budgeted, FY'XX Non Budgeted, Budgeted, Non-budgeted, Savings till month, Total]
+  const budgetedData = categories.map((_, index) => processedData[index]?.[2] || 0); // Budgeted values (column 2)
+  const nonBudgetedData = categories.map((_, index) => processedData[index]?.[3] || 0); // Non-budgeted values (column 3)
+  const totalData = categories.map((_, index) => processedData[index]?.[5] || 0); // Total values (column 5)
 
   const chartData = {
     labels: categories,

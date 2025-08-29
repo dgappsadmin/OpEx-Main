@@ -100,6 +100,8 @@ export default function Reports({ user }: ReportsProps) {
 
   // Fetch DNL chart data when filters change
   useEffect(() => {
+    let isMounted = true; // Flag to prevent state updates if component unmounts
+    
     const fetchDNLChartData = async () => {
       setLoadingChart(true);
       try {
@@ -108,16 +110,30 @@ export default function Reports({ user }: ReportsProps) {
           period: selectedPeriod,
           year: selectedYear
         });
-        setDnlChartData(data);
+        
+        // Only update state if component is still mounted
+        if (isMounted) {
+          setDnlChartData(data);
+        }
       } catch (error) {
         console.error('Error fetching DNL chart data:', error);
+        if (isMounted) {
+          setDnlChartData(null);
+        }
       } finally {
-        setLoadingChart(false);
+        if (isMounted) {
+          setLoadingChart(false);
+        }
       }
     };
 
     fetchDNLChartData();
-  }, [selectedSite, selectedPeriod, selectedYear]);
+    
+    // Cleanup function to prevent memory leaks
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedSite, selectedPeriod, selectedYear]); // Only trigger on filter changes
 
   if (isLoading) {
     return <div className="p-6">Loading reports data...</div>;
