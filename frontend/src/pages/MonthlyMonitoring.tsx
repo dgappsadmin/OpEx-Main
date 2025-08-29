@@ -340,7 +340,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Savings Monitoring Sheet</h1>
-          <p className="text-muted-foreground mt-1">Stage 9: Monthly monitoring and validation</p>
+          <p className="text-muted-foreground mt-1">Monthly monitoring and validation</p>
         </div>
         {selectedInitiativeId && user.role !== 'VIEWER' && (
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -470,7 +470,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
       {!selectedInitiativeId ? (
         <div>
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold">Your Assigned Initiatives (Stage 9 Approved)</h2>
+            <h2 className="text-xl font-semibold">Your Assigned Initiatives</h2>
             <div className="flex space-x-2">
               <div className="relative">
                 <Input
@@ -501,7 +501,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                 <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold mb-2">No Initiatives Available</h3>
                 <p className="text-muted-foreground">
-                  You currently have no initiatives where Stage 9 (Savings Monitoring) has been approved and you are assigned as Site Lead.
+                  You currently have no initiatives where Savings Monitoring has been approved and you are assigned as Site Lead.
                 </p>
               </CardContent>
             </Card>
@@ -529,18 +529,18 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                           <span className="w-16">Site:</span>
                           <span className="font-medium">{initiative.site}</span>
                         </div>
-                        <div className="flex items-center">
+                        {/* <div className="flex items-center">
                           <span className="w-16">Lead:</span>
                           <span className="font-medium">{initiative.assignedUserEmail}</span>
-                        </div>
+                        </div> */}
                         <div className="flex items-center">
                           <span className="w-16">Savings:</span>
                           <span className="font-medium text-green-600">₹{initiative.expectedSavings} Lakhs</span>
                         </div>
-                        <div className="flex items-center">
+                        {/* <div className="flex items-center">
                           <span className="w-16">Stage:</span>
                           <Badge variant="secondary" className="text-xs">Stage {initiative.stageNumber || 9}</Badge>
-                        </div>
+                        </div> */}
                       </div>
                     </CardContent>
                   </Card>

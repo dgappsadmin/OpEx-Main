@@ -47,7 +47,7 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
   // Prepare filters for API call - corrected parameter names and status values
   const apiFilters = {
     search: searchTerm.trim() || undefined, // Backend expects 'search' parameter
-    status: statusFilter === "completed" ? "Completed" : undefined, // Default shows all non-completed (Pending & In Progress)
+    // Don't send status filter to API, we'll filter on frontend to handle multiple status logic
     site: siteFilter && siteFilter !== "all" ? siteFilter : undefined, // Filter by site, skip if "all" is selected
   };
   
@@ -101,11 +101,31 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
     ? initiativesData 
     : []; // Empty array if no real data
 
-  // Sort initiatives by creation date (recently created first)
-  const sortedInitiatives = [...initiatives].sort((a, b) => {
-    const dateA = new Date(a.submittedDate || a.createdDate || '');
-    const dateB = new Date(b.submittedDate || b.createdDate || '');
-    return dateB.getTime() - dateA.getTime(); // Most recent first
+  // Filter initiatives by status based on STATUS column values
+  const filteredInitiatives = initiatives.filter((initiative: any) => {
+    if (statusFilter === "completed") {
+      return initiative.status?.trim() === "Completed";
+    } else if (statusFilter === "default") {
+      // Default shows only Pending and In Progress (excludes Completed)
+      const status = initiative.status?.trim();
+      return status === "Pending" || status === "In Progress";
+    }
+    return true; // Show all if no filter
+  });
+
+  // Sort filtered initiatives by status priority and creation date (recently created first)
+  const sortedInitiatives = [...filteredInitiatives].sort((a, b) => {
+    // First, prioritize pending status initiatives (exact match with DB STATUS column)
+    const aIsPending = a.status?.trim() === 'Pending';
+    const bIsPending = b.status?.trim() === 'Pending';
+    
+    if (aIsPending && !bIsPending) return -1;
+    if (!aIsPending && bIsPending) return 1;
+    
+    // Then sort by creation date (most recent first)
+    const dateA = new Date(a.submittedDate || a.createdDate || a.createdAt || '');
+    const dateB = new Date(b.submittedDate || b.createdDate || b.createdAt || '');
+    return dateB.getTime() - dateA.getTime();
   });
 
   const itemsPerPage = 10;

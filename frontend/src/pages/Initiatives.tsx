@@ -39,6 +39,7 @@ interface Initiative {
   discipline: string;
   submittedDate: string;
   createdAt?: string;
+  createdDate?: string; // Added for sorting
   description?: string;
   startDate?: string;
   endDate?: string;
@@ -127,11 +128,31 @@ export default function Initiatives({ user }: InitiativesProps) {
         createdByEmail: item.createdBy?.email || item.createdByEmail,
         initiatorName: item.initiatorName,
         createdBy: item.createdBy?.id || item.createdBy,
+        // Keep original date fields for sorting
+        createdAt: item.createdAt,
+        createdDate: item.createdDate,
       }));
     } else {
       return mockInitiatives;
     }
   }, [apiInitiatives]);
+
+  // Sort initiatives by status priority and creation date (most recent first)
+  const sortedInitiatives = React.useMemo(() => {
+    return [...initiatives].sort((a, b) => {
+      // First, prioritize pending status initiatives (exact match with DB STATUS column)
+      const aIsPending = a.status?.trim() === 'Pending';
+      const bIsPending = b.status?.trim() === 'Pending';
+      
+      if (aIsPending && !bIsPending) return -1;
+      if (!aIsPending && bIsPending) return 1;
+      
+      // Then sort by creation date (most recent first)
+      const dateA = new Date(a.createdAt || a.submittedDate || a.createdDate || '');
+      const dateB = new Date(b.createdAt || b.submittedDate || b.createdDate || '');
+      return dateB.getTime() - dateA.getTime();
+    });
+  }, [initiatives]);
 
   const handleViewInitiative = (initiative: Initiative) => {
     setSelectedInitiative(initiative);
@@ -166,9 +187,10 @@ export default function Initiatives({ user }: InitiativesProps) {
     }
   };
 
-  // Filter initiatives
-  const filteredInitiatives = initiatives.filter((initiative: Initiative) => {
-    const matchesStatus = statusFilter === "all" || initiative.status.toLowerCase().includes(statusFilter);
+  // Filter sorted initiatives
+  const filteredInitiatives = sortedInitiatives.filter((initiative: Initiative) => {
+    // Exact status matching with database STATUS column values
+    const matchesStatus = statusFilter === "all" || initiative.status.trim() === statusFilter;
     const matchesSite = siteFilter === "all" || initiative.site === siteFilter;
     const matchesSearch = searchTerm === "" || 
       (initiative.title && initiative.title.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -182,16 +204,11 @@ export default function Initiatives({ user }: InitiativesProps) {
   const paginatedData = paginateArray(filteredInitiatives, currentPage, itemsPerPage);
 
   const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "completed": return "bg-success text-success-foreground";
-      case "in progress": return "bg-primary text-primary-foreground";
-      case "under review": return "bg-warning text-warning-foreground";
-      case "pending decision": return "bg-warning text-warning-foreground";
-      case "registered": return "bg-muted text-muted-foreground";
-      case "implementation": return "bg-primary text-primary-foreground";
-      case "moc review": return "bg-warning text-warning-foreground";
-      case "cmo review": return "bg-primary text-primary-foreground";
-      case "decision pending": return "bg-warning text-warning-foreground";
+    // Exact matching with database STATUS column values
+    switch (status.trim()) {
+      case "Pending": return "bg-destructive text-destructive-foreground";
+      case "In Progress": return "bg-primary text-primary-foreground";
+      case "Completed": return "bg-success text-success-foreground";
       default: return "bg-muted text-muted-foreground";
     }
   };
@@ -271,11 +288,9 @@ export default function Initiatives({ user }: InitiativesProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="in progress">In Progress</SelectItem>
-                  <SelectItem value="under review">Under Review</SelectItem>
-                  <SelectItem value="registered">Registered</SelectItem>
-                  <SelectItem value="pending decision">Pending Decision</SelectItem>
+                  <SelectItem value="Pending">Pending</SelectItem>
+                  <SelectItem value="In Progress">In Progress</SelectItem>
+                  <SelectItem value="Completed">Completed</SelectItem>
                 </SelectContent>
               </Select>
               
@@ -306,7 +321,7 @@ export default function Initiatives({ user }: InitiativesProps) {
                     <TableHead className="h-7 px-1.5 text-2xs font-medium text-center">Initiative</TableHead>
                     <TableHead className="h-7 px-1.5 text-2xs font-medium text-center">Site</TableHead>
                     <TableHead className="h-7 px-1.5 text-2xs font-medium text-center">Status</TableHead>
-                    <TableHead className="h-7 px-1.5 text-2xs font-medium text-center">Priority</TableHead>
+                    {/* <TableHead className="h-7 px-1.5 text-2xs font-medium text-center">Priority</TableHead> */}
                     <TableHead className="h-7 px-1.5 text-2xs font-medium text-center">Current Stage</TableHead>
                     <TableHead className="h-7 px-1.5 text-2xs font-medium text-center">Expected Savings</TableHead>
                     <TableHead className="h-7 px-1.5 text-2xs font-medium text-center">Progress</TableHead>
@@ -337,11 +352,11 @@ export default function Initiatives({ user }: InitiativesProps) {
                           {initiative.status}
                         </Badge>
                       </TableCell>
-                      <TableCell className="p-1.5 text-center">
+                      {/* <TableCell className="p-1.5 text-center">
                         <Badge className={`${getPriorityColor(initiative.priority)} text-2xs`}>
                           {initiative.priority}
                         </Badge>
-                      </TableCell>
+                      </TableCell> */}
                       <TableCell className="p-1.5 text-center">
                         <p className="text-2xs text-muted-foreground max-w-32 truncate mx-auto">
                           {initiative.currentStageName}
@@ -434,12 +449,12 @@ export default function Initiatives({ user }: InitiativesProps) {
                           {initiative.status}
                         </Badge>
                       </div>
-                      <div>
+                      {/* <div>
                         <p className="text-2xs text-muted-foreground">Priority</p>
                         <Badge className={`${getPriorityColor(initiative.priority)} text-2xs`}>
                           {initiative.priority}
                         </Badge>
-                      </div>
+                      </div> */}
                     </div>
                     
                     <div className="space-y-1">

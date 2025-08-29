@@ -335,7 +335,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Initiative Timeline Tracker</h1>
-          <p className="text-muted-foreground mt-1">Stage 6: Manage and track initiative timelines</p>
+          <p className="text-muted-foreground mt-1">Manage and track initiative timelines</p>
         </div>
         {selectedInitiativeId && user.role !== 'VIEWER' && (
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -469,7 +469,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
       {!selectedInitiativeId ? (
         <div>
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold">Your Assigned Initiatives (Stage 6 Approved)</h2>
+            <h2 className="text-xl font-semibold">Your Assigned Initiatives</h2>
             <div className="flex space-x-2">
               <div className="relative">
                 <Input
@@ -500,7 +500,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                 <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold mb-2">No Initiatives Available</h3>
                 <p className="text-muted-foreground">
-                  You currently have no initiatives where Stage 6 (Timeline Tracker) has been approved and you are assigned as Initiative Lead.
+                  You currently have no initiatives where Stage (Timeline Tracker) has been approved and you are assigned as Initiative Lead.
                 </p>
               </CardContent>
             </Card>
@@ -536,10 +536,10 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                           <span className="w-16">Savings:</span>
                           <span className="font-medium text-green-600">₹{initiative.expectedSavings} Lakhs</span>
                         </div>
-                        <div className="flex items-center">
+                        {/* <div className="flex items-center">
                           <span className="w-16">Stage:</span>
                           <Badge variant="secondary" className="text-xs">Stage {initiative.stageNumber || 6}</Badge>
-                        </div>
+                        </div> */}
                       </div>
                     </CardContent>
                   </Card>
