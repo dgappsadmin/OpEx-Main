@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
-import { Download, Calendar, TrendingUp, FileText, Filter, BarChart3, AlertCircle, RefreshCw } from "lucide-react";
+import { Download, Calendar, TrendingUp, FileText, Filter, BarChart3, AlertCircle, RefreshCw, FileSpreadsheet } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { reportsAPI } from "@/lib/api";
 import DNLBarChart from "@/components/DNLBarChart";
 
@@ -39,6 +40,7 @@ export default function Reports({ user }: ReportsProps) {
   const [loadingChart, setLoadingChart] = useState<boolean>(false);
   const [chartError, setChartError] = useState<string | null>(null);
   const { data: initiativesData, isLoading } = useInitiatives();
+  const { toast } = useToast();
   
   // Memoize initiatives to prevent infinite re-renders
   const initiatives = useMemo(() => {
@@ -46,6 +48,32 @@ export default function Reports({ user }: ReportsProps) {
     console.log('🔄 Initiatives memoized, length:', result.length);
     return result;
   }, [initiativesData]);
+
+  // Enhanced currency formatting for improved display
+  const formatCurrency = (amount: number): string => {
+    if (amount >= 10000000) { // 1 crore or more (1,00,00,000)
+      return `₹${(amount / 10000000).toFixed(2)}Cr`;
+    } else if (amount >= 100000) { // 1 lakh or more (1,00,000)
+      return `₹${(amount / 100000).toFixed(1)}L`;
+    } else if (amount >= 1000) { // 1 thousand or more
+      return `₹${(amount / 1000).toFixed(1)}K`;
+    } else {
+      return `₹${amount.toLocaleString('en-IN')}`;
+    }
+  };
+
+  // Format large numbers for display in cards
+  const formatDisplayNumber = (amount: number): string => {
+    if (amount >= 10000000) { // 1 crore or more
+      return `${(amount / 10000000).toFixed(2)}Cr`;
+    } else if (amount >= 100000) { // 1 lakh or more
+      return `${(amount / 100000).toFixed(1)}L`;
+    } else if (amount >= 1000) { // 1 thousand or more
+      return `${(amount / 1000).toFixed(1)}K`;
+    } else {
+      return amount.toLocaleString('en-IN');
+    }
+  };
 
   // Generate dynamic monthly data based on current fiscal year
   useEffect(() => {
@@ -169,7 +197,12 @@ export default function Reports({ user }: ReportsProps) {
   }, [selectedSite, selectedPeriod, selectedYear]); // Only trigger on filter changes
 
   if (isLoading) {
-    return <div className="p-6">Loading reports data...</div>;
+    return (
+      <div className="flex justify-center items-center h-64">
+        <RefreshCw className="h-8 w-8 animate-spin mr-2" />
+        Loading reports data...
+      </div>
+    );
   }
 
   // Filter initiatives based on selected site
@@ -247,7 +280,10 @@ export default function Reports({ user }: ReportsProps) {
         });
         
         console.log(`Successfully downloaded DNL Chart Excel: ${filename}`);
-        alert(`DNL Chart Excel "${filename}" downloaded successfully with embedded charts and data table!`);
+        toast({
+          title: "Download Successful",
+          description: `DNL Chart Excel "${filename}" downloaded successfully with embedded charts and data table!`,
+        });
       } catch (error: any) {
         console.error('Error downloading DNL Chart Excel:', error);
         let errorMessage = 'Failed to download DNL Chart Excel. ';
@@ -258,7 +294,11 @@ export default function Reports({ user }: ReportsProps) {
         } else {
           errorMessage += 'Please check your connection and try again.';
         }
-        alert(errorMessage);
+        toast({
+          title: "Download Failed",
+          description: errorMessage,
+          variant: "destructive",
+        });
       }
     } else if (reportType === 'Detailed Report (Excel)') {
       try {
@@ -293,11 +333,22 @@ export default function Reports({ user }: ReportsProps) {
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
-      case 'completed': return 'bg-green-500';
-      case 'in progress': return 'bg-blue-500';
-      case 'rejected': return 'bg-red-500';
-      case 'draft': return 'bg-yellow-500';
-      default: return 'bg-gray-500';
+      case 'completed': return 'bg-green-500 hover:bg-green-600';
+      case 'in progress': return 'bg-blue-500 hover:bg-blue-600';
+      case 'rejected': return 'bg-red-500 hover:bg-red-600';
+      case 'draft': return 'bg-yellow-500 hover:bg-yellow-600';
+      case 'approved': return 'bg-emerald-500 hover:bg-emerald-600';
+      case 'pending': return 'bg-orange-500 hover:bg-orange-600';
+      default: return 'bg-gray-500 hover:bg-gray-600';
+    }
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority?.toLowerCase()) {
+      case 'high': return 'destructive';
+      case 'medium': return 'default';
+      case 'low': return 'secondary';
+      default: return 'outline';
     }
   };
 
@@ -321,124 +372,127 @@ export default function Reports({ user }: ReportsProps) {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="container mx-auto p-4 space-y-4 max-w-7xl">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold">Monthly Reports</h1>
-          <p className="text-muted-foreground">Generate and analyze initiative performance reports (Data till {getCurrentMonth()} {new Date().getFullYear()})</p>
+          <h1 className="text-2xl lg:text-3xl font-bold">Monthly Reports</h1>
+          <p className="text-muted-foreground text-sm">Generate and analyze initiative performance reports (Data till {getCurrentMonth()} {new Date().getFullYear()})</p>
         </div>
       </div>
 
       {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
+      <Card className="compact-card">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Filter className="h-4 w-4" />
             Report Filters
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex gap-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Period</label>
-            <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-              <SelectTrigger className="w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="weekly">Weekly</SelectItem>
-                <SelectItem value="monthly">Monthly</SelectItem>
-                <SelectItem value="quarterly">Quarterly</SelectItem>
-                <SelectItem value="yearly">Yearly (Till {getCurrentMonth()})</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Site</label>
-            <Select value={selectedSite} onValueChange={setSelectedSite}>
-              <SelectTrigger className="w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Sites</SelectItem>
-                {sites.map((site: string) => (
-                  <SelectItem key={site} value={site}>{site}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Period</label>
+              <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="weekly">Weekly</SelectItem>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                  <SelectItem value="quarterly">Quarterly</SelectItem>
+                  <SelectItem value="yearly">Yearly (Till {getCurrentMonth()})</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Year</label>
-            <Select value={selectedYear} onValueChange={setSelectedYear}>
-              <SelectTrigger className="w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Array.from({ length: 5 }, (_, i) => {
-                  const year = new Date().getFullYear() - i;
-                  return (
-                    <SelectItem key={year} value={year.toString()}>
-                      {year}
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
+            
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Site</label>
+              <Select value={selectedSite} onValueChange={setSelectedSite}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Sites</SelectItem>
+                  {sites.map((site: string) => (
+                    <SelectItem key={site} value={site}>{site}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Year</label>
+              <Select value={selectedYear} onValueChange={setSelectedYear}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 5 }, (_, i) => {
+                    const year = new Date().getFullYear() - i;
+                    return (
+                      <SelectItem key={year} value={year.toString()}>
+                        {year}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <Card className="compact-kpi-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Initiatives</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{filteredInitiatives.length}</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent className="pb-2">
+            <div className="text-xl font-bold">{filteredInitiatives.length}</div>
+            <p className="text-xs text-muted-foreground mt-1">
               {completedCount} completed, {inProgressCount} in progress
             </p>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="compact-kpi-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Savings</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">₹{totalSavings.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent className="pb-2">
+            <div className="text-lg font-bold break-words">₹{formatDisplayNumber(totalSavings)}</div>
+            <p className="text-xs text-muted-foreground mt-1">
               Expected savings from all initiatives
             </p>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="compact-kpi-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Avg per Initiative</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">₹{avgSavingsPerInitiative.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent className="pb-2">
+            <div className="text-lg font-bold break-words">₹{formatDisplayNumber(avgSavingsPerInitiative)}</div>
+            <p className="text-xs text-muted-foreground mt-1">
               Average expected savings
             </p>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="compact-kpi-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Completion Rate</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
+          <CardContent className="pb-2">
+            <div className="text-xl font-bold">
               {filteredInitiatives.length > 0 ? ((completedCount / filteredInitiatives.length) * 100).toFixed(1) : 0}%
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground mt-1">
               Initiatives completed successfully
             </p>
           </CardContent>
@@ -446,21 +500,21 @@ export default function Reports({ user }: ReportsProps) {
       </div>
 
       <Tabs defaultValue="trends" className="w-full">
-        <TabsList>
-          <TabsTrigger value="trends">Trends</TabsTrigger>
-          <TabsTrigger value="dnl-chart">DNL Chart</TabsTrigger>
-          <TabsTrigger value="detailed">Detailed Report</TabsTrigger>
-          <TabsTrigger value="export">Export Options</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="trends" className="text-xs">Trends</TabsTrigger>
+          <TabsTrigger value="dnl-chart" className="text-xs">DNL Chart</TabsTrigger>
+          <TabsTrigger value="detailed" className="text-xs">Detailed Report</TabsTrigger>
+          <TabsTrigger value="export" className="text-xs">Export Options</TabsTrigger>
         </TabsList>
 
         <TabsContent value="trends" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <Card>
-              <CardHeader>
-                <CardTitle>Monthly Initiative Trends (FY'{getCurrentFiscalYear()})</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Monthly Initiative Trends (FY'{getCurrentFiscalYear()})</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
+                <ResponsiveContainer width="100%" height={280}>
                   <LineChart data={monthlyData}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="month" />
@@ -474,16 +528,16 @@ export default function Reports({ user }: ReportsProps) {
             </Card>
 
             <Card>
-              <CardHeader>
-                <CardTitle>Monthly Savings Trends (FY'{getCurrentFiscalYear()})</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Monthly Savings Trends (FY'{getCurrentFiscalYear()})</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
+                <ResponsiveContainer width="100%" height={280}>
                   <BarChart data={monthlyData}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="month" />
                     <YAxis />
-                    <Tooltip />
+                    <Tooltip formatter={(value) => [formatCurrency(Number(value)), 'Savings']} />
                     <Bar dataKey="savings" fill="#f59e0b" />
                   </BarChart>
                 </ResponsiveContainer>
@@ -494,28 +548,40 @@ export default function Reports({ user }: ReportsProps) {
 
         <TabsContent value="dnl-chart" className="space-y-4">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5" />
-                DNL Plant Initiatives Chart (FY'{getCurrentFiscalYear()})
-              </CardTitle>
-              <p className="text-muted-foreground">
-                Initiative savings by category - {selectedSite !== 'all' ? selectedSite : 'All Sites'} 
-                {selectedYear && ` - Year ${selectedYear}`}
-              </p>
+            <CardHeader className="pb-3">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <BarChart3 className="h-5 w-5" />
+                    DNL Plant Initiatives Chart (FY'{getCurrentFiscalYear()})
+                  </CardTitle>
+                  <p className="text-muted-foreground text-sm">
+                    Initiative savings by category - {selectedSite !== 'all' ? selectedSite : 'All Sites'} 
+                    {selectedYear && ` - Year ${selectedYear}`}
+                  </p>
+                </div>
+                <Button 
+                  onClick={() => handleDownloadReport('DNL Chart Excel')}
+                  className="bg-green-600 hover:bg-green-700 text-white transition-all duration-200"
+                  disabled={loadingChart || !dnlChartData || !!chartError}
+                >
+                  <FileSpreadsheet className="h-4 w-4 mr-2" />
+                  Download Excel
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               {loadingChart ? (
-                <div className="flex items-center justify-center h-96">
+                <div className="flex items-center justify-center h-80">
                   <div className="flex items-center space-x-2 text-muted-foreground">
                     <RefreshCw className="h-5 w-5 animate-spin" />
                     <span>Loading chart data...</span>
                   </div>
                 </div>
               ) : chartError ? (
-                <div className="flex flex-col items-center justify-center h-96 space-y-4">
+                <div className="flex flex-col items-center justify-center h-80 space-y-4">
                   <div className="text-red-600 text-center">
-                    <AlertCircle className="h-12 w-12 mx-auto mb-4" />
+                    <AlertCircle className="h-10 w-10 mx-auto mb-3" />
                     <p className="font-medium">Chart Data Unavailable</p>
                     <p className="text-sm mt-2 max-w-md">{chartError}</p>
                   </div>
@@ -535,45 +601,9 @@ export default function Reports({ user }: ReportsProps) {
                   year={selectedYear}
                 />
               ) : (
-                <div className="flex items-center justify-center h-96">
+                <div className="flex items-center justify-center h-80">
                   <div className="text-muted-foreground">No chart data available</div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>Chart Export Options</CardTitle>
-              {/* <p className="text-muted-foreground">
-                Download the DNL chart in various formats with enhanced error handling
-              </p> */}
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* <Button 
-                  onClick={() => handleDownloadReport('DNL Chart PDF')}
-                  className="w-full"
-                  disabled={loadingChart || !dnlChartData || !!chartError}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Download Chart (PDF)
-                </Button> */}
-                
-                <Button 
-                  onClick={() => handleDownloadReport('DNL Chart Excel')}
-                  variant="outline"
-                  className="w-full"
-                  disabled={loadingChart || !dnlChartData || !!chartError}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Download Chart (Excel)
-                </Button>
-              </div>
-              {(loadingChart || !dnlChartData || !!chartError) && (
-                <p className="text-sm text-muted-foreground text-center">
-                  Chart exports are disabled when chart data is unavailable
-                </p>
               )}
             </CardContent>
           </Card>
@@ -581,61 +611,74 @@ export default function Reports({ user }: ReportsProps) {
 
         <TabsContent value="detailed" className="space-y-4">
           <Card>
-            <CardHeader>
-              <CardTitle>Initiative Details</CardTitle>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Initiative Details</CardTitle>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Site</TableHead>
-                    <TableHead>Priority</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Expected Savings</TableHead>
-                    <TableHead>Start Date</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredInitiatives.slice(0, 10).map((initiative: any) => (
-                    <TableRow key={initiative.id}>
-                      <TableCell className="font-medium">{initiative.initiativeNumber || initiative.title}</TableCell>
-                      <TableCell>{initiative.site}</TableCell>
-                      <TableCell>
-                        <Badge variant={initiative.priority === 'High' ? 'destructive' : 'outline'}>
-                          {initiative.priority}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getStatusColor(initiative.status)}>
-                          {initiative.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {typeof initiative.expectedSavings === 'string' 
-                          ? initiative.expectedSavings 
-                          : `₹${initiative.expectedSavings?.toLocaleString() || 0}`
-                        }
-                      </TableCell>
-                      <TableCell>{initiative.submittedDate || 'N/A'}</TableCell>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-xs">Title</TableHead>
+                      <TableHead className="text-xs">Site</TableHead>
+                      <TableHead className="text-xs">Priority</TableHead>
+                      <TableHead className="text-xs">Status</TableHead>
+                      <TableHead className="text-xs">Expected Savings</TableHead>
+                      <TableHead className="text-xs">Start Date</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredInitiatives.slice(0, 10).map((initiative: any) => (
+                      <TableRow key={initiative.id}>
+                        <TableCell className="font-medium text-xs">
+                          <div className="max-w-48 truncate">
+                            {initiative.initiativeNumber || initiative.title}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-xs">{initiative.site}</TableCell>
+                        <TableCell className="text-xs">
+                          <Badge variant={getPriorityColor(initiative.priority)} className="text-xs">
+                            {initiative.priority}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          <Badge className={`${getStatusColor(initiative.status)} text-white text-xs`}>
+                            {initiative.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-xs font-medium">
+                          {typeof initiative.expectedSavings === 'string' 
+                            ? initiative.expectedSavings 
+                            : formatCurrency(initiative.expectedSavings || 0)
+                          }
+                        </TableCell>
+                        <TableCell className="text-xs">{initiative.submittedDate || 'N/A'}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              {filteredInitiatives.length > 10 && (
+                <div className="mt-3 text-center">
+                  <p className="text-sm text-muted-foreground">
+                    Showing first 10 of {filteredInitiatives.length} initiatives
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="export" className="space-y-4">
           <Card>
-            <CardHeader>
-              <CardTitle>Export Reports</CardTitle>
-              <p className="text-muted-foreground">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Export Reports</CardTitle>
+              <p className="text-muted-foreground text-sm">
                 Download detailed reports in various formats (Data includes current month: {getCurrentMonth()} {new Date().getFullYear()})
               </p>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <Button 
                   onClick={() => handleDownloadReport('DNL Plant Initiatives PDF')}
                   className="w-full"
@@ -658,6 +701,5 @@ export default function Reports({ user }: ReportsProps) {
         </TabsContent>
       </Tabs>
     </div>
-    
   );
 }

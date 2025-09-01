@@ -123,82 +123,97 @@ export default function KPI({ user }: KPIProps) {
     count,
   }));
 
+  // Format currency amounts without 'L' suffix
+  const formatCurrency = (amount: number) => {
+    if (amount >= 10000000) { // 1 crore or more
+      return `₹${(amount / 10000000).toFixed(1)}Cr`;
+    } else if (amount >= 100000) { // 1 lakh or more  
+      return `₹${(amount / 100000).toFixed(1)}L`;
+    } else if (amount >= 1000) { // 1 thousand or more
+      return `₹${(amount / 1000).toFixed(1)}K`;
+    } else {
+      return `₹${amount.toLocaleString('en-IN')}`;
+    }
+  };
+
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 space-y-4 max-w-7xl mx-auto">
       <div>
-        <h1 className="text-3xl font-bold">KPI Monitoring</h1>
-        <p className="text-muted-foreground">Monitor key performance indicators and initiative metrics</p>
+        <h1 className="text-2xl lg:text-3xl font-bold">KPI Monitoring</h1>
+        <p className="text-muted-foreground text-sm">Monitor key performance indicators and initiative metrics</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <Card>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+        <Card className="compact-kpi-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Initiatives</CardTitle>
             <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalInitiatives}</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent className="pb-2">
+            <div className="text-xl font-bold">{totalInitiatives}</div>
+            <p className="text-xs text-muted-foreground mt-1">
               {inProgressInitiatives} in progress
             </p>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="compact-kpi-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Completion Rate</CardTitle>
             <Award className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{completionRate.toFixed(1)}%</div>
-            <Progress value={completionRate} className="mt-2" />
+          <CardContent className="pb-2">
+            <div className="text-xl font-bold">{completionRate.toFixed(1)}%</div>
+            <Progress value={completionRate} className="mt-2 h-2" />
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="compact-kpi-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Expected Savings</CardTitle>
             <IndianRupee className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">₹{totalExpectedSavings.toLocaleString()}L</div>
-            <p className="text-xs text-muted-foreground">
-              ₹{completedSavings.toLocaleString()}L realized
+          <CardContent className="pb-2">
+            <div className="text-lg font-bold break-words">{formatCurrency(totalExpectedSavings)}</div>
+            <p className="text-xs text-muted-foreground mt-1 break-words">
+              {formatCurrency(completedSavings)} realized
             </p>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="compact-kpi-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Under Approval</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{underApprovalsInitiatives + pendingInitiatives}</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent className="pb-2">
+            <div className="text-xl font-bold">{underApprovalsInitiatives + pendingInitiatives}</div>
+            <p className="text-xs text-muted-foreground mt-1">
               Need attention
             </p>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="compact-kpi-card col-span-1 sm:col-span-2 lg:col-span-3 xl:col-span-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Operational KPIs</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-sm space-y-1">
-              <div className="flex justify-between">
-                <span>Cost Savings:</span>
-                <span className="font-semibold">₹{(totalExpectedSavings * 0.8).toFixed(1)}L</span>
+          <CardContent className="pb-2">
+            <div className="text-xs space-y-1.5">
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Cost Savings:</span>
+                <span className="font-semibold text-green-600 break-words text-right ml-2">
+                  {formatCurrency(totalExpectedSavings * 0.8)}
+                </span>
               </div>
-              <div className="flex justify-between">
-                <span>Productivity:</span>
-                <span className="font-semibold">+15%</span>
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Productivity:</span>
+                <span className="font-semibold text-blue-600">+15%</span>
               </div>
-              <div className="flex justify-between">
-                <span>Waste Reduction:</span>
-                <span className="font-semibold">-12%</span>
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Waste Reduction:</span>
+                <span className="font-semibold text-orange-600">-12%</span>
               </div>
             </div>
           </CardContent>
@@ -206,20 +221,19 @@ export default function KPI({ user }: KPIProps) {
       </div>
 
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList>
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="sites">By Sites</TabsTrigger>
-          {/* <TabsTrigger value="priority">By Priority</TabsTrigger> */}
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <Card>
               <CardHeader>
-                <CardTitle>Initiative Status Distribution</CardTitle>
+                <CardTitle className="text-base">Initiative Status Distribution</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
+                <ResponsiveContainer width="100%" height={280}>
                   <PieChart>
                     <Pie
                       data={statusData}
@@ -227,7 +241,7 @@ export default function KPI({ user }: KPIProps) {
                       cy="50%"
                       labelLine={false}
                       label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      outerRadius={80}
+                      outerRadius={70}
                       fill="#8884d8"
                       dataKey="value"
                     >
@@ -243,25 +257,27 @@ export default function KPI({ user }: KPIProps) {
 
             <Card>
               <CardHeader>
-                <CardTitle>Recent Initiative Status</CardTitle>
+                <CardTitle className="text-base">Recent Initiative Status</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                <div className="space-y-3">
                    {initiatives.slice(0, 5).map((initiative: any) => (
-                     <div key={initiative.id} className="flex items-center justify-between">
-                       <div className="flex-1">
-                         <p className="font-medium text-sm">{initiative.initiativeNumber || initiative.title}</p>
-                         <p className="text-xs text-muted-foreground">{initiative.site}</p>
+                     <div key={initiative.id} className="flex items-center justify-between p-2 rounded-lg bg-gray-50">
+                       <div className="flex-1 min-w-0">
+                         <p className="font-medium text-sm truncate">{initiative.initiativeNumber || initiative.title}</p>
+                         <p className="text-xs text-muted-foreground truncate">{initiative.site}</p>
                        </div>
                       <Badge 
-                        className={
+                        className={`text-xs ml-2 flex-shrink-0 ${
                           initiative.status === 'Completed' ? 'bg-green-500' :
                           initiative.status === 'In Progress' ? 'bg-blue-500' :
                           initiative.status === 'Rejected' ? 'bg-red-500' :
                           'bg-yellow-500'
-                        }
+                        }`}
                       >
-                        {initiative.status}
+                        {initiative.status === 'In Progress' ? 'In Prog.' : 
+                         initiative.status === 'Under Approvals' ? 'Pending' : 
+                         initiative.status}
                       </Badge>
                     </div>
                   ))}
@@ -274,10 +290,10 @@ export default function KPI({ user }: KPIProps) {
         <TabsContent value="sites" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Initiatives by Site</CardTitle>
+              <CardTitle className="text-base">Initiatives by Site</CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={400}>
+              <ResponsiveContainer width="100%" height={350}>
                 <BarChart data={siteChartData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="site" />
@@ -289,38 +305,19 @@ export default function KPI({ user }: KPIProps) {
             </CardContent>
           </Card>
         </TabsContent>
-
-        <TabsContent value="priority" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Initiatives by Priority</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={400}>
-                <BarChart data={priorityChartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="priority" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="count" fill="#ef4444" />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
 
       {/* Attention Required Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {droppedInitiatives > 0 && (
           <Card className="border-red-200">
-            <CardHeader>
-              <CardTitle className="text-red-600 flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5" />
+            <CardHeader className="pb-3">
+              <CardTitle className="text-red-600 flex items-center gap-2 text-base">
+                <AlertTriangle className="h-4 w-4" />
                 Dropped Initiatives
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-0">
               <p className="text-sm">
                 {droppedInitiatives} initiative(s) have been dropped and may need review.
               </p>
@@ -330,13 +327,13 @@ export default function KPI({ user }: KPIProps) {
         
         {(underApprovalsInitiatives + pendingInitiatives) > 0 && (
           <Card className="border-yellow-200">
-            <CardHeader>
-              <CardTitle className="text-yellow-600 flex items-center gap-2">
-                <Clock className="h-5 w-5" />
+            <CardHeader className="pb-3">
+              <CardTitle className="text-yellow-600 flex items-center gap-2 text-base">
+                <Clock className="h-4 w-4" />
                 Pending Approvals
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-0">
               <p className="text-sm">
                 {underApprovalsInitiatives + pendingInitiatives} initiative(s) are pending approval and need attention.
               </p>

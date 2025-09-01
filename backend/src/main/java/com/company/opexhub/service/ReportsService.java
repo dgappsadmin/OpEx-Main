@@ -1399,9 +1399,9 @@ public class ReportsService {
         XWPFRun titleRun = titlePara.createRun();
         titleRun.setBold(true);
         titleRun.setFontSize(16);
-        titleRun.setText("Annexure-I");
+        titleRun.setText("INITIATIVE");
         titleRun.addBreak();
-        titleRun.setText("INITIATIVES APPROVAL FORM");
+        titleRun.setText("APPROVAL FORM");
         
         document.createParagraph(); // Empty line
         

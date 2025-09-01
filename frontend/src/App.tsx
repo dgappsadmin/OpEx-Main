@@ -246,7 +246,7 @@ import NewWorkflow from "./pages/NewWorkflow";
 // import Timeline from "./pages/Timeline";
 import KPI from "./pages/KPI";
 import Reports from "./pages/Reports";
-import Teams from "./pages/Teams";
+// import Teams from "./pages/Teams";
 // import Closure from "./pages/Closure";
 import TimelineTracker from "./pages/TimelineTracker";
 import MonthlyMonitoring from "./pages/MonthlyMonitoring";
@@ -398,7 +398,7 @@ const AppRoutes = () => {
         </ProtectedRoute>
       } />
       
-      <Route path="/teams" element={
+      {/* <Route path="/teams" element={
         <ProtectedRoute>
           <AppLayout user={user!} onLogout={logout}>
             <ErrorBoundary>
@@ -407,7 +407,7 @@ const AppRoutes = () => {
           </AppLayout>
         </ProtectedRoute>
       } />
-      
+       */}
       <Route path="/timeline-tracker" element={
         <ProtectedRoute>
           <AppLayout user={user!} onLogout={logout}>

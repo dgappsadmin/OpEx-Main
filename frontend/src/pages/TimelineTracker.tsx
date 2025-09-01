@@ -70,7 +70,20 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const itemsPerPage = 6;
+  const itemsPerPage = 9; // Increased for better space utilization
+
+  // Enhanced currency formatting
+  const formatCurrency = (amount: number): string => {
+    if (amount >= 10000000) { // 1 crore or more
+      return `₹${(amount / 10000000).toFixed(2)}Cr`;
+    } else if (amount >= 100000) { // 1 lakh or more
+      return `₹${(amount / 100000).toFixed(1)}L`;
+    } else if (amount >= 1000) { // 1 thousand or more
+      return `₹${(amount / 1000).toFixed(1)}K`;
+    } else {
+      return `₹${amount.toLocaleString('en-IN')}`;
+    }
+  };
 
   // Fetch initiatives where Stage 6 is approved and user has access
   const { data: approvedInitiatives = [], isLoading: initiativesLoading } = useQuery({
@@ -221,21 +234,31 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'PENDING': return <Clock className="h-4 w-4 text-yellow-500" />;
-      case 'IN_PROGRESS': return <AlertCircle className="h-4 w-4 text-blue-500" />;
-      case 'COMPLETED': return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'DELAYED': return <AlertCircle className="h-4 w-4 text-red-500" />;
+      case 'PENDING': return <Clock className="h-4 w-4 text-yellow-600" />;
+      case 'IN_PROGRESS': return <AlertCircle className="h-4 w-4 text-blue-600" />;
+      case 'COMPLETED': return <CheckCircle className="h-4 w-4 text-green-600" />;
+      case 'DELAYED': return <AlertCircle className="h-4 w-4 text-red-600" />;
       default: return <Clock className="h-4 w-4 text-gray-500" />;
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'PENDING': return 'bg-yellow-500';
-      case 'IN_PROGRESS': return 'bg-blue-500';
-      case 'COMPLETED': return 'bg-green-500';
-      case 'DELAYED': return 'bg-red-500';
-      default: return 'bg-gray-500';
+      case 'PENDING': return 'bg-yellow-500 hover:bg-yellow-600';
+      case 'IN_PROGRESS': return 'bg-blue-500 hover:bg-blue-600';
+      case 'COMPLETED': return 'bg-green-500 hover:bg-green-600';
+      case 'DELAYED': return 'bg-red-500 hover:bg-red-600';
+      default: return 'bg-gray-500 hover:bg-gray-600';
+    }
+  };
+
+  const getStatusBadgeColor = (status: string) => {
+    switch (status) {
+      case 'PENDING': return 'bg-yellow-500 text-white';
+      case 'IN_PROGRESS': return 'bg-blue-500 text-white';
+      case 'COMPLETED': return 'bg-green-500 text-white';
+      case 'DELAYED': return 'bg-red-500 text-white';
+      default: return 'bg-gray-500 text-white';
     }
   };
 
@@ -331,20 +354,20 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="container mx-auto p-4 space-y-4 max-w-7xl">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold">Initiative Timeline Tracker</h1>
-          <p className="text-muted-foreground mt-1">Manage and track initiative timelines</p>
+          <h1 className="text-2xl lg:text-3xl font-bold">Initiative Timeline Tracker</h1>
+          <p className="text-muted-foreground text-sm">Manage and track initiative timelines</p>
         </div>
         {selectedInitiativeId && user.role !== 'VIEWER' && (
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button 
                 onClick={() => { setEditingEntry(null); setFormData({}); }}
-                className="shadow-lg"
+                className="gap-2 shrink-0"
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="h-4 w-4" />
                 Add Timeline Entry
               </Button>
             </DialogTrigger>
@@ -468,19 +491,19 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
 
       {!selectedInitiativeId ? (
         <div>
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold">Your Assigned Initiatives</h2>
-            <div className="flex space-x-2">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
+            <h2 className="text-lg font-semibold">Your Assigned Initiatives</h2>
+            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
               <div className="relative">
                 <Input
                   placeholder="Search initiatives..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-64"
+                  className="w-full sm:w-56"
                 />
               </div>
               <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-40">
+                <SelectTrigger className="w-full sm:w-36">
                   <Filter className="h-4 w-4 mr-2" />
                   <SelectValue />
                 </SelectTrigger>
@@ -496,50 +519,46 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
 
           {filteredInitiatives.length === 0 ? (
             <Card>
-              <CardContent className="text-center py-12">
+              <CardContent className="text-center py-8">
                 <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold mb-2">No Initiatives Available</h3>
-                <p className="text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   You currently have no initiatives where Stage (Timeline Tracker) has been approved and you are assigned as Initiative Lead.
                 </p>
               </CardContent>
             </Card>
           ) : (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 mb-4">
                 {paginatedInitiatives.map((initiative: Initiative) => (
                   <Card
                     key={initiative.id}
-                    className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-[1.02]"
+                    className="cursor-pointer hover:shadow-md transition-all duration-200 hover:scale-[1.01] compact-card"
                     onClick={() => setSelectedInitiativeId(initiative.id)}
                   >
-                    <CardHeader>
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <CardTitle className="text-lg line-clamp-2">{initiative.initiativeNumber}</CardTitle>
-                          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{initiative.initiativeTitle}</p>
+                    <CardHeader className="pb-2">
+                      <div className="flex justify-between items-start gap-2">
+                        <div className="flex-1 min-w-0">
+                          <CardTitle className="text-sm font-semibold line-clamp-1 mb-1">{initiative.initiativeNumber}</CardTitle>
+                          <Badge variant="outline" className="text-xs px-1.5 py-0.5">{initiative.initiativeStatus}</Badge>
                         </div>
-                        <Badge variant="outline">{initiative.initiativeStatus}</Badge>
                       </div>
                     </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2 text-sm text-muted-foreground">
-                        <div className="flex items-center">
-                          <span className="w-16">Site:</span>
-                          <span className="font-medium">{initiative.site}</span>
+                    <CardContent className="pt-1">
+                      <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{initiative.initiativeTitle}</p>
+                      <div className="space-y-1.5 text-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Site:</span>
+                          <span className="font-medium truncate ml-2">{initiative.site}</span>
                         </div>
-                        <div className="flex items-center">
-                          <span className="w-16">Lead:</span>
-                          <span className="font-medium">{initiative.assignedUserEmail}</span>
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Lead:</span>
+                          <span className="font-medium truncate ml-2 text-xs">{initiative.assignedUserEmail}</span>
                         </div>
-                        <div className="flex items-center">
-                          <span className="w-16">Savings:</span>
-                          <span className="font-medium text-green-600">₹{initiative.expectedSavings} Lakhs</span>
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Savings:</span>
+                          <span className="font-medium text-green-600 truncate ml-2">{formatCurrency(initiative.expectedSavings)}</span>
                         </div>
-                        {/* <div className="flex items-center">
-                          <span className="w-16">Stage:</span>
-                          <Badge variant="secondary" className="text-xs">Stage {initiative.stageNumber || 6}</Badge>
-                        </div> */}
                       </div>
                     </CardContent>
                   </Card>
@@ -548,19 +567,21 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex justify-center space-x-2">
+                <div className="flex justify-center items-center space-x-2">
                   <Button
                     variant="outline"
+                    size="sm"
                     onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                     disabled={currentPage === 1}
                   >
                     Previous
                   </Button>
-                  <span className="flex items-center px-4">
+                  <span className="flex items-center px-3 text-sm">
                     Page {currentPage} of {totalPages}
                   </span>
                   <Button
                     variant="outline"
+                    size="sm"
                     onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                     disabled={currentPage === totalPages}
                   >
@@ -573,27 +594,27 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
         </div>
       ) : (
         <div>
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-3">
             <div>
-              <h2 className="text-xl font-semibold">
+              <h2 className="text-lg font-semibold">
                 Timeline for: {approvedInitiatives.find((i: Initiative) => i.id === selectedInitiativeId)?.initiativeNumber}
               </h2>
               <p className="text-sm text-muted-foreground">
                 {approvedInitiatives.find((i: Initiative) => i.id === selectedInitiativeId)?.initiativeTitle}
               </p>
             </div>
-            <Button variant="outline" onClick={() => setSelectedInitiativeId(null)}>
+            <Button variant="outline" size="sm" onClick={() => setSelectedInitiativeId(null)}>
               Back to Initiatives
             </Button>
           </div>
 
           <Tabs defaultValue="timeline" className="space-y-4">
-            <TabsList>
-              <TabsTrigger value="timeline">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="timeline" className="text-xs">
                 <FileText className="h-4 w-4 mr-2" />
                 Timeline Entries
               </TabsTrigger>
-              <TabsTrigger value="overview">
+              <TabsTrigger value="overview" className="text-xs">
                 <BarChart3 className="h-4 w-4 mr-2" />
                 Overview
               </TabsTrigger>
@@ -606,7 +627,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                   Loading timeline entries...
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {timelineEntries.length === 0 ? (
                     <Card>
                       <CardContent className="text-center py-8">
@@ -616,22 +637,22 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                       </CardContent>
                     </Card>
                   ) : (
-                    <div className="grid gap-4">
+                    <div className="grid gap-3">
                       {timelineEntries.map((entry: TimelineEntry) => (
                         <Card key={entry.id} className="hover:shadow-md transition-shadow">
-                          <CardHeader>
+                          <CardHeader className="pb-3">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center space-x-3">
                                 {getStatusIcon(entry.status)}
                                 <div>
-                                  <CardTitle className="text-lg">{entry.stageName}</CardTitle>
+                                  <CardTitle className="text-base">{entry.stageName}</CardTitle>
                                   <p className="text-sm text-muted-foreground">
                                     Responsible: {entry.responsiblePerson}
                                   </p>
                                 </div>
                               </div>
                               <div className="flex items-center space-x-2">
-                                <Badge variant="outline">{entry.status}</Badge>
+                                <Badge className={`${getStatusBadgeColor(entry.status)} text-xs`}>{entry.status}</Badge>
                                 {user.role !== 'VIEWER' && (
                                   <>
                                     <Button size="sm" variant="outline" onClick={() => handleEdit(entry)}>
@@ -651,7 +672,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                             </div>
                           </CardHeader>
                           <CardContent>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                               <div>
                                 <Label className="text-sm font-medium">Planned Duration</Label>
                                 <p className="text-sm">
@@ -670,27 +691,27 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                             </div>
                             
                             {/* Progress Bar */}
-                            <div className="mb-4">
+                            <div className="mb-3">
                               <div className="flex justify-between text-sm mb-1">
                                 <span>Progress</span>
                                 <span>{calculateProgress(entry)}%</span>
                               </div>
-                              <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div className="w-full bg-gray-200 rounded-full h-1.5">
                                 <div 
-                                  className={`h-2 rounded-full ${getStatusColor(entry.status)}`}
+                                  className={`h-1.5 rounded-full ${getStatusColor(entry.status)}`}
                                   style={{ width: `${calculateProgress(entry)}%` }}
                                 ></div>
                               </div>
                             </div>
 
                             {entry.remarks && (
-                              <div className="mb-4 p-3 bg-muted rounded-lg">
+                              <div className="mb-3 p-3 bg-muted rounded-lg">
                                 <Label className="text-sm font-medium">Remarks</Label>
                                 <p className="text-sm mt-1">{entry.remarks}</p>
                               </div>
                             )}
 
-                            <div className="flex space-x-2 pt-3 border-t">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pt-3 border-t">
                               <div className="flex items-center space-x-2">
                                 <Badge variant={entry.siteLeadApproval === 'Y' ? "default" : "outline"} className="text-xs">
                                   {entry.siteLeadApproval === 'Y' ? "✓ Site Lead" : "○ Site Lead"}
@@ -699,7 +720,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                                   {entry.initiativeLeadApproval === 'Y' ? "✓ Initiative Lead" : "○ Initiative Lead"}
                                 </Badge>
                               </div>
-                              <div className="flex space-x-1 ml-auto">
+                              <div className="flex space-x-1">
                                 {user.role !== 'VIEWER' && (
                                   <>
                                     <Button
@@ -710,6 +731,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                                         siteLeadApproval: entry.siteLeadApproval === 'Y' ? 'N' : 'Y' 
                                       })}
                                       disabled={user.role !== 'STLD'}
+                                      className="text-xs"
                                     >
                                       Site Lead
                                     </Button>
@@ -721,6 +743,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                                         initiativeLeadApproval: entry.initiativeLeadApproval === 'Y' ? 'N' : 'Y' 
                                       })}
                                       disabled={user.role !== 'IL'}
+                                      className="text-xs"
                                     >
                                       IL Approve
                                     </Button>
@@ -738,27 +761,27 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
             </TabsContent>
 
             <TabsContent value="overview">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card>
-                  <CardContent className="p-6 text-center">
-                    <FileText className="h-8 w-8 mx-auto text-blue-600 mb-2" />
-                    <h3 className="text-2xl font-bold text-blue-600">{timelineEntries.length}</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <Card className="compact-kpi-card">
+                  <CardContent className="p-4 text-center">
+                    <FileText className="h-6 w-6 mx-auto text-blue-600 mb-2" />
+                    <h3 className="text-xl font-bold text-blue-600">{timelineEntries.length}</h3>
                     <p className="text-sm text-muted-foreground">Total Entries</p>
                   </CardContent>
                 </Card>
-                <Card>
-                  <CardContent className="p-6 text-center">
-                    <CheckCircle className="h-8 w-8 mx-auto text-green-600 mb-2" />
-                    <h3 className="text-2xl font-bold text-green-600">
+                <Card className="compact-kpi-card">
+                  <CardContent className="p-4 text-center">
+                    <CheckCircle className="h-6 w-6 mx-auto text-green-600 mb-2" />
+                    <h3 className="text-xl font-bold text-green-600">
                       {timelineEntries.filter((e: TimelineEntry) => e.status === 'COMPLETED').length}
                     </h3>
                     <p className="text-sm text-muted-foreground">Completed</p>
                   </CardContent>
                 </Card>
-                <Card>
-                  <CardContent className="p-6 text-center">
-                    <Clock className="h-8 w-8 mx-auto text-yellow-600 mb-2" />
-                    <h3 className="text-2xl font-bold text-yellow-600">
+                <Card className="compact-kpi-card">
+                  <CardContent className="p-4 text-center">
+                    <Clock className="h-6 w-6 mx-auto text-yellow-600 mb-2" />
+                    <h3 className="text-xl font-bold text-yellow-600">
                       {timelineEntries.filter((e: TimelineEntry) => e.status === 'IN_PROGRESS').length}
                     </h3>
                     <p className="text-sm text-muted-foreground">In Progress</p>

@@ -75,7 +75,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const itemsPerPage = 6;
+  const itemsPerPage = 9; // Increased for better space utilization
 
   // Fetch initiatives where Stage 9 is approved and user has access
   const { data: approvedInitiatives = [], isLoading: initiativesLoading } = useQuery({
@@ -326,6 +326,10 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
     return (user.role === 'STLD' && user.email === entry.enteredBy) || user.role === 'ADMIN';
   };
 
+  const formatCurrency = (amount: number) => {
+    return `₹${amount.toLocaleString('en-IN')} Lakhs`;
+  };
+
   if (initiativesLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -336,16 +340,16 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto p-4 space-y-4 max-w-7xl">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Savings Monitoring Sheet</h1>
-          <p className="text-muted-foreground mt-1">Monthly monitoring and validation</p>
+          <h1 className="text-2xl lg:text-3xl font-bold">Savings Monitoring Sheet</h1>
+          <p className="text-muted-foreground mt-1 text-sm">Monthly monitoring and validation</p>
         </div>
         {selectedInitiativeId && user.role !== 'VIEWER' && (
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button onClick={() => { setEditingEntry(null); setFormData({}); }}>
+              <Button onClick={() => { setEditingEntry(null); setFormData({}); }} size="sm">
                 <Plus className="h-4 w-4 mr-2" />
                 Add KPI Entry
               </Button>
@@ -469,19 +473,19 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
 
       {!selectedInitiativeId ? (
         <div>
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold">Your Assigned Initiatives</h2>
-            <div className="flex space-x-2">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
+            <h2 className="text-lg font-semibold">Your Assigned Initiatives</h2>
+            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
               <div className="relative">
                 <Input
                   placeholder="Search initiatives..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-64"
+                  className="w-full sm:w-56"
                 />
               </div>
               <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-40">
+                <SelectTrigger className="w-full sm:w-36">
                   <Filter className="h-4 w-4 mr-2" />
                   <SelectValue />
                 </SelectTrigger>
@@ -497,50 +501,42 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
 
           {filteredInitiatives.length === 0 ? (
             <Card>
-              <CardContent className="text-center py-12">
+              <CardContent className="text-center py-8">
                 <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold mb-2">No Initiatives Available</h3>
-                <p className="text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   You currently have no initiatives where Savings Monitoring has been approved and you are assigned as Site Lead.
                 </p>
               </CardContent>
             </Card>
           ) : (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 mb-4">
                 {paginatedInitiatives.map((initiative: Initiative) => (
                   <Card
                     key={initiative.id}
-                    className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-[1.02]"
+                    className="cursor-pointer hover:shadow-md transition-all duration-200 hover:scale-[1.01] compact-card"
                     onClick={() => setSelectedInitiativeId(initiative.id)}
                   >
-                    <CardHeader>
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <CardTitle className="text-lg line-clamp-2">{initiative.initiativeNumber}</CardTitle>
-                          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{initiative.initiativeTitle}</p>
+                    <CardHeader className="pb-2">
+                      <div className="flex justify-between items-start gap-2">
+                        <div className="flex-1 min-w-0">
+                          <CardTitle className="text-sm font-semibold line-clamp-1 mb-1">{initiative.initiativeNumber}</CardTitle>
+                          <Badge variant="outline" className="text-xs px-1.5 py-0.5">{initiative.initiativeStatus}</Badge>
                         </div>
-                        <Badge variant="outline">{initiative.initiativeStatus}</Badge>
                       </div>
                     </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2 text-sm text-muted-foreground">
-                        <div className="flex items-center">
-                          <span className="w-16">Site:</span>
-                          <span className="font-medium">{initiative.site}</span>
+                    <CardContent className="pt-1">
+                      <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{initiative.initiativeTitle}</p>
+                      <div className="space-y-1.5 text-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Site:</span>
+                          <span className="font-medium truncate ml-2">{initiative.site}</span>
                         </div>
-                        {/* <div className="flex items-center">
-                          <span className="w-16">Lead:</span>
-                          <span className="font-medium">{initiative.assignedUserEmail}</span>
-                        </div> */}
-                        <div className="flex items-center">
-                          <span className="w-16">Savings:</span>
-                          <span className="font-medium text-green-600">₹{initiative.expectedSavings} Lakhs</span>
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Savings:</span>
+                          <span className="font-medium text-green-600 truncate ml-2">₹{initiative.expectedSavings}</span>
                         </div>
-                        {/* <div className="flex items-center">
-                          <span className="w-16">Stage:</span>
-                          <Badge variant="secondary" className="text-xs">Stage {initiative.stageNumber || 9}</Badge>
-                        </div> */}
                       </div>
                     </CardContent>
                   </Card>
@@ -549,19 +545,21 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex justify-center space-x-2">
+                <div className="flex justify-center items-center space-x-2">
                   <Button
                     variant="outline"
+                    size="sm"
                     onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                     disabled={currentPage === 1}
                   >
                     Previous
                   </Button>
-                  <span className="flex items-center px-4">
+                  <span className="flex items-center px-3 text-sm">
                     Page {currentPage} of {totalPages}
                   </span>
                   <Button
                     variant="outline"
+                    size="sm"
                     onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                     disabled={currentPage === totalPages}
                   >
@@ -574,36 +572,36 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
         </div>
       ) : (
         <div>
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-xl font-semibold">
+              <h2 className="text-lg font-semibold">
                 Monitoring for: {approvedInitiatives.find((i: Initiative) => i.id === selectedInitiativeId)?.initiativeNumber}
               </h2>
               <p className="text-sm text-muted-foreground">
                 {approvedInitiatives.find((i: Initiative) => i.id === selectedInitiativeId)?.initiativeTitle}
               </p>
             </div>
-            <Button variant="outline" onClick={() => setSelectedInitiativeId(null)}>
+            <Button variant="outline" size="sm" onClick={() => setSelectedInitiativeId(null)}>
               Back to Initiatives
             </Button>
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
             <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="overview">
-                <BarChart3 className="h-4 w-4 mr-2" />
+              <TabsTrigger value="overview" className="text-xs">
+                <BarChart3 className="h-4 w-4 mr-1" />
                 Overview
               </TabsTrigger>
-              <TabsTrigger value="monthly">
-                <Calendar className="h-4 w-4 mr-2" />
+              <TabsTrigger value="monthly" className="text-xs">
+                <Calendar className="h-4 w-4 mr-1" />
                 Monthly View
               </TabsTrigger>
-              <TabsTrigger value="analytics">
-                <TrendingUp className="h-4 w-4 mr-2" />
+              <TabsTrigger value="analytics" className="text-xs">
+                <TrendingUp className="h-4 w-4 mr-1" />
                 Analytics
               </TabsTrigger>
-              <TabsTrigger value="summary">
-                <PieChart className="h-4 w-4 mr-2" />
+              <TabsTrigger value="summary" className="text-xs">
+                <PieChart className="h-4 w-4 mr-1" />
                 Summary
               </TabsTrigger>
             </TabsList>
@@ -629,21 +627,21 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead>Month</TableHead>
-                            <TableHead>KPI Description</TableHead>
-                            <TableHead>Category</TableHead>
-                            <TableHead>Target (₹L)</TableHead>
-                            <TableHead>Achieved (₹L)</TableHead>
-                            <TableHead>Deviation</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Actions</TableHead>
+                            <TableHead className="text-xs">Month</TableHead>
+                            <TableHead className="text-xs">KPI Description</TableHead>
+                            <TableHead className="text-xs">Category</TableHead>
+                            <TableHead className="text-xs">Target</TableHead>
+                            <TableHead className="text-xs">Achieved</TableHead>
+                            <TableHead className="text-xs">Deviation</TableHead>
+                            <TableHead className="text-xs">Status</TableHead>
+                            <TableHead className="text-xs">Actions</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {monitoringEntries.map((entry: MonthlyMonitoringEntry) => (
                             <TableRow key={entry.id}>
-                              <TableCell className="font-medium">{entry.monitoringMonth}</TableCell>
-                              <TableCell>
+                              <TableCell className="font-medium text-xs">{entry.monitoringMonth}</TableCell>
+                              <TableCell className="text-xs">
                                 <div>
                                   <p className="font-medium">{entry.kpiDescription}</p>
                                   {entry.remarks && (
@@ -651,16 +649,16 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                                   )}
                                 </div>
                               </TableCell>
-                              <TableCell>
+                              <TableCell className="text-xs">
                                 <Badge variant="outline" className="text-xs">
                                   {entry.category || 'General'}
                                 </Badge>
                               </TableCell>
-                              <TableCell>₹{entry.targetValue}</TableCell>
-                              <TableCell>
+                              <TableCell className="text-xs">₹{entry.targetValue}</TableCell>
+                              <TableCell className="text-xs">
                                 {entry.achievedValue ? `₹${entry.achievedValue}` : '-'}
                               </TableCell>
-                              <TableCell>
+                              <TableCell className="text-xs">
                                 {entry.deviation ? (
                                   <div className="flex items-center space-x-1">
                                     <span className={`font-medium ${entry.deviation < 0 ? 'text-red-500' : 'text-green-500'}`}>
@@ -672,7 +670,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                                   </div>
                                 ) : '-'}
                               </TableCell>
-                              <TableCell>
+                              <TableCell className="text-xs">
                                 <div className="flex flex-wrap gap-1">
                                   {entry.isFinalized === 'Y' && (
                                     <Badge variant="outline" className="text-xs bg-blue-50">
@@ -688,7 +686,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                                   )}
                                 </div>
                               </TableCell>
-                              <TableCell>
+                              <TableCell className="text-xs">
                                 <div className="flex space-x-1">
                                   {canEdit(entry) && (
                                     <Button size="sm" variant="outline" onClick={() => handleEdit(entry)}>
@@ -771,44 +769,44 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                     ) : (
                       monthlyEntries.map((entry: MonthlyMonitoringEntry) => (
                         <Card key={entry.id}>
-                          <CardHeader>
+                          <CardHeader className="pb-3">
                             <div className="flex items-center justify-between">
                               <div>
-                                <CardTitle className="text-lg">{entry.kpiDescription}</CardTitle>
-                                <Badge variant="outline" className="mt-1">
+                                <CardTitle className="text-base">{entry.kpiDescription}</CardTitle>
+                                <Badge variant="outline" className="mt-1 text-xs">
                                   {entry.category || 'General'}
                                 </Badge>
                               </div>
                               <div className="flex space-x-2">
-                                {entry.isFinalized === 'Y' && <Badge variant="outline">Finalized</Badge>}
-                                {entry.faApproval === 'Y' && <Badge variant="outline">F&A Approved</Badge>}
+                                {entry.isFinalized === 'Y' && <Badge variant="outline" className="text-xs">Finalized</Badge>}
+                                {entry.faApproval === 'Y' && <Badge variant="outline" className="text-xs">F&A Approved</Badge>}
                               </div>
                             </div>
                           </CardHeader>
                           <CardContent>
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                              <div className="text-center p-4 bg-blue-50 rounded-lg">
-                                <Label className="text-sm font-medium text-blue-600">Target Value</Label>
-                                <p className="text-2xl font-bold text-blue-700">₹{entry.targetValue}</p>
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
+                              <div className="text-center p-3 bg-blue-50 rounded-lg">
+                                <Label className="text-xs font-medium text-blue-600">Target Value</Label>
+                                <p className="text-lg font-bold text-blue-700">₹{entry.targetValue}</p>
                                 <p className="text-xs text-blue-500">Lakhs</p>
                               </div>
-                              <div className="text-center p-4 bg-green-50 rounded-lg">
-                                <Label className="text-sm font-medium text-green-600">Achieved Value</Label>
-                                <p className="text-2xl font-bold text-green-700">₹{entry.achievedValue || '-'}</p>
+                              <div className="text-center p-3 bg-green-50 rounded-lg">
+                                <Label className="text-xs font-medium text-green-600">Achieved Value</Label>
+                                <p className="text-lg font-bold text-green-700">₹{entry.achievedValue || '-'}</p>
                                 <p className="text-xs text-green-500">Lakhs</p>
                               </div>
-                              <div className="text-center p-4 bg-purple-50 rounded-lg">
-                                <Label className="text-sm font-medium text-purple-600">Deviation</Label>
-                                <p className={`text-2xl font-bold ${entry.deviation && entry.deviation < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                              <div className="text-center p-3 bg-purple-50 rounded-lg">
+                                <Label className="text-xs font-medium text-purple-600">Deviation</Label>
+                                <p className={`text-lg font-bold ${entry.deviation && entry.deviation < 0 ? 'text-red-600' : 'text-green-600'}`}>
                                   {entry.deviation ? `₹${entry.deviation.toFixed(2)}` : '-'}
                                 </p>
                                 <p className="text-xs text-purple-500">
                                   {entry.deviationPercentage ? `${entry.deviationPercentage.toFixed(1)}%` : ''}
                                 </p>
                               </div>
-                              <div className="text-center p-4 bg-gray-50 rounded-lg">
-                                <Label className="text-sm font-medium text-gray-600">Performance</Label>
-                                <p className="text-2xl font-bold text-gray-700">
+                              <div className="text-center p-3 bg-gray-50 rounded-lg">
+                                <Label className="text-xs font-medium text-gray-600">Performance</Label>
+                                <p className="text-lg font-bold text-gray-700">
                                   {entry.achievedValue && entry.targetValue 
                                     ? `${((entry.achievedValue / entry.targetValue) * 100).toFixed(0)}%`
                                     : '-'}
@@ -819,15 +817,15 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
 
                             {entry.remarks && (
                               <div className="mb-4 p-3 bg-muted rounded-lg">
-                                <Label className="text-sm font-medium text-muted-foreground">Remarks & Analysis</Label>
-                                <p className="text-sm mt-1">{entry.remarks}</p>
+                                <Label className="text-xs font-medium text-muted-foreground">Remarks & Analysis</Label>
+                                <p className="text-xs mt-1">{entry.remarks}</p>
                               </div>
                             )}
 
                             {entry.faComments && (
                               <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                                <Label className="text-sm font-medium text-yellow-600">F&A Comments</Label>
-                                <p className="text-sm text-yellow-700 mt-1">{entry.faComments}</p>
+                                <Label className="text-xs font-medium text-yellow-600">F&A Comments</Label>
+                                <p className="text-xs text-yellow-700 mt-1">{entry.faComments}</p>
                               </div>
                             )}
 
@@ -877,7 +875,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                   <>
                     <Card>
                       <CardHeader>
-                        <CardTitle className="flex items-center">
+                        <CardTitle className="flex items-center text-base">
                           <TrendingUp className="h-5 w-5 mr-2" />
                           Performance Trend Analysis
                         </CardTitle>
@@ -898,7 +896,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
 
                     <Card>
                       <CardHeader>
-                        <CardTitle>Target vs Achieved Comparison</CardTitle>
+                        <CardTitle className="text-base">Target vs Achieved Comparison</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <ResponsiveContainer width="100%" height={300}>
@@ -927,33 +925,33 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
             </TabsContent>
 
             <TabsContent value="summary">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
                 <Card>
-                  <CardContent className="p-6 text-center">
-                    <FileText className="h-8 w-8 mx-auto text-blue-600 mb-2" />
-                    <h3 className="text-2xl font-bold text-blue-600">{summaryStats.totalEntries}</h3>
-                    <p className="text-sm text-muted-foreground">Total Entries</p>
+                  <CardContent className="p-4 text-center">
+                    <FileText className="h-6 w-6 mx-auto text-blue-600 mb-2" />
+                    <h3 className="text-lg font-bold text-blue-600">{summaryStats.totalEntries}</h3>
+                    <p className="text-xs text-muted-foreground">Total Entries</p>
                   </CardContent>
                 </Card>
                 <Card>
-                  <CardContent className="p-6 text-center">
-                    <CheckCircle className="h-8 w-8 mx-auto text-green-600 mb-2" />
-                    <h3 className="text-2xl font-bold text-green-600">{summaryStats.finalizedEntries}</h3>
-                    <p className="text-sm text-muted-foreground">Finalized</p>
+                  <CardContent className="p-4 text-center">
+                    <CheckCircle className="h-6 w-6 mx-auto text-green-600 mb-2" />
+                    <h3 className="text-lg font-bold text-green-600">{summaryStats.finalizedEntries}</h3>
+                    <p className="text-xs text-muted-foreground">Finalized</p>
                   </CardContent>
                 </Card>
                 <Card>
-                  <CardContent className="p-6 text-center">
-                    <Target className="h-8 w-8 mx-auto text-purple-600 mb-2" />
-                    <h3 className="text-2xl font-bold text-purple-600">{summaryStats.approvedEntries}</h3>
-                    <p className="text-sm text-muted-foreground">F&A Approved</p>
+                  <CardContent className="p-4 text-center">
+                    <Target className="h-6 w-6 mx-auto text-purple-600 mb-2" />
+                    <h3 className="text-lg font-bold text-purple-600">{summaryStats.approvedEntries}</h3>
+                    <p className="text-xs text-muted-foreground">F&A Approved</p>
                   </CardContent>
                 </Card>
                 <Card>
-                  <CardContent className="p-6 text-center">
-                    <DollarSign className="h-8 w-8 mx-auto text-yellow-600 mb-2" />
-                    <h3 className="text-2xl font-bold text-yellow-600">₹{summaryStats.totalSavings.toFixed(1)}</h3>
-                    <p className="text-sm text-muted-foreground">Total Savings (Lakhs)</p>
+                  <CardContent className="p-4 text-center">
+                    <DollarSign className="h-6 w-6 mx-auto text-yellow-600 mb-2" />
+                    <h3 className="text-lg font-bold text-yellow-600">₹{summaryStats.totalSavings.toFixed(1)}</h3>
+                    <p className="text-xs text-muted-foreground">Total Savings (Lakhs)</p>
                   </CardContent>
                 </Card>
               </div>
@@ -962,7 +960,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <Card>
                     <CardHeader>
-                      <CardTitle>Entry Status Distribution</CardTitle>
+                      <CardTitle className="text-base">Entry Status Distribution</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <ResponsiveContainer width="100%" height={250}>
@@ -980,12 +978,12 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
 
                   <Card>
                     <CardHeader>
-                      <CardTitle>Key Performance Indicators</CardTitle>
+                      <CardTitle className="text-base">Key Performance Indicators</CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-4">
+                    <CardContent className="space-y-3">
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-muted-foreground">Completion Rate</span>
-                        <span className="font-medium">
+                        <span className="font-medium text-sm">
                           {summaryStats.totalEntries > 0 
                             ? `${((summaryStats.finalizedEntries / summaryStats.totalEntries) * 100).toFixed(1)}%`
                             : '0%'}
@@ -993,7 +991,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-muted-foreground">Approval Rate</span>
-                        <span className="font-medium">
+                        <span className="font-medium text-sm">
                           {summaryStats.finalizedEntries > 0 
                             ? `${((summaryStats.approvedEntries / summaryStats.finalizedEntries) * 100).toFixed(1)}%`
                             : '0%'}
@@ -1001,7 +999,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-muted-foreground">Average Achievement</span>
-                        <span className="font-medium">₹{summaryStats.averageAchievement.toFixed(2)}L</span>
+                        <span className="font-medium text-sm">₹{summaryStats.averageAchievement.toFixed(2)} Lakhs</span>
                       </div>
                     </CardContent>
                   </Card>

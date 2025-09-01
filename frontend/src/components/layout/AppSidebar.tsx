@@ -82,12 +82,12 @@ const navigationItems = [
     icon: TrendingUp,
     group: "Tracking"
   },
-  {
-    title: "Team Management",
-    url: "/teams",
-    icon: Users,
-    group: "Management"
-  }
+  // {
+  //   title: "Team Management",
+  //   url: "/teams",
+  //   icon: Users,
+  //   group: "Management"
+  // }
   // {
   //   title: "Initiative Closure",
   //   url: "/closure",
