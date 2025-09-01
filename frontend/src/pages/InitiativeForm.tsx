@@ -56,16 +56,16 @@ const formSchema = z.object({
   description: z.string().min(1, "Description is required").min(50, "Description must be at least 50 characters"),
   baselineData: z.string().min(1, "Baseline data is required"),
   targetOutcome: z.string().min(1, "Target outcome is required"),
-  targetValue: z.number().min(0, "Target value must be positive"),
+  targetValue: z.number().min(0, "Target value must be zero or positive").finite("Target value must be a valid number"),
   budgetType: z.enum(["budgeted", "non-budgeted"], {
     required_error: "Budget type is required",
   }),
-  expectedValue: z.number().min(0, "Expected value must be positive"),
+  expectedValue: z.number().min(0, "Expected value must be zero or positive").finite("Expected value must be a valid number"),
   // confidenceLevel: z.number().min(1).max(100),
   assumption1: z.string().min(1, "First assumption is required"),
   assumption2: z.string().min(1, "Second assumption is required"),
   assumption3: z.string().min(1, "Third assumption is required"),
-  estimatedCapex: z.number().min(0, "CAPEX must be positive"),
+  estimatedCapex: z.number().min(0, "CAPEX must be zero or positive").finite("CAPEX must be a valid number"),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -121,12 +121,18 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
   });
 
   const onSubmit = (data: FormData) => {
+    console.log("=== FORM SUBMISSION DEBUG ===");
+    console.log("Form data:", data);
+    console.log("Expected Value (data.expectedValue):", data.expectedValue);
+    console.log("Target Value (data.targetValue):", data.targetValue);
+    console.log("Estimated CAPEX (data.estimatedCapex):", data.estimatedCapex);
+
     const initiativeData = {
       title: data.title,
       description: data.description,
       initiatorName: data.initiatorName,
       priority: "Medium",
-      expectedSavings: data.expectedValue,
+      expectedSavings: data.expectedValue, // Send zeros as they are
       site: data.site,
       discipline: data.discipline,
       startDate: data.date.toISOString().split("T")[0],
@@ -138,13 +144,15 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
       budgetType: data.budgetType,
       baselineData: data.baselineData,
       targetOutcome: data.targetOutcome,
-      targetValue: data.targetValue,
+      targetValue: data.targetValue, // Send zeros as they are
       // confidenceLevel: data.confidenceLevel,
-      estimatedCapex: data.estimatedCapex,
+      estimatedCapex: data.estimatedCapex, // Send zeros as they are
       assumption1: data.assumption1,
       assumption2: data.assumption2,
       assumption3: data.assumption3,
     };
+
+    console.log("Initiative data being sent:", initiativeData);
     createInitiativeMutation.mutate(initiativeData, {
       onSuccess: () => {
         toast({
@@ -415,7 +423,15 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                               type="number"
                               placeholder="0"
                               {...field}
-                              onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                              onChange={(e) => {
+                                const value = e.target.value.trim();
+                                if (value === "" || value === ".") {
+                                  field.onChange(0);
+                                } else {
+                                  const numValue = parseFloat(value);
+                                  field.onChange(isNaN(numValue) ? 0 : numValue);
+                                }
+                              }}
                               className="h-9 text-sm"
                               disabled={isSubmitting}
                             />
@@ -437,7 +453,15 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                               type="number"
                               placeholder="0"
                               {...field}
-                              onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                              onChange={(e) => {
+                                const value = e.target.value.trim();
+                                if (value === "" || value === ".") {
+                                  field.onChange(0);
+                                } else {
+                                  const numValue = parseFloat(value);
+                                  field.onChange(isNaN(numValue) ? 0 : numValue);
+                                }
+                              }}
                               className="h-9 text-sm"
                               disabled={isSubmitting}
                             />
@@ -479,7 +503,15 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                               type="number"
                               placeholder="0"
                               {...field}
-                              onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                              onChange={(e) => {
+                                const value = e.target.value.trim();
+                                if (value === "" || value === ".") {
+                                  field.onChange(0);
+                                } else {
+                                  const numValue = parseFloat(value);
+                                  field.onChange(isNaN(numValue) ? 0 : numValue);
+                                }
+                              }}
                               className="h-9 text-sm"
                               disabled={isSubmitting}
                             />

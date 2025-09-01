@@ -78,11 +78,16 @@ public class InitiativeService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        System.out.println("=== INITIATIVE SERVICE DEBUG ===");
+        System.out.println("Expected Savings: " + request.getExpectedSavings());
+        System.out.println("Target Value: " + request.getTargetValue());
+        System.out.println("Estimated CAPEX: " + request.getEstimatedCapex());
+
         Initiative initiative = new Initiative(
                 request.getTitle(),
                 request.getDescription(),
                 request.getPriority(),
-                request.getExpectedSavings(),
+                request.getExpectedSavings(), // Allow zero values
                 request.getSite(),
                 request.getDiscipline(),
                 request.getStartDate(),
@@ -100,9 +105,9 @@ public class InitiativeService {
         initiative.setAssumption3(request.getAssumption3());
         initiative.setBaselineData(request.getBaselineData());
         initiative.setTargetOutcome(request.getTargetOutcome());
-        initiative.setTargetValue(request.getTargetValue());
+        initiative.setTargetValue(request.getTargetValue()); // Allow zero values
         initiative.setConfidenceLevel(request.getConfidenceLevel());
-        initiative.setEstimatedCapex(request.getEstimatedCapex());
+        initiative.setEstimatedCapex(request.getEstimatedCapex()); // Allow zero values
         initiative.setBudgetType(request.getBudgetType());
         
         // Generate initiative number

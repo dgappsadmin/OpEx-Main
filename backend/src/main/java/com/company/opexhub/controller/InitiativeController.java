@@ -55,13 +55,32 @@ public class InitiativeController {
     public ResponseEntity<?> createInitiative(@Valid @RequestBody InitiativeRequest request,
                                             @AuthenticationPrincipal UserPrincipal currentUser) {
         try {
+            System.out.println("=== CREATING INITIATIVE ===");
+            System.out.println("Request: " + request);
+            System.out.println("Expected Savings: " + request.getExpectedSavings());
+            System.out.println("Target Value: " + request.getTargetValue());
+            System.out.println("Estimated CAPEX: " + request.getEstimatedCapex());
+            
             Initiative initiative = initiativeService.createInitiative(request, currentUser.getId());
             InitiativeResponse response = convertToResponse(initiative);
             
+            System.out.println("Initiative created successfully with ID: " + initiative.getId());
             return ResponseEntity.ok(new ApiResponse(true, "Initiative created successfully", response));
         } catch (Exception e) {
+            System.err.println("Error creating initiative: " + e.getMessage());
+            e.printStackTrace();
+            
+            String errorMessage = "Failed to create initiative";
+            if (e.getMessage().contains("could not execute statement")) {
+                errorMessage = "Database error: Unable to save initiative with current values. Please ensure all numeric fields have valid values.";
+            } else if (e.getMessage().contains("constraint")) {
+                errorMessage = "Data validation error: Please check all required fields are properly filled.";
+            } else {
+                errorMessage = "Error: " + e.getMessage();
+            }
+            
             return ResponseEntity.badRequest()
-                    .body(new ApiResponse(false, e.getMessage()));
+                    .body(new ApiResponse(false, errorMessage));
         }
     }
 
