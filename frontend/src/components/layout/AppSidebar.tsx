@@ -52,12 +52,6 @@ const navigationItems = [
     icon: ClipboardCheck,
     group: "Initiatives"
   },
-  // {
-  //   title: "Timeline Tracking",
-  //   url: "/timeline",
-  //   icon: Calendar,
-  //   group: "Tracking"
-  // },
   {
     title: "Timeline Tracker",
     url: "/timeline-tracker",
@@ -82,18 +76,6 @@ const navigationItems = [
     icon: TrendingUp,
     group: "Tracking"
   },
-  // {
-  //   title: "Team Management",
-  //   url: "/teams",
-  //   icon: Users,
-  //   group: "Management"
-  // }
-  // {
-  //   title: "Initiative Closure",
-  //   url: "/closure",
-  //   icon: XCircle,
-  //   group: "Management"
-  // }
 ];
 
 const groupItems = (items: typeof navigationItems) => {
@@ -135,13 +117,13 @@ export function AppSidebar({ user }: AppSidebarProps = {}) {
 
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
     isActive 
-      ? "bg-primary text-primary-foreground font-medium hover:bg-primary-hover" 
+      ? "bg-primary text-primary-foreground font-medium hover:bg-primary/90" 
       : "hover:bg-muted text-muted-foreground hover:text-foreground";
 
   return (
-    <Sidebar className={isCollapsed ? "w-12" : "w-56"} collapsible="icon">
+    <Sidebar className={isCollapsed ? "w-12" : "w-52"} collapsible="icon">
       <SidebarContent className="bg-card border-r border-border">
-        {/* Logo Section - Compact for 14-inch laptops */}
+        {/* Logo Section - More compact for 14-inch laptops */}
         <div className="p-2 border-b border-border">
           <div className="flex items-center gap-2">
             {!isCollapsed ? (
@@ -149,36 +131,36 @@ export function AppSidebar({ user }: AppSidebarProps = {}) {
                 <img
                   src={dnlLogo}
                   alt="DNL Logo"
-                  className="h-6 w-auto"
+                  className="h-5 w-auto"
                 />
                 <div className="ml-2">
                   <div className="text-xs font-semibold text-foreground">OpEx Hub</div>
-                  <div className="text-2xs text-muted-foreground">Operational Excellence</div>
+                  <div className="text-2xs text-muted-foreground leading-tight">Operational Excellence</div>
                 </div>
               </div>
             ) : (
               <img
                 src={dnlLogo}
                 alt="DNL Logo"
-                className="h-6 w-auto"
+                className="h-5 w-auto"
               />
             )}
           </div>
         </div>
 
-        {/* Navigation Groups */}
+        {/* Navigation Groups - Optimized spacing */}
         {Object.entries(groupedItems).map(([groupName, items]) => (
           <SidebarGroup key={groupName} className="py-1">
             {!isCollapsed && (
-              <SidebarGroupLabel className="text-2xs font-medium text-muted-foreground px-2 py-1">
+              <SidebarGroupLabel className="text-2xs font-medium text-muted-foreground px-2 py-0.5">
                 {groupName}
               </SidebarGroupLabel>
             )}
             <SidebarGroupContent>
-              <SidebarMenu>
+              <SidebarMenu className="space-y-0.5">
                 {items.map((item) => (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild className="py-1.5 text-xs h-8">
+                    <SidebarMenuButton asChild className="py-1 text-xs h-7">
                       <NavLink 
                         to={item.url} 
                         end={item.url === "/"} 

@@ -108,10 +108,16 @@
   
 
   
-  /* 14-inch laptop optimizations - prevent scrolling */
+  /* 14-inch laptop optimizations - prevent browser scrolling but allow app scrolling */
   html, body {
     height: 100%;
-    overflow-x: hidden;
+    overflow: hidden; /* Prevent browser scroll */
+  }
+  
+  /* Ensure the root div takes full height but allows internal scrolling */
+  #root {
+    height: 100vh;
+    overflow: hidden; /* Prevent root overflow, let AppLayout handle scrolling */
   }
   
   /* Container optimizations for 14-inch laptops */
