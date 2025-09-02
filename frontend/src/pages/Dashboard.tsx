@@ -90,7 +90,7 @@ export default function Dashboard({ user }: DashboardProps) {
   const recentInitiatives = initiativesLoading ? [] : (recentInitiativesData || []).slice(0, 3).map((initiative: any) => ({
     id: initiative.id,
     title: initiative.initiativeNumber || initiative.title,
-    site: initiative.site,
+    site: initiative.sitpe,
     status: initiative.status,
     savings: formatCurrency(initiative.expectedSavings || 0),
     progress: Math.round(((initiative.currentStage || 1) - 1) * 100 / 10), // Calculate progress based on current stage
@@ -128,11 +128,11 @@ export default function Dashboard({ user }: DashboardProps) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <h1 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             OpEx Dashboard
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Welcome back, {user.fullName}! Monitor your operational excellence initiatives
+            Welcome back, {user.fullName}!
           </p>
         </div>
         <Button onClick={() => navigate('/initiative/new')} className="gap-2 shrink-0 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800">

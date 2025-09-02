@@ -48,13 +48,24 @@ interface Initiative {
   submittedDate: string;
   createdAt?: string;
   description?: string;
+  budgetType?: string; // BUDGETED or NON-BUDGETED
   startDate?: string;
   endDate?: string;
+  commissioningDate?: string; // Date when initiative goes live
   currentStage?: number;
   requiresMoc?: boolean | string; // Legacy field (boolean) for backward compatibility
   requiresCapex?: boolean | string; // Legacy field (boolean) for backward compatibility
   mocNumber?: string; // New field - MOC Number from OPEX_INITIATIVES table
   capexNumber?: string; // New field - CAPEX Number from OPEX_INITIATIVES table
+  // Missing fields from database schema
+  assumption1?: string; // CLOB - ASSUMPTION_1
+  assumption2?: string; // CLOB - ASSUMPTION_2  
+  assumption3?: string; // CLOB - ASSUMPTION_3
+  baselineData?: string; // CLOB - BASELINE_DATA
+  targetOutcome?: string; // VARCHAR2(255) - TARGET_OUTCOME
+  targetValue?: number; // NUMBER(15,2) - TARGET_VALUE
+  confidenceLevel?: number; // NUMBER(3) - CONFIDENCE_LEVEL (percentage)
+  estimatedCapex?: number; // NUMBER(15,2) - ESTIMATED_CAPEX
   createdByName?: string;
   createdByEmail?: string;
   createdBy?: number | string; // User ID who created the initiative
@@ -182,15 +193,30 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
         expectedSavings: typeof formData.expectedSavings === 'string' 
           ? parseFloat(formData.expectedSavings.replace(/[₹,]/g, '')) 
           : formData.expectedSavings,
+        actualSavings: typeof formData.actualSavings === 'string' 
+          ? parseFloat(formData.actualSavings.replace(/[₹,]/g, '')) 
+          : formData.actualSavings,
         site: formData.site,
         discipline: formData.discipline,
+        budgetType: formData.budgetType || 'NON-BUDGETED',
         startDate: formData.startDate,
         endDate: formData.endDate,
+        commissioningDate: formData.commissioningDate,
         requiresMoc: formData.requiresMoc || 'N',
         requiresCapex: formData.requiresCapex || 'N',
         mocNumber: formData.mocNumber || '',
         capexNumber: formData.capexNumber || '',
-        initiatorName: formData.initiatorName || formData.initiator
+        initiatorName: formData.initiatorName || formData.initiator,
+        // New fields for target & financial information
+        targetOutcome: formData.targetOutcome || '',
+        targetValue: formData.targetValue || 0,
+        confidenceLevel: formData.confidenceLevel || 0,
+        estimatedCapex: formData.estimatedCapex || 0,
+        // New fields for assumptions & baseline data
+        baselineData: formData.baselineData || '',
+        assumption1: formData.assumption1 || '',
+        assumption2: formData.assumption2 || '',
+        assumption3: formData.assumption3 || ''
       };
 
       console.log('Updating initiative with data:', updateData);
@@ -318,7 +344,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
               <ScrollArea className="h-full px-4">
                 <TabsContent value="overview" className="mt-4 space-y-4 px-1">
                   {/* Quick Stats */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
                     <Card className="border-l-4 border-l-primary">
                       <CardContent className="p-3">
                         <div className="flex items-center gap-2">
@@ -353,7 +379,25 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                       </CardContent>
                     </Card>
 
-                    <Card className="border-l-4 border-l-blue-500">
+                    <Card className="border-l-4 border-l-orange-500">
+                      <CardContent className="p-3">
+                        <div className="flex items-center gap-2">
+                          <div className="p-1.5 bg-orange-100 rounded-lg">
+                            <DollarSign className="h-3 w-3 text-orange-600" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Actual</p>
+                            <p className="font-semibold text-orange-600 text-sm">
+                              {typeof initiative?.actualSavings === 'number' 
+                                ? `₹${initiative.actualSavings.toLocaleString()}` 
+                                : initiative?.actualSavings || '₹0'}
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* <Card className="border-l-4 border-l-blue-500">
                       <CardContent className="p-3">
                         <div className="flex items-center gap-2">
                           <div className="p-1.5 bg-blue-100 rounded-lg">
@@ -365,7 +409,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                           </div>
                         </div>
                       </CardContent>
-                    </Card>
+                    </Card> */}
 
                     <Card className="border-l-4 border-l-purple-500">
                       <CardContent className="p-3">
@@ -376,6 +420,25 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                           <div>
                             <p className="text-xs text-muted-foreground">Site</p>
                             <p className="font-semibold text-sm">{initiative?.site}</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="border-l-4 border-l-cyan-500">
+                      <CardContent className="p-3">
+                        <div className="flex items-center gap-2">
+                          <div className="p-1.5 bg-cyan-100 rounded-lg">
+                            <FileText className="h-3 w-3 text-cyan-600" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Budget Type</p>
+                            <Badge 
+                              variant={initiative?.budgetType === 'BUDGETED' ? 'default' : 'secondary'}
+                              className="text-xs mt-0.5"
+                            >
+                              {initiative?.budgetType || 'NON-BUDGETED'}
+                            </Badge>
                           </div>
                         </div>
                       </CardContent>
@@ -430,6 +493,18 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                             <p className="font-medium text-sm">{initiative?.lastUpdated}</p>
                           </div>
                         </div>
+                        {initiative?.commissioningDate && (
+                          <>
+                            <Separator />
+                            <div>
+                              <p className="text-xs text-muted-foreground">Commissioning Date</p>
+                              <p className="font-medium text-sm">{initiative.commissioningDate}</p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Benefits capture starts 2 weeks after this date
+                              </p>
+                            </div>
+                          </>
+                        )}
                         <Separator />
                         <div>
                           <p className="text-xs text-muted-foreground">Priority Level</p>
@@ -473,6 +548,39 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                                 </p>
                               </div>
                             </div>
+                            
+                            {/* Additional Key Information */}
+                            {(initiative?.targetOutcome || initiative?.confidenceLevel || initiative?.estimatedCapex) && (
+                              <>
+                                <Separator />
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                  {initiative?.targetOutcome && (
+                                    <div>
+                                      <p className="text-xs font-medium">Target Outcome</p>
+                                      <p className="text-xs text-muted-foreground">{initiative.targetOutcome}</p>
+                                    </div>
+                                  )}
+                                  {initiative?.confidenceLevel && (
+                                    <div>
+                                      <p className="text-xs font-medium">Confidence Level</p>
+                                      <Badge variant="outline" className="text-xs">
+                                        {initiative.confidenceLevel}%
+                                      </Badge>
+                                    </div>
+                                  )}
+                                  {initiative?.estimatedCapex && (
+                                    <div>
+                                      <p className="text-xs font-medium">Estimated CAPEX</p>
+                                      <p className="text-xs text-green-600 font-medium">
+                                        ₹{typeof initiative.estimatedCapex === 'number' 
+                                          ? initiative.estimatedCapex.toLocaleString()
+                                          : initiative.estimatedCapex}
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+                              </>
+                            )}
                           </>
                         )}
                       </div>
@@ -606,7 +714,32 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                         />
                       </div>
 
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        <div>
+                          <Label htmlFor="budgetType" className="text-sm font-medium">
+                            Budget Type *
+                          </Label>
+                          {isEditing ? (
+                            <Select value={formData.budgetType || 'NON-BUDGETED'} onValueChange={(value) => setFormData({ ...formData, budgetType: value })}>
+                              <SelectTrigger className="mt-1 h-10">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="BUDGETED">BUDGETED</SelectItem>
+                                <SelectItem value="NON-BUDGETED">NON-BUDGETED</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <div className="mt-1">
+                              <Badge 
+                                variant={formData.budgetType === 'BUDGETED' ? 'default' : 'secondary'}
+                                className="text-xs"
+                              >
+                                {formData.budgetType || 'NON-BUDGETED'}
+                              </Badge>
+                            </div>
+                          )}
+                        </div>
                         <div>
                           <Label htmlFor="startDate" className="text-sm font-medium">
                             Start Date
@@ -633,6 +766,180 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                             className="mt-1 h-10"
                           />
                         </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="commissioningDate" className="text-sm font-medium">
+                            Date of Commissioning
+                          </Label>
+                          <Input
+                            id="commissioningDate"
+                            type="date"
+                            value={formData.commissioningDate || ''}
+                            disabled={!isEditing}
+                            onChange={(e) => setFormData({ ...formData, commissioningDate: e.target.value })}
+                            className="mt-1 h-10"
+                          />
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Benefits will be captured 2 weeks after this date on monthly basis
+                          </p>
+                        </div>
+                        <div>
+                          <Label htmlFor="actualSavings" className="text-sm font-medium">
+                            Actual Savings (₹)
+                          </Label>
+                          <Input
+                            id="actualSavings"
+                            value={formData.actualSavings || ''}
+                            disabled={!isEditing}
+                            onChange={(e) => setFormData({ ...formData, actualSavings: e.target.value })}
+                            className="mt-1 h-10"
+                            placeholder="Enter actual savings realized"
+                          />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Target & Financial Information */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <Target className="h-5 w-5" />
+                        Target & Financial Information
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="targetOutcome" className="text-sm font-medium">
+                            Target Outcome
+                          </Label>
+                          <Input
+                            id="targetOutcome"
+                            value={formData.targetOutcome || ''}
+                            disabled={!isEditing}
+                            onChange={(e) => setFormData({ ...formData, targetOutcome: e.target.value })}
+                            className="mt-1 h-10"
+                            placeholder="Define the target outcome"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="targetValue" className="text-sm font-medium">
+                            Target Value (₹)
+                          </Label>
+                          <Input
+                            id="targetValue"
+                            type="number"
+                            value={formData.targetValue || ''}
+                            disabled={!isEditing}
+                            onChange={(e) => setFormData({ ...formData, targetValue: parseFloat(e.target.value) || 0 })}
+                            className="mt-1 h-10"
+                            placeholder="Enter target value"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="confidenceLevel" className="text-sm font-medium">
+                            Confidence Level (%)
+                          </Label>
+                          <Input
+                            id="confidenceLevel"
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={formData.confidenceLevel || ''}
+                            disabled={!isEditing}
+                            onChange={(e) => setFormData({ ...formData, confidenceLevel: parseInt(e.target.value) || 0 })}
+                            className="mt-1 h-10"
+                            placeholder="0-100"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="estimatedCapex" className="text-sm font-medium">
+                            Estimated CAPEX (₹)
+                          </Label>
+                          <Input
+                            id="estimatedCapex"
+                            type="number"
+                            value={formData.estimatedCapex || ''}
+                            disabled={!isEditing}
+                            onChange={(e) => setFormData({ ...formData, estimatedCapex: parseFloat(e.target.value) || 0 })}
+                            className="mt-1 h-10"
+                            placeholder="Enter estimated CAPEX"
+                          />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Assumptions & Baseline Data */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <FileText className="h-5 w-5" />
+                        Assumptions & Baseline Data
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <Label htmlFor="baselineData" className="text-sm font-medium">
+                          Baseline Data
+                        </Label>
+                        <Textarea
+                          id="baselineData"
+                          value={formData.baselineData || ''}
+                          disabled={!isEditing}
+                          onChange={(e) => setFormData({ ...formData, baselineData: e.target.value })}
+                          rows={3}
+                          className="mt-1"
+                          placeholder="Provide baseline data and current state information..."
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="assumption1" className="text-sm font-medium">
+                          Assumption 1
+                        </Label>
+                        <Textarea
+                          id="assumption1"
+                          value={formData.assumption1 || ''}
+                          disabled={!isEditing}
+                          onChange={(e) => setFormData({ ...formData, assumption1: e.target.value })}
+                          rows={2}
+                          className="mt-1"
+                          placeholder="Enter first key assumption..."
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="assumption2" className="text-sm font-medium">
+                          Assumption 2
+                        </Label>
+                        <Textarea
+                          id="assumption2"
+                          value={formData.assumption2 || ''}
+                          disabled={!isEditing}
+                          onChange={(e) => setFormData({ ...formData, assumption2: e.target.value })}
+                          rows={2}
+                          className="mt-1"
+                          placeholder="Enter second key assumption..."
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="assumption3" className="text-sm font-medium">
+                          Assumption 3
+                        </Label>
+                        <Textarea
+                          id="assumption3"
+                          value={formData.assumption3 || ''}
+                          disabled={!isEditing}
+                          onChange={(e) => setFormData({ ...formData, assumption3: e.target.value })}
+                          rows={2}
+                          className="mt-1"
+                          placeholder="Enter third key assumption..."
+                        />
                       </div>
                     </CardContent>
                   </Card>

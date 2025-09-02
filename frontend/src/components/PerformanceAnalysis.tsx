@@ -120,26 +120,26 @@ export default function PerformanceAnalysis({
   if (isLoading) {
     return (
       <Card className={`${colors.border} ${colors.bg}`}>
-        <CardHeader className="pb-4">
-          <div className="flex items-center gap-3">
-            <div className="h-6 w-6 bg-muted animate-pulse rounded"></div>
-            <div className="space-y-2">
-              <div className="h-6 w-64 bg-muted animate-pulse rounded"></div>
-              <div className="h-4 w-48 bg-muted animate-pulse rounded"></div>
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="h-4 w-4 bg-muted animate-pulse rounded"></div>
+            <div className="space-y-1.5">
+              <div className="h-5 w-48 bg-muted animate-pulse rounded"></div>
+              <div className="h-3 w-36 bg-muted animate-pulse rounded"></div>
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="p-4 bg-white rounded-lg border animate-pulse">
-                <div className="space-y-3">
+              <div key={i} className="p-3 bg-white rounded-lg border animate-pulse">
+                <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <div className="h-4 w-4 bg-muted rounded"></div>
-                    <div className="h-4 w-16 bg-muted rounded"></div>
+                    <div className="h-3 w-3 bg-muted rounded"></div>
+                    <div className="h-3 w-12 bg-muted rounded"></div>
                   </div>
-                  <div className="h-8 w-20 bg-muted rounded"></div>
-                  <div className="h-3 w-24 bg-muted rounded"></div>
+                  <div className="h-6 w-16 bg-muted rounded"></div>
+                  <div className="h-2.5 w-20 bg-muted rounded"></div>
                 </div>
               </div>
             ))}
@@ -151,38 +151,38 @@ export default function PerformanceAnalysis({
 
   return (
     <Card className={`${colors.border} ${colors.bg} shadow-lg`}>
-      <CardHeader className="pb-4">
-        <div className="flex items-center gap-3">
-          <div className={`p-2 rounded-lg bg-gradient-to-r ${colors.gradient} shadow-md`}>
-            <PieChart className="h-6 w-6 text-white" />
+      <CardHeader className="pb-3">
+        <div className="flex items-center gap-2.5">
+          <div className={`p-1.5 rounded-lg bg-gradient-to-r ${colors.gradient} shadow-md`}>
+            <PieChart className="h-4 w-4 text-white" />
           </div>
           <div>
-            <CardTitle className={`text-xl font-bold ${colors.primary}`}>
+            <CardTitle className={`text-lg font-bold ${colors.primary}`}>
               {title}
             </CardTitle>
-            <CardDescription className="text-sm mt-1">
+            <CardDescription className="text-xs mt-0.5">
               {subtitle}
             </CardDescription>
           </div>
         </div>
       </CardHeader>
       
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-4">
         {/* KPI Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
           {kpiCards.map((kpi, index) => (
             <Card key={index} className="bg-white border-0 shadow-md hover:shadow-lg transition-all duration-200">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <kpi.icon className={`h-5 w-5 ${colors.primary}`} />
-                  <Badge variant="secondary" className="text-xs">
+              <CardContent className="p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <kpi.icon className={`h-4 w-4 ${colors.primary}`} />
+                  <Badge variant="secondary" className="text-2xs px-1.5 py-0.5">
                     {kpi.trend}
                   </Badge>
                 </div>
-                <div className="space-y-1">
-                  <h3 className="font-bold text-2xl text-foreground">{kpi.value}</h3>
-                  <p className="text-sm font-medium text-muted-foreground">{kpi.title}</p>
-                  <p className="text-xs text-muted-foreground">{kpi.subtitle}</p>
+                <div className="space-y-0.5">
+                  <h3 className="font-bold text-xl text-foreground">{kpi.value}</h3>
+                  <p className="text-xs font-medium text-muted-foreground">{kpi.title}</p>
+                  <p className="text-2xs text-muted-foreground">{kpi.subtitle}</p>
                 </div>
               </CardContent>
             </Card>
@@ -191,31 +191,31 @@ export default function PerformanceAnalysis({
 
         {/* Progress Section */}
         <Card className="bg-white border-0 shadow-md">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${colors.accent}`}>
-                  <Target className={`h-5 w-5 ${colors.primary}`} />
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2.5">
+                <div className={`p-1.5 rounded-lg ${colors.accent}`}>
+                  <Target className={`h-4 w-4 ${colors.primary}`} />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-lg">Progress Tracking</h3>
-                  <p className="text-sm text-muted-foreground">Savings Projection vs Potential Savings</p>
+                  <h3 className="font-semibold text-base">Progress Tracking</h3>
+                  <p className="text-xs text-muted-foreground">Savings Projection vs Potential Savings</p>
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-2xl font-bold text-foreground">
+                <div className="text-xl font-bold text-foreground">
                   {(metrics?.progressPercentage || 0).toFixed(1)}%
                 </div>
-                <div className="text-sm text-muted-foreground">Completion</div>
+                <div className="text-xs text-muted-foreground">Completion</div>
               </div>
             </div>
             
-            <div className="space-y-3">
+            <div className="space-y-2">
               <Progress 
                 value={progressValue} 
-                className="h-3"
+                className="h-2"
               />
-              <div className="flex justify-between text-sm text-muted-foreground">
+              <div className="flex justify-between text-xs text-muted-foreground">
                 <span>Projected: {formatCurrencyInLakhs(metrics?.savingsProjectionCurrentFY || 0)}</span>
                 <span>Target: {formatCurrencyInLakhs(metrics?.potentialSavingsCurrentFY || 0)}</span>
               </div>
@@ -224,38 +224,38 @@ export default function PerformanceAnalysis({
         </Card>
 
         {/* Summary Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white border-0">
-            <CardContent className="p-4 text-center">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <TrendingUp className="h-5 w-5" />
-                <span className="font-semibold">Performance</span>
+            <CardContent className="p-3 text-center">
+              <div className="flex items-center justify-center gap-1.5 mb-1.5">
+                <TrendingUp className="h-4 w-4" />
+                <span className="font-semibold text-sm">Performance</span>
               </div>
-              <div className="text-2xl font-bold">
+              <div className="text-lg font-bold">
                 {progressValue >= 75 ? 'Excellent' : progressValue >= 50 ? 'Good' : 'Needs Focus'}
               </div>
             </CardContent>
           </Card>
           
           <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white border-0">
-            <CardContent className="p-4 text-center">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <IndianRupee className="h-5 w-5" />
-                <span className="font-semibold">Efficiency</span>
+            <CardContent className="p-3 text-center">
+              <div className="flex items-center justify-center gap-1.5 mb-1.5">
+                <IndianRupee className="h-4 w-4" />
+                <span className="font-semibold text-sm">Efficiency</span>
               </div>
-              <div className="text-2xl font-bold">
+              <div className="text-lg font-bold">
                 {((metrics?.actualSavingsCurrentFY || 0) / (metrics?.savingsProjectionCurrentFY || 1) * 100).toFixed(0)}%
               </div>
             </CardContent>
           </Card>
           
           <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white border-0">
-            <CardContent className="p-4 text-center">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <Activity className="h-5 w-5" />
-                <span className="font-semibold">Momentum</span>
+            <CardContent className="p-3 text-center">
+              <div className="flex items-center justify-center gap-1.5 mb-1.5">
+                <Activity className="h-4 w-4" />
+                <span className="font-semibold text-sm">Momentum</span>
               </div>
-              <div className="text-2xl font-bold">
+              <div className="text-lg font-bold">
                 {metrics?.totalInitiatives ? 'Active' : 'Inactive'}
               </div>
             </CardContent>
