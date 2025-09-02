@@ -53,6 +53,16 @@ interface Initiative {
   createdByEmail?: string;
   createdBy?: number | string; // User ID who created the initiative
   initiatorName?: string; // Name of the person who initiated the initiative
+  // Missing fields from database schema
+  assumption1?: string; // CLOB - ASSUMPTION_1
+  assumption2?: string; // CLOB - ASSUMPTION_2  
+  assumption3?: string; // CLOB - ASSUMPTION_3
+  baselineData?: string; // CLOB - BASELINE_DATA
+  targetOutcome?: string; // VARCHAR2(255) - TARGET_OUTCOME
+  targetValue?: number; // NUMBER(15,2) - TARGET_VALUE
+  confidenceLevel?: number; // NUMBER(3) - CONFIDENCE_LEVEL (percentage)
+  estimatedCapex?: number; // NUMBER(15,2) - ESTIMATED_CAPEX
+  budgetType?: string; // Budget type - BUDGETED or NON-BUDGETED
 }
 
 interface InitiativesProps {
@@ -131,6 +141,21 @@ export default function Initiatives({ user }: InitiativesProps) {
         // Keep original date fields for sorting
         createdAt: item.createdAt,
         createdDate: item.createdDate,
+        // Add missing fields for Target & Financial Information
+        targetOutcome: item.targetOutcome,
+        targetValue: item.targetValue,
+        confidenceLevel: item.confidenceLevel,
+        estimatedCapex: item.estimatedCapex,
+        budgetType: item.budgetType,
+        // Add missing fields for Assumptions & Baseline Data
+        assumption1: item.assumption1,
+        assumption2: item.assumption2,
+        assumption3: item.assumption3,
+        baselineData: item.baselineData,
+        // Add actualSavings field if needed
+        actualSavings: typeof item.actualSavings === 'number' 
+          ? `₹${item.actualSavings.toLocaleString()}` 
+          : item.actualSavings,
       }));
     } else {
       return mockInitiatives;
