@@ -13,12 +13,11 @@ import GlassmorphLoader from "@/components/ui/GlassmorphLoader";
 
 const sites = [
   { code: "NDS", name: "NDS" },
-  { code: "HSD1", name: "HSD1" },
-  { code: "HSD2", name: "HSD2" },
-  { code: "HSD3", name: "HSD3" },
   { code: "DHJ", name: "DHJ" },
+  { code: "HSD", name: "HSD" },
   { code: "APL", name: "APL" },
-  { code: "TCD", name: "TCD" }
+  { code: "TCD", name: "TCD" },
+  { code: "CORP", name: "CORP" }
 ];
 
 const disciplines = [
