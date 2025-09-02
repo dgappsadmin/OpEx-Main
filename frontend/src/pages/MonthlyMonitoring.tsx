@@ -351,19 +351,19 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
             <DialogTrigger asChild>
               <Button onClick={() => { setEditingEntry(null); setFormData({}); }} size="sm">
                 <Plus className="h-4 w-4 mr-2" />
-                Add KPI Entry
+                Add Saving Entry
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>
-                  {editingEntry ? 'Edit KPI Entry' : 'Add Monthly KPI Entry'}
+                  {editingEntry ? 'Edit KPI Entry' : 'Add Saving KPI Entry'}
                 </DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-2">
-                    <Label htmlFor="kpiDescription">KPI Description *</Label>
+                    <Label htmlFor="kpiDescription">Saving Description *</Label>
                     <Input
                       id="kpiDescription"
                       value={formData.kpiDescription || ''}

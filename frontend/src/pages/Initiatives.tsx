@@ -302,10 +302,10 @@ export default function Initiatives({ user }: InitiativesProps) {
                 <SelectContent>
                   <SelectItem value="all">All Sites</SelectItem>
                   <SelectItem value="NDS">NDS</SelectItem>
-                  <SelectItem value="DHJ">HSD1</SelectItem>
-                  <SelectItem value="HSD">HSD2</SelectItem>
-                  <SelectItem value="APL">HSD3</SelectItem>
-                  <SelectItem value="TCD">DHJ</SelectItem>
+                  <SelectItem value="DHJ">DHJ</SelectItem>
+                  <SelectItem value="HSD">HSD</SelectItem>
+                  <SelectItem value="APL">APL</SelectItem>
+                  <SelectItem value="TCD">TCD</SelectItem>
                 </SelectContent>
               </Select>
               
