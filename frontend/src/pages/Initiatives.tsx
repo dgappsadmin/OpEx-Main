@@ -293,8 +293,23 @@ export default function Initiatives({ user }: InitiativesProps) {
                   <SelectItem value="Completed">Completed</SelectItem>
                 </SelectContent>
               </Select>
+
+
+               <Select value={siteFilter} onValueChange={setSiteFilter}>
+                <SelectTrigger className="w-20 h-6 text-2xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Sites</SelectItem>
+                  <SelectItem value="NDS">NDS</SelectItem>
+                  <SelectItem value="DHJ">HSD1</SelectItem>
+                  <SelectItem value="HSD">HSD2</SelectItem>
+                  <SelectItem value="APL">HSD3</SelectItem>
+                  <SelectItem value="TCD">DHJ</SelectItem>
+                </SelectContent>
+              </Select>
               
-              <Select value={siteFilter} onValueChange={setSiteFilter}>
+              {/* <Select value={siteFilter} onValueChange={setSiteFilter}>
                 <SelectTrigger className="w-20 h-6 text-2xs">
                   <SelectValue />
                 </SelectTrigger>
@@ -308,7 +323,7 @@ export default function Initiatives({ user }: InitiativesProps) {
                   <SelectItem value="APL">APL</SelectItem>
                   <SelectItem value="TCD">TCD</SelectItem>
                 </SelectContent>
-              </Select>
+              </Select> */}
             </div>
           </div>
 
