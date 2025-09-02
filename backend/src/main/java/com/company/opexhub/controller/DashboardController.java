@@ -1,6 +1,7 @@
 package com.company.opexhub.controller;
 
 import com.company.opexhub.dto.DashboardStatsDTO;
+import com.company.opexhub.dto.PerformanceAnalysisDTO;
 import com.company.opexhub.dto.RecentInitiativeDTO;
 import com.company.opexhub.service.DashboardService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,5 +51,14 @@ public class DashboardController {
     public ResponseEntity<List<RecentInitiativeDTO>> getRecentInitiativesBySite(@PathVariable String site) {
         List<RecentInitiativeDTO> recentInitiatives = dashboardService.getRecentInitiativesBySite(site);
         return ResponseEntity.ok(recentInitiatives);
+    }
+    
+    /**
+     * Get performance analysis dashboard data
+     */
+    @GetMapping("/performance-analysis")
+    public ResponseEntity<PerformanceAnalysisDTO> getPerformanceAnalysis() {
+        PerformanceAnalysisDTO performanceAnalysis = dashboardService.getPerformanceAnalysis();
+        return ResponseEntity.ok(performanceAnalysis);
     }
 }

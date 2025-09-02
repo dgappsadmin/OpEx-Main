@@ -26,3 +26,13 @@ export const useRecentInitiatives = (site?: string) => {
     staleTime: 2 * 60 * 1000, // Still valid
   });
 };
+
+export const usePerformanceAnalysis = () => {
+  return useQuery({
+    queryKey: ['dashboard', 'performance-analysis'],
+    queryFn: async () => {
+      return await dashboardAPI.getPerformanceAnalysis();
+    },
+    staleTime: 5 * 60 * 1000, // Still valid
+  });
+};

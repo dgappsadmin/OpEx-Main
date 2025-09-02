@@ -67,4 +67,23 @@ public interface InitiativeRepository extends JpaRepository<Initiative, Long> {
     
     @Query("SELECT COUNT(i) FROM Initiative i WHERE i.site = :site AND YEAR(i.createdAt) = :year")
     Long countBySiteAndYear(@Param("site") String site, @Param("year") Integer year);
+    
+    // Performance Analysis Queries
+    @Query("SELECT COUNT(i) FROM Initiative i WHERE LOWER(COALESCE(i.budgetType, 'budgeted')) = :budgetType")
+    Long countByBudgetType(@Param("budgetType") String budgetType);
+    
+    @Query("SELECT SUM(i.expectedSavings) FROM Initiative i WHERE i.createdAt >= :startDate AND i.createdAt <= :endDate")
+    java.math.BigDecimal sumExpectedSavingsByCreatedAtBetween(@Param("startDate") LocalDateTime startDate, 
+                                                             @Param("endDate") LocalDateTime endDate);
+    
+    @Query("SELECT SUM(i.expectedSavings) FROM Initiative i WHERE i.createdAt >= :startDate AND i.createdAt <= :endDate AND LOWER(COALESCE(i.budgetType, 'budgeted')) = :budgetType")
+    java.math.BigDecimal sumExpectedSavingsByCreatedAtBetweenAndBudgetType(@Param("startDate") LocalDateTime startDate, 
+                                                                          @Param("endDate") LocalDateTime endDate,
+                                                                          @Param("budgetType") String budgetType);
+    
+    @Query("SELECT SUM(i.expectedSavings) FROM Initiative i")
+    java.math.BigDecimal sumAllExpectedSavings();
+    
+    @Query("SELECT SUM(i.expectedSavings) FROM Initiative i WHERE LOWER(COALESCE(i.budgetType, 'budgeted')) = :budgetType")
+    java.math.BigDecimal sumExpectedSavingsByBudgetType(@Param("budgetType") String budgetType);
 }

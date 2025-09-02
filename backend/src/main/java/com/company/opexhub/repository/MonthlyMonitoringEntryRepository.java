@@ -80,4 +80,23 @@ public interface MonthlyMonitoringEntryRepository extends JpaRepository<MonthlyM
            "ORDER BY mme.monitoringMonth")
     List<Object[]> findDataByDateRange(@Param("startDate") String startDate, 
                                        @Param("endDate") String endDate);
+    
+    // Performance Analysis Queries
+    @Query("SELECT SUM(mme.achievedValue) FROM MonthlyMonitoringEntry mme WHERE mme.monitoringMonth >= :startMonth AND mme.monitoringMonth <= :endMonth AND mme.achievedValue IS NOT NULL")
+    java.math.BigDecimal sumAchievedValueByMonitoringMonthBetween(@Param("startMonth") String startMonth, 
+                                                                 @Param("endMonth") String endMonth);
+    
+    @Query("SELECT SUM(mme.achievedValue) FROM MonthlyMonitoringEntry mme WHERE mme.monitoringMonth >= :startMonth AND mme.monitoringMonth <= :endMonth AND mme.achievedValue IS NOT NULL AND LOWER(COALESCE(mme.initiative.budgetType, 'budgeted')) = :budgetType")
+    java.math.BigDecimal sumAchievedValueByMonitoringMonthBetweenAndBudgetType(@Param("startMonth") String startMonth, 
+                                                                              @Param("endMonth") String endMonth,
+                                                                              @Param("budgetType") String budgetType);
+    
+    @Query("SELECT SUM(mme.targetValue) FROM MonthlyMonitoringEntry mme WHERE mme.monitoringMonth >= :startMonth AND mme.monitoringMonth <= :endMonth AND mme.targetValue IS NOT NULL")
+    java.math.BigDecimal sumTargetValueByMonitoringMonthBetween(@Param("startMonth") String startMonth, 
+                                                               @Param("endMonth") String endMonth);
+    
+    @Query("SELECT SUM(mme.targetValue) FROM MonthlyMonitoringEntry mme WHERE mme.monitoringMonth >= :startMonth AND mme.monitoringMonth <= :endMonth AND mme.targetValue IS NOT NULL AND LOWER(COALESCE(mme.initiative.budgetType, 'budgeted')) = :budgetType")
+    java.math.BigDecimal sumTargetValueByMonitoringMonthBetweenAndBudgetType(@Param("startMonth") String startMonth, 
+                                                                            @Param("endMonth") String endMonth,
+                                                                            @Param("budgetType") String budgetType);
 }

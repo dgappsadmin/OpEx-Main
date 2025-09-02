@@ -2338,6 +2338,12 @@ export const dashboardAPI = {
   getRecentInitiativesBySite: async (site: string) => {
     const response = await api.get(`/dashboard/recent-initiatives/${site}`);
     return response.data;
+  },
+
+  // Get performance analysis dashboard data
+  getPerformanceAnalysis: async () => {
+    const response = await api.get('/dashboard/performance-analysis');
+    return response.data;
   }
 };
 
