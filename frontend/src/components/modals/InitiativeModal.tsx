@@ -51,7 +51,6 @@ interface Initiative {
   budgetType?: string; // BUDGETED or NON-BUDGETED
   startDate?: string;
   endDate?: string;
-  commissioningDate?: string; // Date when initiative goes live
   currentStage?: number;
   requiresMoc?: boolean | string; // Legacy field (boolean) for backward compatibility
   requiresCapex?: boolean | string; // Legacy field (boolean) for backward compatibility
@@ -201,7 +200,6 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
         budgetType: formData.budgetType || 'NON-BUDGETED',
         startDate: formData.startDate,
         endDate: formData.endDate,
-        commissioningDate: formData.commissioningDate,
         requiresMoc: formData.requiresMoc || 'N',
         requiresCapex: formData.requiresCapex || 'N',
         mocNumber: formData.mocNumber || '',
@@ -493,18 +491,6 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                             <p className="font-medium text-sm">{initiative?.lastUpdated}</p>
                           </div>
                         </div>
-                        {initiative?.commissioningDate && (
-                          <>
-                            <Separator />
-                            <div>
-                              <p className="text-xs text-muted-foreground">Commissioning Date</p>
-                              <p className="font-medium text-sm">{initiative.commissioningDate}</p>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                Benefits capture starts 2 weeks after this date
-                              </p>
-                            </div>
-                          </>
-                        )}
                         <Separator />
                         <div>
                           <p className="text-xs text-muted-foreground">Priority Level</p>
@@ -769,22 +755,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                       </div>
 
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="commissioningDate" className="text-sm font-medium">
-                            Date of Commissioning
-                          </Label>
-                          <Input
-                            id="commissioningDate"
-                            type="date"
-                            value={formData.commissioningDate || ''}
-                            disabled={!isEditing}
-                            onChange={(e) => setFormData({ ...formData, commissioningDate: e.target.value })}
-                            className="mt-1 h-10"
-                          />
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Benefits will be captured 2 weeks after this date on monthly basis
-                          </p>
-                        </div>
+                      
                         <div>
                           <Label htmlFor="actualSavings" className="text-sm font-medium">
                             Actual Savings (₹)
