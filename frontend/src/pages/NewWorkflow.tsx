@@ -12,7 +12,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CheckCircle, XCircle, Clock, ArrowLeft, User as UserIcon, Search, Filter, MapPin } from "lucide-react";
+import { CheckCircle, XCircle, Clock, ArrowLeft, User as UserIcon, Search, Filter, MapPin, GitBranch, Activity, Workflow } from "lucide-react";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { useToast } from "@/hooks/use-toast";
 import WorkflowStageModal from "@/components/workflow/WorkflowStageModal";
@@ -169,10 +169,10 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
 
   const getStatusIcon = (status: string) => {
     switch (status?.toLowerCase()) {
-      case 'approved': return <CheckCircle className="h-3 w-3 text-green-500" />;
-      case 'rejected': return <XCircle className="h-3 w-3 text-red-500" />;
-      case 'pending': return <Clock className="h-3 w-3 text-yellow-500" />;
-      default: return <Clock className="h-3 w-3 text-gray-500" />;
+      case 'approved': return <CheckCircle className="h-3.5 w-3.5 text-green-500" />;
+      case 'rejected': return <XCircle className="h-3.5 w-3.5 text-red-500" />;
+      case 'pending': return <Clock className="h-3.5 w-3.5 text-yellow-500" />;
+      default: return <Clock className="h-3.5 w-3.5 text-gray-500" />;
     }
   };
 
@@ -201,134 +201,141 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
   const selectedInitiativeData = initiatives.find((i: any) => i.id === selectedInitiative);
 
   return (
-    <div className="p-2 space-y-2">
-      <div className="bg-gradient-to-r from-background via-background to-primary/5 -m-2 p-2 mb-2 border-b">
-        <div className="flex items-center gap-2">
-          <div className="flex items-center justify-center w-7 h-7 rounded-xl bg-primary/10 text-primary">
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-            </svg>
-          </div>
-          <div>
-            <h1 className="text-base font-bold text-foreground">Workflow Management</h1>
-            <p className="text-muted-foreground text-2xs font-medium">Manage approval workflows with role-based permissions</p>
-          </div>
+    <div className="container mx-auto p-4 space-y-4 max-w-6xl">
+      {/* Header - Compact */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Workflow Management
+          </h1>
+          <p className="text-muted-foreground text-xs mt-0.5">
+            Manage approval workflows with role-based permissions
+          </p>
         </div>
+        <Badge variant="outline" className="text-xs font-medium">
+          <Activity className="h-3 w-3 mr-1.5" />
+          Active Workflows
+        </Badge>
       </div>
 
       <Tabs defaultValue="stages" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 h-7 p-0.5 bg-muted/30">
-          <TabsTrigger value="stages" className="font-medium text-2xs">Initiative Workflow</TabsTrigger>
-          <TabsTrigger value="dynamic" className="font-medium text-2xs">View Workflow</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 h-10 p-0.5 bg-muted/50">
+          <TabsTrigger value="stages" className="font-medium text-xs flex items-center gap-1.5">
+            <GitBranch className="h-3.5 w-3.5" />
+            Initiative Workflow
+          </TabsTrigger>
+          <TabsTrigger value="dynamic" className="font-medium text-xs flex items-center gap-1.5">
+            <Workflow className="h-3.5 w-3.5" />
+            View Workflow
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="stages" className="space-y-2">
+        <TabsContent value="stages" className="space-y-4 mt-4">
           {!selectedInitiative ? (
-            <div className="space-y-2">
-              {/* Search and Filter Controls - At the very top */}
-              <div className="bg-gradient-to-r from-background via-background to-primary/5 p-3 rounded-lg border space-y-3">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-primary/10 text-primary">
-                    <Search className="w-3 h-3" />
-                  </div>
-                  <h3 className="text-sm font-semibold text-foreground">Search & Filter Initiatives</h3>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  {/* Search by Initiative Number */}
-                  <div className="space-y-1">
-                    <label className="text-2xs font-medium text-muted-foreground">Search by Initiative Number</label>
-                    <div className="relative">
-                      <Search className="absolute left-2.5 top-2.5 h-3 w-3 text-muted-foreground" />
-                      <Input
-                        type="text"
-                        placeholder="Enter initiative number..."
-                        value={searchTerm}
-                        onChange={(e) => handleSearchChange(e.target.value)}
-                        className="pl-8 h-8 text-xs"
-                      />
+            <div className="space-y-4">
+              {/* Search and Filter Controls - Compact */}
+              <Card className="shadow-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Search className="h-4 w-4 text-blue-600" />
+                    Search & Filter Initiatives
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {/* Search by Initiative Number */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-muted-foreground">Search by Initiative Number</label>
+                      <div className="relative">
+                        <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                        <Input
+                          type="text"
+                          placeholder="Enter initiative number..."
+                          value={searchTerm}
+                          onChange={(e) => handleSearchChange(e.target.value)}
+                          className="pl-8 h-9 text-xs"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Site Filter */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-muted-foreground">Site Filter</label>
+                      <Select value={siteFilter} onValueChange={handleSiteFilterChange}>
+                        <SelectTrigger className="h-9 text-xs">
+                          <div className="flex items-center gap-1.5">
+                            <MapPin className="h-3.5 w-3.5" />
+                            <SelectValue placeholder="Select site" />
+                          </div>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Sites</SelectItem>
+                          {sites.map((site) => (
+                            <SelectItem key={site.code} value={site.code}>
+                              {site.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Status Filter */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-muted-foreground">Status Filter</label>
+                      <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
+                        <SelectTrigger className="h-9 text-xs">
+                          <div className="flex items-center gap-1.5">
+                            <Filter className="h-3.5 w-3.5" />
+                            <SelectValue placeholder="Select status filter" />
+                          </div>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="default">Default (Pending & In Progress)</SelectItem>
+                          <SelectItem value="completed">Completed Only</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
 
-                  {/* Site Filter */}
-                  <div className="space-y-1">
-                    <label className="text-2xs font-medium text-muted-foreground">Site Filter</label>
-                    <Select value={siteFilter} onValueChange={handleSiteFilterChange}>
-                      <SelectTrigger className="h-8 text-xs">
-                        <div className="flex items-center gap-2">
-                          <MapPin className="h-3 w-3" />
-                          <SelectValue placeholder="Select site" />
-                        </div>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Sites</SelectItem>
-                        {sites.map((site) => (
-                          <SelectItem key={site.code} value={site.code}>
-                            {site.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  {/* Results summary */}
+                  <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border">
+                    <span>
+                      Showing {sortedInitiatives.length} initiative{sortedInitiatives.length !== 1 ? 's' : ''} 
+                      {searchTerm && ` matching "${searchTerm}"`}
+                      {siteFilter && siteFilter !== "all" && ` for site ${siteFilter}`}
+                      {statusFilter === "completed" ? " with Completed status" : " (Pending & In Progress only)"}
+                    </span>
+                    <span>Sorted by: Recently Created</span>
                   </div>
+                </CardContent>
+              </Card>
 
-                  {/* Status Filter */}
-                  <div className="space-y-1">
-                    <label className="text-2xs font-medium text-muted-foreground">Status Filter</label>
-                    <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
-                      <SelectTrigger className="h-8 text-xs">
-                        <div className="flex items-center gap-2">
-                          <Filter className="h-3 w-3" />
-                          <SelectValue placeholder="Select status filter" />
-                        </div>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="default">Default (Pending & In Progress)</SelectItem>
-                        <SelectItem value="completed">Completed Only</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+              <div className="text-center py-6">
+                <div className="flex items-center justify-center w-12 h-12 mx-auto mb-3 rounded-full bg-primary/10">
+                  <GitBranch className="w-6 h-6 text-primary" />
                 </div>
-
-                {/* Results summary */}
-                <div className="flex items-center justify-between text-2xs text-muted-foreground">
-                  <span>
-                    Showing {sortedInitiatives.length} initiative{sortedInitiatives.length !== 1 ? 's' : ''} 
-                    {searchTerm && ` matching "${searchTerm}"`}
-                    {siteFilter && siteFilter !== "all" && ` for site ${siteFilter}`}
-                    {statusFilter === "completed" ? " with Completed status" : " (Pending & In Progress only)"}
-                  </span>
-                  <span>Sorted by: Recently Created</span>
-                </div>
-              </div>
-
-              <div className="text-center py-4">
-                <div className="flex items-center justify-center w-8 h-8 mx-auto mb-2 rounded-full bg-primary/10">
-                  <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                </div>
-                <h2 className="text-sm font-bold text-foreground mb-1">Select Initiative</h2>
-                <p className="text-muted-foreground text-2xs">Choose an initiative to manage its workflow stages</p>
+                <h2 className="text-lg font-bold text-foreground mb-1.5">Select Initiative</h2>
+                <p className="text-muted-foreground text-xs">Choose an initiative to manage its workflow stages</p>
               </div>
               
-              <div className="space-y-1.5">
+              <div className="space-y-3">
                 {paginatedInitiatives.map((initiative: any) => (
                   <Card
                     key={initiative.id}
-                    className="cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 border hover:border-primary/30 bg-gradient-to-r from-card to-card/50"
+                    className="cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 border hover:border-primary/30 bg-gradient-to-r from-card to-card/50"
                     onClick={() => setSelectedInitiative(initiative.id)}
                   >
-                    <CardContent className="p-2">
+                    <CardContent className="p-4">
                       <div className="flex items-center justify-between">
-                        <div className="flex-1 space-y-1">
+                        <div className="flex-1 space-y-3">
                           <div className="flex items-center justify-between">
                             <h3 className="text-sm font-bold text-foreground">{initiative.initiativeNumber || initiative.title}</h3>
-                            <Badge className={`${getStatusColor(initiative.status)} font-semibold text-2xs`}>
+                            <Badge className={`${getStatusColor(initiative.status)} font-semibold text-xs`}>
                               {initiative.status}
                             </Badge>
                           </div>
                           
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-2xs">
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
                             <div>
                               <span className="text-muted-foreground">Site:</span>
                               <p className="font-medium">{initiative.site}</p>
@@ -347,23 +354,23 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
                             </div>
                           </div>
                           
-                          <div className="space-y-0.5">
-                            <div className="flex justify-between text-2xs">
+                          <div className="space-y-1.5">
+                            <div className="flex justify-between text-xs">
                               <span>Progress</span>
                               <span>{Math.round(((initiative.currentStage || 1) - 1) * 100 / 10)}%</span>
                             </div>
-                            <Progress value={Math.round(((initiative.currentStage || 1) - 1) * 100 / 10)} className="h-1" />
+                            <Progress value={Math.round(((initiative.currentStage || 1) - 1) * 100 / 10)} className="h-1.5" />
                           </div>
                         </div>
                         
-                        <div className="ml-2">
+                        <div className="ml-4">
                           <Button 
                             variant="default" 
                             size="sm" 
-                            className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium px-2 py-1 rounded-lg shadow-md transition-all duration-200 text-2xs"
+                            className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium px-4 py-2 rounded-lg shadow-md transition-all duration-200 text-xs"
                           >
                             View Workflow
-                            <ArrowLeft className="ml-1 h-2.5 w-2.5 rotate-180" />
+                            <ArrowLeft className="ml-1.5 h-3.5 w-3.5 rotate-180" />
                           </Button>
                         </div>
                       </div>
@@ -373,106 +380,106 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
               </div>
 
               {totalPages > 1 && (
-                <Pagination>
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious 
-                        href="#" 
-                        onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                        className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
-                      />
-                    </PaginationItem>
-                    {Array.from({ length: totalPages }, (_, i) => (
-                      <PaginationItem key={i + 1}>
-                        <PaginationLink 
+                <div className="flex justify-center">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious 
                           href="#" 
-                          isActive={currentPage === i + 1}
-                          onClick={() => setCurrentPage(i + 1)}
-                        >
-                          {i + 1}
-                        </PaginationLink>
+                          onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                          className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                        />
                       </PaginationItem>
-                    ))}
-                    <PaginationItem>
-                      <PaginationNext 
-                        href="#" 
-                        onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                        className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
+                      {Array.from({ length: totalPages }, (_, i) => (
+                        <PaginationItem key={i + 1}>
+                          <PaginationLink 
+                            href="#" 
+                            isActive={currentPage === i + 1}
+                            onClick={() => setCurrentPage(i + 1)}
+                          >
+                            {i + 1}
+                          </PaginationLink>
+                        </PaginationItem>
+                      ))}
+                      <PaginationItem>
+                        <PaginationNext 
+                          href="#" 
+                          onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                          className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
               )}
             </div>
           ) : (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
                 <Button 
                   variant="ghost" 
                   size="sm"
                   onClick={() => setSelectedInitiative(null)}
-                  className="flex items-center gap-1.5 px-1.5 py-1 rounded-lg border border-border hover:bg-accent hover:text-accent-foreground transition-colors text-2xs"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border hover:bg-accent hover:text-accent-foreground transition-colors text-xs"
                 >
-                  <ArrowLeft className="h-2.5 w-2.5" />
+                  <ArrowLeft className="h-3.5 w-3.5" />
                   <span className="font-medium">Back to Initiatives</span>
                 </Button>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2.5">
                   <div className="h-6 w-0.5 bg-gradient-to-b from-primary to-primary/60 rounded-full"></div>
                   <div>
-                    <h2 className="text-sm font-bold text-foreground">
+                    <h2 className="text-base font-bold text-foreground">
                       {selectedInitiativeData?.initiativeNumber || selectedInitiativeData?.title || 'Initiative'}
                     </h2>
-                    <p className="text-2xs text-muted-foreground font-medium">Workflow Stages</p>
+                    <p className="text-xs text-muted-foreground font-medium">Workflow Stages</p>
                   </div>
                 </div>
               </div>
               
               {workflowTransactions.length === 0 ? (
-                <Card className="border-dashed">
-                  <CardContent className="p-4 text-center">
-                    <div className="flex items-center justify-center w-8 h-8 mx-auto mb-2 rounded-full bg-muted">
-                      <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
+                <Card className="border-dashed shadow-sm">
+                  <CardContent className="p-8 text-center">
+                    <div className="flex items-center justify-center w-12 h-12 mx-auto mb-3 rounded-full bg-muted">
+                      <GitBranch className="w-6 h-6 text-muted-foreground" />
                     </div>
-                    <h3 className="text-sm font-semibold text-foreground mb-1">No Workflow Stages</h3>
-                    <p className="text-muted-foreground text-2xs">No workflow stages found for this initiative.</p>
+                    <h3 className="text-base font-semibold text-foreground mb-1.5">No Workflow Stages</h3>
+                    <p className="text-muted-foreground text-xs">No workflow stages found for this initiative.</p>
                   </CardContent>
                 </Card>
               ) : (
-                <div className="grid gap-2">
+                <div className="grid gap-4">
                   {workflowTransactions.map((transaction: any) => (
-                    <Card key={transaction.id} className="relative overflow-hidden border-l-2 border-l-primary/30 hover:shadow-lg transition-all duration-200">
-                      <CardHeader className="bg-gradient-to-r from-background to-primary/5 pb-1.5">
+                    <Card key={transaction.id} className="relative overflow-hidden border-l-3 border-l-primary/30 hover:shadow-md transition-all duration-200 shadow-sm">
+                      <CardHeader className="bg-gradient-to-r from-background to-primary/5 pb-3">
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <div className="flex items-center justify-center w-7 h-7 rounded-xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-bold text-xs shadow-lg">
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-bold text-sm shadow-lg">
                               {transaction.stageNumber}
                             </div>
                             <div>
-                              <CardTitle className="text-sm text-foreground">
+                              <CardTitle className="text-base text-foreground">
                                 {transaction.stageName}
                               </CardTitle>
                               <div className="flex items-center gap-1.5 mt-0.5">
-                                <span className="text-2xs text-muted-foreground">Required Role:</span>
-                                <Badge variant="secondary" className="text-2xs font-medium">
+                                <span className="text-xs text-muted-foreground">Required Role:</span>
+                                <Badge variant="secondary" className="text-xs font-medium">
                                   {getRoleCodeDescription(transaction.requiredRole)}
                                 </Badge>
                               </div>
                             </div>
                           </div>
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-2">
                             {getStatusIcon(transaction.approveStatus)}
-                            <Badge className={`${getStatusColor(transaction.approveStatus)} font-semibold text-2xs`}>
+                            <Badge className={`${getStatusColor(transaction.approveStatus)} font-semibold text-xs`}>
                               {transaction.approveStatus?.toUpperCase()}
                             </Badge>
                           </div>
                         </div>
                       </CardHeader>
-                      <CardContent className="space-y-1.5">
+                      <CardContent className="space-y-3 pt-3">
                         {transaction.actionBy && (
-                          <div className="flex items-center gap-1.5 text-2xs bg-green-50 dark:bg-green-900/20 p-1.5 rounded-lg">
-                            <UserIcon className="h-2.5 w-2.5" />
+                          <div className="flex items-center gap-2 text-xs bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
+                            <UserIcon className="h-3.5 w-3.5" />
                             <span>
                               {transaction.approveStatus === 'approved' ? 'Approved' : 'Rejected'} by: 
                               <span className="font-medium ml-1">{transaction.actionBy}</span>
@@ -486,15 +493,15 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
                         )}
                         
                         {transaction.comment && (
-                          <div className="bg-muted p-1.5 rounded-lg">
-                            <p className="text-2xs font-medium mb-0.5">Comments:</p>
-                            <p className="text-2xs">{transaction.comment}</p>
+                          <div className="bg-muted p-3 rounded-lg">
+                            <p className="text-xs font-medium mb-1.5">Comments:</p>
+                            <p className="text-xs">{transaction.comment}</p>
                           </div>
                         )}
 
                         {/* Show additional info for specific stages */}
                         {transaction.assignedUserId && (
-                          <div className="bg-blue-50 dark:bg-blue-900/20 p-1.5 rounded-lg text-2xs">
+                          <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg text-xs">
                             <span className="font-medium">Assigned Initiative Lead ID:</span>
                             <span className="ml-2">{transaction.assignedUserId}</span>
                           </div>
@@ -502,7 +509,7 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
 
                         {/* Next pending stage info */}
                         {workflowTransactions.length > 0 && (
-                          <div className="bg-blue-50 dark:bg-blue-900/20 p-1.5 rounded-lg text-2xs">
+                          <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg text-xs">
                             {(() => {
                               const nextPendingTransaction = workflowTransactions.find((t: any) => t.approveStatus === 'pending');
                               if (nextPendingTransaction) {
@@ -527,17 +534,15 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
                         )}
 
                         {transaction.approveStatus === 'pending' && transaction.requiredRole === user.role && (
-                          <div className="border-t pt-1.5">
+                          <div className="border-t pt-3">
                             <Button 
                               onClick={() => {
                                 setSelectedTransaction(transaction);
                                 setIsModalOpen(true);
                               }}
-                              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-1.5 rounded-lg shadow-md transition-all duration-200 text-2xs"
+                              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-2 rounded-lg shadow-md transition-all duration-200 text-xs"
                             >
-                              <svg className="w-2.5 h-2.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
+                              <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
                               Process This Stage
                             </Button>
                           </div>
@@ -551,113 +556,112 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
           )}
         </TabsContent>
 
-        <TabsContent value="dynamic" className="space-y-2">
+        <TabsContent value="dynamic" className="space-y-4 mt-4">
           {!selectedInitiative ? (
-            <div className="space-y-2">
-              {/* Search and Filter Controls - At the very top */}
-              <div className="bg-gradient-to-r from-background via-background to-primary/5 p-3 rounded-lg border space-y-3">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-primary/10 text-primary">
-                    <Search className="w-3 h-3" />
-                  </div>
-                  <h3 className="text-sm font-semibold text-foreground">Search & Filter Initiatives</h3>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  {/* Search by Initiative Number */}
-                  <div className="space-y-1">
-                    <label className="text-2xs font-medium text-muted-foreground">Search by Initiative Number</label>
-                    <div className="relative">
-                      <Search className="absolute left-2.5 top-2.5 h-3 w-3 text-muted-foreground" />
-                      <Input
-                        type="text"
-                        placeholder="Enter initiative number..."
-                        value={searchTerm}
-                        onChange={(e) => handleSearchChange(e.target.value)}
-                        className="pl-8 h-8 text-xs"
-                      />
+            <div className="space-y-4">
+              {/* Search and Filter Controls - Compact */}
+              <Card className="shadow-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Search className="h-4 w-4 text-blue-600" />
+                    Search & Filter Initiatives
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {/* Search by Initiative Number */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-muted-foreground">Search by Initiative Number</label>
+                      <div className="relative">
+                        <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                        <Input
+                          type="text"
+                          placeholder="Enter initiative number..."
+                          value={searchTerm}
+                          onChange={(e) => handleSearchChange(e.target.value)}
+                          className="pl-8 h-9 text-xs"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Site Filter */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-muted-foreground">Site Filter</label>
+                      <Select value={siteFilter} onValueChange={handleSiteFilterChange}>
+                        <SelectTrigger className="h-9 text-xs">
+                          <div className="flex items-center gap-1.5">
+                            <MapPin className="h-3.5 w-3.5" />
+                            <SelectValue placeholder="Select site" />
+                          </div>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Sites</SelectItem>
+                          {sites.map((site) => (
+                            <SelectItem key={site.code} value={site.code}>
+                              {site.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Status Filter */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-muted-foreground">Status Filter</label>
+                      <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
+                        <SelectTrigger className="h-9 text-xs">
+                          <div className="flex items-center gap-1.5">
+                            <Filter className="h-3.5 w-3.5" />
+                            <SelectValue placeholder="Select status filter" />
+                          </div>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="default">Default (Pending & In Progress)</SelectItem>
+                          <SelectItem value="completed">Completed Only</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
 
-                  {/* Site Filter */}
-                  <div className="space-y-1">
-                    <label className="text-2xs font-medium text-muted-foreground">Site Filter</label>
-                    <Select value={siteFilter} onValueChange={handleSiteFilterChange}>
-                      <SelectTrigger className="h-8 text-xs">
-                        <div className="flex items-center gap-2">
-                          <MapPin className="h-3 w-3" />
-                          <SelectValue placeholder="Select site" />
-                        </div>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Sites</SelectItem>
-                        {sites.map((site) => (
-                          <SelectItem key={site.code} value={site.code}>
-                            {site.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  {/* Results summary */}
+                  <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border">
+                    <span>
+                      Showing {sortedInitiatives.length} initiative{sortedInitiatives.length !== 1 ? 's' : ''} 
+                      {searchTerm && ` matching "${searchTerm}"`}
+                      {siteFilter && siteFilter !== "all" && ` for site ${siteFilter}`}
+                      {statusFilter === "completed" ? " with Completed status" : " (Pending & In Progress only)"}
+                    </span>
+                    <span>Sorted by: Recently Created</span>
                   </div>
+                </CardContent>
+              </Card>
 
-                  {/* Status Filter */}
-                  <div className="space-y-1">
-                    <label className="text-2xs font-medium text-muted-foreground">Status Filter</label>
-                    <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
-                      <SelectTrigger className="h-8 text-xs">
-                        <div className="flex items-center gap-2">
-                          <Filter className="h-3 w-3" />
-                          <SelectValue placeholder="Select status filter" />
-                        </div>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="default">Default (Pending & In Progress)</SelectItem>
-                        <SelectItem value="completed">Completed Only</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+              <div className="text-center py-6">
+                <div className="flex items-center justify-center w-12 h-12 mx-auto mb-3 rounded-full bg-primary/10">
+                  <Workflow className="w-6 h-6 text-primary" />
                 </div>
-
-                {/* Results summary */}
-                <div className="flex items-center justify-between text-2xs text-muted-foreground">
-                  <span>
-                    Showing {sortedInitiatives.length} initiative{sortedInitiatives.length !== 1 ? 's' : ''} 
-                    {searchTerm && ` matching "${searchTerm}"`}
-                    {siteFilter && siteFilter !== "all" && ` for site ${siteFilter}`}
-                    {statusFilter === "completed" ? " with Completed status" : " (Pending & In Progress only)"}
-                  </span>
-                  <span>Sorted by: Recently Created</span>
-                </div>
-              </div>
-
-              <div className="text-center py-4">
-                <div className="flex items-center justify-center w-8 h-8 mx-auto mb-2 rounded-full bg-primary/10">
-                  <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-                <h2 className="text-sm font-bold text-foreground mb-1">Select Initiative for Dynamic Workflow</h2>
-                <p className="text-muted-foreground text-2xs">Choose an initiative to view its dynamic role-based workflow progression</p>
+                <h2 className="text-lg font-bold text-foreground mb-1.5">Select Initiative for Dynamic Workflow</h2>
+                <p className="text-muted-foreground text-xs">Choose an initiative to view its dynamic role-based workflow progression</p>
               </div>
               
-              <div className="space-y-1.5">
+              <div className="space-y-3">
                 {paginatedInitiatives.map((initiative: any) => (
                   <Card
                     key={initiative.id}
-                    className="cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 border hover:border-primary/30 bg-gradient-to-r from-card to-card/50"
+                    className="cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 border hover:border-primary/30 bg-gradient-to-r from-card to-card/50"
                     onClick={() => setSelectedInitiative(initiative.id)}
                   >
-                    <CardContent className="p-2">
+                    <CardContent className="p-4">
                       <div className="flex items-center justify-between">
-                        <div className="flex-1 space-y-1">
+                        <div className="flex-1 space-y-3">
                           <div className="flex items-center justify-between">
                             <h3 className="text-sm font-bold text-foreground">{initiative.initiativeNumber || initiative.title}</h3>
-                            <Badge className={`${getStatusColor(initiative.status)} font-semibold text-2xs`}>
+                            <Badge className={`${getStatusColor(initiative.status)} font-semibold text-xs`}>
                               {initiative.status}
                             </Badge>
                           </div>
                           
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-2xs">
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
                             <div>
                               <span className="text-muted-foreground">Site:</span>
                               <p className="font-medium">{initiative.site}</p>
@@ -677,14 +681,14 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
                           </div>
                         </div>
                         
-                        <div className="ml-2">
+                        <div className="ml-4">
                           <Button 
                             variant="default" 
                             size="sm" 
-                            className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium px-2 py-1 rounded-lg shadow-md transition-all duration-200 text-2xs"
+                            className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium px-4 py-2 rounded-lg shadow-md transition-all duration-200 text-xs"
                           >
                             View Dynamic Workflow
-                            <ArrowLeft className="ml-1 h-2.5 w-2.5 rotate-180" />
+                            <ArrowLeft className="ml-1.5 h-3.5 w-3.5 rotate-180" />
                           </Button>
                         </div>
                       </div>
@@ -694,56 +698,58 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
               </div>
 
               {totalPages > 1 && (
-                <Pagination>
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious 
-                        href="#" 
-                        onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                        className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
-                      />
-                    </PaginationItem>
-                    {Array.from({ length: totalPages }, (_, i) => (
-                      <PaginationItem key={i + 1}>
-                        <PaginationLink 
+                <div className="flex justify-center">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious 
                           href="#" 
-                          isActive={currentPage === i + 1}
-                          onClick={() => setCurrentPage(i + 1)}
-                        >
-                          {i + 1}
-                        </PaginationLink>
+                          onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                          className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                        />
                       </PaginationItem>
-                    ))}
-                    <PaginationItem>
-                      <PaginationNext 
-                        href="#" 
-                        onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                        className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
+                      {Array.from({ length: totalPages }, (_, i) => (
+                        <PaginationItem key={i + 1}>
+                          <PaginationLink 
+                            href="#" 
+                            isActive={currentPage === i + 1}
+                            onClick={() => setCurrentPage(i + 1)}
+                          >
+                            {i + 1}
+                          </PaginationLink>
+                        </PaginationItem>
+                      ))}
+                      <PaginationItem>
+                        <PaginationNext 
+                          href="#" 
+                          onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                          className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
               )}
             </div>
           ) : (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
                 <Button 
                   variant="ghost" 
                   size="sm"
                   onClick={() => setSelectedInitiative(null)}
-                  className="flex items-center gap-1.5 px-1.5 py-1 rounded-lg border border-border hover:bg-accent hover:text-accent-foreground transition-colors text-2xs"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border hover:bg-accent hover:text-accent-foreground transition-colors text-xs"
                 >
-                  <ArrowLeft className="h-2.5 w-2.5" />
+                  <ArrowLeft className="h-3.5 w-3.5" />
                   <span className="font-medium">Back to Initiatives</span>
                 </Button>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2.5">
                   <div className="h-6 w-0.5 bg-gradient-to-b from-primary to-primary/60 rounded-full"></div>
                   <div>
-                    <h2 className="text-sm font-bold text-foreground">
+                    <h2 className="text-base font-bold text-foreground">
                       {selectedInitiativeData?.initiativeNumber || selectedInitiativeData?.title || 'Initiative'}
                     </h2>
-                    <p className="text-2xs text-muted-foreground font-medium">Dynamic Role-Based Workflow System</p>
+                    <p className="text-xs text-muted-foreground font-medium">Dynamic Role-Based Workflow System</p>
                   </div>
                 </div>
               </div>

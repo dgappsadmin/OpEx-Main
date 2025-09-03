@@ -106,20 +106,20 @@ export default function WorkflowStageModal({
       case 3: // Engineering Head assigns Initiative Lead
         return (
           <div className="space-y-4">
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="flex items-center gap-2 text-sm text-blue-800 mb-1">
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center gap-2.5 text-sm text-blue-800 mb-1.5">
                 <MapPin className="h-4 w-4" />
-                <span className="font-medium">Site: {transaction.site}</span>
+                <span className="font-semibold">Site: {transaction.site}</span>
               </div>
-              <p className="text-sm text-blue-700">
+              <p className="text-xs text-blue-700">
                 Select an Initiative Lead from users with IL role for this site
               </p>
             </div>
             
             <div>
-              <Label htmlFor="assignedUser">Select Initiative Lead *</Label>
+              <Label htmlFor="assignedUser" className="text-xs font-semibold">Select Initiative Lead *</Label>
               <Select value={assignedUserId} onValueChange={setAssignedUserId}>
-                <SelectTrigger>
+                <SelectTrigger className="h-9 text-xs mt-1.5">
                   <SelectValue placeholder={
                     ilLoading ? "Loading Initiative Leads..." : 
                     initiativeLeads.length === 0 ? "No Initiative Leads available for this site" :
@@ -135,7 +135,7 @@ export default function WorkflowStageModal({
                 </SelectContent>
               </Select>
               {initiativeLeads.length === 0 && !ilLoading && (
-                <p className="text-sm text-red-600 mt-1">
+                <p className="text-xs text-red-600 mt-1.5">
                   No Initiative Leads found for site {transaction.site}
                 </p>
               )}
@@ -147,27 +147,28 @@ export default function WorkflowStageModal({
         return (
           <div className="space-y-4">
             <div>
-              <Label>Is MOC Required? *</Label>
+              <Label className="text-xs font-semibold">Is MOC Required? *</Label>
               <RadioGroup value={mocRequired} onValueChange={setMocRequired} className="mt-2">
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2.5 p-2.5 border rounded-lg hover:bg-muted/50">
                   <RadioGroupItem value="yes" id="moc-yes" />
-                  <Label htmlFor="moc-yes">Yes, MOC is required</Label>
+                  <Label htmlFor="moc-yes" className="text-xs font-medium">Yes, MOC is required</Label>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2.5 p-2.5 border rounded-lg hover:bg-muted/50">
                   <RadioGroupItem value="no" id="moc-no" />
-                  <Label htmlFor="moc-no">No, MOC is not required</Label>
+                  <Label htmlFor="moc-no" className="text-xs font-medium">No, MOC is not required</Label>
                 </div>
               </RadioGroup>
             </div>
             
             {mocRequired === "yes" && (
               <div>
-                <Label htmlFor="mocNumber">MOC Number *</Label>
+                <Label htmlFor="mocNumber" className="text-xs font-semibold">MOC Number *</Label>
                 <Input
                   id="mocNumber"
                   value={mocNumber}
                   onChange={(e) => setMocNumber(e.target.value)}
                   placeholder="Enter MOC Number"
+                  className="h-9 text-xs mt-1.5"
                 />
               </div>
             )}
@@ -178,27 +179,28 @@ export default function WorkflowStageModal({
         return (
           <div className="space-y-4">
             <div>
-              <Label>Is CAPEX Required? *</Label>
+              <Label className="text-xs font-semibold">Is CAPEX Required? *</Label>
               <RadioGroup value={capexRequired} onValueChange={setCapexRequired} className="mt-2">
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2.5 p-2.5 border rounded-lg hover:bg-muted/50">
                   <RadioGroupItem value="yes" id="capex-yes" />
-                  <Label htmlFor="capex-yes">Yes, CAPEX is required</Label>
+                  <Label htmlFor="capex-yes" className="text-xs font-medium">Yes, CAPEX is required</Label>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2.5 p-2.5 border rounded-lg hover:bg-muted/50">
                   <RadioGroupItem value="no" id="capex-no" />
-                  <Label htmlFor="capex-no">No, CAPEX is not required</Label>
+                  <Label htmlFor="capex-no" className="text-xs font-medium">No, CAPEX is not required</Label>
                 </div>
               </RadioGroup>
             </div>
             
             {capexRequired === "yes" && (
               <div>
-                <Label htmlFor="capexNumber">CAPEX Number *</Label>
+                <Label htmlFor="capexNumber" className="text-xs font-semibold">CAPEX Number *</Label>
                 <Input
                   id="capexNumber"
                   value={capexNumber}
                   onChange={(e) => setCapexNumber(e.target.value)}
                   placeholder="Enter CAPEX Number"
+                  className="h-9 text-xs mt-1.5"
                 />
               </div>
             )}
@@ -212,9 +214,9 @@ export default function WorkflowStageModal({
       case 10: // Saving Validation with F&A
         return (
           <div className="space-y-4 p-4 bg-blue-50 rounded-lg">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <CheckCircle className="h-5 w-5 text-blue-600" />
-              <p className="text-blue-800 font-medium">
+              <p className="text-blue-800 font-semibold text-sm">
                 Review and provide your decision with comments.
               </p>
             </div>
@@ -224,9 +226,9 @@ export default function WorkflowStageModal({
       case 11: // Initiative Closure
         return (
           <div className="space-y-4 p-4 bg-red-50 rounded-lg">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <AlertTriangle className="h-5 w-5 text-red-600" />
-              <p className="text-red-800 font-medium">
+              <p className="text-red-800 font-semibold text-sm">
                 Final closure of initiative - This will move the initiative to the Closure Module.
               </p>
             </div>
@@ -258,26 +260,26 @@ export default function WorkflowStageModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-bold flex items-center gap-2">
-            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm font-bold">
+        <DialogHeader className="pb-3">
+          <DialogTitle className="text-lg font-bold flex items-center gap-2.5">
+            <div className="flex items-center justify-center w-9 h-9 rounded-full bg-primary text-primary-foreground text-sm font-bold shadow-md">
               {transaction.stageNumber}
             </div>
             {transaction.stageName}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
-          {/* Stage Information */}
+        <div className="space-y-4">
+          {/* Stage Information - Compact */}
           <div className="p-4 bg-muted rounded-lg">
-            <p className="text-sm text-muted-foreground">{getStageDescription()}</p>
-            <div className="mt-2 grid grid-cols-2 gap-4 text-sm">
+            <p className="text-xs text-muted-foreground mb-3">{getStageDescription()}</p>
+            <div className="grid grid-cols-2 gap-4 text-xs">
               <div>
-                <span className="font-medium">Required Role:</span>
+                <span className="font-semibold">Required Role:</span>
                 <span className="ml-2">{transaction.requiredRole}</span>
               </div>
               <div>
-                <span className="font-medium">Site:</span>
+                <span className="font-semibold">Site:</span>
                 <span className="ml-2">{transaction.site}</span>
               </div>
             </div>
@@ -286,9 +288,9 @@ export default function WorkflowStageModal({
           {/* Stage-specific content */}
           {getStageSpecificContent()}
 
-          {/* Comment section */}
+          {/* Comment section - Compact */}
           <div>
-            <Label htmlFor="comment" className="text-red-600">
+            <Label htmlFor="comment" className="text-red-600 text-xs font-semibold">
               Comments (Required) *
             </Label>
             <Textarea
@@ -296,27 +298,27 @@ export default function WorkflowStageModal({
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               placeholder="Please provide your comments for this stage..."
-              className="min-h-[80px] laptop-14:min-h-[100px] mt-2"
+              className="min-h-[80px] mt-2 text-xs"
               required
             />
           </div>
 
-          {/* Action buttons */}
+          {/* Action buttons - Compact */}
           {transaction.stageNumber === 11 ? (
-            <div className="flex gap-2 laptop-14:gap-3">
+            <div className="flex gap-3 pt-3">
               <Button 
                 onClick={handleApprove}
                 disabled={!comment.trim() || isLoading}
-                className="bg-red-600 hover:bg-red-700 flex-1 text-sm"
+                className="bg-red-600 hover:bg-red-700 flex-1 h-9 text-xs font-medium"
               >
                 {isLoading ? (
                   <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
                     Processing...
                   </>
                 ) : (
                   <>
-                    <CheckCircle className="h-4 w-4 mr-2" />
+                    <CheckCircle className="h-4 w-4 mr-1.5" />
                     Close Initiative
                   </>
                 )}
@@ -327,16 +329,16 @@ export default function WorkflowStageModal({
                   variant="destructive"
                   onClick={handleReject}
                   disabled={!comment.trim() || isLoading}
-                  className="flex-1 text-sm"
+                  className="flex-1 h-9 text-xs font-medium"
                 >
                   {isLoading ? (
                     <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
                       Processing...
                     </>
                   ) : (
                     <>
-                      <XCircle className="h-4 w-4 mr-2" />
+                      <XCircle className="h-4 w-4 mr-1.5" />
                       Reject
                     </>
                   )}
@@ -344,20 +346,20 @@ export default function WorkflowStageModal({
               )}
             </div>
           ) : (
-            <div className="flex gap-2 laptop-14:gap-3">
+            <div className="flex gap-3 pt-3">
               <Button 
                 onClick={handleApprove}
                 disabled={!isFormValid() || isLoading}
-                className="bg-green-600 hover:bg-green-700 flex-1 text-sm"
+                className="bg-green-600 hover:bg-green-700 flex-1 h-9 text-xs font-medium"
               >
                 {isLoading ? (
                   <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
                     Processing...
                   </>
                 ) : (
                   <>
-                    <CheckCircle className="h-4 w-4 mr-2" />
+                    <CheckCircle className="h-4 w-4 mr-1.5" />
                     Approve & Continue
                   </>
                 )}
@@ -368,16 +370,16 @@ export default function WorkflowStageModal({
                   variant="destructive"
                   onClick={handleReject}
                   disabled={!comment.trim() || isLoading}
-                  className="flex-1 text-sm"
+                  className="flex-1 h-9 text-xs font-medium"
                 >
                   {isLoading ? (
                     <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
                       Processing...
                     </>
                   ) : (
                     <>
-                      <XCircle className="h-4 w-4 mr-2" />
+                      <XCircle className="h-4 w-4 mr-1.5" />
                       Reject
                     </>
                   )}

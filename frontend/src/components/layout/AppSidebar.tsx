@@ -41,7 +41,7 @@ const navigationItems = [
     group: "Initiatives"
   },
   {
-    title: "My Initiatives",
+    title: "List of Initiatives",
     url: "/initiatives",
     icon: FileText,
     group: "Initiatives"
@@ -53,7 +53,7 @@ const navigationItems = [
     group: "Initiatives"
   },
   {
-    title: "Timeline Tracker",
+    title: "Activity Timeline Tracker",
     url: "/timeline-tracker",
     icon: Clock,
     group: "Tracking"

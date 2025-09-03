@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, Clock, Circle, User, Calendar, MessageSquare, ArrowRight } from 'lucide-react';
+import { CheckCircle, Clock, Circle, User, Calendar, MessageSquare, ArrowRight, Activity, Workflow } from 'lucide-react';
 import { useVisibleWorkflowTransactions, useProcessStageAction } from '@/hooks/useWorkflowTransactions';
 import WorkflowStageModal from './WorkflowStageModal';
 import { useAuth } from '@/contexts/AuthContext';
@@ -111,7 +111,7 @@ export const DynamicWorkflowTracker: React.FC<DynamicWorkflowTrackerProps> = ({ 
       
       // Handle post-approval redirection for approved actions only
       if (data.action === 'approved' && user) {
-        handlePostApprovalRedirect(
+        handlePostApprovalRedirection(
           selectedTransaction.stageNumber,
           user.role,
           navigate
@@ -135,11 +135,11 @@ export const DynamicWorkflowTracker: React.FC<DynamicWorkflowTrackerProps> = ({ 
 
   if (isLoading) {
     return (
-      <Card>
+      <Card className="shadow-sm">
         <CardContent className="p-8">
           <div className="flex items-center justify-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            <span className="ml-2 text-muted-foreground">Loading workflow...</span>
+            <span className="ml-3 text-muted-foreground text-sm">Loading workflow...</span>
           </div>
         </CardContent>
       </Card>
@@ -148,52 +148,55 @@ export const DynamicWorkflowTracker: React.FC<DynamicWorkflowTrackerProps> = ({ 
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <CheckCircle className="h-5 w-5 text-primary" />
+      <Card className="shadow-sm">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2.5 text-lg">
+            <Workflow className="h-5 w-5 text-primary" />
             Dynamic Workflow Tracker
           </CardTitle>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             Sequential workflow stages - only visible after previous stage approval
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
           {transactions.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No workflow stages available yet
+            <div className="text-center py-8">
+              <div className="flex items-center justify-center w-12 h-12 mx-auto mb-3 rounded-full bg-muted">
+                <Activity className="w-6 h-6 text-muted-foreground" />
+              </div>
+              <p className="text-muted-foreground text-sm">No workflow stages available yet</p>
             </div>
           ) : (
             <div className="space-y-4">
               {transactions.map((transaction, index) => (
                 <div key={transaction.id} className="relative">
-                  {/* Stage Card */}
-                  <Card className={`transition-all duration-200 ${
-                    transaction.approveStatus === 'pending' ? 'ring-2 ring-primary/20' : ''
+                  {/* Stage Card - Compact */}
+                  <Card className={`transition-all duration-200 shadow-sm ${
+                    transaction.approveStatus === 'pending' ? 'ring-2 ring-primary/20 shadow-md' : ''
                   }`}>
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between">
                         <div className="flex items-start gap-3 flex-1">
                           {/* Status Icon */}
-                          <div className="mt-1">
+                          <div className="mt-0.5">
                             {getStatusIcon(transaction.approveStatus)}
                           </div>
                           
                           {/* Stage Information */}
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <Badge variant="outline" className="text-xs">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Badge variant="outline" className="text-xs font-medium">
                                 Stage {transaction.stageNumber}
                               </Badge>
-                              <Badge className={`text-xs ${getStatusColor(transaction.approveStatus)}`}>
+                              <Badge className={`text-xs font-medium ${getStatusColor(transaction.approveStatus)}`}>
                                 {transaction.approveStatus.toUpperCase()}
                               </Badge>
                             </div>
                             
-                            <h4 className="font-medium text-sm mb-1">{transaction.stageName}</h4>
+                            <h4 className="font-semibold text-sm mb-2">{transaction.stageName}</h4>
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-muted-foreground">
-                              <div className="flex items-center gap-1">
+                              <div className="flex items-center gap-1.5">
                                 <User className="h-3 w-3" />
                                 <span>
                                   {transaction.actionBy || transaction.pendingWith || 'Unassigned'}
@@ -201,21 +204,21 @@ export const DynamicWorkflowTracker: React.FC<DynamicWorkflowTrackerProps> = ({ 
                               </div>
                               
                               {transaction.actionDate && (
-                                <div className="flex items-center gap-1">
+                                <div className="flex items-center gap-1.5">
                                   <Calendar className="h-3 w-3" />
                                   <span>{formatDate(transaction.actionDate)}</span>
                                 </div>
                               )}
                               
                               {transaction.assignedUserName && (
-                                <div className="flex items-center gap-1">
+                                <div className="flex items-center gap-1.5">
                                   <User className="h-3 w-3" />
                                   <span>Assigned IL: {transaction.assignedUserName}</span>
                                 </div>
                               )}
                               
                               {transaction.nextUser && (
-                                <div className="flex items-center gap-1">
+                                <div className="flex items-center gap-1.5">
                                   <ArrowRight className="h-3 w-3" />
                                   <span>Next: {transaction.nextUser}</span>
                                 </div>
@@ -223,22 +226,25 @@ export const DynamicWorkflowTracker: React.FC<DynamicWorkflowTrackerProps> = ({ 
                             </div>
                             
                             {transaction.comment && (
-                              <div className="mt-2 p-2 bg-muted/50 rounded text-xs">
-                                <div className="flex items-start gap-1">
+                              <div className="mt-3 p-3 bg-muted/50 rounded text-xs">
+                                <div className="flex items-start gap-1.5">
                                   <MessageSquare className="h-3 w-3 mt-0.5 text-muted-foreground" />
-                                  <span className="text-muted-foreground">{transaction.comment}</span>
+                                  <div>
+                                    <p className="font-medium mb-1">Comments:</p>
+                                    <p className="text-muted-foreground">{transaction.comment}</p>
+                                  </div>
                                 </div>
                               </div>
                             )}
                           </div>
                         </div>
                         
-                        {/* Action Button */}
+                        {/* Action Button - Compact */}
                         {canUserActOnStage(transaction) && (
                           <Button
                             size="sm"
                             onClick={() => handleStageAction(transaction)}
-                            className="ml-4 shrink-0"
+                            className="ml-4 shrink-0 px-4 py-2 text-xs"
                           >
                             Process Stage
                           </Button>
@@ -249,8 +255,8 @@ export const DynamicWorkflowTracker: React.FC<DynamicWorkflowTrackerProps> = ({ 
                   
                   {/* Connection Line to Next Stage */}
                   {index < transactions.length - 1 && (
-                    <div className="flex justify-center my-2">
-                      <div className="w-px h-4 bg-border"></div>
+                    <div className="flex justify-center my-3">
+                      <div className="w-px h-6 bg-border"></div>
                     </div>
                   )}
                 </div>

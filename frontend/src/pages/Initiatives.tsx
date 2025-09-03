@@ -16,7 +16,9 @@ import {
   Edit,
   Clock,
   Search,
-  Download
+  Download,
+  TrendingUp,
+  BarChart3
 } from "lucide-react";
 import { mockInitiatives, paginateArray, User } from "@/lib/mockData";
 import { useInitiatives } from "@/hooks/useInitiatives";
@@ -254,11 +256,11 @@ export default function Initiatives({ user }: InitiativesProps) {
 
   if (isLoading) {
     return (
-      <div className="p-2 space-y-2">
-        <div className="animate-pulse space-y-2">
-          <div className="h-6 bg-muted rounded w-1/4"></div>
-          <div className="h-24 bg-muted rounded"></div>
-          <div className="h-48 bg-muted rounded"></div>
+      <div className="container mx-auto p-6 space-y-6 max-w-7xl">
+        <div className="animate-pulse space-y-6">
+          <div className="h-8 bg-muted rounded w-1/3"></div>
+          <div className="h-32 bg-muted rounded"></div>
+          <div className="h-64 bg-muted rounded"></div>
         </div>
       </div>
     );
@@ -266,49 +268,58 @@ export default function Initiatives({ user }: InitiativesProps) {
 
   if (error) {
     return (
-      <div className="p-2">
-        <div className="text-center py-6">
-          <p className="text-destructive">Error loading initiatives: {error.message}</p>
+      <div className="container mx-auto p-6 max-w-7xl">
+        <div className="text-center py-12">
+          <p className="text-destructive text-lg">Error loading initiatives: {error.message}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-2 space-y-2">
-      <Card>
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-1.5 text-base">
-                <FileText className="h-3.5 w-3.5" />
-                Initiatives Management
-              </CardTitle>
-              <CardDescription className="text-2xs">
-                Track and manage all initiatives across different sites and stages
-              </CardDescription>
-            </div>
-            <Badge variant="outline" className="text-2xs">
-              {paginatedData.totalItems} initiatives
-            </Badge>
-          </div>
+    <div className="container mx-auto p-4 space-y-4 max-w-6xl">
+      {/* Header - Compact */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Initiatives Management
+          </h1>
+          <p className="text-muted-foreground text-xs mt-0.5">
+            Track and manage all initiatives across different sites and stages
+          </p>
+        </div>
+        <Badge variant="outline" className="text-xs font-medium">
+          <BarChart3 className="h-3 w-3 mr-1.5" />
+          {paginatedData.totalItems} initiatives
+        </Badge>
+      </div>
+
+      <Card className="shadow-sm">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <FileText className="h-4 w-4 text-blue-600" />
+            All Initiatives
+          </CardTitle>
+          <CardDescription className="text-xs">
+            Comprehensive view of all operational excellence initiatives
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-2">
-          {/* Filters */}
-          <div className="flex flex-col md:flex-row gap-1.5">
+        <CardContent className="space-y-4">
+          {/* Enhanced Filters - Compact */}
+          <div className="flex flex-col lg:flex-row gap-3">
             <div className="relative flex-1">
-              <Search className="absolute left-1.5 top-1.5 h-2.5 w-2.5 text-muted-foreground" />
+              <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
               <Input
                 placeholder="Search by title, number, or ID..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-6 h-6 text-2xs"
+                className="pl-8 h-9 text-xs"
               />
             </div>
-            <div className="flex gap-1.5">
+            <div className="flex gap-2.5">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-24 h-6 text-2xs">
-                  <Filter className="h-2.5 w-2.5 mr-0.5" />
+                <SelectTrigger className="w-32 h-9 text-xs">
+                  <Filter className="h-3.5 w-3.5 mr-1.5" />
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -319,9 +330,8 @@ export default function Initiatives({ user }: InitiativesProps) {
                 </SelectContent>
               </Select>
 
-
-               <Select value={siteFilter} onValueChange={setSiteFilter}>
-                <SelectTrigger className="w-20 h-6 text-2xs">
+              <Select value={siteFilter} onValueChange={setSiteFilter}>
+                <SelectTrigger className="w-28 h-9 text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -333,48 +343,31 @@ export default function Initiatives({ user }: InitiativesProps) {
                   <SelectItem value="TCD">TCD</SelectItem>
                 </SelectContent>
               </Select>
-              
-              {/* <Select value={siteFilter} onValueChange={setSiteFilter}>
-                <SelectTrigger className="w-20 h-6 text-2xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Sites</SelectItem>
-                  <SelectItem value="NDS">NDS</SelectItem>
-                  <SelectItem value="HSD1">HSD1</SelectItem>
-                  <SelectItem value="HSD2">HSD2</SelectItem>
-                  <SelectItem value="HSD3">HSD3</SelectItem>
-                  <SelectItem value="DHJ">DHJ</SelectItem>
-                  <SelectItem value="APL">APL</SelectItem>
-                  <SelectItem value="TCD">TCD</SelectItem>
-                </SelectContent>
-              </Select> */}
             </div>
           </div>
 
-          {/* Desktop Table View */}
+          {/* Desktop Table View - Compact */}
           <div className="hidden lg:block">
-            <div className="border rounded-lg overflow-hidden">
+            <div className="border rounded-lg overflow-hidden shadow-sm">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/50">
-                    <TableHead className="h-7 px-1.5 text-2xs font-medium text-center">Initiative</TableHead>
-                    <TableHead className="h-7 px-1.5 text-2xs font-medium text-center">Site</TableHead>
-                    <TableHead className="h-7 px-1.5 text-2xs font-medium text-center">Status</TableHead>
-                    {/* <TableHead className="h-7 px-1.5 text-2xs font-medium text-center">Priority</TableHead> */}
-                    <TableHead className="h-7 px-1.5 text-2xs font-medium text-center">Current Stage</TableHead>
-                    <TableHead className="h-7 px-1.5 text-2xs font-medium text-center">Expected Savings</TableHead>
-                    <TableHead className="h-7 px-1.5 text-2xs font-medium text-center">Progress</TableHead>
-                    <TableHead className="h-7 px-1.5 text-2xs font-medium text-center">Last Updated</TableHead>
-                    <TableHead className="h-7 px-1.5 text-2xs font-medium text-center">Actions</TableHead>
+                    <TableHead className="h-10 px-4 text-xs font-semibold text-center">Initiative</TableHead>
+                    <TableHead className="h-10 px-4 text-xs font-semibold text-center">Site</TableHead>
+                    <TableHead className="h-10 px-4 text-xs font-semibold text-center">Status</TableHead>
+                    {/* <TableHead className="h-12 px-4 text-sm font-semibold text-center">Current Stage</TableHead> */}
+                    <TableHead className="h-10 px-4 text-xs font-semibold text-center">Expected Savings</TableHead>
+                    {/* <TableHead className="h-12 px-4 text-sm font-semibold text-center">Progress</TableHead> */}
+                    <TableHead className="h-10 px-4 text-xs font-semibold text-center">Last Updated</TableHead>
+                    <TableHead className="h-10 px-4 text-xs font-semibold text-center">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {paginatedData.data.map((initiative: Initiative) => (
-                    <TableRow key={initiative.id} className="hover:bg-muted/30">
-                      <TableCell className="p-1.5 text-center">
-                        <div className="space-y-0.5">
-                          <p className="font-medium text-2xs leading-tight">
+                    <TableRow key={initiative.id} className="hover:bg-muted/30 transition-colors">
+                      <TableCell className="p-4 text-center">
+                        <div className="space-y-1.5">
+                          <p className="font-medium text-xs leading-tight max-w-48">
                             {initiative.initiativeNumber || initiative.title}
                           </p>
                           <Badge variant="outline" className="text-2xs">
@@ -382,34 +375,29 @@ export default function Initiatives({ user }: InitiativesProps) {
                           </Badge>
                         </div>
                       </TableCell>
-                      <TableCell className="p-1.5 text-center">
-                        <Badge variant="outline" className="text-2xs">
+                      <TableCell className="p-4 text-center">
+                        <Badge variant="outline" className="text-xs font-medium">
                           {initiative.site}
                         </Badge>
                       </TableCell>
-                      <TableCell className="p-1.5 text-center">
-                        <Badge className={`${getStatusColor(initiative.status)} text-2xs`}>
+                      <TableCell className="p-4 text-center">
+                        <Badge className={`${getStatusColor(initiative.status)} text-xs`}>
                           {initiative.status}
                         </Badge>
                       </TableCell>
-                      {/* <TableCell className="p-1.5 text-center">
-                        <Badge className={`${getPriorityColor(initiative.priority)} text-2xs`}>
-                          {initiative.priority}
-                        </Badge>
-                      </TableCell> */}
-                      <TableCell className="p-1.5 text-center">
-                        <p className="text-2xs text-muted-foreground max-w-32 truncate mx-auto">
+                      {/* <TableCell className="p-4 text-center">
+                        <p className="text-sm text-muted-foreground max-w-48 truncate mx-auto">
                           {initiative.currentStageName}
                         </p>
-                      </TableCell>
-                      <TableCell className="p-1.5 text-center">
-                        <span className="font-semibold text-success text-2xs">
+                      </TableCell> */}
+                      <TableCell className="p-4 text-center">
+                        <span className="font-semibold text-success text-xs">
                           {formatCurrency(initiative.expectedSavings)}
                         </span>
                       </TableCell>
-                      <TableCell className="p-1.5 text-center">
-                        <div className="space-y-0.5">
-                          <div className="flex justify-between text-2xs">
+                      {/* <TableCell className="p-4 text-center">
+                        <div className="space-y-2 max-w-24 mx-auto">
+                          <div className="flex justify-between text-sm">
                             <span>Progress</span>
                             <span>{initiative.status?.toLowerCase() === 'completed' 
                               ? '100' 
@@ -417,45 +405,45 @@ export default function Initiatives({ user }: InitiativesProps) {
                           </div>
                           <Progress value={initiative.status?.toLowerCase() === 'completed' 
                             ? 100 
-                            : Math.round(((Math.min(initiative.currentStage || 1, 11)) - 1) * 100 / 10)} className="h-1" />
+                            : Math.round(((Math.min(initiative.currentStage || 1, 11)) - 1) * 100 / 10)} className="h-2" />
+                        </div>
+                      </TableCell> */}
+                      <TableCell className="p-4 text-center">
+                        <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+                          <Calendar className="h-3.5 w-3.5" />
+                          <span>{initiative.lastUpdated}</span>
                         </div>
                       </TableCell>
-                      <TableCell className="p-1.5 text-center">
-                        <div className="flex items-center justify-center gap-0.5 text-2xs text-muted-foreground">
-                          <Calendar className="h-2 w-2" />
-                          <span className="truncate">{initiative.lastUpdated}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="p-1.5 text-center">
-                        <div className="flex items-center justify-center gap-0.5">
+                      <TableCell className="p-4 text-center">
+                        <div className="flex items-center justify-center gap-1.5">
                           <Button 
                             size="sm" 
                             variant="outline" 
-                            className="h-5 w-5 p-0 hover:bg-primary hover:text-primary-foreground transition-colors"
+                            className="h-7 w-7 p-0 hover:bg-primary hover:text-primary-foreground transition-colors"
                             onClick={() => handleViewInitiative(initiative)}
                             title="View Initiative"
                           >
-                            <Eye className="h-2.5 w-2.5" />
+                            <Eye className="h-3.5 w-3.5" />
                           </Button>
                           {user.role !== 'VIEWER' && (
                             <Button 
                               size="sm" 
                               variant="outline" 
-                              className="h-5 w-5 p-0 hover:bg-secondary hover:text-secondary-foreground transition-colors"
+                              className="h-7 w-7 p-0 hover:bg-secondary hover:text-secondary-foreground transition-colors"
                               onClick={() => handleEditInitiative(initiative)}
                               title="Edit Initiative"
                             >
-                              <Edit className="h-2.5 w-2.5" />
+                              <Edit className="h-3.5 w-3.5" />
                             </Button>
                           )}
                           <Button 
                             size="sm" 
                             variant="outline" 
-                            className="h-5 w-5 p-0 hover:bg-green-600 hover:text-white transition-colors"
+                            className="h-7 w-7 p-0 hover:bg-green-600 hover:text-white transition-colors"
                             onClick={() => handleDownloadForm(initiative)}
                             title="Download Initiative Form"
                           >
-                            <Download className="h-2.5 w-2.5" />
+                            <Download className="h-3.5 w-3.5" />
                           </Button>
                         </div>
                       </TableCell>
@@ -466,85 +454,92 @@ export default function Initiatives({ user }: InitiativesProps) {
             </div>
           </div>
 
-          {/* Mobile/Tablet Card View */}
-          <div className="lg:hidden space-y-1.5">
+          {/* Mobile/Tablet Card View - Compact */}
+          <div className="lg:hidden space-y-3">
             {paginatedData.data.map((initiative: Initiative) => (
-              <Card key={initiative.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-2">
-                  <div className="flex items-start justify-between mb-1.5">
-                    <div className="space-y-0.5">
-                      <h3 className="font-semibold text-2xs">{initiative.initiativeNumber || initiative.title}</h3>
-                      <p className="text-2xs text-muted-foreground">{initiative.discipline} • {initiative.site}</p>
+              <Card key={initiative.id} className="hover:shadow-md transition-shadow duration-200">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="space-y-1.5">
+                      <h3 className="font-semibold text-xs">{initiative.initiativeNumber || initiative.title}</h3>
+                      <p className="text-xs text-muted-foreground">{initiative.discipline} • {initiative.site}</p>
                     </div>
-                    <Badge variant="outline" className="font-mono text-2xs">
+                    <Badge variant="outline" className="font-mono text-xs">
                       {initiative.id}
                     </Badge>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-1.5 mb-2">
-                    <div className="space-y-1">
+                  <div className="grid grid-cols-2 gap-3 mb-3">
+                    <div className="space-y-2">
                       <div>
-                        <p className="text-2xs text-muted-foreground">Status</p>
-                        <Badge className={`${getStatusColor(initiative.status)} text-2xs`}>
+                        <p className="text-xs text-muted-foreground mb-1">Status</p>
+                        <Badge className={`${getStatusColor(initiative.status)} text-xs`}>
                           {initiative.status}
                         </Badge>
                       </div>
-                      {/* <div>
-                        <p className="text-2xs text-muted-foreground">Priority</p>
-                        <Badge className={`${getPriorityColor(initiative.priority)} text-2xs`}>
-                          {initiative.priority}
-                        </Badge>
-                      </div> */}
-                    </div>
-                    
-                    <div className="space-y-1">
                       <div>
-                        <p className="text-2xs text-muted-foreground">Expected Savings</p>
-                        <p className="font-semibold text-success text-2xs">
+                        <p className="text-xs text-muted-foreground mb-1">Expected Savings</p>
+                        <p className="font-semibold text-success text-xs">
                           {formatCurrency(initiative.expectedSavings)}
                         </p>
                       </div>
+                    </div>
+                    
+                    <div className="space-y-2">
                       <div>
-                        <p className="text-2xs text-muted-foreground">Current Stage</p>
-                        <p className="text-2xs text-muted-foreground">{initiative.currentStageName}</p>
+                        <p className="text-xs text-muted-foreground mb-1">Current Stage</p>
+                        <p className="text-xs text-muted-foreground">{initiative.currentStageName}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">Progress</p>
+                        <div className="space-y-1">
+                          <Progress value={initiative.status?.toLowerCase() === 'completed' 
+                            ? 100 
+                            : Math.round(((Math.min(initiative.currentStage || 1, 11)) - 1) * 100 / 10)} className="h-1.5" />
+                          <p className="text-2xs text-muted-foreground">
+                            {initiative.status?.toLowerCase() === 'completed' 
+                              ? '100' 
+                              : Math.round(((Math.min(initiative.currentStage || 1, 11)) - 1) * 100 / 10)}%
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-0.5 text-2xs text-muted-foreground">
-                      <Calendar className="h-2 w-2" />
+                  <div className="flex items-center justify-between pt-3 border-t border-border">
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <Calendar className="h-3.5 w-3.5" />
                       <span>Updated: {initiative.lastUpdated}</span>
                     </div>
-                    <div className="flex items-center gap-0.5">
+                    <div className="flex items-center gap-1.5">
                       <Button 
                         size="sm" 
                         variant="outline" 
-                        className="h-5 w-5 p-0 hover:bg-primary hover:text-primary-foreground"
+                        className="h-7 w-7 p-0 hover:bg-primary hover:text-primary-foreground"
                         onClick={() => handleViewInitiative(initiative)}
                         title="View"
                       >
-                        <Eye className="h-2.5 w-2.5" />
+                        <Eye className="h-3.5 w-3.5" />
                       </Button>
                       {user.role !== 'VIEWER' && (
                         <Button 
                           size="sm" 
                           variant="outline" 
-                          className="h-5 w-5 p-0 hover:bg-secondary hover:text-secondary-foreground"
+                          className="h-7 w-7 p-0 hover:bg-secondary hover:text-secondary-foreground"
                           onClick={() => handleEditInitiative(initiative)}
                           title="Edit"
                         >
-                          <Edit className="h-2.5 w-2.5" />
+                          <Edit className="h-3.5 w-3.5" />
                         </Button>
                       )}
                       <Button 
                         size="sm" 
                         variant="outline" 
-                        className="h-5 w-5 p-0 hover:bg-green-600 hover:text-white"
+                        className="h-7 w-7 p-0 hover:bg-green-600 hover:text-white"
                         onClick={() => handleDownloadForm(initiative)}
                         title="Download"
                       >
-                        <Download className="h-2.5 w-2.5" />
+                        <Download className="h-3.5 w-3.5" />
                       </Button>
                     </div>
                   </div>
@@ -553,36 +548,49 @@ export default function Initiatives({ user }: InitiativesProps) {
             ))}
           </div>
 
-          {/* Pagination */}
-          <div className="flex items-center justify-between mt-2">
-            <div className="text-2xs text-muted-foreground">
+          {/* Enhanced Pagination - Compact */}
+          <div className="flex items-center justify-between mt-4 pt-3 border-t border-border">
+            <div className="text-xs text-muted-foreground">
               Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, paginatedData.totalItems)} of {paginatedData.totalItems} initiatives
             </div>
             
-            <div className="flex items-center space-x-0.5">
+            <div className="flex items-center space-x-1.5">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="h-5 px-1.5 text-2xs"
+                className="h-8 px-2.5 text-xs"
               >
-                <ChevronLeft className="h-2.5 w-2.5" />
+                <ChevronLeft className="h-3.5 w-3.5 mr-1" />
                 Previous
               </Button>
               
-              <div className="flex items-center gap-0.5">
-                {Array.from({ length: paginatedData.totalPages }, (_, i) => i + 1).map((page) => (
-                  <Button
-                    key={page}
-                    variant={currentPage === page ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setCurrentPage(page)}
-                    className="h-5 w-5 p-0 text-2xs"
-                  >
-                    {page}
-                  </Button>
-                ))}
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.min(paginatedData.totalPages, 5) }, (_, i) => {
+                  let page;
+                  if (paginatedData.totalPages <= 5) {
+                    page = i + 1;
+                  } else if (currentPage <= 3) {
+                    page = i + 1;
+                  } else if (currentPage >= paginatedData.totalPages - 2) {
+                    page = paginatedData.totalPages - 4 + i;
+                  } else {
+                    page = currentPage - 2 + i;
+                  }
+                  
+                  return (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentPage(page)}
+                      className="h-8 w-8 p-0 text-xs"
+                    >
+                      {page}
+                    </Button>
+                  );
+                })}
               </div>
               
               <Button
@@ -590,10 +598,10 @@ export default function Initiatives({ user }: InitiativesProps) {
                 size="sm"
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, paginatedData.totalPages))}
                 disabled={currentPage === paginatedData.totalPages}
-                className="h-5 px-1.5 text-2xs"
+                className="h-8 px-2.5 text-xs"
               >
                 Next
-                <ChevronRight className="h-2.5 w-2.5" />
+                <ChevronRight className="h-3.5 w-3.5 ml-1" />
               </Button>
             </div>
           </div>
