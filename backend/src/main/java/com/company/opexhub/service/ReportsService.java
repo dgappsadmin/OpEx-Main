@@ -203,8 +203,9 @@ public class ReportsService {
             .setTextAlignment(TextAlignment.CENTER)
             .setMarginBottom(10));
 
-        // Dynamic subtitle with current month and year
-        document.add(new Paragraph("Initiative saving till " + getCurrentMonthYear() + " (Rs. Lacs)")
+        // Dynamic subtitle with current month and year - match frontend format
+        String titleYear = year != null ? year : String.valueOf(LocalDate.now().getYear());
+        document.add(new Paragraph("Initiative saving till " + getCurrentMonth() + " " + titleYear + " (Rs. Lacs)")
             .setFont(boldFont)
             .setFontSize(14)
             .setTextAlignment(TextAlignment.CENTER)
@@ -252,14 +253,15 @@ public class ReportsService {
         try {
             String[] categories = {"RMC", "Spent Acid", "Environment", "Total"};
             String currentFY = getCurrentFiscalYear();
-            String currentMonth = getCurrentMonthYear();
+            String currentMonth = getCurrentMonth();
+            String currentYearShort = String.valueOf(LocalDate.now().getYear()).substring(2);
             
             String[] periods = {
                 "FY'" + currentFY + " Budgeted Saving",
                 "FY'" + currentFY + " Non Budgeted Saving", 
                 "Budgeted",
                 "Non-budgeted",
-                "Savings till " + currentMonth,
+                "Savings till " + currentMonth + "'" + currentYearShort,
                 "Total"
             };
             
@@ -290,14 +292,27 @@ public class ReportsService {
                   .rectangle(chartX, chartY, chartWidth, chartHeight)
                   .stroke();
             
+            // Calculate dynamic intervals based on actual data - matches frontend logic
+            double maxDataValue = 0;
+            for (int i = 0; i < data.length; i++) {
+                for (int j = 0; j < data[i].length; j++) {
+                    if (data[i][j] > maxDataValue) {
+                        maxDataValue = data[i][j];
+                    }
+                }
+            }
+            
+            SmartInterval interval = calculateSmartInterval(maxDataValue);
+            
             // Calculate bar dimensions
             float groupWidth = chartWidth / periods.length;
             float barWidth = groupWidth / (categories.length + 1); // +1 for spacing
-            float maxValue = 3000; // As per the reference image
+            float maxValue = (float) interval.max; // Dynamic max value
             
-            // Draw Y-axis labels and grid lines
-            for (int i = 0; i <= 6; i++) {
-                float value = i * 500;
+            // Draw Y-axis labels and grid lines with dynamic intervals
+            int numGridLines = (int) Math.ceil(interval.max / interval.stepSize);
+            for (int i = 0; i <= numGridLines; i++) {
+                float value = (float) (i * interval.stepSize);
                 float y = chartY + (value / maxValue) * chartHeight;
                 
                 // Grid line
@@ -410,15 +425,16 @@ public class ReportsService {
             new DeviceRgb(91, 155, 213)   // Light Blue for Total
         };
         
-        // Dynamic table headers based on current fiscal year and current month
+        // Dynamic table headers based on current fiscal year and current month - match frontend format
         String currentFY = getCurrentFiscalYear();
-        String currentMonth = getCurrentMonthYear();
+        String currentMonth = getCurrentMonth();
+        String currentYearShort = String.valueOf(LocalDate.now().getYear()).substring(2);
         String[] headers = {"", 
             "FY'" + currentFY + " Budgeted Saving", 
             "FY'" + currentFY + " Non Budgeted Saving", 
             "Budgeted", 
             "Non-budgeted", 
-            "Savings till " + currentMonth, 
+            "Savings till " + currentMonth + "'" + currentYearShort, 
             "Total"};
         
         // Add header row
@@ -449,15 +465,21 @@ public class ReportsService {
         document.add(table);
     }
     
-    // Dynamic method to get current month and year in desired format
-    private String getCurrentMonthYear() {
+    // Dynamic method to get current month in frontend format (Jan, Feb, etc.)
+    private String getCurrentMonth() {
         LocalDate now = LocalDate.now();
-        String month = now.getMonth().toString().toLowerCase();
-        month = month.substring(0, 1).toUpperCase() + month.substring(1);
-        return month + "'" + String.valueOf(now.getYear()).substring(2);
+        String[] months = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+                          "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+        return months[now.getMonthValue() - 1]; // getMonthValue() returns 1-12, so subtract 1
     }
     
-    // Dynamic method to get current fiscal year
+    // Dynamic method to get current month and year in frontend format (Jan 2025)
+    private String getCurrentMonthYear() {
+        LocalDate now = LocalDate.now();
+        return getCurrentMonth() + " " + now.getYear();
+    }
+    
+    // Dynamic method to get current fiscal year in frontend format
     private String getCurrentFiscalYear() {
         LocalDate now = LocalDate.now();
         int year = now.getYear();
@@ -466,6 +488,49 @@ public class ReportsService {
             return String.valueOf(year + 1).substring(2); // e.g., "26" for 2026
         } else {
             return String.valueOf(year).substring(2); // e.g., "25" for 2025
+        }
+    }
+    
+    // Helper class to hold calculated interval values
+    private static class SmartInterval {
+        public final double max;
+        public final double stepSize;
+        
+        public SmartInterval(double max, double stepSize) {
+            this.max = max;
+            this.stepSize = stepSize;
+        }
+    }
+    
+    // Dynamic interval calculation - matches frontend calculateSmartInterval function exactly
+    private SmartInterval calculateSmartInterval(double maxValue) {
+        if (maxValue == 0) {
+            return new SmartInterval(1000, 200);
+        }
+        
+        // Add 20% padding to max value for better visualization
+        double paddedMax = maxValue * 1.2;
+        
+        if (paddedMax <= 5000) {
+            // For values up to 5000, use intervals of 500 or 1000
+            double max = Math.ceil(paddedMax / 1000) * 1000;
+            return new SmartInterval(max, max <= 3000 ? 500 : 1000);
+        } else if (paddedMax <= 50000) {
+            // For values up to 50,000 (50L), use intervals of 5000 or 10000
+            double max = Math.ceil(paddedMax / 10000) * 10000;
+            return new SmartInterval(max, max <= 30000 ? 5000 : 10000);
+        } else if (paddedMax <= 500000) {
+            // For values up to 5,00,000 (50L), use intervals of 50000 or 100000
+            double max = Math.ceil(paddedMax / 100000) * 100000;
+            return new SmartInterval(max, max <= 300000 ? 50000 : 100000);
+        } else if (paddedMax <= 10000000) {
+            // For values up to 1,00,00,000 (1Cr), use intervals of 1000000 (10L)
+            double max = Math.ceil(paddedMax / 1000000) * 1000000;
+            return new SmartInterval(max, max <= 5000000 ? 500000 : 1000000);
+        } else {
+            // For values above 1 crore, use intervals of 10000000 (1Cr) or more
+            double max = Math.ceil(paddedMax / 10000000) * 10000000;
+            return new SmartInterval(max, max <= 50000000 ? 10000000 : 20000000);
         }
     }
     
@@ -557,8 +622,9 @@ public class ReportsService {
                 .setTextAlignment(TextAlignment.CENTER)
                 .setMarginBottom(10));
 
-            // Dynamic subtitle with current month and year
-            document.add(new Paragraph("Initiative saving till " + getCurrentMonthYear() + " (Rs. Lacs)")
+            // Dynamic subtitle with current month and year - match frontend format  
+            String titleYear = year != null ? year : String.valueOf(LocalDate.now().getYear());
+            document.add(new Paragraph("Initiative saving till " + getCurrentMonth() + " " + titleYear + " (Rs. Lacs)")
                 .setFont(boldFont)
                 .setFontSize(14)
                 .setTextAlignment(TextAlignment.CENTER)
@@ -650,10 +716,11 @@ public class ReportsService {
         titleCell.setCellStyle(titleStyle);
         sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 6));
         
-        // Dynamic subtitle row with current month instead of hardcoded
+        // Dynamic subtitle row - match frontend format exactly
         Row subtitleRow = sheet.createRow(rowNum++);
         org.apache.poi.ss.usermodel.Cell subtitleCell = subtitleRow.createCell(0);
-        subtitleCell.setCellValue("Initiative saving till " + getCurrentMonthYear() + " (Rs. Lacs)");
+        String titleYear = year != null ? year : String.valueOf(LocalDate.now().getYear());
+        subtitleCell.setCellValue("Initiative saving till " + getCurrentMonth() + " " + titleYear + " (Rs. Lacs)");
         subtitleCell.setCellStyle(titleStyle);
         sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 6));
         
@@ -703,13 +770,14 @@ public class ReportsService {
         // Dynamic headers for data table with current fiscal year and month
         Row headerRow = sheet.createRow(rowNum++);
         String currentFY = getCurrentFiscalYear();
-        String currentMonth = getCurrentMonthYear();
+        String currentMonth = getCurrentMonth();
+        String currentYearShort = String.valueOf(LocalDate.now().getYear()).substring(2);
         String[] headers = {"Category", 
             "FY'" + currentFY + " Budgeted Saving", 
             "FY'" + currentFY + " Non Budgeted Saving", 
             "Budgeted", 
             "Non-budgeted", 
-            "Savings till " + currentMonth, 
+            "Savings till " + currentMonth + "'" + currentYearShort, 
             "Total"};
         
         for (int i = 0; i < headers.length; i++) {
@@ -768,10 +836,11 @@ public class ReportsService {
         titleCell.setCellStyle(titleStyle);
         sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 6));
         
-        // Dynamic subtitle row
+        // Dynamic subtitle row - match frontend format exactly
         Row subtitleRow = sheet.createRow(rowNum++);
         Cell subtitleCell = subtitleRow.createCell(0);
-        subtitleCell.setCellValue("Initiative saving till " + getCurrentMonthYear() + " (Rs. Lacs)");
+        String titleYear = year != null ? year : String.valueOf(LocalDate.now().getYear());
+        subtitleCell.setCellValue("Initiative saving till " + getCurrentMonth() + " " + titleYear + " (Rs. Lacs)");
         subtitleCell.setCellStyle(titleStyle);
         sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 6));
         
@@ -784,12 +853,14 @@ public class ReportsService {
         rowNum += 2; // Add some spacing
         Row headerRow = sheet.createRow(rowNum++);
         String currentFY = getCurrentFiscalYear();
+        String currentMonth = getCurrentMonth();
+        String currentYearShort = String.valueOf(LocalDate.now().getYear()).substring(2);
         String[] headers = {"Category", 
             "FY'" + currentFY + " Budgeted Saving", 
             "FY'" + currentFY + " Non Budgeted Saving", 
             "Budgeted", 
             "Non-budgeted", 
-            "Savings till " + getCurrentMonthYear(), 
+            "Savings till " + currentMonth + "'" + currentYearShort, 
             "Total"};
         
         for (int i = 0; i < headers.length; i++) {
@@ -846,10 +917,11 @@ public class ReportsService {
         titleCell.setCellStyle(titleStyle);
         sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 10));
         
-        // Dynamic subtitle row
+        // Dynamic subtitle row - match frontend format exactly
         Row subtitleRow = sheet.createRow(rowNum++);
         Cell subtitleCell = subtitleRow.createCell(0);
-        subtitleCell.setCellValue("Initiative saving till " + getCurrentMonthYear() + " (Rs. Lacs)");
+        String titleYear = year != null ? year : String.valueOf(LocalDate.now().getYear());
+        subtitleCell.setCellValue("Initiative saving till " + getCurrentMonth() + " " + titleYear + " (Rs. Lacs)");
         subtitleCell.setCellStyle(titleStyle);
         sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 10));
         
@@ -905,12 +977,14 @@ public class ReportsService {
         // Data table section
         Row headerRow = sheet.createRow(rowNum++);
         String currentFY = getCurrentFiscalYear();
+        String currentMonth = getCurrentMonth();
+        String currentYearShort = String.valueOf(LocalDate.now().getYear()).substring(2);
         String[] headers = {"Category", 
             "FY'" + currentFY + " Budgeted Saving", 
             "FY'" + currentFY + " Non Budgeted Saving", 
             "Budgeted", 
             "Non-budgeted", 
-            "Savings till " + getCurrentMonthYear(), 
+            "Savings till " + currentMonth + "'" + currentYearShort, 
             "Total"};
         
         for (int i = 0; i < headers.length; i++) {
@@ -1315,10 +1389,11 @@ public class ReportsService {
         titleCell.setCellStyle(titleStyle);
         sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 10));
         
-        // Dynamic subtitle row
+        // Dynamic subtitle row - match frontend format exactly
         Row subtitleRow = sheet.createRow(rowNum++);
         Cell subtitleCell = subtitleRow.createCell(0);
-        subtitleCell.setCellValue("Initiative saving till " + getCurrentMonthYear() + " (Rs. Lacs)");
+        String titleYear = year != null ? year : String.valueOf(LocalDate.now().getYear());
+        subtitleCell.setCellValue("Initiative saving till " + getCurrentMonth() + " " + titleYear + " (Rs. Lacs)");
         subtitleCell.setCellStyle(titleStyle);
         sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 10));
         
@@ -1333,12 +1408,16 @@ public class ReportsService {
         // Create data table for chart
         Row headerRow = sheet.createRow(rowNum++);
         String currentFY = getCurrentFiscalYear();
+        String currentMonth = getCurrentMonth();
+        String currentYearShort = String.valueOf(LocalDate.now().getYear()).substring(2);
+        
+        // Match frontend time periods exactly
         String[] headers = {"Category", 
             "FY'" + currentFY + " Budgeted Saving", 
             "FY'" + currentFY + " Non Budgeted Saving", 
             "Budgeted", 
             "Non-budgeted", 
-            "Savings till " + getCurrentMonthYear(), 
+            "Savings till " + currentMonth + "'" + currentYearShort, 
             "Total"};
         
         for (int i = 0; i < headers.length; i++) {
@@ -1402,14 +1481,16 @@ public class ReportsService {
             // Create data for the chart
             String[] categories = {"RMC", "Spent Acid", "Environment", "Total"};
             String currentFY = getCurrentFiscalYear();
-            String currentMonth = getCurrentMonthYear();
+            String currentMonth = getCurrentMonth();
+            String currentYearShort = String.valueOf(LocalDate.now().getYear()).substring(2);
             
+            // Match frontend time periods exactly
             String[] periods = {
-                "FY'" + currentFY + " Budgeted",
-                "FY'" + currentFY + " Non Budgeted", 
+                "FY'" + currentFY + " Budgeted Saving",
+                "FY'" + currentFY + " Non Budgeted Saving", 
                 "Budgeted",
                 "Non-budgeted",
-                "Savings till " + currentMonth,
+                "Savings till " + currentMonth + "'" + currentYearShort,
                 "Total"
             };
             
@@ -1421,15 +1502,27 @@ public class ReportsService {
             XDDFCategoryAxis bottomAxis = chart.createCategoryAxis(AxisPosition.BOTTOM);
             bottomAxis.setTitle("Time Periods");
             
-            // Create value axis (Y-axis)  
+            // Calculate dynamic intervals based on actual data - matches frontend logic
+            double maxValue = 0;
+            for (int i = 0; i < data.length; i++) {
+                for (int j = 0; j < data[i].length; j++) {
+                    if (data[i][j] > maxValue) {
+                        maxValue = data[i][j];
+                    }
+                }
+            }
+            
+            SmartInterval interval = calculateSmartInterval(maxValue);
+            
+            // Create value axis (Y-axis) with dynamic scaling
             XDDFValueAxis leftAxis = chart.createValueAxis(AxisPosition.LEFT);
             leftAxis.setTitle("Savings (Rs. Lacs)");
             leftAxis.setMinimum(0.0);
-            leftAxis.setMaximum(3000.0);
+            leftAxis.setMaximum(interval.max);
             
-            // Add major grid lines at 500 intervals like in the reference image
-            leftAxis.setMajorUnit(500.0);
-            leftAxis.setMinorUnit(100.0);
+            // Add major grid lines with dynamic intervals
+            leftAxis.setMajorUnit(interval.stepSize);
+            leftAxis.setMinorUnit(interval.stepSize / 5.0); // Minor units are 1/5 of major units
             
             // Create data sources for periods (X-axis labels)
             XDDFDataSource<String> periodDataSource = XDDFDataSourcesFactory.fromArray(periods);

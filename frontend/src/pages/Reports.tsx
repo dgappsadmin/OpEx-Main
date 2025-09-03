@@ -70,6 +70,21 @@ export default function Reports({ user }: ReportsProps) {
     return result;
   }, [initiativesData]);
 
+  // Filter initiatives based on selected site and filters - MOVED BEFORE EARLY RETURN
+  const filteredInitiatives = useMemo(() => {
+    let filtered = selectedSite === 'all' ? initiatives : initiatives.filter((i: any) => i.site === selectedSite);
+    
+    // Apply budget type filter
+    if (selectedBudgetType !== 'all') {
+      filtered = filtered.filter((i: any) => 
+        (selectedBudgetType === 'budgeted' && (!i.budgetType || i.budgetType.toLowerCase() === 'budgeted')) ||
+        (selectedBudgetType === 'non-budgeted' && i.budgetType && i.budgetType.toLowerCase() === 'non-budgeted')
+      );
+    }
+    
+    return filtered;
+  }, [initiatives, selectedSite, selectedBudgetType]);
+
   // Enhanced currency formatting for improved display
   const formatCurrency = (amount: number): string => {
     if (amount >= 10000000) { // 1 crore or more (1,00,00,000)
@@ -302,21 +317,6 @@ export default function Reports({ user }: ReportsProps) {
       </div>
     );
   }
-
-  // Filter initiatives based on selected site and filters
-  const filteredInitiatives = useMemo(() => {
-    let filtered = selectedSite === 'all' ? initiatives : initiatives.filter((i: any) => i.site === selectedSite);
-    
-    // Apply budget type filter
-    if (selectedBudgetType !== 'all') {
-      filtered = filtered.filter((i: any) => 
-        (selectedBudgetType === 'budgeted' && (!i.budgetType || i.budgetType.toLowerCase() === 'budgeted')) ||
-        (selectedBudgetType === 'non-budgeted' && i.budgetType && i.budgetType.toLowerCase() === 'non-budgeted')
-      );
-    }
-    
-    return filtered;
-  }, [initiatives, selectedSite, selectedBudgetType]);
 
   // Get unique sites for filter
   const sites = [...new Set(initiatives.map((i: any) => i.site))];
