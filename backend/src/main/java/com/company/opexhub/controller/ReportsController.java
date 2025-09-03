@@ -1,6 +1,7 @@
 package com.company.opexhub.controller;
 
 import com.company.opexhub.dto.DNLReportDataDTO;
+import com.company.opexhub.dto.FinancialYearReportDTO;
 import com.company.opexhub.service.ReportsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
@@ -14,6 +15,7 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -299,6 +301,62 @@ public class ReportsController {
             logger.error("❌ Error generating DNL Chart Excel report: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError()
                 .header("X-Error-Message", "Excel chart generation failed: " + e.getMessage())
+                .build();
+        }
+    }
+    
+    // Financial Year Reporting Endpoints
+    @GetMapping("/financial-year-data")
+    public ResponseEntity<FinancialYearReportDTO> getFinancialYearData(
+            @RequestParam(value = "financialYear", required = false) String financialYear,
+            @RequestParam(value = "site", required = false) String site,
+            @RequestParam(value = "budgetType", required = false) String budgetType,
+            @RequestParam(value = "category", required = false) String category) {
+        
+        try {
+            logger.info("🔍 Financial Year API Request - FY: {}, site: {}, budgetType: {}, category: {}", 
+                       financialYear, site, budgetType, category);
+            
+            FinancialYearReportDTO data = reportsService.getFinancialYearData(financialYear, site, budgetType, category);
+            
+            if (data == null) {
+                logger.warn("⚠️ No financial year data found for given parameters");
+                return ResponseEntity.notFound()
+                    .header("X-Error-Message", "No data found for selected filters")
+                    .build();
+            }
+            
+            logger.info("✅ Financial Year API Response - Data retrieved successfully");
+            return ResponseEntity.ok()
+                .header(HttpHeaders.CACHE_CONTROL, "no-cache, no-store, must-revalidate")
+                .header(HttpHeaders.PRAGMA, "no-cache")
+                .header(HttpHeaders.EXPIRES, "0")
+                .body(data);
+        } catch (Exception e) {
+            logger.error("❌ Error in getFinancialYearData API: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError()
+                .header("X-Error-Message", "Failed to retrieve financial year data: " + e.getMessage())
+                .build();
+        }
+    }
+    
+    @GetMapping("/available-financial-years")
+    public ResponseEntity<List<String>> getAvailableFinancialYears() {
+        try {
+            logger.info("🔍 Available Financial Years API Request");
+            
+            List<String> financialYears = reportsService.getAvailableFinancialYears();
+            
+            logger.info("✅ Available Financial Years API Response - {} years found", financialYears.size());
+            return ResponseEntity.ok()
+                .header(HttpHeaders.CACHE_CONTROL, "no-cache, no-store, must-revalidate")
+                .header(HttpHeaders.PRAGMA, "no-cache")
+                .header(HttpHeaders.EXPIRES, "0")
+                .body(financialYears);
+        } catch (Exception e) {
+            logger.error("❌ Error in getAvailableFinancialYears API: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError()
+                .header("X-Error-Message", "Failed to retrieve available financial years: " + e.getMessage())
                 .build();
         }
     }

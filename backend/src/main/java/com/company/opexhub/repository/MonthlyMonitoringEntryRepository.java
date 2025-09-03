@@ -99,4 +99,67 @@ public interface MonthlyMonitoringEntryRepository extends JpaRepository<MonthlyM
     java.math.BigDecimal sumTargetValueByMonitoringMonthBetweenAndBudgetType(@Param("startMonth") String startMonth, 
                                                                             @Param("endMonth") String endMonth,
                                                                             @Param("budgetType") String budgetType);
+
+    // Financial Year Reporting Queries
+    @Query("SELECT mme.monitoringMonth, " +
+           "LOWER(mme.category) as category, " +
+           "COALESCE(LOWER(i.budgetType), 'budgeted') as budgetType, " +
+           "SUM(CASE WHEN mme.achievedValue IS NOT NULL THEN mme.achievedValue ELSE 0 END) as actualSavings, " +
+           "SUM(CASE WHEN mme.targetValue IS NOT NULL THEN mme.targetValue ELSE 0 END) as targetSavings, " +
+           "SUM(CASE WHEN i.expectedSavings IS NOT NULL THEN i.expectedSavings ELSE 0 END) as expectedSavings " +
+           "FROM MonthlyMonitoringEntry mme " +
+           "JOIN mme.initiative i " +
+           "WHERE mme.monitoringMonth >= :startMonth AND mme.monitoringMonth <= :endMonth " +
+           "AND (:site IS NULL OR :site = 'all' OR i.site = :site) " +
+           "AND (:budgetType IS NULL OR :budgetType = 'all' OR COALESCE(LOWER(i.budgetType), 'budgeted') = :budgetType) " +
+           "AND (:category IS NULL OR :category = 'all' OR LOWER(mme.category) = :category) " +
+           "GROUP BY mme.monitoringMonth, LOWER(mme.category), COALESCE(LOWER(i.budgetType), 'budgeted') " +
+           "ORDER BY mme.monitoringMonth")
+    List<Object[]> findFinancialYearData(@Param("startMonth") String startMonth, 
+                                        @Param("endMonth") String endMonth,
+                                        @Param("site") String site,
+                                        @Param("budgetType") String budgetType,
+                                        @Param("category") String category);
+
+    // Query for last financial year cumulative data
+    @Query("SELECT SUM(CASE WHEN mme.achievedValue IS NOT NULL THEN mme.achievedValue ELSE 0 END) as cumulativeSavings " +
+           "FROM MonthlyMonitoringEntry mme " +
+           "JOIN mme.initiative i " +
+           "WHERE mme.monitoringMonth >= :startMonth AND mme.monitoringMonth <= :endMonth " +
+           "AND (:site IS NULL OR :site = 'all' OR i.site = :site) " +
+           "AND (:budgetType IS NULL OR :budgetType = 'all' OR COALESCE(LOWER(i.budgetType), 'budgeted') = :budgetType) " +
+           "AND (:category IS NULL OR :category = 'all' OR LOWER(mme.category) = :category)")
+    java.math.BigDecimal findCumulativeSavings(@Param("startMonth") String startMonth, 
+                                              @Param("endMonth") String endMonth,
+                                              @Param("site") String site,
+                                              @Param("budgetType") String budgetType,
+                                              @Param("category") String category);
+
+    // Query for expected savings by initiative (potential savings)
+    @Query("SELECT SUM(CASE WHEN i.expectedSavings IS NOT NULL THEN i.expectedSavings ELSE 0 END) as potentialSavings " +
+           "FROM Initiative i " +
+           "WHERE (:site IS NULL OR :site = 'all' OR i.site = :site) " +
+           "AND (:budgetType IS NULL OR :budgetType = 'all' OR COALESCE(LOWER(i.budgetType), 'budgeted') = :budgetType) " +
+           "AND i.startDate >= :startDate AND i.startDate <= :endDate")
+    java.math.BigDecimal findPotentialSavings(@Param("startDate") java.time.LocalDate startDate,
+                                             @Param("endDate") java.time.LocalDate endDate,
+                                             @Param("site") String site,
+                                             @Param("budgetType") String budgetType);
+
+    // Category-wise summary for filters
+    @Query("SELECT LOWER(mme.category) as category, " +
+           "COALESCE(LOWER(i.budgetType), 'budgeted') as budgetType, " +
+           "SUM(CASE WHEN mme.achievedValue IS NOT NULL THEN mme.achievedValue ELSE 0 END) as totalSavings " +
+           "FROM MonthlyMonitoringEntry mme " +
+           "JOIN mme.initiative i " +
+           "WHERE mme.monitoringMonth >= :startMonth AND mme.monitoringMonth <= :endMonth " +
+           "AND (:site IS NULL OR :site = 'all' OR i.site = :site) " +
+           "AND (:budgetType IS NULL OR :budgetType = 'all' OR COALESCE(LOWER(i.budgetType), 'budgeted') = :budgetType) " +
+           "AND (:category IS NULL OR :category = 'all' OR LOWER(mme.category) = :category) " +
+           "GROUP BY LOWER(mme.category), COALESCE(LOWER(i.budgetType), 'budgeted')")
+    List<Object[]> findCategoryWiseSummary(@Param("startMonth") String startMonth, 
+                                          @Param("endMonth") String endMonth,
+                                          @Param("site") String site,
+                                          @Param("budgetType") String budgetType,
+                                          @Param("category") String category);
 }

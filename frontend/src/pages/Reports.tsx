@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, ComposedChart } from 'recharts';
 import { Download, Calendar, TrendingUp, FileText, Filter, BarChart3, AlertCircle, RefreshCw, FileSpreadsheet } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { reportsAPI } from "@/lib/api";
@@ -28,6 +28,15 @@ interface DNLChartData {
   processedData: number[][];
 }
 
+interface FinancialYearData {
+  month: string;
+  lastFYCumulativeSavings: number;
+  potentialMonthlySavingsCumulative: number;
+  actualSavings: number;
+  monthlyCumulativeProjectedSavings: number;
+  currentFYTarget: number;
+}
+
 export default function Reports({ user }: ReportsProps) {
   // Debug render cycles
   console.log('🔄 Reports component render - timestamp:', Date.now());
@@ -35,10 +44,22 @@ export default function Reports({ user }: ReportsProps) {
   const [selectedPeriod, setSelectedPeriod] = useState<string>('yearly'); // Default to yearly
   const [selectedSite, setSelectedSite] = useState<string>('all');
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
+  
+  // New filter states
+  const [selectedFinancialYear, setSelectedFinancialYear] = useState<string>('');
+  const [selectedBudgetType, setSelectedBudgetType] = useState<string>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
   const [dnlChartData, setDnlChartData] = useState<DNLChartData | null>(null);
+  const [financialYearData, setFinancialYearData] = useState<FinancialYearData[]>([]);
+  const [availableFinancialYears, setAvailableFinancialYears] = useState<string[]>([]);
+  
   const [loadingChart, setLoadingChart] = useState<boolean>(false);
+  const [loadingFinancialData, setLoadingFinancialData] = useState<boolean>(false);
   const [chartError, setChartError] = useState<string | null>(null);
+  const [financialDataError, setFinancialDataError] = useState<string | null>(null);
+  
   const { data: initiativesData, isLoading } = useInitiatives();
   const { toast } = useToast();
   
@@ -149,6 +170,83 @@ export default function Reports({ user }: ReportsProps) {
     setMonthlyData(generateDynamicMonthlyData());
   }, [initiatives]);
 
+  // Fetch available financial years on component mount
+  useEffect(() => {
+    const fetchAvailableFinancialYears = async () => {
+      try {
+        const years = await reportsAPI.getAvailableFinancialYears();
+        setAvailableFinancialYears(years);
+        if (years.length > 0 && !selectedFinancialYear) {
+          setSelectedFinancialYear(years[0]); // Set current FY as default
+        }
+      } catch (error) {
+        console.error('Error fetching available financial years:', error);
+      }
+    };
+
+    fetchAvailableFinancialYears();
+  }, []);
+
+  // Fetch financial year data whenever filters change
+  useEffect(() => {
+    if (!selectedFinancialYear) return;
+    
+    let isMounted = true;
+    
+    const fetchFinancialYearData = async () => {
+      setLoadingFinancialData(true);
+      setFinancialDataError(null);
+      
+      try {
+        const data = await reportsAPI.getFinancialYearData({
+          financialYear: selectedFinancialYear,
+          site: selectedSite !== 'all' ? selectedSite : undefined,
+          budgetType: selectedBudgetType !== 'all' ? selectedBudgetType : undefined,
+          category: selectedCategory !== 'all' ? selectedCategory : undefined
+        });
+        
+        if (isMounted) {
+          // Transform the data for chart display
+          const chartData: FinancialYearData[] = [];
+          const months = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
+          
+          months.forEach(month => {
+            const monthData = data.monthlyData[month];
+            if (monthData) {
+              chartData.push({
+                month: month,
+                lastFYCumulativeSavings: parseFloat(monthData.lastFYCumulativeSavings || 0),
+                potentialMonthlySavingsCumulative: parseFloat(monthData.potentialMonthlySavingsCumulative || 0),
+                actualSavings: parseFloat(monthData.actualSavings || 0),
+                monthlyCumulativeProjectedSavings: parseFloat(monthData.monthlyCumulativeProjectedSavings || 0),
+                currentFYTarget: parseFloat(monthData.currentFYTarget || 0)
+              });
+            }
+          });
+          
+          setFinancialYearData(chartData);
+          setFinancialDataError(null);
+        }
+      } catch (error: any) {
+        console.error('Error fetching financial year data:', error);
+        if (isMounted) {
+          setFinancialYearData([]);
+          setFinancialDataError('Failed to load financial year data. Please try again.');
+        }
+      } finally {
+        if (isMounted) {
+          setLoadingFinancialData(false);
+        }
+      }
+    };
+
+    fetchFinancialYearData();
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedFinancialYear, selectedSite, selectedBudgetType, selectedCategory]);
+
   // Fetch DNL chart data when filters change
   useEffect(() => {
     let isMounted = true; // Flag to prevent state updates if component unmounts
@@ -205,10 +303,20 @@ export default function Reports({ user }: ReportsProps) {
     );
   }
 
-  // Filter initiatives based on selected site
-  const filteredInitiatives = selectedSite === 'all' 
-    ? initiatives 
-    : initiatives.filter((i: any) => i.site === selectedSite);
+  // Filter initiatives based on selected site and filters
+  const filteredInitiatives = useMemo(() => {
+    let filtered = selectedSite === 'all' ? initiatives : initiatives.filter((i: any) => i.site === selectedSite);
+    
+    // Apply budget type filter
+    if (selectedBudgetType !== 'all') {
+      filtered = filtered.filter((i: any) => 
+        (selectedBudgetType === 'budgeted' && (!i.budgetType || i.budgetType.toLowerCase() === 'budgeted')) ||
+        (selectedBudgetType === 'non-budgeted' && i.budgetType && i.budgetType.toLowerCase() === 'non-budgeted')
+      );
+    }
+    
+    return filtered;
+  }, [initiatives, selectedSite, selectedBudgetType]);
 
   // Get unique sites for filter
   const sites = [...new Set(initiatives.map((i: any) => i.site))];
@@ -375,12 +483,12 @@ export default function Reports({ user }: ReportsProps) {
     <div className="container mx-auto p-4 space-y-4 max-w-7xl">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold">Monthly Reports</h1>
+          <h1 className="text-2xl lg:text-3xl font-bold">Reports</h1>
           <p className="text-muted-foreground text-sm">Generate and analyze initiative performance reports (Data till {getCurrentMonth()} {new Date().getFullYear()})</p>
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Enhanced Filters */}
       <Card className="compact-card">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
@@ -389,7 +497,9 @@ export default function Reports({ user }: ReportsProps) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            {/* Period Filter - Commented out as requested */}
+            {/* 
             <div className="space-y-1.5">
               <label className="text-sm font-medium">Period</label>
               <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
@@ -404,6 +514,7 @@ export default function Reports({ user }: ReportsProps) {
                 </SelectContent>
               </Select>
             </div>
+            */}
             
             <div className="space-y-1.5">
               <label className="text-sm font-medium">Site</label>
@@ -420,6 +531,8 @@ export default function Reports({ user }: ReportsProps) {
               </Select>
             </div>
             
+            {/* Year Filter - Commented out as requested */}
+            {/* 
             <div className="space-y-1.5">
               <label className="text-sm font-medium">Year</label>
               <Select value={selectedYear} onValueChange={setSelectedYear}>
@@ -435,6 +548,54 @@ export default function Reports({ user }: ReportsProps) {
                       </SelectItem>
                     );
                   })}
+                </SelectContent>
+              </Select>
+            </div>
+            */}
+
+            {/* Financial Year Filter */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Financial Year</label>
+              <Select value={selectedFinancialYear} onValueChange={setSelectedFinancialYear}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select FY" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableFinancialYears.map((fy) => (
+                    <SelectItem key={fy} value={fy}>FY {fy}-{(parseInt(fy) + 1).toString().slice(-2)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Budget Type Filter */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Budget Type</label>
+              <Select value={selectedBudgetType} onValueChange={setSelectedBudgetType}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Overall</SelectItem>
+                  <SelectItem value="budgeted">Budgeted</SelectItem>
+                  <SelectItem value="non-budgeted">Non-Budgeted</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Category Filter */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Category</label>
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  <SelectItem value="rmc">RMC</SelectItem>
+                  <SelectItem value="environment">Environment</SelectItem>
+                  <SelectItem value="spent acid">Spent Acid</SelectItem>
+                  <SelectItem value="others">Others</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -500,8 +661,9 @@ export default function Reports({ user }: ReportsProps) {
       </div>
 
       <Tabs defaultValue="trends" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="trends" className="text-xs">Trends</TabsTrigger>
+          <TabsTrigger value="financial-year" className="text-xs">Financial Year</TabsTrigger>
           <TabsTrigger value="dnl-chart" className="text-xs">DNL Chart</TabsTrigger>
           <TabsTrigger value="detailed" className="text-xs">Detailed Report</TabsTrigger>
           <TabsTrigger value="export" className="text-xs">Export Options</TabsTrigger>
@@ -544,6 +706,98 @@ export default function Reports({ user }: ReportsProps) {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        {/* New Financial Year Tab */}
+        <TabsContent value="financial-year" className="space-y-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <BarChart3 className="h-5 w-5" />
+                    Financial Year Analysis (FY {selectedFinancialYear}-{selectedFinancialYear ? (parseInt(selectedFinancialYear) + 1).toString().slice(-2) : ''})
+                  </CardTitle>
+                  <p className="text-muted-foreground text-sm">
+                    Comprehensive savings analysis by category and budget type
+                  </p>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {loadingFinancialData ? (
+                <div className="flex items-center justify-center h-80">
+                  <div className="flex items-center space-x-2 text-muted-foreground">
+                    <RefreshCw className="h-5 w-5 animate-spin" />
+                    <span>Loading financial year data...</span>
+                  </div>
+                </div>
+              ) : financialDataError ? (
+                <div className="flex flex-col items-center justify-center h-80 space-y-4">
+                  <div className="text-red-600 text-center">
+                    <AlertCircle className="h-10 w-10 mx-auto mb-3" />
+                    <p className="font-medium">Financial Year Data Unavailable</p>
+                    <p className="text-sm mt-2 max-w-md">{financialDataError}</p>
+                  </div>
+                  <Button 
+                    onClick={() => window.location.reload()} 
+                    variant="outline" 
+                    size="sm"
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Retry
+                  </Button>
+                </div>
+              ) : financialYearData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={400}>
+                  <ComposedChart data={financialYearData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip formatter={(value, name) => [formatCurrency(Number(value)), name]} />
+                    
+                    {/* Last Financial Year Cumulative Savings - Solid Orange Bar */}
+                    <Bar dataKey="lastFYCumulativeSavings" fill="#f97316" name="Last FY Cumulative Savings" />
+                    
+                    {/* Current Financial Year Target - Blue Bar */}
+                    <Bar dataKey="currentFYTarget" fill="#3b82f6" name="Current FY Target" />
+                    
+                    {/* Potential Monthly Savings Cumulative - Thick Blue Line */}
+                    <Line 
+                      type="monotone" 
+                      dataKey="potentialMonthlySavingsCumulative" 
+                      stroke="#1d4ed8" 
+                      strokeWidth={4}
+                      name="Potential Monthly Savings Cumulative"
+                    />
+                    
+                    {/* Actual Savings - Blue Line */}
+                    <Line 
+                      type="monotone" 
+                      dataKey="actualSavings" 
+                      stroke="#3b82f6" 
+                      strokeWidth={2}
+                      name="Actual Savings"
+                    />
+                    
+                    {/* Monthly Cumulative Projected Savings - Broken Blue Line */}
+                    <Line 
+                      type="monotone" 
+                      dataKey="monthlyCumulativeProjectedSavings" 
+                      stroke="#3b82f6" 
+                      strokeWidth={2}
+                      strokeDasharray="5 5"
+                      name="Monthly Cumulative Projected Savings"
+                    />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-80">
+                  <div className="text-muted-foreground">No financial year data available for selected filters</div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="dnl-chart" className="space-y-4">
@@ -623,6 +877,7 @@ export default function Reports({ user }: ReportsProps) {
                       <TableHead className="text-xs">Site</TableHead>
                       <TableHead className="text-xs">Priority</TableHead>
                       <TableHead className="text-xs">Status</TableHead>
+                      <TableHead className="text-xs">Budget Type</TableHead>
                       <TableHead className="text-xs">Expected Savings</TableHead>
                       <TableHead className="text-xs">Start Date</TableHead>
                     </TableRow>
@@ -644,6 +899,11 @@ export default function Reports({ user }: ReportsProps) {
                         <TableCell className="text-xs">
                           <Badge className={`${getStatusColor(initiative.status)} text-white text-xs`}>
                             {initiative.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          <Badge variant={initiative.budgetType?.toLowerCase() === 'budgeted' ? 'default' : 'secondary'} className="text-xs">
+                            {initiative.budgetType || 'Budgeted'}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-xs font-medium">

@@ -1,6 +1,7 @@
 package com.company.opexhub.service;
 
 import com.company.opexhub.dto.DNLReportDataDTO;
+import com.company.opexhub.dto.FinancialYearReportDTO;
 import com.company.opexhub.entity.Initiative;
 import com.company.opexhub.repository.InitiativeRepository;
 import com.company.opexhub.repository.MonthlyMonitoringEntryRepository;
@@ -31,9 +32,12 @@ import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class ReportsService {
@@ -43,6 +47,141 @@ public class ReportsService {
 
     @Autowired
     private MonthlyMonitoringEntryRepository monthlyMonitoringEntryRepository;
+
+    // Financial Year Reporting Methods
+    public FinancialYearReportDTO getFinancialYearData(String financialYear, String site, String budgetType, String category) {
+        // Calculate financial year date range (April to March)
+        LocalDate currentDate = LocalDate.now();
+        int fyYear = financialYear != null ? Integer.parseInt(financialYear) : 
+                    (currentDate.getMonthValue() >= 4 ? currentDate.getYear() : currentDate.getYear() - 1);
+        
+        String startMonth = fyYear + "-04"; // April of FY start year
+        String endMonth = (fyYear + 1) + "-03"; // March of FY end year
+        
+        // Get financial year data from repository
+        List<Object[]> financialData = monthlyMonitoringEntryRepository.findFinancialYearData(
+            startMonth, endMonth, site, budgetType, category);
+        
+        // Process monthly data
+        Map<String, FinancialYearReportDTO.MonthlyData> monthlyDataMap = processMonthlyData(
+            financialData, fyYear, site, budgetType, category);
+        
+        // Process category data
+        Map<String, FinancialYearReportDTO.CategoryData> categoryDataMap = processCategoryData(
+            startMonth, endMonth, site, budgetType, category);
+        
+        return new FinancialYearReportDTO(financialYear, monthlyDataMap, categoryDataMap);
+    }
+    
+    private Map<String, FinancialYearReportDTO.MonthlyData> processMonthlyData(
+            List<Object[]> financialData, int fyYear, String site, String budgetType, String category) {
+        
+        Map<String, FinancialYearReportDTO.MonthlyData> monthlyDataMap = new HashMap<>();
+        String[] months = {"Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"};
+        
+        // Initialize all months with zero values
+        for (int i = 0; i < months.length; i++) {
+            String monthKey = months[i];
+            String monthStr = String.format("%d-%02d", i < 9 ? fyYear : fyYear + 1, (i % 12) + (i < 9 ? 4 : -8));
+            
+            // Get last FY cumulative savings (previous year same month)
+            String lastFYMonth = String.format("%d-%02d", fyYear - 1, (i % 12) + (i < 9 ? 4 : -8));
+            String lastFYEndMonth = String.format("%d-%02d", fyYear - 1, (i % 12) + (i < 9 ? 4 : -8));
+            BigDecimal lastFYCumulative = monthlyMonitoringEntryRepository.findCumulativeSavings(
+                (fyYear - 1) + "-04", lastFYEndMonth, site, budgetType, category);
+            
+            // Get potential monthly savings cumulative (expected savings)
+            LocalDate startDate = LocalDate.of(fyYear, i < 9 ? i + 4 : i - 8, 1);
+            LocalDate endDate = LocalDate.of(i < 9 ? fyYear : fyYear + 1, (i % 12) + (i < 9 ? 4 : -8), 
+                                           LocalDate.of(i < 9 ? fyYear : fyYear + 1, (i % 12) + (i < 9 ? 4 : -8), 1).lengthOfMonth());
+            BigDecimal potentialCumulative = monthlyMonitoringEntryRepository.findPotentialSavings(
+                startDate, endDate, site, budgetType);
+            
+            // Get current month actual and target savings from financial data
+            BigDecimal actualSavings = BigDecimal.ZERO;
+            BigDecimal targetSavings = BigDecimal.ZERO;
+            BigDecimal expectedSavings = BigDecimal.ZERO;
+            
+            for (Object[] row : financialData) {
+                String dataMonth = (String) row[0];
+                if (dataMonth.equals(monthStr)) {
+                    actualSavings = actualSavings.add(row[3] != null ? (BigDecimal) row[3] : BigDecimal.ZERO);
+                    targetSavings = targetSavings.add(row[4] != null ? (BigDecimal) row[4] : BigDecimal.ZERO);
+                    expectedSavings = expectedSavings.add(row[5] != null ? (BigDecimal) row[5] : BigDecimal.ZERO);
+                }
+            }
+            
+            // Calculate cumulative projected savings (target values cumulative)
+            BigDecimal cumulativeProjected = monthlyMonitoringEntryRepository.findCumulativeSavings(
+                fyYear + "-04", monthStr, site, budgetType, category);
+            
+            FinancialYearReportDTO.MonthlyData monthlyData = new FinancialYearReportDTO.MonthlyData(
+                monthKey,
+                lastFYCumulative != null ? lastFYCumulative : BigDecimal.ZERO,
+                potentialCumulative != null ? potentialCumulative : BigDecimal.ZERO,
+                actualSavings,
+                cumulativeProjected != null ? cumulativeProjected : BigDecimal.ZERO,
+                targetSavings // Current FY Target for the month
+            );
+            
+            monthlyDataMap.put(monthKey, monthlyData);
+        }
+        
+        return monthlyDataMap;
+    }
+    
+    private Map<String, FinancialYearReportDTO.CategoryData> processCategoryData(
+            String startMonth, String endMonth, String site, String budgetType, String category) {
+        
+        Map<String, FinancialYearReportDTO.CategoryData> categoryDataMap = new HashMap<>();
+        
+        // Get category-wise summary data
+        List<Object[]> categoryData = monthlyMonitoringEntryRepository.findCategoryWiseSummary(
+            startMonth, endMonth, site, budgetType, category);
+        
+        // Process each category
+        for (Object[] row : categoryData) {
+            String cat = (String) row[0];
+            String budgetTypeVal = (String) row[1];
+            BigDecimal totalSavings = (BigDecimal) row[2];
+            
+            FinancialYearReportDTO.CategoryData existingData = categoryDataMap.get(cat);
+            if (existingData == null) {
+                existingData = new FinancialYearReportDTO.CategoryData(cat, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
+                categoryDataMap.put(cat, existingData);
+            }
+            
+            if ("budgeted".equals(budgetTypeVal)) {
+                existingData.setBudgetedSavings(totalSavings);
+            } else {
+                existingData.setNonBudgetedSavings(totalSavings);
+            }
+            
+            // Update total
+            existingData.setTotalSavings(
+                existingData.getBudgetedSavings().add(existingData.getNonBudgetedSavings())
+            );
+        }
+        
+        return categoryDataMap;
+    }
+    
+    // Get available financial years
+    public List<String> getAvailableFinancialYears() {
+        LocalDate currentDate = LocalDate.now();
+        int currentFY = currentDate.getMonthValue() >= 4 ? currentDate.getYear() : currentDate.getYear() - 1;
+        
+        // Return last 5 financial years
+        return java.util.Arrays.asList(
+            String.valueOf(currentFY),
+            String.valueOf(currentFY - 1),
+            String.valueOf(currentFY - 2),
+            String.valueOf(currentFY - 3),
+            String.valueOf(currentFY - 4)
+        );
+    }
+
+    // Existing methods
 
     public ByteArrayOutputStream generateDNLPlantInitiativesPDF(String site, String period, String year) throws IOException {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();

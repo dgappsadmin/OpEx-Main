@@ -27,7 +27,50 @@ interface DNLBarChartProps {
   year?: string;
 }
 
-// Helper function to get current month dynamically
+// Helper function to format currency in Indian format (K, L, Cr)
+const formatIndianCurrency = (amount: number): string => {
+  if (amount >= 10000000) { // 1 crore or more (1,00,00,000)
+    return `${(amount / 10000000).toFixed(1)}Cr`;
+  } else if (amount >= 100000) { // 1 lakh or more (1,00,000)
+    return `${(amount / 100000).toFixed(1)}L`;
+  } else if (amount >= 1000) { // 1 thousand or more
+    return `${(amount / 1000).toFixed(1)}K`;
+  } else {
+    return amount.toString();
+  }
+};
+
+// Helper function to calculate smart intervals based on max value
+const calculateSmartInterval = (maxValue: number): { max: number; stepSize: number } => {
+  if (maxValue === 0) {
+    return { max: 1000, stepSize: 200 };
+  }
+  
+  // Add 20% padding to max value for better visualization
+  const paddedMax = maxValue * 1.2;
+  
+  if (paddedMax <= 5000) {
+    // For values up to 5000, use intervals of 500 or 1000
+    const max = Math.ceil(paddedMax / 1000) * 1000;
+    return { max, stepSize: max <= 3000 ? 500 : 1000 };
+  } else if (paddedMax <= 50000) {
+    // For values up to 50,000 (50L), use intervals of 5000 or 10000
+    const max = Math.ceil(paddedMax / 10000) * 10000;
+    return { max, stepSize: max <= 30000 ? 5000 : 10000 };
+  } else if (paddedMax <= 500000) {
+    // For values up to 5,00,000 (50L), use intervals of 50000 or 100000
+    const max = Math.ceil(paddedMax / 100000) * 100000;
+    return { max, stepSize: max <= 300000 ? 50000 : 100000 };
+  } else if (paddedMax <= 10000000) {
+    // For values up to 1,00,00,000 (1Cr), use intervals of 1000000 (10L)
+    const max = Math.ceil(paddedMax / 1000000) * 1000000;
+    return { max, stepSize: max <= 5000000 ? 500000 : 1000000 };
+  } else {
+    // For values above 1 crore, use intervals of 10000000 (1Cr) or more
+    const max = Math.ceil(paddedMax / 10000000) * 10000000;
+    return { max, stepSize: max <= 50000000 ? 10000000 : 20000000 };
+  }
+};
 const getCurrentMonth = () => {
   const now = new Date();
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -120,6 +163,10 @@ export default function DNLBarChart({ data, title = "DNL Plant Initiatives", yea
     datasets: chartDatasets,
   };
 
+  // Calculate the maximum value from all data points for smart scaling
+  const maxValue = Math.max(...processedData.flat().filter(val => typeof val === 'number'));
+  const { max: chartMax, stepSize } = calculateSmartInterval(maxValue);
+
   const options = {
     responsive: true,
     maintainAspectRatio: false,
@@ -144,8 +191,8 @@ export default function DNLBarChart({ data, title = "DNL Plant Initiatives", yea
           label: function(context: any) {
             const datasetLabel = context.dataset.label || '';
             const value = context.parsed.y;
-            // Format in Indian style with lakhs
-            return `${datasetLabel}: ${value.toLocaleString('en-IN')} L`;
+            // Format with Indian currency notation
+            return `${datasetLabel}: ${formatIndianCurrency(value)}`;
           }
         }
       }
@@ -153,18 +200,21 @@ export default function DNLBarChart({ data, title = "DNL Plant Initiatives", yea
     scales: {
       y: {
         beginAtZero: true,
-        // Set intervals of 500 up to 3000 as per image
         min: 0,
-        max: 3000,
+        max: chartMax,
         ticks: {
-          stepSize: 500,
+          stepSize: stepSize,
           callback: function(value: any) {
-            // Format as plain numbers (lakhs are implicit)
-            return value.toLocaleString('en-IN');
+            // Format Y-axis labels with Indian currency notation
+            return formatIndianCurrency(value);
           }
         },
         title: {
           display: false, // Remove y-axis title as per image
+        },
+        grid: {
+          display: true,
+          color: 'rgba(0, 0, 0, 0.1)',
         }
       },
       x: {
@@ -209,7 +259,7 @@ export default function DNLBarChart({ data, title = "DNL Plant Initiatives", yea
                 </td>
                 {timePeriods.map((_, periodIndex) => (
                   <td key={periodIndex} className="border-r border-gray-300 p-2 text-center">
-                    {Math.round(processedData[categoryIndex]?.[periodIndex] || 0)}
+                    {formatIndianCurrency(processedData[categoryIndex]?.[periodIndex] || 0)}
                   </td>
                 ))}
               </tr>

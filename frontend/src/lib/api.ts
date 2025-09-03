@@ -2790,6 +2790,36 @@ export const reportsAPI = {
     window.URL.revokeObjectURL(url);
     
     return filename;
+  },
+
+  // Financial Year Reporting APIs
+  getFinancialYearData: async (params?: { 
+    financialYear?: string; 
+    site?: string; 
+    budgetType?: string; 
+    category?: string; 
+  }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.financialYear) {
+      queryParams.append('financialYear', params.financialYear);
+    }
+    if (params?.site && params.site !== 'all') {
+      queryParams.append('site', params.site);
+    }
+    if (params?.budgetType && params.budgetType !== 'all') {
+      queryParams.append('budgetType', params.budgetType);
+    }
+    if (params?.category && params.category !== 'all') {
+      queryParams.append('category', params.category);
+    }
+    
+    const response = await api.get(`/reports/financial-year-data?${queryParams.toString()}`);
+    return response.data;
+  },
+
+  getAvailableFinancialYears: async () => {
+    const response = await api.get('/reports/available-financial-years');
+    return response.data;
   }
 };
 

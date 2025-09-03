@@ -71,7 +71,7 @@ const navigationItems = [
     group: "Tracking"
   },
   {
-    title: "Monthly Reports",
+    title: "Reports",
     url: "/reports",
     icon: TrendingUp,
     group: "Tracking"
