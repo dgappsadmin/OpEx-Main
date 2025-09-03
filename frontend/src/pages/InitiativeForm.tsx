@@ -75,16 +75,16 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
 
   if (user.role !== "STLD") {
     return (
-      <div className="container mx-auto p-6 max-w-4xl">
-        <Card className="shadow-md">
-          <CardContent className="p-8 text-center">
-            <h1 className="text-2xl font-bold text-destructive mb-4">Access Denied</h1>
-            <p className="text-sm text-muted-foreground mb-2">
+      <div className="container mx-auto p-4 max-w-6xl">
+        <Card className="shadow-sm">
+          <CardContent className="p-6 text-center">
+            <h1 className="text-xl font-bold text-destructive mb-3">Access Denied</h1>
+            <p className="text-xs text-muted-foreground mb-2">
               Only users with SITE TSD LEAD role can create new initiatives.
             </p>
-            <p className="text-sm text-muted-foreground">Your current role: {user.role}</p>
+            <p className="text-xs text-muted-foreground">Your current role: {user.role}</p>
             {user.role === "VIEWER" && (
-              <p className="text-sm text-blue-600 mt-4">
+              <p className="text-xs text-blue-600 mt-3">
                 As a Viewer, you have read-only access to view initiatives and data.
               </p>
             )}
@@ -187,73 +187,73 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
         submessage="Please wait while we process your initiative..."
       />
       
-      <div className="container mx-auto p-6 space-y-6 max-w-5xl">
+      <div className="container mx-auto p-4 space-y-4 max-w-6xl">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <h1 className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
               New Initiative
             </h1>
-            <p className="text-muted-foreground text-sm mt-1">
+            <p className="text-muted-foreground text-xs mt-0.5">
               Submit a new operational excellence initiative
             </p>
           </div>
-          <Badge variant="outline" className="text-sm font-medium">
-            <FileText className="h-4 w-4 mr-2" />
+          <Badge variant="outline" className="text-xs font-medium">
+            <FileText className="h-3 w-3 mr-1.5" />
             Draft Form
           </Badge>
         </div>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             {/* Basic Information */}
-            <Card className="shadow-md hover:shadow-lg transition-shadow duration-200">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-blue-600" />
+            <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-blue-600" />
                   Basic Information
                 </CardTitle>
-                <CardDescription className="text-sm">
+                <CardDescription className="text-xs">
                   Provide the fundamental details of your initiative
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6 pt-0">
-                <div className="grid grid-cols-1 gap-6">
+              <CardContent className="space-y-4 pt-0">
+                <div className="grid grid-cols-1 gap-4">
                   <FormField
                     control={form.control}
                     name="title"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-medium">Initiative Title *</FormLabel>
+                        <FormLabel className="text-xs font-medium">Initiative Title *</FormLabel>
                         <FormControl>
                           <Input
                             placeholder="Enter a descriptive title for your initiative"
                             {...field}
-                            className="h-11 text-sm"
+                            className="h-9 text-xs"
                             disabled={isSubmitting}
                           />
                         </FormControl>
-                        <FormMessage className="text-sm" />
+                        <FormMessage className="text-xs" />
                       </FormItem>
                     )}
                   />
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="initiatorName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-sm font-medium">Initiator Name *</FormLabel>
+                          <FormLabel className="text-xs font-medium">Initiator Name *</FormLabel>
                           <FormControl>
                             <Input
                               placeholder="Your full name"
                               {...field}
                               disabled
-                              className="h-11 text-sm bg-muted text-muted-foreground"
+                              className="h-9 text-xs bg-muted text-muted-foreground"
                             />
                           </FormControl>
-                          <FormMessage className="text-sm" />
+                          <FormMessage className="text-xs" />
                         </FormItem>
                       )}
                     />
@@ -262,42 +262,42 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                       name="site"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-sm font-medium">Site *</FormLabel>
+                          <FormLabel className="text-xs font-medium">Site *</FormLabel>
                           <FormControl>
                             <Input
                               placeholder="Your site"
                               {...field}
                               disabled
-                              className="h-11 text-sm bg-muted text-muted-foreground"
+                              className="h-9 text-xs bg-muted text-muted-foreground"
                             />
                           </FormControl>
-                          <FormMessage className="text-sm" />
+                          <FormMessage className="text-xs" />
                         </FormItem>
                       )}
                     />
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="discipline"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-sm font-medium">Discipline *</FormLabel>
+                          <FormLabel className="text-xs font-medium">Discipline *</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting}>
                             <FormControl>
-                              <SelectTrigger className="h-11 text-sm">
+                              <SelectTrigger className="h-9 text-xs">
                                 <SelectValue placeholder="Select discipline" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
                               {disciplines.map((discipline) => (
-                                <SelectItem key={discipline.code} value={discipline.code} className="text-sm">
+                                <SelectItem key={discipline.code} value={discipline.code} className="text-xs hover:bg-blue-50 focus:bg-blue-50">
                                   <div className="flex flex-col py-1">
                                     <span className="font-medium">
                                       {discipline.name} ({discipline.code})
                                     </span>
-                                    <span className="text-xs text-muted-foreground">
+                                    <span className="text-2xs text-muted-foreground">
                                       {discipline.details}
                                     </span>
                                   </div>
@@ -305,7 +305,7 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                               ))}
                             </SelectContent>
                           </Select>
-                          <FormMessage className="text-sm" />
+                          <FormMessage className="text-xs" />
                         </FormItem>
                       )}
                     />
@@ -314,14 +314,14 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                       name="date"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-sm font-medium">Initiative Date *</FormLabel>
+                          <FormLabel className="text-xs font-medium">Initiative Date *</FormLabel>
                           <Popover>
                             <PopoverTrigger asChild>
                               <FormControl>
                                 <Button
                                   variant="outline"
                                   className={cn(
-                                    "w-full h-11 pl-4 text-left font-normal text-sm",
+                                    "w-full h-9 pl-3 text-left font-normal text-xs",
                                     !field.value && "text-muted-foreground"
                                   )}
                                   disabled={isSubmitting}
@@ -331,7 +331,7 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                                   ) : (
                                     <span>Pick a date</span>
                                   )}
-                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                  <CalendarIcon className="ml-auto h-3.5 w-3.5 opacity-50" />
                                 </Button>
                               </FormControl>
                             </PopoverTrigger>
@@ -346,7 +346,7 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                               />
                             </PopoverContent>
                           </Popover>
-                          <FormMessage className="text-sm" />
+                          <FormMessage className="text-xs" />
                         </FormItem>
                       )}
                     />
@@ -357,16 +357,16 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                     name="description"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-medium">Description *</FormLabel>
+                        <FormLabel className="text-xs font-medium">Description *</FormLabel>
                         <FormControl>
                           <Textarea
                             placeholder="Provide a detailed description of the initiative, including background, objectives, and expected outcomes..."
-                            className="min-h-[120px] text-sm resize-y"
+                            className="min-h-[100px] text-xs resize-y"
                             {...field}
                             disabled={isSubmitting}
                           />
                         </FormControl>
-                        <FormMessage className="text-sm" />
+                        <FormMessage className="text-xs" />
                       </FormItem>
                     )}
                   />
@@ -375,54 +375,54 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
             </Card>
 
             {/* Target & Financial Information */}
-            <Card className="shadow-md hover:shadow-lg transition-shadow duration-200">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <IndianRupee className="h-5 w-5 text-green-600" />
+            <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <IndianRupee className="h-4 w-4 text-green-600" />
                   Target & Financial Information
                 </CardTitle>
-                <CardDescription className="text-sm">
+                <CardDescription className="text-xs">
                   Define measurable outcomes and financial expectations
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6 pt-0">
+              <CardContent className="space-y-4 pt-0">
                 <FormField
                   control={form.control}
                   name="baselineData"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-medium">
+                      <FormLabel className="text-xs font-medium">
                         Baseline Data (12-month historical) *
                       </FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="Provide 12-month historical data that supports this initiative, including current performance metrics, costs, and relevant operational data..."
-                          className="min-h-[100px] text-sm resize-y"
+                          className="min-h-[80px] text-xs resize-y"
                           {...field}
                           disabled={isSubmitting}
                         />
                       </FormControl>
-                      <FormMessage className="text-sm" />
+                      <FormMessage className="text-xs" />
                     </FormItem>
                   )}
                 />
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="targetOutcome"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-medium">Target Outcome *</FormLabel>
+                        <FormLabel className="text-xs font-medium">Target Outcome *</FormLabel>
                         <FormControl>
                           <Input
                             placeholder="e.g., Reduce energy consumption by 15%"
                             {...field}
-                            className="h-11 text-sm"
+                            className="h-9 text-xs"
                             disabled={isSubmitting}
                           />
                         </FormControl>
-                        <FormMessage className="text-sm" />
+                        <FormMessage className="text-xs" />
                       </FormItem>
                     )}
                   />
@@ -431,7 +431,7 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                     name="targetValue"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-medium">Target Value (Numeric) *</FormLabel>
+                        <FormLabel className="text-xs font-medium">Target Value (Numeric) *</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -447,23 +447,23 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                                 field.onChange(isNaN(numValue) ? 0 : numValue);
                               }
                             }}
-                            className="h-11 text-sm"
+                            className="h-9 text-xs"
                             disabled={isSubmitting}
                           />
                         </FormControl>
-                        <FormMessage className="text-sm" />
+                        <FormMessage className="text-xs" />
                       </FormItem>
                     )}
                   />
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="expectedValue"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-medium">Expected Value (₹ Lakhs) *</FormLabel>
+                        <FormLabel className="text-xs font-medium">Expected Value (₹ Lakhs) *</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -479,11 +479,11 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                                 field.onChange(isNaN(numValue) ? 0 : numValue);
                               }
                             }}
-                            className="h-11 text-sm"
+                            className="h-9 text-xs"
                             disabled={isSubmitting}
                           />
                         </FormControl>
-                        <FormMessage className="text-sm" />
+                        <FormMessage className="text-xs" />
                       </FormItem>
                     )}
                   />
@@ -492,7 +492,7 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                     name="estimatedCapex"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-medium">Estimated CAPEX (₹ Lakhs) *</FormLabel>
+                        <FormLabel className="text-xs font-medium">Estimated CAPEX (₹ Lakhs) *</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -508,11 +508,11 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                                 field.onChange(isNaN(numValue) ? 0 : numValue);
                               }
                             }}
-                            className="h-11 text-sm"
+                            className="h-9 text-xs"
                             disabled={isSubmitting}
                           />
                         </FormControl>
-                        <FormMessage className="text-sm" />
+                        <FormMessage className="text-xs" />
                       </FormItem>
                     )}
                   />
@@ -523,31 +523,31 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                   name="budgetType"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-medium">Budget Type *</FormLabel>
+                      <FormLabel className="text-xs font-medium">Budget Type *</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting}>
                         <FormControl>
-                          <SelectTrigger className="h-11 text-sm">
+                          <SelectTrigger className="h-9 text-xs">
                             <SelectValue placeholder="Select budget type" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="budgeted" className="text-sm focus:bg-accent py-3">
-                            <div className="flex items-center gap-3">
-                              <Banknote className="h-5 w-5 text-green-500" />
+                          <SelectItem value="budgeted" className="text-xs focus:bg-accent py-2.5">
+                            <div className="flex items-center gap-2.5">
+                              <Banknote className="h-4 w-4 text-green-500" />
                               <div className="flex flex-col">
                                 <span className="font-medium">Budgeted</span>
-                                <span className="text-xs text-muted-foreground">
+                                <span className="text-2xs text-muted-foreground">
                                   Funds allocated in current budget
                                 </span>
                               </div>
                             </div>
                           </SelectItem>
-                          <SelectItem value="non-budgeted" className="text-sm focus:bg-accent py-3">
-                            <div className="flex items-center gap-3">
-                              <IndianRupee className="h-5 w-5 text-red-500" />
+                          <SelectItem value="non-budgeted" className="text-xs focus:bg-accent py-2.5">
+                            <div className="flex items-center gap-2.5">
+                              <IndianRupee className="h-4 w-4 text-red-500" />
                               <div className="flex flex-col">
                                 <span className="font-medium">Non-Budgeted</span>
-                                <span className="text-xs text-muted-foreground">
+                                <span className="text-2xs text-muted-foreground">
                                   Additional funding required
                                 </span>
                               </div>
@@ -555,7 +555,7 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                           </SelectItem>
                         </SelectContent>
                       </Select>
-                      <FormMessage className="text-sm" />
+                      <FormMessage className="text-xs" />
                     </FormItem>
                   )}
                 />
@@ -563,33 +563,33 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
             </Card>
 
             {/* Key Assumptions */}
-            <Card className="shadow-md hover:shadow-lg transition-shadow duration-200">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Percent className="h-5 w-5 text-purple-600" />
+            <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Percent className="h-4 w-4 text-purple-600" />
                   Key Assumptions
                 </CardTitle>
-                <CardDescription className="text-sm">
+                <CardDescription className="text-xs">
                   List the three most critical assumptions for this initiative
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6 pt-0">
-                <div className="grid grid-cols-1 gap-6">
+              <CardContent className="space-y-4 pt-0">
+                <div className="grid grid-cols-1 gap-4">
                   <FormField
                     control={form.control}
                     name="assumption1"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-medium">Assumption 1 *</FormLabel>
+                        <FormLabel className="text-xs font-medium">Assumption 1 *</FormLabel>
                         <FormControl>
                           <Input
                             placeholder="e.g., Current production volume remains stable throughout implementation"
                             {...field}
-                            className="h-11 text-sm"
+                            className="h-9 text-xs"
                             disabled={isSubmitting}
                           />
                         </FormControl>
-                        <FormMessage className="text-sm" />
+                        <FormMessage className="text-xs" />
                       </FormItem>
                     )}
                   />
@@ -598,16 +598,16 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                     name="assumption2"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-medium">Assumption 2 *</FormLabel>
+                        <FormLabel className="text-xs font-medium">Assumption 2 *</FormLabel>
                         <FormControl>
                           <Input
                             placeholder="e.g., Energy prices increase by 10% annually"
                             {...field}
-                            className="h-11 text-sm"
+                            className="h-9 text-xs"
                             disabled={isSubmitting}
                           />
                         </FormControl>
-                        <FormMessage className="text-sm" />
+                        <FormMessage className="text-xs" />
                       </FormItem>
                     )}
                   />
@@ -616,16 +616,16 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                     name="assumption3"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-medium">Assumption 3 *</FormLabel>
+                        <FormLabel className="text-xs font-medium">Assumption 3 *</FormLabel>
                         <FormControl>
                           <Input
                             placeholder="e.g., Technology implementation completed within 6 months"
                             {...field}
-                            className="h-11 text-sm"
+                            className="h-9 text-xs"
                             disabled={isSubmitting}
                           />
                         </FormControl>
-                        <FormMessage className="text-sm" />
+                        <FormMessage className="text-xs" />
                       </FormItem>
                     )}
                   />
@@ -634,13 +634,13 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
             </Card>
 
             {/* Submit Button */}
-            <div className="flex justify-end pt-4">
+            <div className="flex justify-end pt-3">
               <Button 
                 type="submit" 
-                className="h-12 px-8 text-sm font-medium bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800" 
+                className="h-10 px-6 text-xs font-medium bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800" 
                 disabled={isSubmitting}
               >
-                <Send className="h-5 w-5 mr-2" />
+                <Send className="h-4 w-4 mr-1.5" />
                 Submit for Approval
               </Button>
             </div>

@@ -124,73 +124,73 @@ export default function Dashboard({ user }: DashboardProps) {
   };
 
   return (
-    <div className="container mx-auto p-4 space-y-6 max-w-7xl">
+    <div className="container mx-auto p-4 space-y-4 max-w-6xl">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <h1 className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             OpEx Dashboard
           </h1>
-          <p className="text-muted-foreground text-sm mt-1">
+          <p className="text-muted-foreground text-xs mt-0.5">
             Welcome back, {user.fullName}!
           </p>
         </div>
-        <Button onClick={() => navigate('/initiative/new')} className="gap-2 shrink-0 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800">
-          <Plus className="h-4 w-4" />
+        <Button onClick={() => navigate('/initiative/new')} className="gap-1.5 shrink-0 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 h-9 px-4 text-xs">
+          <Plus className="h-3.5 w-3.5" />
           New Initiative
         </Button>
       </div>
 
       {/* Tab Navigation */}
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto lg:mx-0">
-          <TabsTrigger value="overview" className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4" />
+        <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto lg:mx-0 h-9">
+          <TabsTrigger value="overview" className="flex items-center gap-1.5 text-xs">
+            <BarChart3 className="h-3.5 w-3.5" />
             Overview
           </TabsTrigger>
-          <TabsTrigger value="performance" className="flex items-center gap-2">
-            <Activity className="h-4 w-4" />
+          <TabsTrigger value="performance" className="flex items-center gap-1.5 text-xs">
+            <Activity className="h-3.5 w-3.5" />
             Performance Analysis
           </TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-6 mt-6">
+        <TabsContent value="overview" className="space-y-4 mt-4">
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {statsError ? (
               <div className="col-span-full">
-                <Card className="border-red-200 bg-red-50">
-                  <CardContent className="p-4 text-center">
-                    <AlertTriangle className="h-6 w-6 text-red-600 mx-auto mb-2" />
-                    <p className="text-sm text-red-600">Failed to load dashboard statistics</p>
+                <Card className="border-red-200 bg-red-50 shadow-sm">
+                  <CardContent className="p-3 text-center">
+                    <AlertTriangle className="h-5 w-5 text-red-600 mx-auto mb-2" />
+                    <p className="text-xs text-red-600">Failed to load dashboard statistics</p>
                   </CardContent>
                 </Card>
               </div>
             ) : (
               stats.map((stat) => (
-                <Card key={stat.title} className="relative overflow-hidden group hover:shadow-lg transition-all duration-200">
+                <Card key={stat.title} className="relative overflow-hidden group hover:shadow-md transition-all duration-200 shadow-sm">
                   <div className="absolute inset-0 bg-gradient-to-br from-transparent to-gray-50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10 pt-3 px-3">
+                    <CardTitle className="text-xs font-medium text-muted-foreground">
                       {stat.title}
                     </CardTitle>
-                    <div className={`p-2 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200`}>
-                      <stat.icon className={`h-4 w-4 ${stat.color}`} />
+                    <div className={`p-1.5 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200`}>
+                      <stat.icon className={`h-3.5 w-3.5 ${stat.color}`} />
                     </div>
                   </CardHeader>
-                  <CardContent className="pb-3 relative z-10">
-                    <div className="text-2xl font-bold break-words mb-1">
+                  <CardContent className="pb-3 relative z-10 px-3">
+                    <div className="text-xl font-bold break-words mb-1">
                       {statsLoading ? (
-                        <div className="h-8 w-20 bg-muted animate-pulse rounded"></div>
+                        <div className="h-6 w-16 bg-muted animate-pulse rounded"></div>
                       ) : (
                         stat.value
                       )}
                     </div>
-                    <p className={`text-xs flex items-center gap-1 ${
+                    <p className={`text-2xs flex items-center gap-1 ${
                       stat.trend === 'up' ? 'text-green-600' : 'text-red-600'
                     }`}>
-                      <TrendingUp className="h-3 w-3" />
+                      <TrendingUp className="h-2.5 w-2.5" />
                       {stat.change} from last month
                     </p>
                   </CardContent>
@@ -200,14 +200,14 @@ export default function Dashboard({ user }: DashboardProps) {
           </div>
 
           {/* Recent Initiatives and Quick Actions */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="shadow-md">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <BarChart3 className="h-5 w-5 text-blue-600" />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <Card className="shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <BarChart3 className="h-4 w-4 text-blue-600" />
                   Recent Initiatives
                 </CardTitle>
-                <CardDescription className="text-sm">
+                <CardDescription className="text-xs">
                   Latest submitted initiatives requiring attention
                 </CardDescription>
               </CardHeader>
@@ -215,61 +215,61 @@ export default function Dashboard({ user }: DashboardProps) {
                 {initiativesLoading ? (
                   <div className="space-y-3">
                     {[1, 2, 3].map((i) => (
-                      <div key={i} className="p-4 border border-border rounded-lg space-y-3 animate-pulse">
+                      <div key={i} className="p-3 border border-border rounded-lg space-y-2 animate-pulse">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <div className="h-4 w-12 bg-muted rounded"></div>
-                            <div className="h-4 w-16 bg-muted rounded"></div>
+                            <div className="h-3 w-10 bg-muted rounded"></div>
+                            <div className="h-3 w-14 bg-muted rounded"></div>
                           </div>
-                          <div className="h-4 w-20 bg-muted rounded"></div>
+                          <div className="h-3 w-16 bg-muted rounded"></div>
                         </div>
-                        <div className="h-4 w-3/4 bg-muted rounded"></div>
-                        <div className="h-2 w-full bg-muted rounded"></div>
+                        <div className="h-3 w-3/4 bg-muted rounded"></div>
+                        <div className="h-1.5 w-full bg-muted rounded"></div>
                       </div>
                     ))}
                   </div>
                 ) : initiativesError ? (
-                  <div className="p-4 border border-red-200 bg-red-50 rounded-lg text-center">
-                    <AlertTriangle className="h-6 w-6 text-red-600 mx-auto mb-2" />
-                    <p className="text-sm text-red-600">Failed to load recent initiatives</p>
+                  <div className="p-3 border border-red-200 bg-red-50 rounded-lg text-center">
+                    <AlertTriangle className="h-5 w-5 text-red-600 mx-auto mb-2" />
+                    <p className="text-xs text-red-600">Failed to load recent initiatives</p>
                   </div>
                 ) : recentInitiatives.length === 0 ? (
-                  <div className="p-4 border border-dashed border-border rounded-lg text-center">
-                    <FileText className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">No recent initiatives found</p>
+                  <div className="p-3 border border-dashed border-border rounded-lg text-center">
+                    <FileText className="h-5 w-5 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-xs text-muted-foreground">No recent initiatives found</p>
                   </div>
                 ) : (
                   recentInitiatives.map((initiative) => (
-                    <div key={initiative.id} className="p-4 border border-border rounded-lg space-y-3 hover:shadow-md transition-all duration-200 hover:border-blue-200">
+                    <div key={initiative.id} className="p-3 border border-border rounded-lg space-y-2 hover:shadow-md transition-all duration-200 hover:border-blue-200">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="font-mono text-xs">
+                        <div className="flex items-center gap-1.5">
+                          <Badge variant="outline" className="font-mono text-2xs">
                             {initiative.id}
                           </Badge>
-                          <Badge variant={getPriorityColor(initiative.priority)} className="text-xs">
+                          <Badge variant={getPriorityColor(initiative.priority)} className="text-2xs">
                             {initiative.priority}
                           </Badge>
                         </div>
-                        <Badge className={`${getStatusColor(initiative.status)} text-xs`}>
+                        <Badge className={`${getStatusColor(initiative.status)} text-2xs`}>
                           {initiative.status}
                         </Badge>
                       </div>
                       
-                      <h4 className="font-semibold text-foreground text-sm line-clamp-1">{initiative.title}</h4>
+                      <h4 className="font-semibold text-foreground text-xs line-clamp-1">{initiative.title}</h4>
                       
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <div className="flex items-center justify-between text-2xs text-muted-foreground">
                         <span>Site: {initiative.site}</span>
                         <span className="font-semibold text-green-600">{initiative.savings}</span>
                       </div>
                       
-                      <div className="w-full bg-muted rounded-full h-2">
+                      <div className="w-full bg-muted rounded-full h-1.5">
                         <div 
-                          className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-300" 
+                          className="bg-gradient-to-r from-blue-500 to-blue-600 h-1.5 rounded-full transition-all duration-300" 
                           style={{ width: `${initiative.progress}%` }}
                         ></div>
                       </div>
                       
-                      <div className="flex justify-between text-xs text-muted-foreground">
+                      <div className="flex justify-between text-2xs text-muted-foreground">
                         <span>Progress</span>
                         <span className="font-medium">{initiative.progress}%</span>
                       </div>
@@ -280,54 +280,54 @@ export default function Dashboard({ user }: DashboardProps) {
             </Card>
 
             {/* Quick Actions */}
-            <Card className="shadow-md">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Target className="h-5 w-5 text-blue-600" />
+            <Card className="shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Target className="h-4 w-4 text-blue-600" />
                   Quick Actions
                 </CardTitle>
-                <CardDescription className="text-sm">
+                <CardDescription className="text-xs">
                   Frequently used actions and shortcuts
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-2.5">
                 <Button 
                   variant="outline" 
-                  className="w-full justify-start gap-3 h-12 text-sm hover:bg-blue-50 hover:border-blue-200 transition-all"
+                  className="w-full justify-start gap-2.5 h-10 text-xs hover:bg-blue-50 hover:border-blue-200 transition-all"
                   onClick={() => navigate('/initiative/new')}
                 >
                   <div className="p-1 rounded bg-blue-100">
-                    <Plus className="h-4 w-4 text-blue-600" />
+                    <Plus className="h-3.5 w-3.5 text-blue-600" />
                   </div>
                   Submit New Initiative
                 </Button>
                 <Button 
                   variant="outline" 
-                  className="w-full justify-start gap-3 h-12 text-sm hover:bg-green-50 hover:border-green-200 transition-all"
+                  className="w-full justify-start gap-2.5 h-10 text-xs hover:bg-green-50 hover:border-green-200 transition-all"
                   onClick={() => navigate('/workflow')}
                 >
                   <div className="p-1 rounded bg-green-100">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <CheckCircle className="h-3.5 w-3.5 text-green-600" />
                   </div>
                   Review Pending Approvals
                 </Button>
                 <Button 
                   variant="outline" 
-                  className="w-full justify-start gap-3 h-12 text-sm hover:bg-purple-50 hover:border-purple-200 transition-all"
+                  className="w-full justify-start gap-2.5 h-10 text-xs hover:bg-purple-50 hover:border-purple-200 transition-all"
                   onClick={() => navigate('/reports')}
                 >
                   <div className="p-1 rounded bg-purple-100">
-                    <BarChart3 className="h-4 w-4 text-purple-600" />
+                    <BarChart3 className="h-3.5 w-3.5 text-purple-600" />
                   </div>
                   Generate Monthly Report
                 </Button>
                 <Button 
                   variant="outline" 
-                  className="w-full justify-start gap-3 h-12 text-sm hover:bg-orange-50 hover:border-orange-200 transition-all"
+                  className="w-full justify-start gap-2.5 h-10 text-xs hover:bg-orange-50 hover:border-orange-200 transition-all"
                   onClick={() => navigate('/timeline')}
                 >
                   <div className="p-1 rounded bg-orange-100">
-                    <Clock className="h-4 w-4 text-orange-600" />
+                    <Clock className="h-3.5 w-3.5 text-orange-600" />
                   </div>
                   Update Timeline Status
                 </Button>
@@ -336,39 +336,39 @@ export default function Dashboard({ user }: DashboardProps) {
           </div>
 
           {/* Alerts & Notifications */}
-          <Card className="shadow-md">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <AlertTriangle className="h-5 w-5 text-orange-600" />
+          <Card className="shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <AlertTriangle className="h-4 w-4 text-orange-600" />
                 Alerts & Notifications
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 {!statsLoading && dashboardStats && dashboardStats.pendingApprovals > 0 && (
-                  <div className="flex items-start gap-3 p-4 border border-orange-200 bg-orange-50 rounded-lg">
-                    <AlertTriangle className="h-5 w-5 text-orange-600 mt-0.5 shrink-0" />
+                  <div className="flex items-start gap-2.5 p-3 border border-orange-200 bg-orange-50 rounded-lg">
+                    <AlertTriangle className="h-4 w-4 text-orange-600 mt-0.5 shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-foreground text-sm">
+                      <p className="font-semibold text-foreground text-xs">
                         {dashboardStats.pendingApprovals} initiative{dashboardStats.pendingApprovals !== 1 ? 's' : ''} pending approval
                       </p>
-                      <p className="text-sm text-muted-foreground mt-1">
+                      <p className="text-xs text-muted-foreground mt-1">
                         {dashboardStats.pendingApprovals === 1 ? 'Review required' : 'Reviews required'} for workflow stages
                       </p>
                     </div>
-                    <Button size="sm" variant="outline" onClick={() => navigate('/workflow')} className="shrink-0">
+                    <Button size="sm" variant="outline" onClick={() => navigate('/workflow')} className="shrink-0 h-8 px-3 text-xs">
                       View
                     </Button>
                   </div>
                 )}
                 
                 {!statsLoading && (!dashboardStats || dashboardStats.pendingApprovals === 0) && (
-                  <div className="p-4 border border-green-200 bg-green-50 rounded-lg">
-                    <div className="flex items-start gap-3">
-                      <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
+                  <div className="p-3 border border-green-200 bg-green-50 rounded-lg">
+                    <div className="flex items-start gap-2.5">
+                      <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
                       <div className="flex-1">
-                        <p className="font-semibold text-foreground text-sm">All caught up!</p>
-                        <p className="text-sm text-muted-foreground mt-1">No pending approvals at this time</p>
+                        <p className="font-semibold text-foreground text-xs">All caught up!</p>
+                        <p className="text-xs text-muted-foreground mt-1">No pending approvals at this time</p>
                       </div>
                     </div>
                   </div>
@@ -379,17 +379,17 @@ export default function Dashboard({ user }: DashboardProps) {
         </TabsContent>
 
         {/* Performance Analysis Tab */}
-        <TabsContent value="performance" className="space-y-6 mt-6">
+        <TabsContent value="performance" className="space-y-4 mt-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-foreground">Performance Analysis Dashboard</h2>
-              <p className="text-muted-foreground text-sm mt-1">
+              <h2 className="text-xl font-bold text-foreground">Performance Analysis Dashboard</h2>
+              <p className="text-muted-foreground text-xs mt-0.5">
                 Financial Year: <span className="font-semibold text-blue-600">{performanceAnalysisData?.currentFinancialYear || 'Loading...'}</span>
               </p>
             </div>
             {performanceError && (
-              <div className="flex items-center gap-2 text-red-600 text-sm">
-                <AlertTriangle className="h-4 w-4" />
+              <div className="flex items-center gap-1.5 text-red-600 text-xs">
+                <AlertTriangle className="h-3.5 w-3.5" />
                 Failed to load performance data
               </div>
             )}
