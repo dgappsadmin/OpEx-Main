@@ -397,6 +397,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                         <SelectItem value="RMC">RMC (Raw Material Cost)</SelectItem>
                         <SelectItem value="Spent Acid">Spent Acid</SelectItem>
                         <SelectItem value="Environment">Environment</SelectItem>
+                        <SelectItem value="Others">Others</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
