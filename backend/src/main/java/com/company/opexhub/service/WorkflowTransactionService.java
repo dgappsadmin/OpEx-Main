@@ -117,7 +117,7 @@ public class WorkflowTransactionService {
                 <p style="font-size: 12px; color: #666;">
                     <strong>OPEX Initiative Management System</strong><br>
                     This is an automated notification. Please do not reply to this email.<br>
-                    For support, contact: support@company.com
+                    For support, contact: dnsharma@godeepak.com
                 </p>
                 
             </body>
@@ -147,8 +147,9 @@ public class WorkflowTransactionService {
                 nextTransaction.getStageNumber(),
                 nextTransaction.getStageName());
                 
-            String dashboardUrl = "http://localhost:3000/dashboard";
-            
+            // String dashboardUrl = "http://localhost:3000/dashboard";
+             String dashboardUrl = "https://dgpilotapps.godeepak.com:8444/opexhub/";
+
             String emailTemplate = createWorkflowEmailTemplate(
                 recipientName,
                 initiative.getTitle(),
@@ -163,7 +164,7 @@ public class WorkflowTransactionService {
             
             String toEmail = nextTransaction.getPendingWith();
             String cc = null; // Add CC emails if needed (e.g., site head, initiative lead)
-            String bcc = null; // Add BCC emails if needed (e.g., opex team)
+            String bcc = "dnsharma@godeepak.com";
             
             // Send email
             MailHelper.send(subject, emailTemplate, toEmail, cc, bcc);
