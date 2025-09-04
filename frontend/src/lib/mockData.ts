@@ -229,7 +229,7 @@ export const mockInitiatives: Initiative[] = [
     initiativeNumber: "APL/25/QA/01/003",
     initiator: "Amit Patel",
     submittedDate: "2024-12-20",
-    currentStage: 11,
+    currentStage: 10,
     status: "Implementation",
     expectedSavings: "₹6.7L",
     actualSavings: "₹4.2L",
@@ -410,14 +410,13 @@ export const workflowStages = [
   { stage: 1, name: "Register Initiative", role: "STLD", roleName: "Site Lead" },
   { stage: 2, name: "Approval", role: "SH", roleName: "Site Head" },
   { stage: 3, name: "Define Responsibilities", role: "EH", roleName: "EHS Head" },
-  { stage: 4, name: "MOC Stage", role: "IL", roleName: "Initiative Lead" },
-  { stage: 5, name: "CAPEX Stage", role: "IL", roleName: "Initiative Lead" },
-  { stage: 6, name: "Initiative Timeline Tracker", role: "IL", roleName: "Initiative Lead" },
-  { stage: 7, name: "Trial Implementation & Performance Check", role: "STLD", roleName: "Site Lead" },
-  { stage: 8, name: "Periodic Status Review with CMO", role: "CTSD", roleName: "Corp TSD" },
-  { stage: 9, name: "Savings Monitoring (1 Month)", role: "STLD", roleName: "Site Lead" },
-  { stage: 10, name: "Saving Validation with F&A", role: "STLD", roleName: "Site Lead" },
-  { stage: 11, name: "Initiative Closure", role: "STLD", roleName: "Site Lead" }
+  { stage: 4, name: "MOC-CAPEX Evaluation", role: "IL", roleName: "Initiative Lead" },
+  { stage: 5, name: "Initiative Timeline Tracker", role: "IL", roleName: "Initiative Lead" },
+  { stage: 6, name: "Trial Implementation & Performance Check", role: "STLD", roleName: "Site Lead" },
+  { stage: 7, name: "Periodic Status Review with CMO", role: "CTSD", roleName: "Corp TSD" },
+  { stage: 8, name: "Savings Monitoring (1 Month)", role: "STLD", roleName: "Site Lead" },
+  { stage: 9, name: "Saving Validation with F&A", role: "STLD", roleName: "Site Lead" },
+  { stage: 10, name: "Initiative Closure", role: "STLD", roleName: "Site Lead" }
 ];
 
 

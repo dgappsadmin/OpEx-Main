@@ -59,13 +59,11 @@ export default function WorkflowStageModal({
     }
     
     if (transaction.stageNumber === 4) {
+      // Combined MOC-CAPEX stage
       data.requiresMoc = mocRequired === "yes" ? "Y" : "N";
       if (mocRequired === "yes" && mocNumber) {
         data.mocNumber = mocNumber;
       }
-    }
-    
-    if (transaction.stageNumber === 5) {
       data.requiresCapex = capexRequired === "yes" ? "Y" : "N";
       if (capexRequired === "yes" && capexNumber) {
         data.capexNumber = capexNumber;
@@ -88,11 +86,9 @@ export default function WorkflowStageModal({
     
     if (transaction.stageNumber === 3 && !assignedUserId) return false;
     if (transaction.stageNumber === 4) {
-      if (!mocRequired) return false;
+      // Combined MOC-CAPEX validation
+      if (!mocRequired || !capexRequired) return false;
       if (mocRequired === "yes" && !mocNumber.trim()) return false;
-    }
-    if (transaction.stageNumber === 5) {
-      if (!capexRequired) return false;
       if (capexRequired === "yes" && !capexNumber.trim()) return false;
     }
     
@@ -143,75 +139,78 @@ export default function WorkflowStageModal({
           </div>
         );
 
-      case 4: // MOC Stage - Initiative Lead decides if MOC is required
+      case 4: // MOC-CAPEX Evaluation - Initiative Lead decides both MOC and CAPEX in single stage
         return (
-          <div className="space-y-4">
-            <div>
-              <Label className="text-xs font-semibold">Is MOC Required? *</Label>
-              <RadioGroup value={mocRequired} onValueChange={setMocRequired} className="mt-2">
-                <div className="flex items-center space-x-2.5 p-2.5 border rounded-lg hover:bg-muted/50">
-                  <RadioGroupItem value="yes" id="moc-yes" />
-                  <Label htmlFor="moc-yes" className="text-xs font-medium">Yes, MOC is required</Label>
-                </div>
-                <div className="flex items-center space-x-2.5 p-2.5 border rounded-lg hover:bg-muted/50">
-                  <RadioGroupItem value="no" id="moc-no" />
-                  <Label htmlFor="moc-no" className="text-xs font-medium">No, MOC is not required</Label>
-                </div>
-              </RadioGroup>
-            </div>
-            
-            {mocRequired === "yes" && (
+          <div className="space-y-6">
+            {/* MOC Section */}
+            <div className="space-y-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-200">Management of Change (MOC) Evaluation</h4>
               <div>
-                <Label htmlFor="mocNumber" className="text-xs font-semibold">MOC Number *</Label>
-                <Input
-                  id="mocNumber"
-                  value={mocNumber}
-                  onChange={(e) => setMocNumber(e.target.value)}
-                  placeholder="Enter MOC Number"
-                  className="h-9 text-xs mt-1.5"
-                />
+                <Label className="text-xs font-semibold">Is MOC Required? *</Label>
+                <RadioGroup value={mocRequired} onValueChange={setMocRequired} className="mt-2">
+                  <div className="flex items-center space-x-2.5 p-2.5 border rounded-lg hover:bg-muted/50">
+                    <RadioGroupItem value="yes" id="moc-yes" />
+                    <Label htmlFor="moc-yes" className="text-xs font-medium">Yes, MOC is required</Label>
+                  </div>
+                  <div className="flex items-center space-x-2.5 p-2.5 border rounded-lg hover:bg-muted/50">
+                    <RadioGroupItem value="no" id="moc-no" />
+                    <Label htmlFor="moc-no" className="text-xs font-medium">No, MOC is not required</Label>
+                  </div>
+                </RadioGroup>
               </div>
-            )}
+              
+              {mocRequired === "yes" && (
+                <div>
+                  <Label htmlFor="mocNumber" className="text-xs font-semibold">MOC Number *</Label>
+                  <Input
+                    id="mocNumber"
+                    value={mocNumber}
+                    onChange={(e) => setMocNumber(e.target.value)}
+                    placeholder="Enter MOC Number"
+                    className="h-9 text-xs mt-1.5"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* CAPEX Section */}
+            <div className="space-y-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+              <h4 className="text-sm font-semibold text-green-800 dark:text-green-200">Capital Expenditure (CAPEX) Evaluation</h4>
+              <div>
+                <Label className="text-xs font-semibold">Is CAPEX Required? *</Label>
+                <RadioGroup value={capexRequired} onValueChange={setCapexRequired} className="mt-2">
+                  <div className="flex items-center space-x-2.5 p-2.5 border rounded-lg hover:bg-muted/50">
+                    <RadioGroupItem value="yes" id="capex-yes" />
+                    <Label htmlFor="capex-yes" className="text-xs font-medium">Yes, CAPEX is required</Label>
+                  </div>
+                  <div className="flex items-center space-x-2.5 p-2.5 border rounded-lg hover:bg-muted/50">
+                    <RadioGroupItem value="no" id="capex-no" />
+                    <Label htmlFor="capex-no" className="text-xs font-medium">No, CAPEX is not required</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+              
+              {capexRequired === "yes" && (
+                <div>
+                  <Label htmlFor="capexNumber" className="text-xs font-semibold">CAPEX Number *</Label>
+                  <Input
+                    id="capexNumber"
+                    value={capexNumber}
+                    onChange={(e) => setCapexNumber(e.target.value)}
+                    placeholder="Enter CAPEX Number"
+                    className="h-9 text-xs mt-1.5"
+                  />
+                </div>
+              )}
+            </div>
           </div>
         );
 
-      case 5: // CAPEX Stage - Initiative Lead decides if CAPEX is required
-        return (
-          <div className="space-y-4">
-            <div>
-              <Label className="text-xs font-semibold">Is CAPEX Required? *</Label>
-              <RadioGroup value={capexRequired} onValueChange={setCapexRequired} className="mt-2">
-                <div className="flex items-center space-x-2.5 p-2.5 border rounded-lg hover:bg-muted/50">
-                  <RadioGroupItem value="yes" id="capex-yes" />
-                  <Label htmlFor="capex-yes" className="text-xs font-medium">Yes, CAPEX is required</Label>
-                </div>
-                <div className="flex items-center space-x-2.5 p-2.5 border rounded-lg hover:bg-muted/50">
-                  <RadioGroupItem value="no" id="capex-no" />
-                  <Label htmlFor="capex-no" className="text-xs font-medium">No, CAPEX is not required</Label>
-                </div>
-              </RadioGroup>
-            </div>
-            
-            {capexRequired === "yes" && (
-              <div>
-                <Label htmlFor="capexNumber" className="text-xs font-semibold">CAPEX Number *</Label>
-                <Input
-                  id="capexNumber"
-                  value={capexNumber}
-                  onChange={(e) => setCapexNumber(e.target.value)}
-                  placeholder="Enter CAPEX Number"
-                  className="h-9 text-xs mt-1.5"
-                />
-              </div>
-            )}
-          </div>
-        );
-
-      case 6: // Initiative Timeline Tracker
-      case 7: // Trial Implementation & Performance Check
-      case 8: // Periodic Status Review with CMO
-      case 9: // Savings Monitoring (1 Month)
-      case 10: // Saving Validation with F&A
+      case 5: // Initiative Timeline Tracker
+      case 6: // Trial Implementation & Performance Check
+      case 7: // Periodic Status Review with CMO
+      case 8: // Savings Monitoring (1 Month)
+      case 9: // Saving Validation with F&A
         return (
           <div className="space-y-4 p-4 bg-blue-50 rounded-lg">
             <div className="flex items-center gap-2.5">
@@ -223,7 +222,7 @@ export default function WorkflowStageModal({
           </div>
         );
 
-      case 11: // Initiative Closure
+      case 10: // Initiative Closure
         return (
           <div className="space-y-4 p-4 bg-red-50 rounded-lg">
             <div className="flex items-center gap-2.5">
@@ -245,14 +244,13 @@ export default function WorkflowStageModal({
       1: "Initiative has been registered and is ready for approval.",
       2: "Review the initiative details and provide your approval decision.",
       3: "Assign an Initiative Lead who will be responsible for driving this initiative forward.",
-      4: "Determine if Management of Change (MOC) process is required for this initiative.",
-      5: "Determine if Capital Expenditure (CAPEX) approval is required for this initiative.",
-      6: "Prepare detailed timeline for initiative implementation.",
-      7: "Conduct trial implementation and performance checks.",
-      8: "Periodic status review with Chief Marketing Officer.",
-      9: "Monitor savings achieved after implementation (1 month monitoring period).",
-      10: "Validate savings with Finance & Accounts department.",
-      11: "Final closure of the initiative and documentation completion."
+      4: "Evaluate both Management of Change (MOC) and Capital Expenditure (CAPEX) requirements in a single assessment.",
+      5: "Prepare detailed timeline for initiative implementation.",
+      6: "Conduct trial implementation and performance checks.",
+      7: "Periodic status review with Chief Marketing Officer.",
+      8: "Monitor savings achieved after implementation (1 month monitoring period).",
+      9: "Validate savings with Finance & Accounts department.",
+      10: "Final closure of the initiative and documentation completion."
     };
     return descriptions[transaction.stageNumber] || "Process this workflow stage.";
   };
@@ -304,7 +302,7 @@ export default function WorkflowStageModal({
           </div>
 
           {/* Action buttons - Compact */}
-          {transaction.stageNumber === 11 ? (
+          {transaction.stageNumber === 10 ? (
             <div className="flex gap-3 pt-3">
               <Button 
                 onClick={handleApprove}

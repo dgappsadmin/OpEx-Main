@@ -17,14 +17,14 @@ export const handlePostApprovalRedirect = (
 
   console.log("Redirect check:", { stageNumber, userRole });
 
-  if (stageNumber === 6 && userRole === 'IL') {
+  if (stageNumber === 5 && userRole === 'IL') {
     console.log("Redirecting to /timeline-tracker");
     showToast({ title: 'Redirecting to Timeline Tracker...' });
     navigate('/timeline-tracker');
     return true;
   }
 
-  if (stageNumber === 9 && userRole === 'STLD') {
+  if (stageNumber === 8 && userRole === 'STLD') {
     console.log("Redirecting to /monthly-monitoring");
     showToast({ title: 'Redirecting to Monthly Monitoring...' });
     navigate('/monthly-monitoring');
@@ -43,5 +43,5 @@ export const handlePostApprovalRedirect = (
  * @returns boolean indicating if redirect should happen
  */
 export const shouldRedirectAfterApproval = (stageNumber: number, userRole: string): boolean => {
-  return (stageNumber === 6 && userRole === 'IL') || (stageNumber === 9 && userRole === 'STLD');
+  return (stageNumber === 5 && userRole === 'IL') || (stageNumber === 8 && userRole === 'STLD');
 };

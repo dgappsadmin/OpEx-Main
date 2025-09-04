@@ -33,7 +33,7 @@ public class TimelineTrackerController {
             @PathVariable String userEmail, @PathVariable String site) {
         try {
             List<WorkflowTransactionDetailDTO> initiatives = workflowTransactionService
-                    .getInitiativesWithApprovedStage6ForUser(userEmail, site);
+                    .getInitiativesWithApprovedStage5ForUser(userEmail, site);
             return ResponseEntity.ok(new ApiResponse<>(true, "Approved initiatives retrieved successfully", initiatives));
         } catch (Exception e) {
             return ResponseEntity.badRequest()

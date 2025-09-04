@@ -99,30 +99,24 @@ public class WorkflowTransactionController {
 
             System.out.println("Processed transaction ID: " + transaction.getId() + " for initiative ID: " + transaction.getInitiativeId());
 
-            // If approved and this is a MOC/CAPEX stage, update the Initiative table
-            if ("approved".equals(action) && (transaction.getStageNumber() == 4 || transaction.getStageNumber() == 5)) {
+            // If approved and this is the combined MOC-CAPEX stage, update the Initiative table
+            if ("approved".equals(action) && transaction.getStageNumber() == 4) {
                 System.out.println("Processing MOC/CAPEX update for approved stage " + transaction.getStageNumber() + "...");
                 
                 Map<String, Object> mocCapexData = new HashMap<>();
                 
-                // Always save MOC data for Stage 4
-                if (transaction.getStageNumber() == 4) {
-                    if (requiresMoc != null) {
-                        mocCapexData.put("requiresMoc", requiresMoc);
-                    }
-                    if (mocNumber != null && !mocNumber.trim().isEmpty()) {
-                        mocCapexData.put("mocNumber", mocNumber);
-                    }
+                // Save both MOC and CAPEX data for combined Stage 4
+                if (requiresMoc != null) {
+                    mocCapexData.put("requiresMoc", requiresMoc);
                 }
-                
-                // Always save CAPEX data for Stage 5
-                if (transaction.getStageNumber() == 5) {
-                    if (requiresCapex != null) {
-                        mocCapexData.put("requiresCapex", requiresCapex);
-                    }
-                    if (capexNumber != null && !capexNumber.trim().isEmpty()) {
-                        mocCapexData.put("capexNumber", capexNumber);
-                    }
+                if (mocNumber != null && !mocNumber.trim().isEmpty()) {
+                    mocCapexData.put("mocNumber", mocNumber);
+                }
+                if (requiresCapex != null) {
+                    mocCapexData.put("requiresCapex", requiresCapex);
+                }
+                if (capexNumber != null && !capexNumber.trim().isEmpty()) {
+                    mocCapexData.put("capexNumber", capexNumber);
                 }
                 
                 System.out.println("MOC/CAPEX data to update: " + mocCapexData);

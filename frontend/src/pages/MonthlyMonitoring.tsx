@@ -77,9 +77,9 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
   const queryClient = useQueryClient();
   const itemsPerPage = 9; // Increased for better space utilization
 
-  // Fetch initiatives where Stage 9 is approved and user has access
+  // Fetch initiatives where Stage 8 is approved and user has access
   const { data: approvedInitiatives = [], isLoading: initiativesLoading } = useQuery({
-    queryKey: ['stage9-approved-initiatives', user.email, user.site],
+    queryKey: ['stage8-approved-initiatives', user.email, user.site],
     queryFn: async () => {
       try {
         const response = await monthlyMonitoringAPI.getApprovedInitiatives(user.email, user.site);

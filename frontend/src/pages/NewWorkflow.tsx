@@ -71,19 +71,18 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
       }
     }
     
-    // Fallback to hardcoded stage names based on stage number
+    // Fallback to hardcoded stage names based on stage number (updated to 10 stages)
     const stageNames: { [key: number]: string } = {
       1: "Register Initiative",
       2: "Approval", 
       3: "Define Responsibilities",
-      4: "MOC Stage",
-      5: "CAPEX Stage",
-      6: "Initiative Timeline Tracker",
-      7: "Trial Implementation & Performance Check",
-      8: "Periodic Status Review with CMO",
-      9: "Savings Monitoring (1 Month)",
-      10: "Saving Validation with F&A", 
-      11: "Initiative Closure"
+      4: "MOC-CAPEX Evaluation",
+      5: "Initiative Timeline Tracker",
+      6: "Trial Implementation & Performance Check",
+      7: "Periodic Status Review with CMO",
+      8: "Savings Monitoring (1 Month)",
+      9: "Saving Validation with F&A", 
+      10: "Initiative Closure"
     };
     
     return stageNames[stageNumber] || `Stage ${stageNumber}`;
@@ -357,9 +356,9 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
                           <div className="space-y-1.5">
                             <div className="flex justify-between text-xs">
                               <span>Progress</span>
-                              <span>{Math.round(((initiative.currentStage || 1) - 1) * 100 / 10)}%</span>
+                              <span>{Math.round(((initiative.currentStage || 1) - 1) * 100 / 9)}%</span>
                             </div>
-                            <Progress value={Math.round(((initiative.currentStage || 1) - 1) * 100 / 10)} className="h-1.5" />
+                            <Progress value={Math.round(((initiative.currentStage || 1) - 1) * 100 / 9)} className="h-1.5" />
                           </div>
                         </div>
                         

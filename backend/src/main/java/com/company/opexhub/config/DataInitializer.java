@@ -79,7 +79,7 @@ public class DataInitializer implements CommandLineRunner {
             new User("Rohit Jain", "rohit.jain@godeepak.com", 
                     passwordEncoder.encode("password123"), "NDS", "SF", "STLD", "Site TSD Lead"),
             
-            // Stage 11: Initiative Closure - STLD (Site TSD Lead)
+            // Stage 10: Initiative Closure - STLD (Site TSD Lead)
             new User("Ananya Verma", "ananya.verma@godeepak.com", 
                     passwordEncoder.encode("password123"), "NDS", "QA", "STLD", "Site TSD Lead")
         };
@@ -118,7 +118,7 @@ public class DataInitializer implements CommandLineRunner {
             new User("Sonia Jain", "sonia.jain@godeepak.com", 
                     passwordEncoder.encode("password123"), "DHJ", "SF", "STLD", "Site TSD Lead"),
             
-            // Stage 11: Initiative Closure - STLD (Site TSD Lead)
+            // Stage 10: Initiative Closure - STLD (Site TSD Lead)
             new User("Nikhil Reddy", "nikhil.reddy@godeepak.com", 
                     passwordEncoder.encode("password123"), "DHJ", "QA", "STLD", "Site TSD Lead")
         };
@@ -143,7 +143,7 @@ public class DataInitializer implements CommandLineRunner {
         System.out.println("Email: kavya.nair@godeepak.com | Password: password123 | Role: CTSD - Corporate TSD (Stage 8)");
         System.out.println("Email: suresh.reddy@godeepak.com | Password: password123 | Role: STLD - Site TSD Lead (Stage 9)");
         System.out.println("Email: rohit.jain@godeepak.com | Password: password123 | Role: STLD - Site TSD Lead (Stage 10)");
-        System.out.println("Email: ananya.verma@godeepak.com | Password: password123 | Role: STLD - Site TSD Lead (Stage 11)");
+        System.out.println("Email: ananya.verma@godeepak.com | Password: password123 | Role: STLD - Site TSD Lead (Stage 10)");
         
         System.out.println("=== DHJ SITE LOGIN CREDENTIALS ===");
         System.out.println("Email: deepak.singh@godeepak.com | Password: password123 | Role: STLD - Site TSD Lead (Stage 1 - CREATE INITIATIVES)");
@@ -154,24 +154,23 @@ public class DataInitializer implements CommandLineRunner {
         System.out.println("Email: ritu.nair@godeepak.com | Password: password123 | Role: CTSD - Corporate TSD (Stage 8)");
         System.out.println("Email: ashish.verma@godeepak.com | Password: password123 | Role: STLD - Site TSD Lead (Stage 9)");
         System.out.println("Email: sonia.jain@godeepak.com | Password: password123 | Role: STLD - Site TSD Lead (Stage 10)");
-        System.out.println("Email: nikhil.reddy@godeepak.com | Password: password123 | Role: STLD - Site TSD Lead (Stage 11)");
+        System.out.println("Email: nikhil.reddy@godeepak.com | Password: password123 | Role: STLD - Site TSD Lead (Stage 10)");
         System.out.println("========================");
     }
 
     private void initializeWorkflowStages() {
-        // Workflow stage definitions with proper names and roles (11 stages)
+        // Workflow stage definitions with proper names and roles (10 stages - MOC and CAPEX combined)
         String[][] stageDefinitions = {
             {"1", "Register Initiative", "STLD"},
             {"2", "Approval", "SH"},
             {"3", "Define Responsibilities", "EH"},
-            {"4", "MOC Stage", "IL"},
-            {"5", "CAPEX Stage", "IL"},
-            {"6", "Initiative Timeline Tracker", "IL"},
-            {"7", "Trial Implementation & Performance Check", "STLD"},
-            {"8", "Periodic Status Review with CMO", "CTSD"},
-            {"9", "Savings Monitoring (1 Month)", "STLD"},
-            {"10", "Saving Validation with F&A", "STLD"},
-            {"11", "Initiative Closure", "STLD"}
+            {"4", "MOC-CAPEX Evaluation", "IL"},
+            {"5", "Initiative Timeline Tracker", "IL"},
+            {"6", "Trial Implementation & Performance Check", "STLD"},
+            {"7", "Periodic Status Review with CMO", "CTSD"},
+            {"8", "Savings Monitoring (1 Month)", "STLD"},
+            {"9", "Saving Validation with F&A", "STLD"},
+            {"10", "Initiative Closure", "STLD"}
         };
 
         // WorkflowStage is now a master table - no need to create stages per initiative
@@ -181,30 +180,30 @@ public class DataInitializer implements CommandLineRunner {
     private void initializeWfMaster() {
         // Check if wf_master data already exists
         if (wfMasterRepository.count() == 0) {
-            // Initialize WF Master data for NDS site with correct stage assignments
+            // Initialize WF Master data for NDS site with correct stage assignments (10 stages total)
             String[][] ndsWfMasterData = {
                 {"1", "Register Initiative", "STLD", "manoj.tiwari@godeepak.com"},
                 {"2", "Approval", "SH", "priya.sharma@godeepak.com"},
                 {"3", "Define Responsibilities", "EH", "amit.patel@godeepak.com"},
                 // IL stages removed - they will be created dynamically after Stage 3
-                {"7", "Trial Implementation & Performance Check", "STLD", "vikram.gupta@godeepak.com"},
-                {"8", "Periodic Status Review with CMO", "CTSD", "kavya.nair@godeepak.com"},
-                {"9", "Savings Monitoring (1 Month)", "STLD", "suresh.reddy@godeepak.com"},
-                {"10", "Saving Validation with F&A", "STLD", "rohit.jain@godeepak.com"},
-                {"11", "Initiative Closure", "STLD", "ananya.verma@godeepak.com"}
+                {"6", "Trial Implementation & Performance Check", "STLD", "vikram.gupta@godeepak.com"},
+                {"7", "Periodic Status Review with CMO", "CTSD", "kavya.nair@godeepak.com"},
+                {"8", "Savings Monitoring (1 Month)", "STLD", "suresh.reddy@godeepak.com"},
+                {"9", "Saving Validation with F&A", "STLD", "rohit.jain@godeepak.com"},
+                {"10", "Initiative Closure", "STLD", "ananya.verma@godeepak.com"}
             };
 
-            // Initialize WF Master data for DHJ site with correct stage assignments
+            // Initialize WF Master data for DHJ site with correct stage assignments (10 stages total)
             String[][] dhjWfMasterData = {
                 {"1", "Register Initiative", "STLD", "deepak.singh@godeepak.com"},
                 {"2", "Approval", "SH", "meera.gupta@godeepak.com"},
                 {"3", "Define Responsibilities", "EH", "arjun.mishra@godeepak.com"},
                 // IL stages removed - they will be created dynamically after Stage 3
-                {"7", "Trial Implementation & Performance Check", "STLD", "karan.sharma@godeepak.com"},
-                {"8", "Periodic Status Review with CMO", "CTSD", "ritu.nair@godeepak.com"},
-                {"9", "Savings Monitoring (1 Month)", "STLD", "ashish.verma@godeepak.com"},
-                {"10", "Saving Validation with F&A", "STLD", "sonia.jain@godeepak.com"},
-                {"11", "Initiative Closure", "STLD", "nikhil.reddy@godeepak.com"}
+                {"6", "Trial Implementation & Performance Check", "STLD", "karan.sharma@godeepak.com"},
+                {"7", "Periodic Status Review with CMO", "CTSD", "ritu.nair@godeepak.com"},
+                {"8", "Savings Monitoring (1 Month)", "STLD", "ashish.verma@godeepak.com"},
+                {"9", "Saving Validation with F&A", "STLD", "sonia.jain@godeepak.com"},
+                {"10", "Initiative Closure", "STLD", "nikhil.reddy@godeepak.com"}
             };
 
             // Save NDS WF Master data

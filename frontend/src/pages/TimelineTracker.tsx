@@ -85,9 +85,9 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
     }
   };
 
-  // Fetch initiatives where Stage 6 is approved and user has access
+  // Fetch initiatives where Stage 5 is approved and user has access
   const { data: approvedInitiatives = [], isLoading: initiativesLoading } = useQuery({
-    queryKey: ['stage6-approved-initiatives', user.email, user.site],
+    queryKey: ['stage5-approved-initiatives', user.email, user.site],
     queryFn: async () => {
       try {
         const response = await timelineTrackerAPI.getApprovedInitiatives(user.email, user.site);
@@ -523,7 +523,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                 <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold mb-2">No Initiatives Available</h3>
                 <p className="text-muted-foreground text-sm">
-                  You currently have no initiatives where Stage (Timeline Tracker) has been approved and you are assigned as Initiative Lead.
+                  You currently have no initiatives where Stage 5 (Timeline Tracker) has been approved and you are assigned as Initiative Lead.
                 </p>
               </CardContent>
             </Card>

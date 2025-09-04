@@ -40,7 +40,7 @@ public interface WorkflowTransactionRepository extends JpaRepository<WorkflowTra
     Integer countTotalStages(@Param("initiativeId") Long initiativeId);
     
     
-    @Query("SELECT wt FROM WorkflowTransaction wt WHERE wt.stageNumber = 10 AND wt.approveStatus = 'approved'")
+    @Query("SELECT wt FROM WorkflowTransaction wt WHERE wt.stageNumber = 9 AND wt.approveStatus = 'approved'")
     List<WorkflowTransaction> findInitiativesReadyForClosure();
     
     @Query("SELECT wt FROM WorkflowTransaction wt WHERE wt.stageNumber = :stageNumber AND wt.approveStatus = :approveStatus AND wt.site = :site")

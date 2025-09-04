@@ -76,14 +76,13 @@ const WORKFLOW_STAGE_NAMES: { [key: number]: string } = {
   1: 'Register Initiative',
   2: 'Approval',
   3: 'Define Responsibilities',
-  4: 'MOC Stage',
-  5: 'CAPEX Stage',
-  6: 'Initiative Timeline Tracker',
-  7: 'Trial Implementation & Performance Check',
-  8: 'Periodic Status Review with CMO',
-  9: 'Savings Monitoring (1 Month)',
-  10: 'Saving Validation with F&A',
-  11: 'Initiative Closure'
+  4: 'MOC-CAPEX Evaluation',
+  5: 'Initiative Timeline Tracker',
+  6: 'Trial Implementation & Performance Check',
+  7: 'Periodic Status Review with CMO',
+  8: 'Savings Monitoring (1 Month)',
+  9: 'Saving Validation with F&A',
+  10: 'Initiative Closure'
 };
 
 export default function Initiatives({ user }: InitiativesProps) {
@@ -127,11 +126,11 @@ export default function Initiatives({ user }: InitiativesProps) {
         description: item.description,
         startDate: item.startDate,
         endDate: item.endDate,
-        currentStage: Math.min(item.currentStage || 1, 11), // Cap at stage 11
+        currentStage: Math.min(item.currentStage || 1, 10), // Cap at stage 10
         // Prioritize currentStageName from API for instant display
         currentStageName: item.status?.toLowerCase() === 'completed' 
           ? 'Initiative Closure' 
-          : (item.currentStageName || WORKFLOW_STAGE_NAMES[Math.min(item.currentStage || 1, 11)] || `Stage ${Math.min(item.currentStage || 1, 11)}`),
+          : (item.currentStageName || WORKFLOW_STAGE_NAMES[Math.min(item.currentStage || 1, 10)] || `Stage ${Math.min(item.currentStage || 1, 10)}`),
         requiresMoc: item.requiresMoc,
         requiresCapex: item.requiresCapex,
         mocNumber: item.mocNumber,
@@ -401,11 +400,11 @@ export default function Initiatives({ user }: InitiativesProps) {
                             <span>Progress</span>
                             <span>{initiative.status?.toLowerCase() === 'completed' 
                               ? '100' 
-                              : Math.round(((Math.min(initiative.currentStage || 1, 11)) - 1) * 100 / 10)}%</span>
+                              : Math.round(((Math.min(initiative.currentStage || 1, 10)) - 1) * 100 / 9)}%</span>
                           </div>
                           <Progress value={initiative.status?.toLowerCase() === 'completed' 
                             ? 100 
-                            : Math.round(((Math.min(initiative.currentStage || 1, 11)) - 1) * 100 / 10)} className="h-2" />
+                            : Math.round(((Math.min(initiative.currentStage || 1, 10)) - 1) * 100 / 9)} className="h-2" />
                         </div>
                       </TableCell> */}
                       <TableCell className="p-4 text-center">
@@ -495,11 +494,11 @@ export default function Initiatives({ user }: InitiativesProps) {
                         <div className="space-y-1">
                           <Progress value={initiative.status?.toLowerCase() === 'completed' 
                             ? 100 
-                            : Math.round(((Math.min(initiative.currentStage || 1, 11)) - 1) * 100 / 10)} className="h-1.5" />
+                            : Math.round(((Math.min(initiative.currentStage || 1, 10)) - 1) * 100 / 9)} className="h-1.5" />
                           <p className="text-2xs text-muted-foreground">
                             {initiative.status?.toLowerCase() === 'completed' 
                               ? '100' 
-                              : Math.round(((Math.min(initiative.currentStage || 1, 11)) - 1) * 100 / 10)}%
+                              : Math.round(((Math.min(initiative.currentStage || 1, 10)) - 1) * 100 / 9)}%
                           </p>
                         </div>
                       </div>
