@@ -50,7 +50,7 @@ export default function WorkflowStageModal({
     const data: any = {
       transactionId: transaction.id,
       action: 'approved',
-      comment: comment.trim()
+      remarks: comment.trim()
     };
 
     // Add stage-specific data
@@ -79,7 +79,7 @@ export default function WorkflowStageModal({
     onProcess({
       transactionId: transaction.id,
       action: 'rejected',
-      comment: comment.trim()
+      remarks: comment.trim()
     });
   };
 

@@ -533,7 +533,7 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
                           </div>
                         )}
 
-                        {transaction.approveStatus === 'pending' && transaction.requiredRole === user.role && (
+                        {transaction.approveStatus === 'pending' && transaction.pendingWith === user.email && (
                           <div className="border-t pt-3">
                             <Button 
                               onClick={() => {

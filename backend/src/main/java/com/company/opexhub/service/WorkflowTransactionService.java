@@ -420,12 +420,18 @@ public class WorkflowTransactionService {
 
     @Transactional
     public WorkflowTransaction processStageAction(Long transactionId, String action, String comment, 
-                                                String actionBy, Long assignedUserId) {
+                                                String actionBy, Long assignedUserId, String currentUserEmail) {
         WorkflowTransaction transaction = workflowTransactionRepository.findById(transactionId)
                 .orElseThrow(() -> new RuntimeException("Workflow transaction not found"));
 
         if (!"pending".equals(transaction.getApproveStatus())) {
             throw new RuntimeException("Transaction is not pending");
+        }
+
+        // Authorization check: Only the user in pendingWith can process this transaction
+        if (transaction.getPendingWith() == null || !transaction.getPendingWith().equals(currentUserEmail)) {
+            throw new RuntimeException("You are not authorized to process this workflow stage. Only " + 
+                transaction.getPendingWith() + " can approve this stage.");
         }
 
         transaction.setApproveStatus(action); // "approved" or "rejected"
@@ -604,38 +610,61 @@ public class WorkflowTransactionService {
         Initiative initiative = initiativeRepository.findById(initiativeId)
                 .orElseThrow(() -> new RuntimeException("Initiative not found"));
                 
-        // Find a user with the required role and site
-        List<User> roleUsers = userRepository.findByRoleAndSite(roleCode, initiative.getSite());
+        // For stages 7,8,9,10,11: Use WfMaster table to get predefined user assignments
+        // For stages 4,5,6 (IL): These are handled separately by createStagesWithAssignedIL method
+        Optional<WfMaster> wfMasterConfig = wfMasterRepository
+                .findBySiteAndStageNumberAndIsActive(initiative.getSite(), stageNumber, "Y");
         
-        if (roleUsers.isEmpty()) {
-            // If no specific user found, create with role-based assignment
+        if (wfMasterConfig.isPresent()) {
+            // Use predefined user from WfMaster table
+            WfMaster wfStage = wfMasterConfig.get();
             WorkflowTransaction transaction = new WorkflowTransaction(
                 initiativeId,
                 stageNumber,
                 stageName,
                 initiative.getSite(),
                 roleCode,
-                null  // No specific user email - will be assigned based on role
+                wfStage.getUserEmail()
             );
             
             transaction.setApproveStatus("pending");
-            transaction.setPendingWith(roleCode);  // Pending with role code
+            transaction.setPendingWith(wfStage.getUserEmail());
             workflowTransactionRepository.save(transaction);
         } else {
-            // Create with specific user assignment (use first user found)
-            User assignedUser = roleUsers.get(0);
-            WorkflowTransaction transaction = new WorkflowTransaction(
-                initiativeId,
-                stageNumber,
-                stageName,
-                initiative.getSite(),
-                roleCode,
-                assignedUser.getEmail()
-            );
+            // Fallback: If no WfMaster configuration found, try to find user from Users table
+            // This provides backward compatibility
+            List<User> roleUsers = userRepository.findByRoleAndSite(roleCode, initiative.getSite());
             
-            transaction.setApproveStatus("pending");
-            transaction.setPendingWith(assignedUser.getEmail());
-            workflowTransactionRepository.save(transaction);
+            if (roleUsers.isEmpty()) {
+                // If no specific user found, create with role-based assignment
+                WorkflowTransaction transaction = new WorkflowTransaction(
+                    initiativeId,
+                    stageNumber,
+                    stageName,
+                    initiative.getSite(),
+                    roleCode,
+                    null  // No specific user email - will be assigned based on role
+                );
+                
+                transaction.setApproveStatus("pending");
+                transaction.setPendingWith(roleCode);  // Pending with role code
+                workflowTransactionRepository.save(transaction);
+            } else {
+                // Create with specific user assignment (use first user found)
+                User assignedUser = roleUsers.get(0);
+                WorkflowTransaction transaction = new WorkflowTransaction(
+                    initiativeId,
+                    stageNumber,
+                    stageName,
+                    initiative.getSite(),
+                    roleCode,
+                    assignedUser.getEmail()
+                );
+                
+                transaction.setApproveStatus("pending");
+                transaction.setPendingWith(assignedUser.getEmail());
+                workflowTransactionRepository.save(transaction);
+            }
         }
     }
 

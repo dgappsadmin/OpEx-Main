@@ -75,9 +75,8 @@ export const DynamicWorkflowTracker: React.FC<DynamicWorkflowTrackerProps> = ({ 
   const canUserActOnStage = (transaction: WorkflowTransactionDetail) => {
     if (!user || transaction.approveStatus !== 'pending') return false;
     
-    // Check if user's email matches pendingWith or if user has the required role
-    return transaction.pendingWith === user.email || 
-           (user.role === transaction.requiredRole && user.site === transaction.site);
+    // Only the specific user whose email is in pendingWith can approve this stage
+    return transaction.pendingWith === user.email;
   };
 
   const handleStageAction = (transaction: WorkflowTransactionDetail) => {
@@ -100,7 +99,7 @@ export const DynamicWorkflowTracker: React.FC<DynamicWorkflowTrackerProps> = ({ 
       await processStageAction.mutateAsync({
         transactionId: selectedTransaction.id,
         action: data.action as 'approved' | 'rejected',
-        comment: data.comment,
+        remarks: data.comment,
         assignedUserId: data.assignedUserId,
       });
 
@@ -111,7 +110,7 @@ export const DynamicWorkflowTracker: React.FC<DynamicWorkflowTrackerProps> = ({ 
       
       // Handle post-approval redirection for approved actions only
       if (data.action === 'approved' && user) {
-        handlePostApprovalRedirection(
+        handlePostApprovalRedirect(
           selectedTransaction.stageNumber,
           user.role,
           navigate

@@ -67,15 +67,16 @@ public class WorkflowTransactionController {
             System.out.println("=== WORKFLOW TRANSACTION PROCESSING ===");
             System.out.println("Transaction ID: " + transactionId);
             System.out.println("Request Body: " + requestBody);
+            System.out.println("Current User: " + currentUser.getUsername()); // getUsername() returns email
             
             String action = (String) requestBody.get("action"); // "approved" or "rejected"
-            String comment = (String) requestBody.get("comment");
+            String comment = (String) requestBody.get("remarks");
             Long assignedUserId = requestBody.get("assignedUserId") != null ? 
                     Long.valueOf(requestBody.get("assignedUserId").toString()) : null;
 
             if (comment == null || comment.trim().isEmpty()) {
                 return ResponseEntity.badRequest()
-                        .body(new ApiResponse<>(false, "Comment is required"));
+                        .body(new ApiResponse<>(false, "Remarks are required"));
             }
 
             // Extract MOC/CAPEX data from request for Initiative table update
@@ -92,9 +93,9 @@ public class WorkflowTransactionController {
             System.out.println("requiresCapex: " + requiresCapex);
             System.out.println("capexNumber: " + capexNumber);
 
-            // Process the workflow transaction (without MOC/CAPEX data)
+            // Process the workflow transaction with user authorization check
             WorkflowTransaction transaction = workflowTransactionService.processStageAction(
-                    transactionId, action, comment, currentUser.getFullName(), assignedUserId);
+                    transactionId, action, comment, currentUser.getFullName(), assignedUserId, currentUser.getUsername());
 
             System.out.println("Processed transaction ID: " + transaction.getId() + " for initiative ID: " + transaction.getInitiativeId());
 
