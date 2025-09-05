@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,8 +12,24 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { 
-  Plus, Edit, Trash2, CheckCircle, Clock, AlertTriangle, Lock, Filter, RefreshCw, 
-  FileText, BarChart3, Calendar, TrendingUp, PieChart, Target, DollarSign 
+  Plus, 
+  Edit, 
+  Trash2, 
+  CheckCircle, 
+  Clock, 
+  AlertTriangle, 
+  Lock, 
+  Filter, 
+  RefreshCw, 
+  FileText, 
+  BarChart3, 
+  Calendar, 
+  TrendingUp, 
+  PieChart, 
+  Target, 
+  DollarSign, 
+  Activity,
+  IndianRupee
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { monthlyMonitoringAPI } from '@/lib/api';
@@ -75,7 +91,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const itemsPerPage = 9; // Increased for better space utilization
+  const itemsPerPage = 8; // Optimized for better display
 
   // Fetch initiatives where Stage 8 is approved and user has access
   const { data: approvedInitiatives = [], isLoading: initiativesLoading } = useQuery({
@@ -330,27 +346,79 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
     return `₹${amount.toLocaleString('en-IN')} Lakhs`;
   };
 
+  // Summary stats for consistent design
+  const overviewStats = [
+    {
+      title: "Total Entries",
+      value: summaryStats.totalEntries.toString(),
+      change: "+12%",
+      trend: "up",
+      icon: FileText,
+      color: "text-blue-600",
+      description: `${summaryStats.finalizedEntries} finalized`
+    },
+    {
+      title: "Approved Entries",
+      value: summaryStats.approvedEntries.toString(),
+      change: "+8%",
+      trend: "up",
+      icon: CheckCircle,
+      color: "text-green-600",
+      description: "F&A approved"
+    },
+    {
+      title: "Total Savings",
+      value: `₹${summaryStats.totalSavings.toFixed(1)}L`,
+      change: "+25%",
+      trend: "up",
+      icon: IndianRupee,
+      color: "text-emerald-600",
+      description: "Achieved savings"
+    },
+    {
+      title: "Avg Achievement",
+      value: `₹${summaryStats.averageAchievement.toFixed(1)}L`,
+      change: "+15%",
+      trend: "up",
+      icon: Target,
+      color: "text-purple-600",
+      description: "Per entry average"
+    }
+  ];
+
   if (initiativesLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <RefreshCw className="h-8 w-8 animate-spin mr-2" />
-        Loading Monthly Monitoring...
+      <div className="container mx-auto p-4 space-y-4 max-w-6xl">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center space-y-2">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="text-sm text-muted-foreground">Loading Monthly Monitoring...</p>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-4 space-y-4 max-w-7xl">
-      <div className="flex justify-between items-center">
+    <div className="container mx-auto p-4 space-y-4 max-w-6xl">
+      {/* Header - Match Dashboard style */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold">Savings Monitoring Sheet</h1>
-          <p className="text-muted-foreground mt-1 text-sm">Monthly monitoring and validation</p>
+          <h1 className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Savings Monitoring Sheet
+          </h1>
+          <p className="text-muted-foreground text-xs mt-0.5">
+            Monthly monitoring and validation of savings achievements
+          </p>
         </div>
         {selectedInitiativeId && user.role !== 'VIEWER' && (
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button onClick={() => { setEditingEntry(null); setFormData({}); }} size="sm">
-                <Plus className="h-4 w-4 mr-2" />
+              <Button 
+                onClick={() => { setEditingEntry(null); setFormData({}); }} 
+                className="gap-2 shrink-0 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 h-9 px-4 text-xs"
+              >
+                <Plus className="h-3.5 w-3.5" />
                 Add Saving Entry
               </Button>
             </DialogTrigger>
@@ -474,69 +542,79 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
 
       {!selectedInitiativeId ? (
         <div>
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
-            <h2 className="text-lg font-semibold">Your Assigned Initiatives</h2>
-            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
-              <div className="relative">
-                <Input
-                  placeholder="Search initiatives..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full sm:w-56"
-                />
+          {/* Filters - Enhanced style */}
+          <Card className="shadow-sm mb-4">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Filter className="h-4 w-4 text-blue-600" />
+                Initiative Filters
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Search and filter your assigned initiatives
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                <div className="flex-1">
+                  <Input
+                    placeholder="Search initiatives..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+                <Select value={filterStatus} onValueChange={setFilterStatus}>
+                  <SelectTrigger className="sm:w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">All Status</SelectItem>
+                    <SelectItem value="PLANNING">Planning</SelectItem>
+                    <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                    <SelectItem value="COMPLETED">Completed</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-full sm:w-36">
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">All Status</SelectItem>
-                  <SelectItem value="PLANNING">Planning</SelectItem>
-                  <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-                  <SelectItem value="COMPLETED">Completed</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
           {filteredInitiatives.length === 0 ? (
-            <Card>
-              <CardContent className="text-center py-8">
+            <Card className="shadow-sm">
+              <CardContent className="text-center py-12">
                 <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold mb-2">No Initiatives Available</h3>
-                <p className="text-muted-foreground text-sm">
+                <p className="text-muted-foreground text-sm max-w-md mx-auto">
                   You currently have no initiatives where Savings Monitoring has been approved and you are assigned as Site Lead.
                 </p>
               </CardContent>
             </Card>
           ) : (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
                 {paginatedInitiatives.map((initiative: Initiative) => (
                   <Card
                     key={initiative.id}
-                    className="cursor-pointer hover:shadow-md transition-all duration-200 hover:scale-[1.01] compact-card"
+                    className="cursor-pointer hover:shadow-md transition-all duration-200 hover:scale-[1.02] shadow-sm group"
                     onClick={() => setSelectedInitiativeId(initiative.id)}
                   >
-                    <CardHeader className="pb-2">
+                    <div className="absolute inset-0 bg-gradient-to-br from-transparent to-gray-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"></div>
+                    <CardHeader className="pb-3 relative z-10">
                       <div className="flex justify-between items-start gap-2">
                         <div className="flex-1 min-w-0">
-                          <CardTitle className="text-sm font-semibold line-clamp-1 mb-1">{initiative.initiativeNumber}</CardTitle>
-                          <Badge variant="outline" className="text-xs px-1.5 py-0.5">{initiative.initiativeStatus}</Badge>
+                          <CardTitle className="text-sm font-semibold line-clamp-1 mb-2">{initiative.initiativeNumber}</CardTitle>
+                          <Badge variant="outline" className="text-xs">{initiative.initiativeStatus}</Badge>
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent className="pt-1">
+                    <CardContent className="pt-0 relative z-10">
                       <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{initiative.initiativeTitle}</p>
-                      <div className="space-y-1.5 text-xs">
+                      <div className="space-y-2 text-xs">
                         <div className="flex items-center justify-between">
                           <span className="text-muted-foreground">Site:</span>
-                          <span className="font-medium truncate ml-2">{initiative.site}</span>
+                          <span className="font-medium">{initiative.site}</span>
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-muted-foreground">Savings:</span>
-                          <span className="font-medium text-green-600 truncate ml-2">₹{initiative.expectedSavings}</span>
+                          <span className="font-medium text-green-600">₹{initiative.expectedSavings}</span>
                         </div>
                       </div>
                     </CardContent>
@@ -573,7 +651,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
         </div>
       ) : (
         <div>
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-lg font-semibold">
                 Monitoring for: {approvedInitiatives.find((i: Initiative) => i.id === selectedInitiativeId)?.initiativeNumber}
@@ -587,425 +665,443 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
             </Button>
           </div>
 
+          {/* Summary Stats Cards - Dashboard pattern */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+            {overviewStats.map((stat) => (
+              <Card key={stat.title} className="relative overflow-hidden group hover:shadow-md transition-all duration-200 shadow-sm">
+                <div className="absolute inset-0 bg-gradient-to-br from-transparent to-gray-50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10 pt-3 px-3">
+                  <CardTitle className="text-xs font-medium text-muted-foreground">
+                    {stat.title}
+                  </CardTitle>
+                  <div className={`p-1.5 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200`}>
+                    <stat.icon className={`h-3.5 w-3.5 ${stat.color}`} />
+                  </div>
+                </CardHeader>
+                <CardContent className="pb-3 relative z-10 px-3">
+                  <div className="text-xl font-bold break-words mb-1">
+                    {stat.value}
+                  </div>
+                  <p className="text-2xs text-muted-foreground mb-1">
+                    {stat.description}
+                  </p>
+                  <p className={`text-2xs flex items-center gap-1 ${
+                    stat.trend === 'up' ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    <TrendingUp className="h-2.5 w-2.5" />
+                    {stat.change} from last month
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Tab Navigation - Match Dashboard style */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="overview" className="text-xs">
-                <BarChart3 className="h-4 w-4 mr-1" />
+            <TabsList className="grid w-full grid-cols-4 max-w-2xl mx-auto lg:mx-0 h-9">
+              <TabsTrigger value="overview" className="flex items-center gap-1.5 text-xs">
+                <BarChart3 className="h-3.5 w-3.5" />
                 Overview
               </TabsTrigger>
-              <TabsTrigger value="monthly" className="text-xs">
-                <Calendar className="h-4 w-4 mr-1" />
-                Monthly View
+              <TabsTrigger value="monthly" className="flex items-center gap-1.5 text-xs">
+                <Calendar className="h-3.5 w-3.5" />
+                Monthly
               </TabsTrigger>
-              <TabsTrigger value="analytics" className="text-xs">
-                <TrendingUp className="h-4 w-4 mr-1" />
+              <TabsTrigger value="analytics" className="flex items-center gap-1.5 text-xs">
+                <Activity className="h-3.5 w-3.5" />
                 Analytics
               </TabsTrigger>
-              <TabsTrigger value="summary" className="text-xs">
-                <PieChart className="h-4 w-4 mr-1" />
+              <TabsTrigger value="summary" className="flex items-center gap-1.5 text-xs">
+                <PieChart className="h-3.5 w-3.5" />
                 Summary
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="overview">
+            <TabsContent value="overview" className="mt-4">
               {entriesLoading ? (
                 <div className="flex justify-center items-center h-64">
-                  <RefreshCw className="h-8 w-8 animate-spin mr-2" />
-                  Loading monitoring entries...
+                  <div className="text-center space-y-2">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                    <p className="text-sm text-muted-foreground">Loading monitoring entries...</p>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-4">
                   {monitoringEntries.length === 0 ? (
-                    <Card>
-                      <CardContent className="text-center py-8">
+                    <Card className="shadow-sm">
+                      <CardContent className="text-center py-12">
                         <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                        <p className="text-muted-foreground">No monitoring entries found for this initiative.</p>
-                        <p className="text-sm text-muted-foreground mt-2">Click "Add KPI Entry" to get started.</p>
+                        <h3 className="text-lg font-semibold mb-2">No Monitoring Entries</h3>
+                        <p className="text-muted-foreground text-sm">No monitoring entries found for this initiative.</p>
+                        <p className="text-sm text-muted-foreground mt-2">Click "Add Saving Entry" to get started.</p>
                       </CardContent>
                     </Card>
                   ) : (
-                    <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="text-xs">Month</TableHead>
-                            <TableHead className="text-xs">KPI Description</TableHead>
-                            <TableHead className="text-xs">Category</TableHead>
-                            <TableHead className="text-xs">Target</TableHead>
-                            <TableHead className="text-xs">Achieved</TableHead>
-                            <TableHead className="text-xs">Deviation</TableHead>
-                            <TableHead className="text-xs">Status</TableHead>
-                            <TableHead className="text-xs">Actions</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {monitoringEntries.map((entry: MonthlyMonitoringEntry) => (
-                            <TableRow key={entry.id}>
-                              <TableCell className="font-medium text-xs">{entry.monitoringMonth}</TableCell>
-                              <TableCell className="text-xs">
-                                <div>
-                                  <p className="font-medium">{entry.kpiDescription}</p>
-                                  {entry.remarks && (
-                                    <p className="text-xs text-muted-foreground line-clamp-2">{entry.remarks}</p>
-                                  )}
-                                </div>
-                              </TableCell>
-                              <TableCell className="text-xs">
-                                <Badge variant="outline" className="text-xs">
-                                  {entry.category || 'General'}
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="text-xs">₹{entry.targetValue}</TableCell>
-                              <TableCell className="text-xs">
-                                {entry.achievedValue ? `₹${entry.achievedValue}` : '-'}
-                              </TableCell>
-                              <TableCell className="text-xs">
-                                {entry.deviation ? (
-                                  <div className="flex items-center space-x-1">
-                                    <span className={`font-medium ${entry.deviation < 0 ? 'text-red-500' : 'text-green-500'}`}>
-                                      ₹{entry.deviation.toFixed(2)}
-                                    </span>
-                                    <span className="text-xs text-muted-foreground">
-                                      ({entry.deviationPercentage?.toFixed(1)}%)
-                                    </span>
-                                  </div>
-                                ) : '-'}
-                              </TableCell>
-                              <TableCell className="text-xs">
-                                <div className="flex flex-wrap gap-1">
-                                  {entry.isFinalized === 'Y' && (
-                                    <Badge variant="outline" className="text-xs bg-blue-50">
-                                      <CheckCircle className="h-3 w-3 mr-1" />
-                                      Finalized
+                    <Card className="shadow-sm">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="flex items-center gap-2 text-base">
+                          <FileText className="h-4 w-4 text-blue-600" />
+                          Monitoring Entries
+                        </CardTitle>
+                        <CardDescription className="text-xs">
+                          Track and manage savings monitoring entries
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="overflow-x-auto">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead className="text-xs">Month</TableHead>
+                                <TableHead className="text-xs">KPI Description</TableHead>
+                                <TableHead className="text-xs">Category</TableHead>
+                                <TableHead className="text-xs">Target</TableHead>
+                                <TableHead className="text-xs">Achieved</TableHead>
+                                <TableHead className="text-xs">Deviation</TableHead>
+                                <TableHead className="text-xs">Status</TableHead>
+                                <TableHead className="text-xs">Actions</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {monitoringEntries.map((entry: MonthlyMonitoringEntry) => (
+                                <TableRow key={entry.id} className="hover:bg-muted/50">
+                                  <TableCell className="font-medium text-xs">{entry.monitoringMonth}</TableCell>
+                                  <TableCell className="text-xs">
+                                    <div>
+                                      <p className="font-medium">{entry.kpiDescription}</p>
+                                      {entry.remarks && (
+                                        <p className="text-xs text-muted-foreground line-clamp-2">{entry.remarks}</p>
+                                      )}
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="text-xs">
+                                    <Badge variant="outline" className="text-xs">
+                                      {entry.category || 'General'}
                                     </Badge>
-                                  )}
-                                  {entry.faApproval === 'Y' && (
-                                    <Badge variant="outline" className="text-xs bg-green-50">
-                                      <Target className="h-3 w-3 mr-1" />
-                                      F&A Approved
-                                    </Badge>
-                                  )}
-                                </div>
-                              </TableCell>
-                              <TableCell className="text-xs">
-                                <div className="flex space-x-1">
-                                  {canEdit(entry) && (
-                                    <Button size="sm" variant="outline" onClick={() => handleEdit(entry)}>
-                                      <Edit className="h-3 w-3" />
-                                    </Button>
-                                  )}
-                                  {canFinalize(entry) && entry.isFinalized !== 'Y' && (
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => finalizeMutation.mutate({ id: entry.id!, isFinalized: 'Y' })}
-                                    >
-                                      <FileText className="h-3 w-3" />
-                                    </Button>
-                                  )}
-                                  {canApprove() && (
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => faApprovalMutation.mutate({ 
-                                        id: entry.id!, 
-                                        faApproval: entry.faApproval === 'Y' ? 'N' : 'Y' 
-                                      })}
-                                    >
-                                      <Target className="h-3 w-3" />
-                                    </Button>
-                                  )}
-                                  {user.role !== 'VIEWER' && (
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => deleteMutation.mutate(entry.id!)}
-                                      className="text-red-600 hover:text-red-700"
-                                    >
-                                      <Trash2 className="h-3 w-3" />
-                                    </Button>
-                                  )}
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
+                                  </TableCell>
+                                  <TableCell className="text-xs">₹{entry.targetValue}</TableCell>
+                                  <TableCell className="text-xs">
+                                    {entry.achievedValue ? `₹${entry.achievedValue}` : '-'}
+                                  </TableCell>
+                                  <TableCell className="text-xs">
+                                    {entry.deviation ? (
+                                      <div className="flex items-center space-x-1">
+                                        <span className={`font-medium ${entry.deviation < 0 ? 'text-red-500' : 'text-green-500'}`}>
+                                          ₹{entry.deviation.toFixed(2)}
+                                        </span>
+                                        <span className="text-xs text-muted-foreground">
+                                          ({entry.deviationPercentage?.toFixed(1)}%)
+                                        </span>
+                                      </div>
+                                    ) : '-'}
+                                  </TableCell>
+                                  <TableCell className="text-xs">
+                                    <div className="flex flex-wrap gap-1">
+                                      {entry.isFinalized === 'Y' && (
+                                        <Badge variant="outline" className="text-xs bg-blue-50">
+                                          <CheckCircle className="h-3 w-3 mr-1" />
+                                          Finalized
+                                        </Badge>
+                                      )}
+                                      {entry.faApproval === 'Y' && (
+                                        <Badge variant="outline" className="text-xs bg-green-50">
+                                          <Target className="h-3 w-3 mr-1" />
+                                          F&A Approved
+                                        </Badge>
+                                      )}
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="text-xs">
+                                    <div className="flex space-x-1">
+                                      {canEdit(entry) && (
+                                        <Button size="sm" variant="outline" onClick={() => handleEdit(entry)}>
+                                          <Edit className="h-3 w-3" />
+                                        </Button>
+                                      )}
+                                      {canFinalize(entry) && entry.isFinalized !== 'Y' && (
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          onClick={() => finalizeMutation.mutate({ id: entry.id!, isFinalized: 'Y' })}
+                                        >
+                                          <FileText className="h-3 w-3" />
+                                        </Button>
+                                      )}
+                                      {canApprove() && (
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          onClick={() => faApprovalMutation.mutate({ 
+                                            id: entry.id!, 
+                                            faApproval: entry.faApproval === 'Y' ? 'N' : 'Y' 
+                                          })}
+                                        >
+                                          <Target className="h-3 w-3" />
+                                        </Button>
+                                      )}
+                                      {user.role !== 'VIEWER' && (
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          onClick={() => deleteMutation.mutate(entry.id!)}
+                                          className="text-red-600 hover:text-red-700"
+                                        >
+                                          <Trash2 className="h-3 w-3" />
+                                        </Button>
+                                      )}
+                                    </div>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </CardContent>
+                    </Card>
                   )}
                 </div>
               )}
             </TabsContent>
 
-            <TabsContent value="monthly">
-              <div className="space-y-4">
-                <div className="flex items-center space-x-4">
-                  <Label htmlFor="monthSelect">Select Month:</Label>
-                  <Input
-                    id="monthSelect"
-                    type="month"
-                    value={selectedMonth}
-                    onChange={(e) => setSelectedMonth(e.target.value)}
-                    className="w-48"
-                  />
-                  <Badge variant="outline">
-                    {monthlyEntries.length} entries found
-                  </Badge>
-                </div>
-
-                {monthlyLoading ? (
-                  <div className="flex justify-center items-center h-64">
-                    <RefreshCw className="h-8 w-8 animate-spin mr-2" />
-                    Loading monthly entries...
+            <TabsContent value="monthly" className="mt-4">
+              <Card className="shadow-sm">
+                <CardHeader className="pb-3">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div>
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <Calendar className="h-4 w-4 text-blue-600" />
+                        Monthly View
+                      </CardTitle>
+                      <CardDescription className="text-xs">
+                        Filter entries by specific month
+                      </CardDescription>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Label htmlFor="monthSelect" className="text-sm font-medium">Month:</Label>
+                      <Input
+                        id="monthSelect"
+                        type="month"
+                        value={selectedMonth}
+                        onChange={(e) => setSelectedMonth(e.target.value)}
+                        className="w-40 h-9"
+                      />
+                      <Badge variant="outline">
+                        {monthlyEntries.length} entries
+                      </Badge>
+                    </div>
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    {monthlyEntries.length === 0 ? (
-                      <Card>
-                        <CardContent className="text-center py-8">
+                </CardHeader>
+                <CardContent>
+                  {monthlyLoading ? (
+                    <div className="flex justify-center items-center h-64">
+                      <div className="text-center space-y-2">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                        <p className="text-sm text-muted-foreground">Loading monthly entries...</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {monthlyEntries.length === 0 ? (
+                        <div className="text-center py-12">
                           <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                           <p className="text-muted-foreground">No entries found for {selectedMonth}.</p>
-                        </CardContent>
-                      </Card>
-                    ) : (
-                      monthlyEntries.map((entry: MonthlyMonitoringEntry) => (
-                        <Card key={entry.id}>
-                          <CardHeader className="pb-3">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <CardTitle className="text-base">{entry.kpiDescription}</CardTitle>
-                                <Badge variant="outline" className="mt-1 text-xs">
-                                  {entry.category || 'General'}
-                                </Badge>
+                        </div>
+                      ) : (
+                        monthlyEntries.map((entry: MonthlyMonitoringEntry) => (
+                          <Card key={entry.id} className="shadow-sm">
+                            <CardHeader className="pb-3">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <CardTitle className="text-base">{entry.kpiDescription}</CardTitle>
+                                  <Badge variant="outline" className="mt-1 text-xs">
+                                    {entry.category || 'General'}
+                                  </Badge>
+                                </div>
+                                <div className="flex space-x-2">
+                                  {entry.isFinalized === 'Y' && <Badge variant="outline" className="text-xs">Finalized</Badge>}
+                                  {entry.faApproval === 'Y' && <Badge variant="outline" className="text-xs">F&A Approved</Badge>}
+                                </div>
                               </div>
-                              <div className="flex space-x-2">
-                                {entry.isFinalized === 'Y' && <Badge variant="outline" className="text-xs">Finalized</Badge>}
-                                {entry.faApproval === 'Y' && <Badge variant="outline" className="text-xs">F&A Approved</Badge>}
+                            </CardHeader>
+                            <CardContent>
+                              <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
+                                <div className="text-center p-3 bg-blue-50 rounded-lg">
+                                  <Label className="text-xs font-medium text-blue-600">Target Value</Label>
+                                  <p className="text-lg font-bold text-blue-700">₹{entry.targetValue}</p>
+                                  <p className="text-xs text-blue-500">Lakhs</p>
+                                </div>
+                                <div className="text-center p-3 bg-green-50 rounded-lg">
+                                  <Label className="text-xs font-medium text-green-600">Achieved Value</Label>
+                                  <p className="text-lg font-bold text-green-700">₹{entry.achievedValue || '-'}</p>
+                                  <p className="text-xs text-green-500">Lakhs</p>
+                                </div>
+                                <div className="text-center p-3 bg-purple-50 rounded-lg">
+                                  <Label className="text-xs font-medium text-purple-600">Deviation</Label>
+                                  <p className={`text-lg font-bold ${entry.deviation && entry.deviation < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                                    {entry.deviation ? `₹${entry.deviation.toFixed(2)}` : '-'}
+                                  </p>
+                                  <p className="text-xs text-purple-500">
+                                    {entry.deviationPercentage ? `${entry.deviationPercentage.toFixed(1)}%` : ''}
+                                  </p>
+                                </div>
+                                <div className="text-center p-3 bg-gray-50 rounded-lg">
+                                  <Label className="text-xs font-medium text-gray-600">Status</Label>
+                                  <div className="flex flex-col space-y-1 mt-1">
+                                    <Badge variant="outline" className="text-xs">
+                                      {entry.isFinalized === 'Y' ? '✓ Finalized' : '○ Draft'}
+                                    </Badge>
+                                    <Badge variant="outline" className="text-xs">
+                                      {entry.faApproval === 'Y' ? '✓ F&A Approved' : '○ Pending'}
+                                    </Badge>
+                                  </div>
+                                </div>
                               </div>
-                            </div>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
-                              <div className="text-center p-3 bg-blue-50 rounded-lg">
-                                <Label className="text-xs font-medium text-blue-600">Target Value</Label>
-                                <p className="text-lg font-bold text-blue-700">₹{entry.targetValue}</p>
-                                <p className="text-xs text-blue-500">Lakhs</p>
-                              </div>
-                              <div className="text-center p-3 bg-green-50 rounded-lg">
-                                <Label className="text-xs font-medium text-green-600">Achieved Value</Label>
-                                <p className="text-lg font-bold text-green-700">₹{entry.achievedValue || '-'}</p>
-                                <p className="text-xs text-green-500">Lakhs</p>
-                              </div>
-                              <div className="text-center p-3 bg-purple-50 rounded-lg">
-                                <Label className="text-xs font-medium text-purple-600">Deviation</Label>
-                                <p className={`text-lg font-bold ${entry.deviation && entry.deviation < 0 ? 'text-red-600' : 'text-green-600'}`}>
-                                  {entry.deviation ? `₹${entry.deviation.toFixed(2)}` : '-'}
-                                </p>
-                                <p className="text-xs text-purple-500">
-                                  {entry.deviationPercentage ? `${entry.deviationPercentage.toFixed(1)}%` : ''}
-                                </p>
-                              </div>
-                              <div className="text-center p-3 bg-gray-50 rounded-lg">
-                                <Label className="text-xs font-medium text-gray-600">Performance</Label>
-                                <p className="text-lg font-bold text-gray-700">
-                                  {entry.achievedValue && entry.targetValue 
-                                    ? `${((entry.achievedValue / entry.targetValue) * 100).toFixed(0)}%`
-                                    : '-'}
-                                </p>
-                                <p className="text-xs text-gray-500">Achievement</p>
-                              </div>
-                            </div>
-
-                            {entry.remarks && (
-                              <div className="mb-4 p-3 bg-muted rounded-lg">
-                                <Label className="text-xs font-medium text-muted-foreground">Remarks & Analysis</Label>
-                                <p className="text-xs mt-1">{entry.remarks}</p>
-                              </div>
-                            )}
-
-                            {entry.faComments && (
-                              <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                                <Label className="text-xs font-medium text-yellow-600">F&A Comments</Label>
-                                <p className="text-xs text-yellow-700 mt-1">{entry.faComments}</p>
-                              </div>
-                            )}
-
-                            <div className="flex flex-wrap gap-2 pt-3 border-t">
-                              {canEdit(entry) && (
-                                <Button size="sm" variant="outline" onClick={() => handleEdit(entry)}>
-                                  <Edit className="h-4 w-4 mr-2" />
-                                  Edit
-                                </Button>
+                              {entry.remarks && (
+                                <div className="mt-4 p-3 bg-muted rounded-lg">
+                                  <Label className="text-sm font-medium">Remarks & Analysis</Label>
+                                  <p className="text-sm mt-1">{entry.remarks}</p>
+                                </div>
                               )}
-                              {canFinalize(entry) && entry.isFinalized !== 'Y' && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => finalizeMutation.mutate({ id: entry.id!, isFinalized: 'Y' })}
-                                >
-                                  <FileText className="h-4 w-4 mr-2" />
-                                  Finalize
-                                </Button>
-                              )}
-                              {canApprove() && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => faApprovalMutation.mutate({ 
-                                    id: entry.id!, 
-                                    faApproval: entry.faApproval === 'Y' ? 'N' : 'Y' 
-                                  })}
-                                >
-                                  <Target className="h-4 w-4 mr-2" />
-                                  {entry.faApproval === 'Y' ? 'Remove' : 'Give'} F&A Approval
-                                </Button>
-                              )}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))
-                    )}
-                  </div>
-                )}
+                            </CardContent>
+                          </Card>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="analytics" className="mt-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <Card className="shadow-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <Activity className="h-4 w-4 text-blue-600" />
+                      Target vs Achievement Trends
+                    </CardTitle>
+                    <CardDescription className="text-xs">
+                      Monthly comparison of targets and achievements
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={280}>
+                      <LineChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="month" />
+                        <YAxis />
+                        <Tooltip />
+                        <Line type="monotone" dataKey="target" stroke="#3b82f6" strokeWidth={2} name="Target" />
+                        <Line type="monotone" dataKey="achieved" stroke="#22c55e" strokeWidth={2} name="Achieved" />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+
+                <Card className="shadow-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <BarChart3 className="h-4 w-4 text-green-600" />
+                      Monthly Achievements
+                    </CardTitle>
+                    <CardDescription className="text-xs">
+                      Bar chart showing monthly achievement values
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={280}>
+                      <BarChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="month" />
+                        <YAxis />
+                        <Tooltip formatter={(value) => [`₹${value} Lakhs`, 'Achievement']} />
+                        <Bar dataKey="achieved" fill="#22c55e" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
               </div>
             </TabsContent>
 
-            <TabsContent value="analytics">
-              <div className="space-y-6">
-                {chartData.length > 0 ? (
-                  <>
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center text-base">
-                          <TrendingUp className="h-5 w-5 mr-2" />
-                          Performance Trend Analysis
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <ResponsiveContainer width="100%" height={300}>
-                          <LineChart data={chartData}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="month" />
-                            <YAxis />
-                            <Tooltip />
-                            <Line type="monotone" dataKey="target" stroke="#3b82f6" name="Target" strokeWidth={2} />
-                            <Line type="monotone" dataKey="achieved" stroke="#10b981" name="Achieved" strokeWidth={2} />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      </CardContent>
-                    </Card>
-
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-base">Target vs Achieved Comparison</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <ResponsiveContainer width="100%" height={300}>
-                          <BarChart data={chartData}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="month" />
-                            <YAxis />
-                            <Tooltip />
-                            <Bar dataKey="target" fill="#3b82f6" name="Target" />
-                            <Bar dataKey="achieved" fill="#10b981" name="Achieved" />
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </CardContent>
-                    </Card>
-                  </>
-                ) : (
-                  <Card>
-                    <CardContent className="text-center py-8">
-                      <BarChart3 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                      <p className="text-muted-foreground">No data available for analytics.</p>
-                      <p className="text-sm text-muted-foreground mt-2">Add some monitoring entries to see analytics.</p>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="summary">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-                <Card>
-                  <CardContent className="p-4 text-center">
-                    <FileText className="h-6 w-6 mx-auto text-blue-600 mb-2" />
-                    <h3 className="text-lg font-bold text-blue-600">{summaryStats.totalEntries}</h3>
-                    <p className="text-xs text-muted-foreground">Total Entries</p>
+            <TabsContent value="summary" className="mt-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <Card className="shadow-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <PieChart className="h-4 w-4 text-purple-600" />
+                      Finalization Status
+                    </CardTitle>
+                    <CardDescription className="text-xs">
+                      Distribution of finalized vs pending entries
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={280}>
+                      <RechartsPieChart>
+                        <Pie
+                          data={pieData}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="value"
+                        >
+                          {pieData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </RechartsPieChart>
+                    </ResponsiveContainer>
                   </CardContent>
                 </Card>
-                <Card>
-                  <CardContent className="p-4 text-center">
-                    <CheckCircle className="h-6 w-6 mx-auto text-green-600 mb-2" />
-                    <h3 className="text-lg font-bold text-green-600">{summaryStats.finalizedEntries}</h3>
-                    <p className="text-xs text-muted-foreground">Finalized</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-4 text-center">
-                    <Target className="h-6 w-6 mx-auto text-purple-600 mb-2" />
-                    <h3 className="text-lg font-bold text-purple-600">{summaryStats.approvedEntries}</h3>
-                    <p className="text-xs text-muted-foreground">F&A Approved</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-4 text-center">
-                    <DollarSign className="h-6 w-6 mx-auto text-yellow-600 mb-2" />
-                    <h3 className="text-lg font-bold text-yellow-600">₹{summaryStats.totalSavings.toFixed(1)}</h3>
-                    <p className="text-xs text-muted-foreground">Total Savings (Lakhs)</p>
-                  </CardContent>
-                </Card>
-              </div>
 
-              {pieData.length > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base">Entry Status Distribution</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ResponsiveContainer width="100%" height={250}>
-                        <RechartsPieChart>
-                          <Tooltip />
-                          <RechartsPieChart data={pieData} cx="50%" cy="50%" outerRadius={80}>
-                            {pieData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </RechartsPieChart>
-                        </RechartsPieChart>
-                      </ResponsiveContainer>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base">Key Performance Indicators</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
+                <Card className="shadow-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <Target className="h-4 w-4 text-blue-600" />
+                      Summary Statistics
+                    </CardTitle>
+                    <CardDescription className="text-xs">
+                      Key performance indicators and achievements
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="text-center p-3 bg-blue-50 rounded-lg">
+                        <div className="text-2xl font-bold text-blue-600">{summaryStats.totalEntries}</div>
+                        <div className="text-xs text-muted-foreground">Total Entries</div>
+                      </div>
+                      <div className="text-center p-3 bg-green-50 rounded-lg">
+                        <div className="text-2xl font-bold text-green-600">{summaryStats.approvedEntries}</div>
+                        <div className="text-xs text-muted-foreground">F&A Approved</div>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">Completion Rate</span>
-                        <span className="font-medium text-sm">
-                          {summaryStats.totalEntries > 0 
-                            ? `${((summaryStats.finalizedEntries / summaryStats.totalEntries) * 100).toFixed(1)}%`
-                            : '0%'}
+                        <span className="text-sm text-muted-foreground">Total Savings</span>
+                        <span className="font-medium text-sm text-green-600">
+                          ₹{summaryStats.totalSavings.toFixed(2)} Lakhs
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">Approval Rate</span>
+                        <span className="text-sm text-muted-foreground">Finalization Rate</span>
                         <span className="font-medium text-sm">
-                          {summaryStats.finalizedEntries > 0 
-                            ? `${((summaryStats.approvedEntries / summaryStats.finalizedEntries) * 100).toFixed(1)}%`
-                            : '0%'}
+                          {summaryStats.totalEntries > 0 
+                            ? ((summaryStats.finalizedEntries / summaryStats.totalEntries) * 100).toFixed(1) 
+                            : 0}%
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-muted-foreground">Average Achievement</span>
                         <span className="font-medium text-sm">₹{summaryStats.averageAchievement.toFixed(2)} Lakhs</span>
                       </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </TabsContent>
           </Tabs>
         </div>

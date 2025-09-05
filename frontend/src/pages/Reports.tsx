@@ -1,14 +1,28 @@
 import { useState, useEffect, useMemo } from "react";
 import { User } from "@/lib/mockData";
 import { useInitiatives } from "@/hooks/useInitiatives";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, ComposedChart } from 'recharts';
-import { Download, Calendar, TrendingUp, FileText, Filter, BarChart3, AlertCircle, RefreshCw, FileSpreadsheet } from "lucide-react";
+import { 
+  Download, 
+  Calendar, 
+  TrendingUp, 
+  FileText, 
+  Filter, 
+  BarChart3, 
+  AlertTriangle, 
+  RefreshCw, 
+  FileSpreadsheet,
+  Activity,
+  PieChart,
+  Target,
+  IndianRupee
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { reportsAPI } from "@/lib/api";
 import DNLBarChart from "@/components/DNLBarChart";
@@ -311,9 +325,13 @@ export default function Reports({ user }: ReportsProps) {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <RefreshCw className="h-8 w-8 animate-spin mr-2" />
-        Loading reports data...
+      <div className="container mx-auto p-4 space-y-4 max-w-6xl">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center space-y-2">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="text-sm text-muted-foreground">Loading reports data...</p>
+          </div>
+        </div>
       </div>
     );
   }
@@ -344,7 +362,10 @@ export default function Reports({ user }: ReportsProps) {
         });
         
         console.log(`Successfully downloaded DNL Plant Initiatives PDF report: ${filename} for ${selectedSite} site(s) - ${selectedPeriod} period (${selectedYear})`);
-        alert(`DNL Plant Initiatives PDF report "${filename}" downloaded successfully for year ${selectedYear}! Data includes savings till current month (${getCurrentMonth()}).`);
+        toast({
+          title: "Download Successful",
+          description: `DNL Plant Initiatives PDF report "${filename}" downloaded successfully for year ${selectedYear}!`,
+        });
       } catch (error: any) {
         console.error('Error downloading DNL Plant Initiatives PDF report:', error);
         let errorMessage = 'Failed to download DNL Plant Initiatives PDF report. ';
@@ -355,7 +376,11 @@ export default function Reports({ user }: ReportsProps) {
         } else {
           errorMessage += 'Please check your connection and try again.';
         }
-        alert(errorMessage);
+        toast({
+          title: "Download Failed",
+          description: errorMessage,
+          variant: "destructive",
+        });
       }
     } else if (reportType === 'DNL Chart PDF') {
       try {
@@ -366,7 +391,10 @@ export default function Reports({ user }: ReportsProps) {
         });
         
         console.log(`Successfully downloaded DNL Chart PDF: ${filename}`);
-        alert(`DNL Chart PDF "${filename}" downloaded successfully!`);
+        toast({
+          title: "Download Successful",
+          description: `DNL Chart PDF "${filename}" downloaded successfully!`,
+        });
       } catch (error: any) {
         console.error('Error downloading DNL Chart PDF:', error);
         let errorMessage = 'Failed to download DNL Chart PDF. ';
@@ -377,7 +405,11 @@ export default function Reports({ user }: ReportsProps) {
         } else {
           errorMessage += 'Please check your connection and try again.';
         }
-        alert(errorMessage);
+        toast({
+          title: "Download Failed",
+          description: errorMessage,
+          variant: "destructive",
+        });
       }
     } else if (reportType === 'DNL Chart Excel') {
       try {
@@ -417,9 +449,10 @@ export default function Reports({ user }: ReportsProps) {
         });
         
         console.log(`Successfully downloaded detailed Excel report: ${filename} for ${selectedSite} site(s)`);
-        // Optional: Show success message instead of alert
-        // You can replace this with a toast notification if you have one
-        alert(`Excel report "${filename}" downloaded successfully!`);
+        toast({
+          title: "Download Successful",
+          description: `Excel report "${filename}" downloaded successfully!`,
+        });
       } catch (error: any) {
         console.error('Error downloading Excel report:', error);
         let errorMessage = 'Failed to download Excel report. ';
@@ -430,24 +463,31 @@ export default function Reports({ user }: ReportsProps) {
         } else {
           errorMessage += 'Please check your connection and try again.';
         }
-        alert(errorMessage);
+        toast({
+          title: "Download Failed",
+          description: errorMessage,
+          variant: "destructive",
+        });
       }
     } else {
       // Mock download functionality for other reports
       console.log(`Downloading ${reportType} report for ${selectedSite} site(s) - ${selectedPeriod} period`);
-      alert(`${reportType} report download started`);
+      toast({
+        title: "Download Started",
+        description: `${reportType} report download started`,
+      });
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
-      case 'completed': return 'bg-green-500 hover:bg-green-600';
-      case 'in progress': return 'bg-blue-500 hover:bg-blue-600';
-      case 'rejected': return 'bg-red-500 hover:bg-red-600';
-      case 'draft': return 'bg-yellow-500 hover:bg-yellow-600';
-      case 'approved': return 'bg-emerald-500 hover:bg-emerald-600';
-      case 'pending': return 'bg-orange-500 hover:bg-orange-600';
-      default: return 'bg-gray-500 hover:bg-gray-600';
+      case 'completed': return 'bg-green-500 hover:bg-green-600 text-white';
+      case 'in progress': return 'bg-blue-500 hover:bg-blue-600 text-white';
+      case 'rejected': return 'bg-red-500 hover:bg-red-600 text-white';
+      case 'draft': return 'bg-yellow-500 hover:bg-yellow-600 text-white';
+      case 'approved': return 'bg-emerald-500 hover:bg-emerald-600 text-white';
+      case 'pending': return 'bg-orange-500 hover:bg-orange-600 text-white';
+      default: return 'bg-gray-500 hover:bg-gray-600 text-white';
     }
   };
 
@@ -479,47 +519,77 @@ export default function Reports({ user }: ReportsProps) {
     }
   };
 
+  // // Summary stats array for consistent card design
+  // const summaryStats = [
+  //   {
+  //     title: "Total Initiatives",
+  //     value: filteredInitiatives.length.toString(),
+  //     change: "+12%",
+  //     trend: "up",
+  //     icon: FileText,
+  //     color: "text-blue-600",
+  //     description: `${completedCount} completed, ${inProgressCount} in progress`
+  //   },
+  //   {
+  //     title: "Total Savings",
+  //     value: `₹${formatDisplayNumber(totalSavings)}`,
+  //     change: "+28%",
+  //     trend: "up",
+  //     icon: TrendingUp,
+  //     color: "text-green-600",
+  //     description: "Expected savings from all initiatives"
+  //   },
+  //   {
+  //     title: "Avg per Initiative",
+  //     value: `₹${formatDisplayNumber(avgSavingsPerInitiative)}`,
+  //     change: "+15%",
+  //     trend: "up",
+  //     icon: Target,
+  //     color: "text-purple-600",
+  //     description: "Average expected savings"
+  //   },
+  //   {
+  //     title: "Completion Rate",
+  //     value: `${filteredInitiatives.length > 0 ? ((completedCount / filteredInitiatives.length) * 100).toFixed(1) : 0}%`,
+  //     change: "+8%",
+  //     trend: "up",
+  //     icon: TrendingUp,
+  //     color: "text-emerald-600",
+  //     description: "Initiatives completed successfully"
+  //   }
+  // ];
+
   return (
-    <div className="container mx-auto p-4 space-y-4 max-w-7xl">
+    <div className="container mx-auto p-4 space-y-4 max-w-6xl">
+      {/* Header - Match Dashboard style */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold">Reports</h1>
-          <p className="text-muted-foreground text-sm">Generate and analyze initiative performance reports (Data till {getCurrentMonth()} {new Date().getFullYear()})</p>
+          <h1 className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Reports & Analytics
+          </h1>
+          <p className="text-muted-foreground text-xs mt-0.5">
+            Generate and analyze initiative performance reports (Data till {getCurrentMonth()} {new Date().getFullYear()})
+          </p>
         </div>
       </div>
 
-      {/* Enhanced Filters */}
-      <Card className="compact-card">
+      {/* Enhanced Filters - Match Dashboard card style */}
+      <Card className="shadow-sm">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
-            <Filter className="h-4 w-4" />
+            <Filter className="h-4 w-4 text-blue-600" />
             Report Filters
           </CardTitle>
+          <CardDescription className="text-xs">
+            Select filters to customize your reports and analysis
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-            {/* Period Filter - Commented out as requested */}
-            {/* 
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <div className="space-y-1.5">
-              <label className="text-sm font-medium">Period</label>
-              <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="weekly">Weekly</SelectItem>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                  <SelectItem value="quarterly">Quarterly</SelectItem>
-                  <SelectItem value="yearly">Yearly (Till {getCurrentMonth()})</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            */}
-            
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium">Site</label>
+              <label className="text-xs font-medium text-muted-foreground">Site</label>
               <Select value={selectedSite} onValueChange={setSelectedSite}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full h-9">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -530,34 +600,12 @@ export default function Reports({ user }: ReportsProps) {
                 </SelectContent>
               </Select>
             </div>
-            
-            {/* Year Filter - Commented out as requested */}
-            {/* 
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium">Year</label>
-              <Select value={selectedYear} onValueChange={setSelectedYear}>
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: 5 }, (_, i) => {
-                    const year = new Date().getFullYear() - i;
-                    return (
-                      <SelectItem key={year} value={year.toString()}>
-                        {year}
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-            </div>
-            */}
 
             {/* Financial Year Filter */}
             <div className="space-y-1.5">
-              <label className="text-sm font-medium">Financial Year</label>
+              <label className="text-xs font-medium text-muted-foreground">Financial Year</label>
               <Select value={selectedFinancialYear} onValueChange={setSelectedFinancialYear}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full h-9">
                   <SelectValue placeholder="Select FY" />
                 </SelectTrigger>
                 <SelectContent>
@@ -570,9 +618,9 @@ export default function Reports({ user }: ReportsProps) {
 
             {/* Budget Type Filter */}
             <div className="space-y-1.5">
-              <label className="text-sm font-medium">Budget Type</label>
+              <label className="text-xs font-medium text-muted-foreground">Budget Type</label>
               <Select value={selectedBudgetType} onValueChange={setSelectedBudgetType}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full h-9">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -585,9 +633,9 @@ export default function Reports({ user }: ReportsProps) {
 
             {/* Category Filter */}
             <div className="space-y-1.5">
-              <label className="text-sm font-medium">Category</label>
+              <label className="text-xs font-medium text-muted-foreground">Category</label>
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full h-9">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -603,77 +651,73 @@ export default function Reports({ user }: ReportsProps) {
         </CardContent>
       </Card>
 
-      {/* Summary Cards */}
+      {/* Summary Cards - Match Dashboard pattern
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        <Card className="compact-kpi-card">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Initiatives</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="pb-2">
-            <div className="text-xl font-bold">{filteredInitiatives.length}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {completedCount} completed, {inProgressCount} in progress
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card className="compact-kpi-card">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Savings</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="pb-2">
-            <div className="text-lg font-bold break-words">₹{formatDisplayNumber(totalSavings)}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Expected savings from all initiatives
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card className="compact-kpi-card">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg per Initiative</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="pb-2">
-            <div className="text-lg font-bold break-words">₹{formatDisplayNumber(avgSavingsPerInitiative)}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Average expected savings
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card className="compact-kpi-card">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completion Rate</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="pb-2">
-            <div className="text-xl font-bold">
-              {filteredInitiatives.length > 0 ? ((completedCount / filteredInitiatives.length) * 100).toFixed(1) : 0}%
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Initiatives completed successfully
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+        {summaryStats.map((stat) => (
+          <Card key={stat.title} className="relative overflow-hidden group hover:shadow-md transition-all duration-200 shadow-sm">
+            <div className="absolute inset-0 bg-gradient-to-br from-transparent to-gray-50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10 pt-3 px-3">
+              <CardTitle className="text-xs font-medium text-muted-foreground">
+                {stat.title}
+              </CardTitle>
+              <div className={`p-1.5 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200`}>
+                <stat.icon className={`h-3.5 w-3.5 ${stat.color}`} />
+              </div>
+            </CardHeader>
+            <CardContent className="pb-3 relative z-10 px-3">
+              <div className="text-xl font-bold break-words mb-1">
+                {stat.value}
+              </div>
+              <p className="text-2xs text-muted-foreground mb-1">
+                {stat.description}
+              </p>
+              <p className={`text-2xs flex items-center gap-1 ${
+                stat.trend === 'up' ? 'text-green-600' : 'text-red-600'
+              }`}>
+                <TrendingUp className="h-2.5 w-2.5" />
+                {stat.change} from last month
+              </p>
+            </CardContent>
+          </Card>
+        ))}
+      </div> */}
 
+      {/* Tab Navigation - Match Dashboard style */}
       <Tabs defaultValue="trends" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="trends" className="text-xs">Trends</TabsTrigger>
-          <TabsTrigger value="financial-year" className="text-xs">Financial Year</TabsTrigger>
-          <TabsTrigger value="dnl-chart" className="text-xs">DNL Chart</TabsTrigger>
-          <TabsTrigger value="detailed" className="text-xs">Detailed Report</TabsTrigger>
-          <TabsTrigger value="export" className="text-xs">Export Options</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-5 max-w-2xl mx-auto lg:mx-0 h-9">
+          <TabsTrigger value="trends" className="flex items-center gap-1.5 text-xs">
+            <Activity className="h-3.5 w-3.5" />
+            Trends
+          </TabsTrigger>
+          <TabsTrigger value="financial-year" className="flex items-center gap-1.5 text-xs">
+            <IndianRupee className="h-3.5 w-3.5" />
+            Financial
+          </TabsTrigger>
+          <TabsTrigger value="dnl-chart" className="flex items-center gap-1.5 text-xs">
+            <BarChart3 className="h-3.5 w-3.5" />
+            DNL Chart
+          </TabsTrigger>
+          <TabsTrigger value="detailed" className="flex items-center gap-1.5 text-xs">
+            <FileText className="h-3.5 w-3.5" />
+            Detailed
+          </TabsTrigger>
+          <TabsTrigger value="export" className="flex items-center gap-1.5 text-xs">
+            <Download className="h-3.5 w-3.5" />
+            Export
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="trends" className="space-y-4">
+        <TabsContent value="trends" className="space-y-4 mt-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <Card>
+            <Card className="shadow-sm">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base">Monthly Initiative Trends (FY'{getCurrentFiscalYear()})</CardTitle>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Activity className="h-4 w-4 text-blue-600" />
+                  Monthly Initiative Trends (FY'{getCurrentFiscalYear()})
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  Initiative submission and completion trends
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={280}>
@@ -689,9 +733,15 @@ export default function Reports({ user }: ReportsProps) {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="shadow-sm">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base">Monthly Savings Trends (FY'{getCurrentFiscalYear()})</CardTitle>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <IndianRupee className="h-4 w-4 text-green-600" />
+                  Monthly Savings Trends (FY'{getCurrentFiscalYear()})
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  Expected savings distribution by month
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={280}>
@@ -708,19 +758,19 @@ export default function Reports({ user }: ReportsProps) {
           </div>
         </TabsContent>
 
-        {/* New Financial Year Tab */}
-        <TabsContent value="financial-year" className="space-y-4">
-          <Card>
+        {/* Financial Year Tab */}
+        <TabsContent value="financial-year" className="space-y-4 mt-4">
+          <Card className="shadow-sm">
             <CardHeader className="pb-3">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div>
                   <CardTitle className="flex items-center gap-2 text-base">
-                    <BarChart3 className="h-5 w-5" />
+                    <BarChart3 className="h-4 w-4 text-blue-600" />
                     Financial Year Analysis (FY {selectedFinancialYear}-{selectedFinancialYear ? (parseInt(selectedFinancialYear) + 1).toString().slice(-2) : ''})
                   </CardTitle>
-                  <p className="text-muted-foreground text-sm">
+                  <CardDescription className="text-xs">
                     Comprehensive savings analysis by category and budget type
-                  </p>
+                  </CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -735,7 +785,7 @@ export default function Reports({ user }: ReportsProps) {
               ) : financialDataError ? (
                 <div className="flex flex-col items-center justify-center h-80 space-y-4">
                   <div className="text-red-600 text-center">
-                    <AlertCircle className="h-10 w-10 mx-auto mb-3" />
+                    <AlertTriangle className="h-10 w-10 mx-auto mb-3" />
                     <p className="font-medium">Financial Year Data Unavailable</p>
                     <p className="text-sm mt-2 max-w-md">{financialDataError}</p>
                   </div>
@@ -800,26 +850,26 @@ export default function Reports({ user }: ReportsProps) {
           </Card>
         </TabsContent>
 
-        <TabsContent value="dnl-chart" className="space-y-4">
-          <Card>
+        <TabsContent value="dnl-chart" className="space-y-4 mt-4">
+          <Card className="shadow-sm">
             <CardHeader className="pb-3">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div>
                   <CardTitle className="flex items-center gap-2 text-base">
-                    <BarChart3 className="h-5 w-5" />
+                    <BarChart3 className="h-4 w-4 text-blue-600" />
                     DNL Plant Initiatives Chart (FY'{getCurrentFiscalYear()})
                   </CardTitle>
-                  <p className="text-muted-foreground text-sm">
+                  <CardDescription className="text-xs">
                     Initiative savings by category - {selectedSite !== 'all' ? selectedSite : 'All Sites'} 
                     {selectedYear && ` - Year ${selectedYear}`}
-                  </p>
+                  </CardDescription>
                 </div>
                 <Button 
                   onClick={() => handleDownloadReport('DNL Chart Excel')}
-                  className="bg-green-600 hover:bg-green-700 text-white transition-all duration-200"
+                  className="bg-green-600 hover:bg-green-700 text-white transition-all duration-200 h-9 px-4 text-xs"
                   disabled={loadingChart || !dnlChartData || !!chartError}
                 >
-                  <FileSpreadsheet className="h-4 w-4 mr-2" />
+                  <FileSpreadsheet className="h-3.5 w-3.5 mr-2" />
                   Download Excel
                 </Button>
               </div>
@@ -835,7 +885,7 @@ export default function Reports({ user }: ReportsProps) {
               ) : chartError ? (
                 <div className="flex flex-col items-center justify-center h-80 space-y-4">
                   <div className="text-red-600 text-center">
-                    <AlertCircle className="h-10 w-10 mx-auto mb-3" />
+                    <AlertTriangle className="h-10 w-10 mx-auto mb-3" />
                     <p className="font-medium">Chart Data Unavailable</p>
                     <p className="text-sm mt-2 max-w-md">{chartError}</p>
                   </div>
@@ -863,10 +913,16 @@ export default function Reports({ user }: ReportsProps) {
           </Card>
         </TabsContent>
 
-        <TabsContent value="detailed" className="space-y-4">
-          <Card>
+        <TabsContent value="detailed" className="space-y-4 mt-4">
+          <Card className="shadow-sm">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">Initiative Details</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <FileText className="h-4 w-4 text-blue-600" />
+                Initiative Details
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Detailed view of filtered initiatives
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
@@ -884,7 +940,7 @@ export default function Reports({ user }: ReportsProps) {
                   </TableHeader>
                   <TableBody>
                     {filteredInitiatives.slice(0, 10).map((initiative: any) => (
-                      <TableRow key={initiative.id}>
+                      <TableRow key={initiative.id} className="hover:bg-muted/50">
                         <TableCell className="font-medium text-xs">
                           <div className="max-w-48 truncate">
                             {initiative.initiativeNumber || initiative.title}
@@ -897,7 +953,7 @@ export default function Reports({ user }: ReportsProps) {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-xs">
-                          <Badge className={`${getStatusColor(initiative.status)} text-white text-xs`}>
+                          <Badge className={`${getStatusColor(initiative.status)} text-xs`}>
                             {initiative.status}
                           </Badge>
                         </TableCell>
@@ -920,7 +976,7 @@ export default function Reports({ user }: ReportsProps) {
               </div>
               {filteredInitiatives.length > 10 && (
                 <div className="mt-3 text-center">
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     Showing first 10 of {filteredInitiatives.length} initiatives
                   </p>
                 </div>
@@ -929,30 +985,38 @@ export default function Reports({ user }: ReportsProps) {
           </Card>
         </TabsContent>
 
-        <TabsContent value="export" className="space-y-4">
-          <Card>
+        <TabsContent value="export" className="space-y-4 mt-4">
+          <Card className="shadow-sm">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">Export Reports</CardTitle>
-              <p className="text-muted-foreground text-sm">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Download className="h-4 w-4 text-blue-600" />
+                Export Reports
+              </CardTitle>
+              <CardDescription className="text-xs">
                 Download detailed reports in various formats (Data includes current month: {getCurrentMonth()} {new Date().getFullYear()})
-              </p>
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Button 
                   onClick={() => handleDownloadReport('DNL Plant Initiatives PDF')}
-                  className="w-full"
+                  className="w-full justify-start gap-2.5 h-10 text-xs hover:bg-blue-50 hover:border-blue-200 transition-all"
+                  variant="outline"
                 >
-                  <Download className="h-4 w-4 mr-2" />
+                  <div className="p-1 rounded bg-blue-100">
+                    <Download className="h-3.5 w-3.5 text-blue-600" />
+                  </div>
                   DNL Plant Initiatives Report (Excel)
                 </Button>
                 
                 <Button 
                   onClick={() => handleDownloadReport('Detailed Report (Excel)')}
+                  className="w-full justify-start gap-2.5 h-10 text-xs hover:bg-green-50 hover:border-green-200 transition-all"
                   variant="outline"
-                  className="w-full"
                 >
-                  <Download className="h-4 w-4 mr-2" />
+                  <div className="p-1 rounded bg-green-100">
+                    <FileSpreadsheet className="h-3.5 w-3.5 text-green-600" />
+                  </div>
                   Detailed Report (Excel)
                 </Button>
               </div>

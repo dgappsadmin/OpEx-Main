@@ -271,22 +271,22 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 w-[95vw] h-[95vh]">
-        <DialogHeader className="px-4 py-3 border-b bg-gradient-to-r from-primary/5 to-secondary/5 flex-shrink-0">
+      <DialogContent className="max-w-screen max-h-screen p-0 w-screen h-screen border-none shadow-2xl">
+        <DialogHeader className="px-6 py-4 border-b bg-gradient-to-r from-primary/5 to-secondary/5 flex-shrink-0">
           <DialogTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-primary/10">
-                {isEditing ? <Edit className="h-4 w-4 text-primary" /> : <Eye className="h-4 w-4 text-primary" />}
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                {isEditing ? <Edit className="h-5 w-5 text-primary" /> : <Eye className="h-5 w-5 text-primary" />}
               </div>
               <div>
-                <h2 className="text-lg font-semibold">
+                <h2 className="text-xl font-semibold">
                   {isEditing ? 'Edit Initiative' : 'Initiative Details'}
                 </h2>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-sm text-muted-foreground mt-1">
                   {initiative?.initiativeNumber || `ID: ${initiative?.id}`}
                 </p>
-                <div className="flex items-center gap-2 mt-1">
-                  <div className={`px-2 py-0.5 rounded text-xs font-medium ${
+                <div className="flex items-center gap-2 mt-2">
+                  <div className={`px-3 py-1 rounded text-sm font-medium ${
                     user?.role === 'VIEWER'
                       ? 'bg-blue-100 text-blue-800' 
                       : isEditing 
@@ -298,21 +298,21 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               {!isEditing && mode !== 'edit' && user?.role !== 'VIEWER' && (
-                <Button variant="outline" size="sm" onClick={() => setIsEditing(true)} className="min-w-[70px] h-8">
-                  <Edit className="h-3 w-3 mr-1" />
+                <Button variant="outline" size="default" onClick={() => setIsEditing(true)} className="min-w-[90px] h-10 px-4">
+                  <Edit className="h-4 w-4 mr-2" />
                   Edit
                 </Button>
               )}
               {isEditing && (
                 <>
-                  <Button variant="outline" size="sm" onClick={handleCancel} className="min-w-[80px] h-8" disabled={isSaving}>
-                    <X className="h-3 w-3 mr-1" />
+                  <Button variant="outline" size="default" onClick={handleCancel} className="min-w-[100px] h-10 px-4" disabled={isSaving}>
+                    <X className="h-4 w-4 mr-2" />
                     Cancel
                   </Button>
-                  <Button size="sm" onClick={handleSave} className="min-w-[100px] h-8" disabled={isSaving}>
-                    <Save className="h-3 w-3 mr-1" />
+                  <Button size="default" onClick={handleSave} className="min-w-[120px] h-10 px-4" disabled={isSaving}>
+                    <Save className="h-4 w-4 mr-2" />
                     {isSaving ? 'Saving...' : 'Save Changes'}
                   </Button>
                 </>
@@ -323,24 +323,24 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
 
         <div className="flex-1 overflow-hidden">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full h-full flex flex-col">
-            <TabsList className="grid w-full grid-cols-3 h-9 flex-shrink-0 mx-4 mt-4">
-              <TabsTrigger value="overview" className="flex items-center gap-1 text-xs">
-                <Target className="h-3 w-3" />
+            <TabsList className="grid w-full grid-cols-3 h-12 flex-shrink-0 mx-6 mt-6">
+              <TabsTrigger value="overview" className="flex items-center gap-2 text-sm py-2">
+                <Target className="h-4 w-4" />
                 Overview
               </TabsTrigger>
-              <TabsTrigger value="details" className="flex items-center gap-1 text-xs">
-                <FileText className="h-3 w-3" />
+              <TabsTrigger value="details" className="flex items-center gap-2 text-sm py-2">
+                <FileText className="h-4 w-4" />
                 Details
               </TabsTrigger>
-              <TabsTrigger value="settings" className="flex items-center gap-1 text-xs">
-                <Settings className="h-3 w-3" />
+              <TabsTrigger value="settings" className="flex items-center gap-2 text-sm py-2">
+                <Settings className="h-4 w-4" />
                 Settings
               </TabsTrigger>
             </TabsList>
 
             <div className="flex-1 overflow-hidden">
-              <ScrollArea className="h-full px-4">
-                <TabsContent value="overview" className="mt-4 space-y-4 px-1">
+              <ScrollArea className="h-full px-6 pb-6">
+                <TabsContent value="overview" className="mt-6 space-y-6 px-2">
                   {/* Quick Stats */}
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
                     <Card className="border-l-4 border-l-primary">
@@ -536,16 +536,17 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                             </div>
                             
                             {/* Additional Key Information */}
-                            {(initiative?.targetOutcome || initiative?.confidenceLevel || initiative?.estimatedCapex) && (
+                            {(initiative?.targetOutcome || initiative?.estimatedCapex) && (
                               <>
                                 <Separator />
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                   {initiative?.targetOutcome && (
                                     <div>
                                       <p className="text-xs font-medium">Target Outcome</p>
                                       <p className="text-xs text-muted-foreground">{initiative.targetOutcome}</p>
                                     </div>
                                   )}
+                                  {/* Commented out Confidence Level display as requested
                                   {initiative?.confidenceLevel && (
                                     <div>
                                       <p className="text-xs font-medium">Confidence Level</p>
@@ -554,6 +555,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                                       </Badge>
                                     </div>
                                   )}
+                                  */}
                                   {initiative?.estimatedCapex && (
                                     <div>
                                       <p className="text-xs font-medium">Estimated CAPEX</p>
@@ -652,6 +654,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                             <Input value={formData.discipline || ''} disabled className="mt-1 h-10" />
                           )}
                         </div>
+                        {/* Commented out Priority field as requested
                         <div>
                           <Label htmlFor="priority" className="text-sm font-medium">
                             Priority *
@@ -671,6 +674,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                             <Input value={formData.priority || ''} disabled className="mt-1 h-10" />
                           )}
                         </div>
+                        */}
                         <div>
                           <Label htmlFor="expectedSavings" className="text-sm font-medium">
                             Expected Savings (₹)
@@ -810,6 +814,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                             placeholder="Enter target value"
                           />
                         </div>
+                        {/* Commented out Confidence Level field as requested
                         <div>
                           <Label htmlFor="confidenceLevel" className="text-sm font-medium">
                             Confidence Level (%)
@@ -826,6 +831,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                             placeholder="0-100"
                           />
                         </div>
+                        */}
                         <div>
                           <Label htmlFor="estimatedCapex" className="text-sm font-medium">
                             Estimated CAPEX (₹)

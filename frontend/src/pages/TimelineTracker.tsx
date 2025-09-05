@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,7 +12,25 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CalendarIcon, Plus, Edit, Trash2, CheckCircle, Clock, AlertCircle, Lock, Filter, RefreshCw, FileText, BarChart3, FileSpreadsheet } from 'lucide-react';
+import { 
+  CalendarIcon, 
+  Plus, 
+  Edit, 
+  Trash2, 
+  CheckCircle, 
+  Clock, 
+  AlertCircle, 
+  Lock, 
+  Filter, 
+  RefreshCw, 
+  FileText, 
+  BarChart3, 
+  FileSpreadsheet,
+  Activity,
+  Target,
+  TrendingUp,
+  IndianRupee
+} from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -70,7 +88,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const itemsPerPage = 9; // Increased for better space utilization
+  const itemsPerPage = 8; // Optimized for better display
 
   // Enhanced currency formatting
   const formatCurrency = (amount: number): string => {
@@ -368,31 +386,82 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
     </Popover>
   );
 
+  // Summary stats for consistent design
+  const overviewStats = [
+    {
+      title: "Total Entries",
+      value: timelineEntries.length.toString(),
+      change: "+15%",
+      trend: "up",
+      icon: FileText,
+      color: "text-blue-600",
+      description: `${timelineEntries.filter((e: TimelineEntry) => e.status === 'COMPLETED').length} completed`
+    },
+    {
+      title: "In Progress",
+      value: timelineEntries.filter((e: TimelineEntry) => e.status === 'IN_PROGRESS').length.toString(),
+      change: "+8%",
+      trend: "up",
+      icon: Activity,
+      color: "text-orange-600",
+      description: "Currently active"
+    },
+    {
+      title: "Completed",
+      value: timelineEntries.filter((e: TimelineEntry) => e.status === 'COMPLETED').length.toString(),
+      change: "+25%",
+      trend: "up",
+      icon: CheckCircle,
+      color: "text-green-600",
+      description: "Successfully finished"
+    },
+    {
+      title: "Approval Rate",
+      value: `${timelineEntries.length > 0 ? 
+        ((timelineEntries.filter((e: TimelineEntry) => e.siteLeadApproval === 'Y' && e.initiativeLeadApproval === 'Y').length / timelineEntries.length) * 100).toFixed(0) 
+        : 0}%`,
+      change: "+12%",
+      trend: "up",
+      icon: Target,
+      color: "text-purple-600",
+      description: "Both approvals"
+    }
+  ];
+
   if (initiativesLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <RefreshCw className="h-8 w-8 animate-spin mr-2" />
-        Loading Timeline Tracker...
+      <div className="container mx-auto p-4 space-y-4 max-w-6xl">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center space-y-2">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="text-sm text-muted-foreground">Loading Timeline Tracker...</p>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-4 space-y-4 max-w-7xl">
+    <div className="container mx-auto p-4 space-y-4 max-w-6xl">
+      {/* Header - Match Dashboard style */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold">Initiative Timeline Tracker</h1>
-          <p className="text-muted-foreground text-sm">Manage and track initiative timelines</p>
+          <h1 className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Initiative Timeline Tracker
+          </h1>
+          <p className="text-muted-foreground text-xs mt-0.5">
+            Manage and track initiative timelines and milestones
+          </p>
         </div>
         <div className="flex items-center gap-2">
           {/* Download Template Button */}
           <Button 
             variant="outline"
             onClick={handleDownloadTemplate}
-            className="gap-2 shrink-0 hover:bg-green-50 hover:border-green-200 transition-colors"
+            className="gap-2 shrink-0 hover:bg-green-50 hover:border-green-200 transition-colors h-9 px-4 text-xs"
           >
-            <FileSpreadsheet className="h-4 w-4 text-green-600" />
-            <span className="font-medium">Download Tracker Template</span>
+            <FileSpreadsheet className="h-3.5 w-3.5 text-green-600" />
+            <span className="font-medium">Download Template</span>
           </Button>
           
           {selectedInitiativeId && user.role !== 'VIEWER' && (
@@ -400,9 +469,9 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
               <DialogTrigger asChild>
                 <Button 
                   onClick={() => { setEditingEntry(null); setFormData({}); }}
-                  className="gap-2 shrink-0"
+                  className="gap-2 shrink-0 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 h-9 px-4 text-xs"
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-3.5 w-3.5" />
                   Add Timeline Entry
                 </Button>
               </DialogTrigger>
@@ -527,65 +596,75 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
 
       {!selectedInitiativeId ? (
         <div>
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
-            <h2 className="text-lg font-semibold">Your Assigned Initiatives</h2>
-            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
-              <div className="relative">
-                <Input
-                  placeholder="Search initiatives..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full sm:w-56"
-                />
+          {/* Filters - Enhanced style */}
+          <Card className="shadow-sm mb-4">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Filter className="h-4 w-4 text-blue-600" />
+                Initiative Filters
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Search and filter your assigned initiatives
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                <div className="flex-1">
+                  <Input
+                    placeholder="Search initiatives..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+                <Select value={filterStatus} onValueChange={setFilterStatus}>
+                  <SelectTrigger className="sm:w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">All Status</SelectItem>
+                    <SelectItem value="PLANNING">Planning</SelectItem>
+                    <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                    <SelectItem value="COMPLETED">Completed</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-full sm:w-36">
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">All Status</SelectItem>
-                  <SelectItem value="PLANNING">Planning</SelectItem>
-                  <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-                  <SelectItem value="COMPLETED">Completed</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
           {filteredInitiatives.length === 0 ? (
-            <Card>
-              <CardContent className="text-center py-8">
+            <Card className="shadow-sm">
+              <CardContent className="text-center py-12">
                 <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold mb-2">No Initiatives Available</h3>
-                <p className="text-muted-foreground text-sm">
+                <p className="text-muted-foreground text-sm max-w-md mx-auto">
                   You currently have no initiatives where Stage 5 (Timeline Tracker) has been approved and you are assigned as Initiative Lead.
                 </p>
               </CardContent>
             </Card>
           ) : (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
                 {paginatedInitiatives.map((initiative: Initiative) => (
                   <Card
                     key={initiative.id}
-                    className="cursor-pointer hover:shadow-md transition-all duration-200 hover:scale-[1.01] compact-card"
+                    className="cursor-pointer hover:shadow-md transition-all duration-200 hover:scale-[1.02] shadow-sm group"
                     onClick={() => setSelectedInitiativeId(initiative.id)}
                   >
-                    <CardHeader className="pb-2">
+                    <div className="absolute inset-0 bg-gradient-to-br from-transparent to-gray-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"></div>
+                    <CardHeader className="pb-3 relative z-10">
                       <div className="flex justify-between items-start gap-2">
                         <div className="flex-1 min-w-0">
-                          <CardTitle className="text-sm font-semibold line-clamp-1 mb-1">{initiative.initiativeNumber}</CardTitle>
-                          <Badge variant="outline" className="text-xs px-1.5 py-0.5">{initiative.initiativeStatus}</Badge>
+                          <CardTitle className="text-sm font-semibold line-clamp-1 mb-2">{initiative.initiativeNumber}</CardTitle>
+                          <Badge variant="outline" className="text-xs">{initiative.initiativeStatus}</Badge>
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent className="pt-1">
+                    <CardContent className="pt-0 relative z-10">
                       <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{initiative.initiativeTitle}</p>
-                      <div className="space-y-1.5 text-xs">
+                      <div className="space-y-2 text-xs">
                         <div className="flex items-center justify-between">
                           <span className="text-muted-foreground">Site:</span>
-                          <span className="font-medium truncate ml-2">{initiative.site}</span>
+                          <span className="font-medium">{initiative.site}</span>
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-muted-foreground">Lead:</span>
@@ -593,7 +672,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-muted-foreground">Savings:</span>
-                          <span className="font-medium text-green-600 truncate ml-2">{formatCurrency(initiative.expectedSavings)}</span>
+                          <span className="font-medium text-green-600">{formatCurrency(initiative.expectedSavings)}</span>
                         </div>
                       </div>
                     </CardContent>
@@ -630,7 +709,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
         </div>
       ) : (
         <div>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-3">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-3">
             <div>
               <h2 className="text-lg font-semibold">
                 Timeline for: {approvedInitiatives.find((i: Initiative) => i.id === selectedInitiativeId)?.initiativeNumber}
@@ -644,38 +723,73 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
             </Button>
           </div>
 
+          {/* Summary Stats Cards - Dashboard pattern */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+            {overviewStats.map((stat) => (
+              <Card key={stat.title} className="relative overflow-hidden group hover:shadow-md transition-all duration-200 shadow-sm">
+                <div className="absolute inset-0 bg-gradient-to-br from-transparent to-gray-50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10 pt-3 px-3">
+                  <CardTitle className="text-xs font-medium text-muted-foreground">
+                    {stat.title}
+                  </CardTitle>
+                  <div className={`p-1.5 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200`}>
+                    <stat.icon className={`h-3.5 w-3.5 ${stat.color}`} />
+                  </div>
+                </CardHeader>
+                <CardContent className="pb-3 relative z-10 px-3">
+                  <div className="text-xl font-bold break-words mb-1">
+                    {stat.value}
+                  </div>
+                  <p className="text-2xs text-muted-foreground mb-1">
+                    {stat.description}
+                  </p>
+                  <p className={`text-2xs flex items-center gap-1 ${
+                    stat.trend === 'up' ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    <TrendingUp className="h-2.5 w-2.5" />
+                    {stat.change} from last month
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Tab Navigation - Match Dashboard style */}
           <Tabs defaultValue="timeline" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="timeline" className="text-xs">
-                <FileText className="h-4 w-4 mr-2" />
+            <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto lg:mx-0 h-9">
+              <TabsTrigger value="timeline" className="flex items-center gap-1.5 text-xs">
+                <FileText className="h-3.5 w-3.5" />
                 Timeline Entries
               </TabsTrigger>
-              <TabsTrigger value="overview" className="text-xs">
-                <BarChart3 className="h-4 w-4 mr-2" />
+              <TabsTrigger value="overview" className="flex items-center gap-1.5 text-xs">
+                <BarChart3 className="h-3.5 w-3.5" />
                 Overview
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="timeline">
+            <TabsContent value="timeline" className="mt-4">
               {entriesLoading ? (
                 <div className="flex justify-center items-center h-64">
-                  <RefreshCw className="h-8 w-8 animate-spin mr-2" />
-                  Loading timeline entries...
+                  <div className="text-center space-y-2">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                    <p className="text-sm text-muted-foreground">Loading timeline entries...</p>
+                  </div>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {timelineEntries.length === 0 ? (
-                    <Card>
-                      <CardContent className="text-center py-8">
+                    <Card className="shadow-sm">
+                      <CardContent className="text-center py-12">
                         <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                        <p className="text-muted-foreground">No timeline entries found for this initiative.</p>
+                        <h3 className="text-lg font-semibold mb-2">No Timeline Entries</h3>
+                        <p className="text-muted-foreground text-sm">No timeline entries found for this initiative.</p>
                         <p className="text-sm text-muted-foreground mt-2">Click "Add Timeline Entry" to get started.</p>
                       </CardContent>
                     </Card>
                   ) : (
-                    <div className="grid gap-3">
+                    <div className="grid gap-4">
                       {timelineEntries.map((entry: TimelineEntry) => (
-                        <Card key={entry.id} className="hover:shadow-md transition-shadow">
+                        <Card key={entry.id} className="hover:shadow-md transition-shadow shadow-sm">
                           <CardHeader className="pb-3">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center space-x-3">
@@ -732,9 +846,9 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                                 <span>Progress</span>
                                 <span>{calculateProgress(entry)}%</span>
                               </div>
-                              <div className="w-full bg-gray-200 rounded-full h-1.5">
+                              <div className="w-full bg-gray-200 rounded-full h-2">
                                 <div 
-                                  className={`h-1.5 rounded-full ${getStatusColor(entry.status)}`}
+                                  className={`h-2 rounded-full ${getStatusColor(entry.status)}`}
                                   style={{ width: `${calculateProgress(entry)}%` }}
                                 ></div>
                               </div>
@@ -796,28 +910,28 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
               )}
             </TabsContent>
 
-            <TabsContent value="overview">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <Card className="compact-kpi-card">
-                  <CardContent className="p-4 text-center">
-                    <FileText className="h-6 w-6 mx-auto text-blue-600 mb-2" />
-                    <h3 className="text-xl font-bold text-blue-600">{timelineEntries.length}</h3>
+            <TabsContent value="overview" className="mt-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card className="shadow-sm">
+                  <CardContent className="p-6 text-center">
+                    <FileText className="h-8 w-8 mx-auto text-blue-600 mb-3" />
+                    <h3 className="text-2xl font-bold text-blue-600">{timelineEntries.length}</h3>
                     <p className="text-sm text-muted-foreground">Total Entries</p>
                   </CardContent>
                 </Card>
-                <Card className="compact-kpi-card">
-                  <CardContent className="p-4 text-center">
-                    <CheckCircle className="h-6 w-6 mx-auto text-green-600 mb-2" />
-                    <h3 className="text-xl font-bold text-green-600">
+                <Card className="shadow-sm">
+                  <CardContent className="p-6 text-center">
+                    <CheckCircle className="h-8 w-8 mx-auto text-green-600 mb-3" />
+                    <h3 className="text-2xl font-bold text-green-600">
                       {timelineEntries.filter((e: TimelineEntry) => e.status === 'COMPLETED').length}
                     </h3>
                     <p className="text-sm text-muted-foreground">Completed</p>
                   </CardContent>
                 </Card>
-                <Card className="compact-kpi-card">
-                  <CardContent className="p-4 text-center">
-                    <Clock className="h-6 w-6 mx-auto text-yellow-600 mb-2" />
-                    <h3 className="text-xl font-bold text-yellow-600">
+                <Card className="shadow-sm">
+                  <CardContent className="p-6 text-center">
+                    <Clock className="h-8 w-8 mx-auto text-yellow-600 mb-3" />
+                    <h3 className="text-2xl font-bold text-yellow-600">
                       {timelineEntries.filter((e: TimelineEntry) => e.status === 'IN_PROGRESS').length}
                     </h3>
                     <p className="text-sm text-muted-foreground">In Progress</p>
