@@ -28,13 +28,24 @@ export default function PerformanceAnalysis({
   isLoading 
 }: PerformanceAnalysisProps) {
   
-  // Enhanced currency formatting to show values in Lakhs
+  // Enhanced currency formatting to show values in appropriate units (fixed scaling issue)
   const formatCurrencyInLakhs = (amount: number): string => {
-    const lakhs = amount / 100000;
-    if (lakhs >= 100) {
-      return `₹${(lakhs/100).toFixed(2)}Cr`;
+    if (amount >= 10000000) {
+      // >= 1 Crore: show in Crores
+      const crores = amount / 10000000;
+      return `₹${crores.toFixed(2)}Cr`;
+    } else if (amount >= 100000) {
+      // >= 1 Lakh: show in Lakhs
+      const lakhs = amount / 100000;
+      return `₹${lakhs.toFixed(2)}L`;
+    } else if (amount >= 1000) {
+      // >= 1 Thousand: show in Thousands
+      const thousands = amount / 1000;
+      return `₹${thousands.toFixed(0)}K`;
+    } else {
+      // < 1 Thousand: show actual amount
+      return `₹${amount.toFixed(0)}`;
     }
-    return `₹${lakhs.toFixed(2)}L`;
   };
 
   const getVariantColors = () => {

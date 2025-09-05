@@ -159,8 +159,9 @@ public class DashboardService {
             // Overall metrics
             totalInitiatives = initiativeRepository.count();
             BigDecimal totalExpectedSavings = initiativeRepository.sumAllExpectedSavings();
-            potentialSavingsAnnualized = totalExpectedSavings != null ? 
-                totalExpectedSavings.multiply(BigDecimal.valueOf(12)) : BigDecimal.ZERO;
+            // Fix: Don't multiply by 12 for annualized - use the total expected savings as is
+            // The expected savings in the database already represents the full potential
+            potentialSavingsAnnualized = totalExpectedSavings != null ? totalExpectedSavings : BigDecimal.ZERO;
             potentialSavingsCurrentFY = initiativeRepository.sumExpectedSavingsByCreatedAtBetween(fyStart, fyEnd);
             actualSavingsCurrentFY = monthlyMonitoringEntryRepository.sumAchievedValueByMonitoringMonthBetween(startMonth, endMonth);
             savingsProjectionCurrentFY = monthlyMonitoringEntryRepository.sumTargetValueByMonitoringMonthBetween(startMonth, endMonth);
@@ -168,8 +169,9 @@ public class DashboardService {
             // Budget type specific metrics
             totalInitiatives = initiativeRepository.countByBudgetType(budgetType);
             BigDecimal totalExpectedSavings = initiativeRepository.sumExpectedSavingsByBudgetType(budgetType);
-            potentialSavingsAnnualized = totalExpectedSavings != null ? 
-                totalExpectedSavings.multiply(BigDecimal.valueOf(12)) : BigDecimal.ZERO;
+            // Fix: Don't multiply by 12 for annualized - use the total expected savings as is
+            // The expected savings in the database already represents the full potential
+            potentialSavingsAnnualized = totalExpectedSavings != null ? totalExpectedSavings : BigDecimal.ZERO;
             potentialSavingsCurrentFY = initiativeRepository.sumExpectedSavingsByCreatedAtBetweenAndBudgetType(fyStart, fyEnd, budgetType);
             actualSavingsCurrentFY = monthlyMonitoringEntryRepository.sumAchievedValueByMonitoringMonthBetweenAndBudgetType(startMonth, endMonth, budgetType);
             savingsProjectionCurrentFY = monthlyMonitoringEntryRepository.sumTargetValueByMonitoringMonthBetweenAndBudgetType(startMonth, endMonth, budgetType);

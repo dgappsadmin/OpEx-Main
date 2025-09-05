@@ -14,9 +14,9 @@
     <name>opex-hub</name>
     <description>OpEx Hub - Operational Excellence Management System</description>
     
- <properties>
-    <maven.compiler.source>15</maven.compiler.source>
-    <maven.compiler.target>15</maven.compiler.target>
+<properties>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
 </properties>
 
     

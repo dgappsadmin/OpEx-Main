@@ -12,7 +12,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CalendarIcon, Plus, Edit, Trash2, CheckCircle, Clock, AlertCircle, Lock, Filter, RefreshCw, FileText, BarChart3 } from 'lucide-react';
+import { CalendarIcon, Plus, Edit, Trash2, CheckCircle, Clock, AlertCircle, Lock, Filter, RefreshCw, FileText, BarChart3, FileSpreadsheet } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -232,6 +232,30 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
     }
   });
 
+  const handleDownloadTemplate = () => {
+    try {
+      // Create a link element and trigger download
+      const link = document.createElement('a');
+      link.href = '/templates/Timeline_sheet_template.xlsx';
+      link.download = 'Timeline_sheet_template.xlsx';
+      link.setAttribute('target', '_blank');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast({ 
+        title: "Download Started", 
+        description: "Timeline tracker template downloaded successfully!" 
+      });
+    } catch (error) {
+      toast({ 
+        title: "Download Error", 
+        description: "Failed to download template file", 
+        variant: "destructive" 
+      });
+    }
+  };
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'PENDING': return <Clock className="h-4 w-4 text-yellow-600" />;
@@ -360,17 +384,28 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
           <h1 className="text-2xl lg:text-3xl font-bold">Initiative Timeline Tracker</h1>
           <p className="text-muted-foreground text-sm">Manage and track initiative timelines</p>
         </div>
-        {selectedInitiativeId && user.role !== 'VIEWER' && (
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button 
-                onClick={() => { setEditingEntry(null); setFormData({}); }}
-                className="gap-2 shrink-0"
-              >
-                <Plus className="h-4 w-4" />
-                Add Timeline Entry
-              </Button>
-            </DialogTrigger>
+        <div className="flex items-center gap-2">
+          {/* Download Template Button */}
+          <Button 
+            variant="outline"
+            onClick={handleDownloadTemplate}
+            className="gap-2 shrink-0 hover:bg-green-50 hover:border-green-200 transition-colors"
+          >
+            <FileSpreadsheet className="h-4 w-4 text-green-600" />
+            <span className="font-medium">Download Tracker Template</span>
+          </Button>
+          
+          {selectedInitiativeId && user.role !== 'VIEWER' && (
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button 
+                  onClick={() => { setEditingEntry(null); setFormData({}); }}
+                  className="gap-2 shrink-0"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Timeline Entry
+                </Button>
+              </DialogTrigger>
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>
@@ -486,7 +521,8 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
               </form>
             </DialogContent>
           </Dialog>
-        )}
+          )}
+        </div>
       </div>
 
       {!selectedInitiativeId ? (
