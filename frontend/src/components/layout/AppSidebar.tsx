@@ -121,7 +121,7 @@ export function AppSidebar({ user }: AppSidebarProps = {}) {
       : "hover:bg-gradient-to-r hover:from-muted/80 hover:to-accent/30 text-muted-foreground hover:text-foreground transition-all duration-300 ease-out hover:shadow-sm hover:border-l-2 hover:border-primary/30 hover:transform hover:translate-x-0.5";
 
   return (
-    <Sidebar className={isCollapsed ? "w-12" : "w-52"} collapsible="icon">
+    <Sidebar collapsible="icon">
       <SidebarContent className="bg-gradient-to-b from-card to-card/95 border-r border-border/60 backdrop-blur-sm">
         {/* Logo Section - Enhanced with subtle gradient */}
         <div className="p-2 border-b border-border/60 bg-gradient-to-r from-background/50 to-background/30 backdrop-blur-sm">
