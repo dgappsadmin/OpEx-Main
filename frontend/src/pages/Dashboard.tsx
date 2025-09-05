@@ -87,15 +87,34 @@ export default function Dashboard({ user }: DashboardProps) {
   ];
 
   // Format recent initiatives from API data
-  const recentInitiatives = initiativesLoading ? [] : (recentInitiativesData || []).slice(0, 3).map((initiative: any) => ({
-    id: initiative.id,
-    title: initiative.initiativeNumber || initiative.title,
-    site: initiative.sitpe,
-    status: initiative.status,
-    savings: formatCurrency(initiative.expectedSavings || 0),
-    progress: Math.round(((initiative.currentStage || 1) - 1) * 100 / 10), // Calculate progress based on current stage
-    priority: initiative.priority
-  }));
+  const recentInitiatives = initiativesLoading ? [] : (recentInitiativesData || []).slice(0, 3).map((initiative: any) => {
+    // Calculate progress based on current stage and status
+    // Stage 1 approved = 10%, Stage 2 approved = 20%, ..., Stage 10 approved = 100%
+    let progress = 0;
+    const currentStage = initiative.currentStage || 1;
+    const status = initiative.status?.trim();
+    
+    if (status === 'Completed') {
+      // If status is Completed, show 100%
+      progress = 100;
+    } else {
+      // Calculate progress: each approved stage = 10%
+      // If currentStage is 3, it means stages 1 and 2 are approved = 20%
+      // Current stage is the next pending stage, so approved stages = currentStage - 1
+      const approvedStages = Math.max(0, currentStage - 1);
+      progress = Math.min(100, (approvedStages * 100) / 10);
+    }
+    
+    return {
+      id: initiative.id,
+      title: initiative.initiativeNumber || initiative.title,
+      site: initiative.site,
+      status: initiative.status,
+      savings: formatCurrency(initiative.expectedSavings || 0),
+      progress: Math.round(progress),
+      priority: initiative.priority
+    };
+  });
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {

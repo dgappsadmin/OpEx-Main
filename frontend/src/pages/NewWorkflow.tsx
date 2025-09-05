@@ -356,9 +356,35 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
                           <div className="space-y-1.5">
                             <div className="flex justify-between text-xs">
                               <span>Progress</span>
-                              <span>{Math.round(((initiative.currentStage || 1) - 1) * 100 / 9)}%</span>
+                              <span>{(() => {
+                                const currentStage = initiative.currentStage || 1;
+                                const status = initiative.status?.trim();
+                                
+                                if (status === 'Completed') {
+                                  return 100;
+                                } else {
+                                  // Calculate progress: each approved stage = 10%
+                                  // If currentStage is 3, it means stages 1 and 2 are approved = 20%
+                                  // Current stage is the next pending stage, so approved stages = currentStage - 1
+                                  const approvedStages = Math.max(0, currentStage - 1);
+                                  return Math.min(100, Math.round((approvedStages * 100) / 10));
+                                }
+                              })()}%</span>
                             </div>
-                            <Progress value={Math.round(((initiative.currentStage || 1) - 1) * 100 / 9)} className="h-1.5" />
+                            <Progress value={(() => {
+                              const currentStage = initiative.currentStage || 1;
+                              const status = initiative.status?.trim();
+                              
+                              if (status === 'Completed') {
+                                return 100;
+                              } else {
+                                // Calculate progress: each approved stage = 10%
+                                // If currentStage is 3, it means stages 1 and 2 are approved = 20%
+                                // Current stage is the next pending stage, so approved stages = currentStage - 1
+                                const approvedStages = Math.max(0, currentStage - 1);
+                                return Math.min(100, Math.round((approvedStages * 100) / 10));
+                              }
+                            })()} className="h-1.5" />
                           </div>
                         </div>
                         

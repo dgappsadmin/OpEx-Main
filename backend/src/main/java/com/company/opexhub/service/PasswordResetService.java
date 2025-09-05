@@ -146,75 +146,76 @@ public class PasswordResetService {
      * Create simple email template for password reset
      */
     private String createPasswordResetEmailTemplate(String userName, String resetCode) {
-        return String.format("""
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <title>Password Reset Code</title>
-            </head>
-            <body style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.4; color: #333;">
-                
-                <h2 style="color: #2c5aa0; margin-bottom: 20px;">Password Reset Request</h2>
-                
-                <p>Dear <strong>%s</strong>,</p>
-                
-                <p>You have requested to reset your password for OPEX Hub. Please use the verification code below to proceed with your password reset.</p>
-                
-                <table border="1" cellpadding="15" cellspacing="0" style="border-collapse: collapse; margin: 20px 0; border: 2px solid #2c5aa0;">
-                    <tr style="background-color: #f8f9ff;">
-                        <td style="text-align: center;">
-                            <h3 style="color: #2c5aa0; margin: 0; font-size: 18px;">Your Reset Code</h3>
-                            <div style="font-size: 32px; font-weight: bold; color: #2c5aa0; letter-spacing: 4px; margin: 10px 0;">%s</div>
-                            <p style="margin: 0; font-size: 12px; color: #666;">This code will expire in 15 minutes</p>
-                        </td>
-                    </tr>
-                </table>
-                
-                <h3 style="color: #2c5aa0; margin-top: 25px; margin-bottom: 15px;">Security Information</h3>
-                
-                <table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%%; max-width: 500px; border: 1px solid #ccc;">
-                    <tr style="background-color: #f5f5f5;">
-                        <td style="font-weight: bold; width: 30%%;">Code Validity</td>
-                        <td>15 minutes from now</td>
-                    </tr>
-                    <tr>
-                        <td style="font-weight: bold; background-color: #f5f5f5;">Security</td>
-                        <td>One-time use only</td>
-                    </tr>
-                    <tr style="background-color: #f5f5f5;">
-                        <td style="font-weight: bold;">Action Required</td>
-                        <td>Enter this code in the password reset form</td>
-                    </tr>
-                </table>
-                
-                <h3 style="color: #2c5aa0; margin-top: 25px; margin-bottom: 15px;">Next Steps</h3>
-                
-                <ol style="line-height: 1.6;">
-                    <li>Return to the OPEX Hub password reset page</li>
-                    <li>Enter the 6-digit code shown above</li>
-                    <li>Create your new password</li>
-                    <li>Sign in with your new credentials</li>
-                </ol>
-                
-                <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 4px; margin: 20px 0;">
-                    <p style="margin: 0; color: #856404;">
-                        <strong>Security Notice:</strong> If you did not request this password reset, please ignore this email. 
-                        Your account security has not been compromised.
-                    </p>
-                </div>
-                
-                <hr style="margin: 30px 0; border: none; border-top: 1px solid #ccc;">
-                
-                <p style="font-size: 12px; color: #666;">
-                    <strong>OPEX Initiative Management System</strong><br>
-                    This is an automated notification. Please do not reply to this email.<br>
-                    For support, contact: support@company.com
-                </p>
-                
-            </body>
-            </html>
-            """, userName, resetCode);
+        StringBuilder template = new StringBuilder();
+        template.append("<!DOCTYPE html>\n");
+        template.append("<html>\n");
+        template.append("<head>\n");
+        template.append("    <meta charset=\"UTF-8\">\n");
+        template.append("    <title>Password Reset Code</title>\n");
+        template.append("</head>\n");
+        template.append("<body style=\"font-family: Arial, sans-serif; font-size: 14px; line-height: 1.4; color: #333;\">\n");
+        template.append("    \n");
+        template.append("    <h2 style=\"color: #2c5aa0; margin-bottom: 20px;\">Password Reset Request</h2>\n");
+        template.append("    \n");
+        template.append("    <p>Dear <strong>%s</strong>,</p>\n");
+        template.append("    \n");
+        template.append("    <p>You have requested to reset your password for OPEX Hub. Please use the verification code below to proceed with your password reset.</p>\n");
+        template.append("    \n");
+        template.append("    <table border=\"1\" cellpadding=\"15\" cellspacing=\"0\" style=\"border-collapse: collapse; margin: 20px 0; border: 2px solid #2c5aa0;\">\n");
+        template.append("        <tr style=\"background-color: #f8f9ff;\">\n");
+        template.append("            <td style=\"text-align: center;\">\n");
+        template.append("                <h3 style=\"color: #2c5aa0; margin: 0; font-size: 18px;\">Your Reset Code</h3>\n");
+        template.append("                <div style=\"font-size: 32px; font-weight: bold; color: #2c5aa0; letter-spacing: 4px; margin: 10px 0;\">%s</div>\n");
+        template.append("                <p style=\"margin: 0; font-size: 12px; color: #666;\">This code will expire in 15 minutes</p>\n");
+        template.append("            </td>\n");
+        template.append("        </tr>\n");
+        template.append("    </table>\n");
+        template.append("    \n");
+        template.append("    <h3 style=\"color: #2c5aa0; margin-top: 25px; margin-bottom: 15px;\">Security Information</h3>\n");
+        template.append("    \n");
+        template.append("    <table border=\"1\" cellpadding=\"8\" cellspacing=\"0\" style=\"border-collapse: collapse; width: 100%%; max-width: 500px; border: 1px solid #ccc;\">\n");
+        template.append("        <tr style=\"background-color: #f5f5f5;\">\n");
+        template.append("            <td style=\"font-weight: bold; width: 30%%;\">Code Validity</td>\n");
+        template.append("            <td>15 minutes from now</td>\n");
+        template.append("        </tr>\n");
+        template.append("        <tr>\n");
+        template.append("            <td style=\"font-weight: bold; background-color: #f5f5f5;\">Security</td>\n");
+        template.append("            <td>One-time use only</td>\n");
+        template.append("        </tr>\n");
+        template.append("        <tr style=\"background-color: #f5f5f5;\">\n");
+        template.append("            <td style=\"font-weight: bold;\">Action Required</td>\n");
+        template.append("            <td>Enter this code in the password reset form</td>\n");
+        template.append("        </tr>\n");
+        template.append("    </table>\n");
+        template.append("    \n");
+        template.append("    <h3 style=\"color: #2c5aa0; margin-top: 25px; margin-bottom: 15px;\">Next Steps</h3>\n");
+        template.append("    \n");
+        template.append("    <ol style=\"line-height: 1.6;\">\n");
+        template.append("        <li>Return to the OPEX Hub password reset page</li>\n");
+        template.append("        <li>Enter the 6-digit code shown above</li>\n");
+        template.append("        <li>Create your new password</li>\n");
+        template.append("        <li>Sign in with your new credentials</li>\n");
+        template.append("    </ol>\n");
+        template.append("    \n");
+        template.append("    <div style=\"background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 4px; margin: 20px 0;\">\n");
+        template.append("        <p style=\"margin: 0; color: #856404;\">\n");
+        template.append("            <strong>Security Notice:</strong> If you did not request this password reset, please ignore this email. \n");
+        template.append("            Your account security has not been compromised.\n");
+        template.append("        </p>\n");
+        template.append("    </div>\n");
+        template.append("    \n");
+        template.append("    <hr style=\"margin: 30px 0; border: none; border-top: 1px solid #ccc;\">\n");
+        template.append("    \n");
+        template.append("    <p style=\"font-size: 12px; color: #666;\">\n");
+        template.append("        <strong>OPEX Hub - Operational Excellence Platform</strong><br>\n");
+        template.append("        This is an automated notification. Please do not reply to this email.<br>\n");
+        // template.append("        For support, contact: support@company.com\n");
+        template.append("    </p>\n");
+        template.append("    \n");
+        template.append("</body>\n");
+        template.append("</html>\n");
+        
+        return String.format(template.toString(), userName, resetCode);
     }
 
     /**

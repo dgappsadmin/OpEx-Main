@@ -207,70 +207,71 @@ public class EmailVerificationService {
      * Create professional email template for email verification
      */
     private String createEmailVerificationTemplate(String userName, String verificationCode, String email) {
-        return String.format("""
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <title>Email Verification Code</title>
-            </head>
-            <body style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.4; color: #333;">
-                
-                <h2 style="color: #2c5aa0; margin-bottom: 20px;">Email Verification Required</h2>
-                
-                <p>Dear <strong>%s</strong>,</p>
-                
-                <p>Thank you for registering with OPEX Hub - Operational Excellence Platform. To complete your registration and secure your account, please use the verification code below.</p>
-                
-                <table border="1" cellpadding="15" cellspacing="0" style="border-collapse: collapse; margin: 20px 0; border: 2px solid #2c5aa0;">
-                    <tr style="background-color: #f8f9ff;">
-                        <td style="text-align: center;">
-                            <h3 style="color: #2c5aa0; margin: 0; font-size: 18px;">Your Verification Code</h3>
-                            <div style="font-size: 32px; font-weight: bold; color: #2c5aa0; letter-spacing: 4px; margin: 10px 0;">%s</div>
-                            <p style="margin: 0; font-size: 12px; color: #666;">This code will expire in 15 minutes</p>
-                        </td>
-                    </tr>
-                </table>
-                
-                <h3 style="color: #2c5aa0; margin-top: 25px; margin-bottom: 15px;">Registration Information</h3>
-                
-                <table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%%; max-width: 500px; border: 1px solid #ccc;">
-                    <tr style="background-color: #f5f5f5;">
-                        <td style="font-weight: bold; width: 30%%;">Email Address</td>
-                        <td>%s</td>
-                    </tr>
-                    <tr>
-                        <td style="font-weight: bold; background-color: #f5f5f5;">Code Validity</td>
-                        <td>15 minutes from now</td>
-                    </tr>
-                    <tr style="background-color: #f5f5f5;">
-                        <td style="font-weight: bold;">Security</td>
-                        <td>One-time use only</td>
-                    </tr>
-                    <tr>
-                        <td style="font-weight: bold; background-color: #f5f5f5;">Action Required</td>
-                        <td>Enter this code in the registration form</td>
-                    </tr>
-                </table>
-                
-                <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 4px; margin: 20px 0;">
-                    <p style="margin: 0; color: #856404;">
-                        <strong>Security Notice:</strong> If you did not create an account with OPEX Hub, please ignore this email. 
-                        Your email address will not be registered and no account will be created.
-                    </p>
-                </div>
-                
-                <hr style="margin: 30px 0; border: none; border-top: 1px solid #ccc;">
-                
-                <p style="font-size: 12px; color: #666;">
-                    <strong>OPEX Hub - Operational Excellence Platform</strong><br>
-                    This is an automated notification. Please do not reply to this email.<br>
-                    For support, contact: dnsharma@godeepak.com
-                </p>
-                
-            </body>
-            </html>
-            """, userName, verificationCode, email);
+        StringBuilder template = new StringBuilder();
+        template.append("<!DOCTYPE html>\n");
+        template.append("<html>\n");
+        template.append("<head>\n");
+        template.append("    <meta charset=\"UTF-8\">\n");
+        template.append("    <title>Email Verification Code</title>\n");
+        template.append("</head>\n");
+        template.append("<body style=\"font-family: Arial, sans-serif; font-size: 14px; line-height: 1.4; color: #333;\">\n");
+        template.append("    \n");
+        template.append("    <h2 style=\"color: #2c5aa0; margin-bottom: 20px;\">Email Verification Required</h2>\n");
+        template.append("    \n");
+        template.append("    <p>Dear <strong>%s</strong>,</p>\n");
+        template.append("    \n");
+        template.append("    <p>Thank you for registering with OPEX Hub - Operational Excellence Platform. To complete your registration and secure your account, please use the verification code below.</p>\n");
+        template.append("    \n");
+        template.append("    <table border=\"1\" cellpadding=\"15\" cellspacing=\"0\" style=\"border-collapse: collapse; margin: 20px 0; border: 2px solid #2c5aa0;\">\n");
+        template.append("        <tr style=\"background-color: #f8f9ff;\">\n");
+        template.append("            <td style=\"text-align: center;\">\n");
+        template.append("                <h3 style=\"color: #2c5aa0; margin: 0; font-size: 18px;\">Your Verification Code</h3>\n");
+        template.append("                <div style=\"font-size: 32px; font-weight: bold; color: #2c5aa0; letter-spacing: 4px; margin: 10px 0;\">%s</div>\n");
+        template.append("                <p style=\"margin: 0; font-size: 12px; color: #666;\">This code will expire in 15 minutes</p>\n");
+        template.append("            </td>\n");
+        template.append("        </tr>\n");
+        template.append("    </table>\n");
+        template.append("    \n");
+        template.append("    <h3 style=\"color: #2c5aa0; margin-top: 25px; margin-bottom: 15px;\">Registration Information</h3>\n");
+        template.append("    \n");
+        template.append("    <table border=\"1\" cellpadding=\"8\" cellspacing=\"0\" style=\"border-collapse: collapse; width: 100%%; max-width: 500px; border: 1px solid #ccc;\">\n");
+        template.append("        <tr style=\"background-color: #f5f5f5;\">\n");
+        template.append("            <td style=\"font-weight: bold; width: 30%%;\">Email Address</td>\n");
+        template.append("            <td>%s</td>\n");
+        template.append("        </tr>\n");
+        template.append("        <tr>\n");
+        template.append("            <td style=\"font-weight: bold; background-color: #f5f5f5;\">Code Validity</td>\n");
+        template.append("            <td>15 minutes from now</td>\n");
+        template.append("        </tr>\n");
+        template.append("        <tr style=\"background-color: #f5f5f5;\">\n");
+        template.append("            <td style=\"font-weight: bold;\">Security</td>\n");
+        template.append("            <td>One-time use only</td>\n");
+        template.append("        </tr>\n");
+        template.append("        <tr>\n");
+        template.append("            <td style=\"font-weight: bold; background-color: #f5f5f5;\">Action Required</td>\n");
+        template.append("            <td>Enter this code in the registration form</td>\n");
+        template.append("        </tr>\n");
+        template.append("    </table>\n");
+        template.append("    \n");
+        template.append("    <div style=\"background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 4px; margin: 20px 0;\">\n");
+        template.append("        <p style=\"margin: 0; color: #856404;\">\n");
+        template.append("            <strong>Security Notice:</strong> If you did not create an account with OPEX Hub, please ignore this email. \n");
+        template.append("            Your email address will not be registered and no account will be created.\n");
+        template.append("        </p>\n");
+        template.append("    </div>\n");
+        template.append("    \n");
+        template.append("    <hr style=\"margin: 30px 0; border: none; border-top: 1px solid #ccc;\">\n");
+        template.append("    \n");
+        template.append("    <p style=\"font-size: 12px; color: #666;\">\n");
+        template.append("        <strong>OPEX Hub - Operational Excellence Platform</strong><br>\n");
+        template.append("        This is an automated notification. Please do not reply to this email.<br>\n");
+        // template.append("        For support, contact: dnsharma@godeepak.com\n");
+        template.append("    </p>\n");
+        template.append("    \n");
+        template.append("</body>\n");
+        template.append("</html>\n");
+        
+        return String.format(template.toString(), userName, verificationCode, email);
     }
 
     /**

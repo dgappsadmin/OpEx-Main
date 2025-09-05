@@ -102,7 +102,7 @@ export default function WorkflowStageModal({
       case 3: // Engineering Head assigns Initiative Lead
         return (
           <div className="space-y-4">
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            {/* <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <div className="flex items-center gap-2.5 text-sm text-blue-800 mb-1.5">
                 <MapPin className="h-4 w-4" />
                 <span className="font-semibold">Site: {transaction.site}</span>
@@ -111,7 +111,7 @@ export default function WorkflowStageModal({
                 Select an Initiative Lead from users with IL role for this site
               </p>
             </div>
-            
+             */}
             <div>
               <Label htmlFor="assignedUser" className="text-xs font-semibold">Select Initiative Lead *</Label>
               <Select value={assignedUserId} onValueChange={setAssignedUserId}>
@@ -272,10 +272,10 @@ export default function WorkflowStageModal({
           <div className="p-4 bg-muted rounded-lg">
             <p className="text-xs text-muted-foreground mb-3">{getStageDescription()}</p>
             <div className="grid grid-cols-2 gap-4 text-xs">
-              <div>
+              {/* <div>
                 <span className="font-semibold">Required Role:</span>
                 <span className="ml-2">{transaction.requiredRole}</span>
-              </div>
+              </div> */}
               <div>
                 <span className="font-semibold">Site:</span>
                 <span className="ml-2">{transaction.site}</span>

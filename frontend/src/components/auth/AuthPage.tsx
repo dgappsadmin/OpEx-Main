@@ -586,7 +586,7 @@ export default function AuthPage({ onLogin }: AuthProps) {
                         <User className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-400" />
                         <Input
                           id="fullName"
-                          placeholder="Deep Sharma"
+                          placeholder="Enter your name."
                           className="pl-9 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 transition-colors duration-200 h-9 text-sm"
                           value={formData.fullName}
                           onChange={(e) => handleInputChange("fullName", e.target.value)}
@@ -602,7 +602,7 @@ export default function AuthPage({ onLogin }: AuthProps) {
                         <Input
                           id="email"
                           type="email"
-                          placeholder="sharma@godeepak.com"
+                          placeholder="Enter your email"
                           className="pl-9 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 transition-colors duration-200 h-9 text-sm"
                           value={formData.email}
                           onChange={(e) => handleInputChange("email", e.target.value)}

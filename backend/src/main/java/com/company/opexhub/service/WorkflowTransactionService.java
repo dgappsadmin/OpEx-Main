@@ -46,83 +46,84 @@ public class WorkflowTransactionService {
                                              String nextStageName, String senderName, String site,
                                              String expectedSavings, String dashboardUrl) {
         
-        return String.format("""
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <title>Workflow Approval Required</title>
-            </head>
-            <body style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.4; color: #333;">
-                
-                <h2 style="color: #2c5aa0; margin-bottom: 20px;">Workflow Approval Required</h2>
-                
-                <p>Dear <strong>%s</strong>,</p>
-                
-                <p>A workflow stage requires your approval. Please review the details below and take the necessary action.</p>
-                
-                <h3 style="color: #2c5aa0; margin-top: 25px; margin-bottom: 15px;">Initiative Details</h3>
-                
-                <table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%%; max-width: 600px; border: 1px solid #ccc;">
-                    <tr style="background-color: #f5f5f5;">
-                        <td style="font-weight: bold; width: 30%%;">Initiative Title</td>
-                        <td>%s</td>
-                    </tr>
-                    <tr>
-                        <td style="font-weight: bold; background-color: #f5f5f5;">Initiative Number</td>
-                        <td>%s</td>
-                    </tr>
-                    <tr style="background-color: #f5f5f5;">
-                        <td style="font-weight: bold;">Site</td>
-                        <td>%s</td>
-                    </tr>
-                    <tr>
-                        <td style="font-weight: bold; background-color: #f5f5f5;">Expected Savings</td>
-                        <td>₹%s K</td>
-                    </tr>
-                    <tr style="background-color: #f5f5f5;">
-                        <td style="font-weight: bold;">Last Approved By</td>
-                        <td>%s</td>
-                    </tr>
-                </table>
-                
-                <h3 style="color: #2c5aa0; margin-top: 25px; margin-bottom: 15px;">Workflow Status</h3>
-                
-                <table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%%; max-width: 600px; border: 1px solid #ccc;">
-                    <tr style="background-color: #f5f5f5;">
-                        <td style="font-weight: bold; width: 30%%;">Completed Stage</td>
-                        <td style="color: #28a745;">%s ✓</td>
-                    </tr>
-                    <tr>
-                        <td style="font-weight: bold; background-color: #f5f5f5;">Pending Stage</td>
-                        <td style="color: #dc3545; font-weight: bold;">%s (Awaiting Your Action)</td>
-                    </tr>
-                </table>
-                
-                <h3 style="color: #2c5aa0; margin-top: 25px; margin-bottom: 15px;">Next Steps</h3>
-                
-                <ol style="line-height: 1.6;">
-                    <li>Access the OPEX Dashboard using the link below</li>
-                    <li>Navigate to Workflow Management section</li>
-                    <li>Locate this initiative and review the details</li>
-                    <li>Add your comments and approve or reject the stage</li>
-                </ol>
-                
-                <p style="margin-top: 20px;">
-                    <a href="%s" style="background-color: #2c5aa0; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">Access Dashboard</a>
-                </p>
-                
-                <hr style="margin: 30px 0; border: none; border-top: 1px solid #ccc;">
-                
-                <p style="font-size: 12px; color: #666;">
-                    <strong>OPEX Initiative Management System</strong><br>
-                    This is an automated notification. Please do not reply to this email.<br>
-                    For support, contact: dnsharma@godeepak.com
-                </p>
-                
-            </body>
-            </html>
-            """, 
+        StringBuilder template = new StringBuilder();
+        template.append("<!DOCTYPE html>\n");
+        template.append("<html>\n");
+        template.append("<head>\n");
+        template.append("    <meta charset=\"UTF-8\">\n");
+        template.append("    <title>Workflow Approval Required</title>\n");
+        template.append("</head>\n");
+        template.append("<body style=\"font-family: Arial, sans-serif; font-size: 14px; line-height: 1.4; color: #333;\">\n");
+        template.append("    \n");
+        template.append("    <h2 style=\"color: #2c5aa0; margin-bottom: 20px;\">Workflow Approval Required</h2>\n");
+        template.append("    \n");
+        template.append("    <p>Dear <strong>%s</strong>,</p>\n");
+        template.append("    \n");
+        template.append("    <p>A workflow stage requires your approval. Please review the details below and take the necessary action.</p>\n");
+        template.append("    \n");
+        template.append("    <h3 style=\"color: #2c5aa0; margin-top: 25px; margin-bottom: 15px;\">Initiative Details</h3>\n");
+        template.append("    \n");
+        template.append("    <table border=\"1\" cellpadding=\"8\" cellspacing=\"0\" style=\"border-collapse: collapse; width: 100%%; max-width: 600px; border: 1px solid #ccc;\">\n");
+        template.append("        <tr style=\"background-color: #f5f5f5;\">\n");
+        template.append("            <td style=\"font-weight: bold; width: 30%%;\">Initiative Title</td>\n");
+        template.append("            <td>%s</td>\n");
+        template.append("        </tr>\n");
+        template.append("        <tr>\n");
+        template.append("            <td style=\"font-weight: bold; background-color: #f5f5f5;\">Initiative Number</td>\n");
+        template.append("            <td>%s</td>\n");
+        template.append("        </tr>\n");
+        template.append("        <tr style=\"background-color: #f5f5f5;\">\n");
+        template.append("            <td style=\"font-weight: bold;\">Site</td>\n");
+        template.append("            <td>%s</td>\n");
+        template.append("        </tr>\n");
+        template.append("        <tr>\n");
+        template.append("            <td style=\"font-weight: bold; background-color: #f5f5f5;\">Expected Savings</td>\n");
+        template.append("            <td>₹%s K</td>\n");
+        template.append("        </tr>\n");
+        template.append("        <tr style=\"background-color: #f5f5f5;\">\n");
+        template.append("            <td style=\"font-weight: bold;\">Last Approved By</td>\n");
+        template.append("            <td>%s</td>\n");
+        template.append("        </tr>\n");
+        template.append("    </table>\n");
+        template.append("    \n");
+        template.append("    <h3 style=\"color: #2c5aa0; margin-top: 25px; margin-bottom: 15px;\">Workflow Status</h3>\n");
+        template.append("    \n");
+        template.append("    <table border=\"1\" cellpadding=\"8\" cellspacing=\"0\" style=\"border-collapse: collapse; width: 100%%; max-width: 600px; border: 1px solid #ccc;\">\n");
+        template.append("        <tr style=\"background-color: #f5f5f5;\">\n");
+        template.append("            <td style=\"font-weight: bold; width: 30%%;\">Completed Stage</td>\n");
+        template.append("            <td style=\"color: #28a745;\">%s ✓</td>\n");
+        template.append("        </tr>\n");
+        template.append("        <tr>\n");
+        template.append("            <td style=\"font-weight: bold; background-color: #f5f5f5;\">Pending Stage</td>\n");
+        template.append("            <td style=\"color: #dc3545; font-weight: bold;\">%s (Awaiting Your Action)</td>\n");
+        template.append("        </tr>\n");
+        template.append("    </table>\n");
+        template.append("    \n");
+        template.append("    <h3 style=\"color: #2c5aa0; margin-top: 25px; margin-bottom: 15px;\">Next Steps</h3>\n");
+        template.append("    \n");
+        template.append("    <ol style=\"line-height: 1.6;\">\n");
+        template.append("        <li>Access the OPEX Dashboard using the link below</li>\n");
+        template.append("        <li>Navigate to Workflow Management section</li>\n");
+        template.append("        <li>Locate this initiative and review the details</li>\n");
+        template.append("        <li>Add your comments and approve or reject the stage</li>\n");
+        template.append("    </ol>\n");
+        template.append("    \n");
+        template.append("    <p style=\"margin-top: 20px;\">\n");
+        template.append("        <a href=\"%s\" style=\"background-color: #2c5aa0; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;\">Access Dashboard</a>\n");
+        template.append("    </p>\n");
+        template.append("    \n");
+        template.append("    <hr style=\"margin: 30px 0; border: none; border-top: 1px solid #ccc;\">\n");
+        template.append("    \n");
+        template.append("    <p style=\"font-size: 12px; color: #666;\">\n");
+        template.append("        <strong>OPEX Initiative Management System</strong><br>\n");
+        template.append("        This is an automated notification. Please do not reply to this email.<br>\n");
+        // template.append("        For support, contact: dnsharma@godeepak.com\n");
+        template.append("    </p>\n");
+        template.append("    \n");
+        template.append("</body>\n");
+        template.append("</html>\n");
+        
+        return String.format(template.toString(), 
             recipientName, initiativeTitle, initiativeNumber, site, expectedSavings, senderName,
             currentStageName, nextStageName, dashboardUrl);
     }
