@@ -36,8 +36,8 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
   // Site options
   const sites = [
     { code: "NDS", name: "NDS" },
-    { code: "DHJ", name: "HSD1" },
-    { code: "HSD", name: "HSD2" },
+    { code: "DHJ", name: "DHJ" },
+    { code: "HSD", name: "HSD" },
     { code: "APL", name: "DHJ" },
     { code: "TCD", name: "APL" }
   ];
@@ -208,7 +208,7 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
             Workflow Management
           </h1>
           <p className="text-muted-foreground text-xs mt-0.5">
-            Manage approval workflows with role-based permissions
+            Manage approval workflows
           </p>
         </div>
         <Badge variant="outline" className="text-xs font-medium">
@@ -665,8 +665,8 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
                 <div className="flex items-center justify-center w-12 h-12 mx-auto mb-3 rounded-full bg-primary/10">
                   <Workflow className="w-6 h-6 text-primary" />
                 </div>
-                <h2 className="text-lg font-bold text-foreground mb-1.5">Select Initiative for Dynamic Workflow</h2>
-                <p className="text-muted-foreground text-xs">Choose an initiative to view its dynamic role-based workflow progression</p>
+                <h2 className="text-lg font-bold text-foreground mb-1.5">Select Initiative for Workflow</h2>
+                <p className="text-muted-foreground text-xs">Choose an initiative to view its workflow progression</p>
               </div>
               
               <div className="space-y-3">
@@ -712,7 +712,7 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
                             size="sm" 
                             className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium px-4 py-2 rounded-lg shadow-md transition-all duration-200 text-xs"
                           >
-                            View Dynamic Workflow
+                            View Workflow
                             <ArrowLeft className="ml-1.5 h-3.5 w-3.5 rotate-180" />
                           </Button>
                         </div>
@@ -774,7 +774,7 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
                     <h2 className="text-base font-bold text-foreground">
                       {selectedInitiativeData?.initiativeNumber || selectedInitiativeData?.title || 'Initiative'}
                     </h2>
-                    <p className="text-xs text-muted-foreground font-medium">Dynamic Role-Based Workflow System</p>
+                    <p className="text-xs text-muted-foreground font-medium">Workflow System</p>
                   </div>
                 </div>
               </div>

@@ -254,8 +254,8 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
     try {
       // Create a link element and trigger download
       const link = document.createElement('a');
-      link.href = '/templates/Timeline_sheet_template.xlsx';
-      link.download = 'Timeline_sheet_template.xlsx';
+      link.href = 'templates\Annexure-III_Timeline sheet_template.xlsx';
+      link.download = 'Annexure-III_Timeline sheet_template.xlsx';
       link.setAttribute('target', '_blank');
       document.body.appendChild(link);
       link.click();

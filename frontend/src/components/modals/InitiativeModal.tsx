@@ -81,19 +81,18 @@ interface InitiativeModalProps {
   user?: { role?: string; [key: string]: any }; // Add user prop
 }
 
-// Correct workflow stage names matching backend
+// Correct workflow stage names matching backend (10 stages total)
 const WORKFLOW_STAGE_NAMES: { [key: number]: string } = {
   1: 'Register Initiative',
   2: 'Approval',
   3: 'Define Responsibilities',
-  4: 'MOC Stage',
-  5: 'CAPEX Stage',
-  6: 'Initiative Timeline Tracker',
-  7: 'Trial Implementation & Performance Check',
-  8: 'Periodic Status Review with CMO',
-  9: 'Savings Monitoring (1 Month)',
-  10: 'Saving Validation with F&A',
-  11: 'Initiative Closure'
+  4: 'MOC-CAPEX Evaluation',
+  5: 'Initiative Timeline Tracker',
+  6: 'Trial Implementation & Performance Check',
+  7: 'Periodic Status Review with CMO',
+  8: 'Savings Monitoring (1 Month)',
+  9: 'Saving Validation with F&A',
+  10: 'Initiative Closure'
 };
 
 export default function InitiativeModal({ isOpen, onClose, initiative, mode, onSave, user }: InitiativeModalProps) {
@@ -141,8 +140,8 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
   // Basic implementation: only check for createdBy user ID
   const { data: createdByUser } = useUser(initiative?.createdBy);
 
-  // Calculate Progress Percentage using NewWorkflow.tsx logic
-  const progressPercentage = Math.round(((initiative?.currentStage || 1) - 1) * 100 / 10);
+  // Calculate Progress Percentage - being at stage X means X/10 * 100% progress
+  const progressPercentage = Math.round((initiative?.currentStage || 1) * 100 / 10);
 
   const actualProgress = progressData?.progressPercentage ?? progressPercentage;
   const currentStageName = currentStageData?.stageName || 

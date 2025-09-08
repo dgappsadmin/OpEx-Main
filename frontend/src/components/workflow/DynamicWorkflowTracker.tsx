@@ -151,7 +151,7 @@ export const DynamicWorkflowTracker: React.FC<DynamicWorkflowTrackerProps> = ({ 
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2.5 text-lg">
             <Workflow className="h-5 w-5 text-primary" />
-            Dynamic Workflow Tracker
+            Workflow Tracker
           </CardTitle>
           <p className="text-muted-foreground text-xs">
             Sequential workflow stages - only visible after previous stage approval

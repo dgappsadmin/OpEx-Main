@@ -400,11 +400,11 @@ export default function Initiatives({ user }: InitiativesProps) {
                             <span>Progress</span>
                             <span>{initiative.status?.toLowerCase() === 'completed' 
                               ? '100' 
-                              : Math.round(((Math.min(initiative.currentStage || 1, 10)) - 1) * 100 / 9)}%</span>
+                              : Math.round((Math.min(initiative.currentStage || 1, 10)) * 100 / 10)}%</span>
                           </div>
                           <Progress value={initiative.status?.toLowerCase() === 'completed' 
                             ? 100 
-                            : Math.round(((Math.min(initiative.currentStage || 1, 10)) - 1) * 100 / 9)} className="h-2" />
+                            : Math.round((Math.min(initiative.currentStage || 1, 10)) * 100 / 10)} className="h-2" />
                         </div>
                       </TableCell> */}
                       <TableCell className="p-4 text-center">
@@ -494,11 +494,11 @@ export default function Initiatives({ user }: InitiativesProps) {
                         <div className="space-y-1">
                           <Progress value={initiative.status?.toLowerCase() === 'completed' 
                             ? 100 
-                            : Math.round(((Math.min(initiative.currentStage || 1, 10)) - 1) * 100 / 9)} className="h-1.5" />
+                            : Math.round((Math.min(initiative.currentStage || 1, 10)) * 100 / 10)} className="h-1.5" />
                           <p className="text-2xs text-muted-foreground">
                             {initiative.status?.toLowerCase() === 'completed' 
                               ? '100' 
-                              : Math.round(((Math.min(initiative.currentStage || 1, 10)) - 1) * 100 / 9)}%
+                              : Math.round((Math.min(initiative.currentStage || 1, 10)) * 100 / 10)}%
                           </p>
                         </div>
                       </div>
