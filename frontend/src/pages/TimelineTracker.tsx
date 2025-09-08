@@ -250,25 +250,52 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
     }
   });
 
-  const handleDownloadTemplate = () => {
+  const handleDownloadTemplate = async () => {
     try {
-      // Create a link element and trigger download
+      toast({ 
+        title: "Download Starting", 
+        description: "Preparing your template file..." 
+      });
+
+      // Use the correct path with Vite base configuration
+      const templatePath = '/opexhub/templates/Timeline_sheet_template.xlsx';
+      
+      // Fetch the file as blob to handle binary data properly
+      const response = await fetch(templatePath);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch template: ${response.statusText}`);
+      }
+      
+      // Get the file as blob (binary data)
+      const blob = await response.blob();
+      
+      // Create a blob URL
+      const blobUrl = window.URL.createObjectURL(blob);
+      
+      // Create download link
       const link = document.createElement('a');
-      link.href = 'templates\Annexure-III_Timeline sheet_template.xlsx';
-      link.download = 'Annexure-III_Timeline sheet_template.xlsx';
-      link.setAttribute('target', '_blank');
+      link.href = blobUrl;
+      link.download = 'Timeline_sheet_template.xlsx'; // Removed spaces for better compatibility
+      link.style.display = 'none';
+      
+      // Append to body, click, and remove
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       
+      // Clean up the blob URL
+      window.URL.revokeObjectURL(blobUrl);
+      
       toast({ 
-        title: "Download Started", 
+        title: "Download Complete", 
         description: "Timeline tracker template downloaded successfully!" 
       });
     } catch (error) {
+      console.error('Download error:', error);
       toast({ 
         title: "Download Error", 
-        description: "Failed to download template file", 
+        description: `Failed to download template file: ${error instanceof Error ? error.message : 'Unknown error'}`, 
         variant: "destructive" 
       });
     }

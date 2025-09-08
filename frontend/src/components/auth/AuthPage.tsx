@@ -586,7 +586,7 @@ export default function AuthPage({ onLogin }: AuthProps) {
                         <User className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-400" />
                         <Input
                           id="fullName"
-                          placeholder="Enter your name."
+                          placeholder="Enter your name"
                           className="pl-9 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 transition-colors duration-200 h-9 text-sm"
                           value={formData.fullName}
                           onChange={(e) => handleInputChange("fullName", e.target.value)}
@@ -637,7 +637,7 @@ export default function AuthPage({ onLogin }: AuthProps) {
                         </SelectTrigger>
                         <SelectContent className="bg-white border-gray-300">
                           {sites.map((site) => (
-                            <SelectItem key={site.code} value={site.code} className="hover:bg-blue-50 text-sm">
+                            <SelectItem key={site.code} value={site.code} className="text-sm focus:bg-accent hover:bg-accent">
                               {site.name}
                             </SelectItem>
                           ))}
@@ -653,7 +653,7 @@ export default function AuthPage({ onLogin }: AuthProps) {
                         </SelectTrigger>
                         <SelectContent className="bg-white border-gray-300">
                           {disciplines.map((discipline) => (
-                            <SelectItem key={discipline.code} value={discipline.code} className="hover:bg-blue-50 text-sm">
+                            <SelectItem key={discipline.code} value={discipline.code} className="text-sm focus:bg-accent hover:bg-accent">
                               {discipline.name}
                             </SelectItem>
                           ))}
@@ -669,7 +669,7 @@ export default function AuthPage({ onLogin }: AuthProps) {
                         </SelectTrigger>
                         <SelectContent className="bg-white border-gray-300">
                           {roles.map((role) => (
-                            <SelectItem key={role.code} value={role.code} className="hover:bg-blue-50 text-sm">
+                            <SelectItem key={role.code} value={role.code} className="text-sm focus:bg-accent hover:bg-accent">
                               {role.name}
                             </SelectItem>
                           ))}

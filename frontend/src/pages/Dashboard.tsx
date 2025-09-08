@@ -343,7 +343,7 @@ export default function Dashboard({ user }: DashboardProps) {
                 <Button 
                   variant="outline" 
                   className="w-full justify-start gap-2.5 h-10 text-xs hover:bg-orange-50 hover:border-orange-200 transition-all"
-                  onClick={() => navigate('/timeline')}
+                  onClick={() => navigate('/timeline-tracker')}
                 >
                   <div className="p-1 rounded bg-orange-100">
                     <Clock className="h-3.5 w-3.5 text-orange-600" />

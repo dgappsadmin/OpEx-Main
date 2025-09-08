@@ -30,7 +30,8 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
   const [initiativeTransactions, setInitiativeTransactions] = useState<{[key: number]: any[]}>({});
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("default"); // "default" or "completed"
-  const [siteFilter, setSiteFilter] = useState(user.site || ""); // Default to user's site
+  // const [siteFilter, setSiteFilter] = useState(user.site || ""); // Default to user's site
+  const [siteFilter, setSiteFilter] = useState(user.site === "CORP" ? "all" : user.site || "");
   const { toast } = useToast();
   
   // Site options
