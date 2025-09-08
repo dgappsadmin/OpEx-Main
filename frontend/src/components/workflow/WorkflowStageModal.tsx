@@ -244,7 +244,7 @@ export default function WorkflowStageModal({
       1: "Initiative has been registered and is ready for approval.",
       2: "Review the initiative details and provide your approval decision.",
       3: "Assign an Initiative Lead who will be responsible for driving this initiative forward.",
-      4: "Evaluate both Management of Change (MOC) and Capital Expenditure (CAPEX) requirements in a single assessment.",
+      4: "Evaluate both Management of Change (MOC) and Capital Expenditure (CAPEX) requirements.",
       5: "Prepare detailed timeline for initiative implementation.",
       6: "Conduct trial implementation and performance checks.",
       7: "Periodic status review with Chief Marketing Officer.",

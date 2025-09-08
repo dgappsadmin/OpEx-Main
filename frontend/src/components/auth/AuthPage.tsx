@@ -34,7 +34,8 @@ const roles = [
   // { code: "STLD", name: "Site TSD Lead" },
   // { code: "EH", name: "Engineering Head" },
   // { code: "CTSD", name: "Corp TSD" },
-  { code: "VIEWER", name: "View" }
+  { code: "VIEWER", name: "View" },
+  { code: "CR", name: "Create" }
 ];
 
 interface AuthProps {
