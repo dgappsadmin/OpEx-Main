@@ -351,14 +351,14 @@ export default function KPI({ user }: KPIProps) {
                     {formatCurrency(totalExpectedSavings * 0.8)}
                   </span>
                 </div>
-                <div className="flex justify-between items-center">
+                {/* <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Productivity:</span>
                   <span className="font-semibold text-blue-600">+15%</span>
-                </div>
-                <div className="flex justify-between items-center">
+                </div> */}
+                {/* <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Waste Reduction:</span>
                   <span className="font-semibold text-orange-600">-12%</span>
-                </div>
+                </div> */}
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Completion Rate:</span>
                   <span className="font-semibold text-purple-600">{completionRate.toFixed(1)}%</span>

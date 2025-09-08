@@ -987,7 +987,7 @@ export default function Reports({ user }: ReportsProps) {
 
         <TabsContent value="export" className="space-y-4 mt-4">
           <Card className="shadow-sm">
-            <CardHeader className="pb-3">
+            {/* <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
                 <Download className="h-4 w-4 text-blue-600" />
                 Export Reports
@@ -995,7 +995,7 @@ export default function Reports({ user }: ReportsProps) {
               <CardDescription className="text-xs">
                 Download detailed reports in various formats (Data includes current month: {getCurrentMonth()} {new Date().getFullYear()})
               </CardDescription>
-            </CardHeader>
+            </CardHeader> */}
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Button 
