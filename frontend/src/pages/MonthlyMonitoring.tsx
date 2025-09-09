@@ -29,7 +29,9 @@ import {
   Target, 
   DollarSign, 
   Activity,
-  IndianRupee
+  IndianRupee,
+  Search,
+  X
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { monthlyMonitoringAPI } from '@/lib/api';
@@ -121,9 +123,17 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
 
   // Filter and search initiatives
   const filteredInitiatives = approvedInitiatives.filter((initiative: Initiative) => {
-    const matchesSearch = initiative.initiativeTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         initiative.initiativeNumber.toLowerCase().includes(searchTerm.toLowerCase());
+    // Enhanced search - include site and description in search
+    const searchLower = searchTerm.toLowerCase().trim();
+    const matchesSearch = !searchTerm || 
+                         initiative.initiativeTitle.toLowerCase().includes(searchLower) ||
+                         initiative.initiativeNumber.toLowerCase().includes(searchLower) ||
+                         initiative.site.toLowerCase().includes(searchLower) ||
+                         (initiative.description && initiative.description.toLowerCase().includes(searchLower));
+    
+    // Status filtering with exact match
     const matchesStatus = filterStatus === 'ALL' || initiative.initiativeStatus === filterStatus;
+    
     return matchesSearch && matchesStatus;
   });
 
@@ -399,8 +409,16 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
     );
   }
 
+  // Handle global clicks to prevent unwanted initiative selections
+  const handleGlobalClick = (e: React.MouseEvent) => {
+    // Only allow initiative selection through explicit card clicks
+    if (!(e.target as HTMLElement).closest('.initiative-card')) {
+      e.stopPropagation();
+    }
+  };
+
   return (
-    <div className="container mx-auto p-4 space-y-4 max-w-6xl">
+    <div className="container mx-auto p-4 space-y-4 max-w-6xl" onClick={handleGlobalClick}>
       {/* Header - Match Dashboard style */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
@@ -415,7 +433,12 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button 
-                onClick={() => { setEditingEntry(null); setFormData({}); }} 
+                onClick={(e) => { 
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setEditingEntry(null); 
+                  setFormData({}); 
+                }} 
                 className="gap-2 shrink-0 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 h-9 px-4 text-xs"
               >
                 <Plus className="h-3.5 w-3.5" />
@@ -428,7 +451,14 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                   {editingEntry ? 'Edit KPI Entry' : 'Add Saving KPI Entry'}
                 </DialogTitle>
               </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-5">
+              <form 
+                onSubmit={(e) => {
+                  e.stopPropagation();
+                  handleSubmit(e);
+                }} 
+                className="space-y-5"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="md:col-span-2">
                     <Label htmlFor="kpiDescription" className="text-sm font-medium text-gray-700 mb-1.5 block">
@@ -437,7 +467,12 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                     <Input
                       id="kpiDescription"
                       value={formData.kpiDescription || ''}
-                      onChange={(e) => setFormData({ ...formData, kpiDescription: e.target.value })}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        setFormData({ ...formData, kpiDescription: e.target.value });
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      onFocus={(e) => e.stopPropagation()}
                       placeholder="Enter KPI description (e.g., Monthly Cost Savings)"
                       className="h-9 border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                       required
@@ -452,7 +487,12 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                       id="monitoringMonth"
                       type="month"
                       value={formData.monitoringMonth || ''}
-                      onChange={(e) => setFormData({ ...formData, monitoringMonth: e.target.value })}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        setFormData({ ...formData, monitoringMonth: e.target.value });
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      onFocus={(e) => e.stopPropagation()}
                       className="h-9 border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                       required
                     />
@@ -536,11 +576,15 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                   />
                 </div>
 
-                <div className="flex justify-end space-x-3 pt-4 border-t border-gray-100">
+                <div className="flex justify-end space-x-3 pt-4 border-t border-gray-100" onClick={(e) => e.stopPropagation()}>
                   <Button 
                     type="button" 
                     variant="outline" 
-                    onClick={() => setIsDialogOpen(false)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setIsDialogOpen(false);
+                    }}
                     className="h-9 px-4 border-gray-200 hover:bg-gray-50"
                   >
                     Cancel
@@ -549,6 +593,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                     type="submit" 
                     disabled={createMutation.isPending || updateMutation.isPending}
                     className="h-9 px-4 bg-blue-600 hover:bg-blue-700 text-white"
+                    onClick={(e) => e.stopPropagation()}
                   >
                     {createMutation.isPending || updateMutation.isPending ? (
                       <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
@@ -577,24 +622,77 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
             </CardHeader>
             <CardContent>
               <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                <div className="flex-1">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                   <Input
-                    placeholder="Search initiatives..."
+                    placeholder="Search by title, number, site, or description..."
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      setSearchTerm(e.target.value);
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    onFocus={(e) => e.stopPropagation()}
+                    className="h-10 border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors pl-10 pr-10"
                   />
+                  {searchTerm && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSearchTerm('');
+                      }}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-colors"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
                 </div>
-                <Select value={filterStatus} onValueChange={setFilterStatus}>
-                  <SelectTrigger className="sm:w-40">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ALL">All Status</SelectItem>
-                    <SelectItem value="PLANNING">Planning</SelectItem>
-                    <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-                    <SelectItem value="COMPLETED">Completed</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div onClick={(e) => e.stopPropagation()}>
+                  <Select value={filterStatus} onValueChange={(value) => {
+                    setFilterStatus(value);
+                  }}>
+                    <SelectTrigger className="sm:w-40 h-10 border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent onClick={(e) => e.stopPropagation()}>
+                      <SelectItem value="ALL">All Status</SelectItem>
+                      <SelectItem value="In Progress">In Progress</SelectItem>
+                      <SelectItem value="Completed">Completed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              {/* Results counter */}
+              <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+                <div className="text-sm text-muted-foreground">
+                  {filteredInitiatives.length === approvedInitiatives.length ? (
+                    `Showing all ${approvedInitiatives.length} initiatives`
+                  ) : (
+                    `Showing ${filteredInitiatives.length} of ${approvedInitiatives.length} initiatives`
+                  )}
+                  {searchTerm && (
+                    <span className="ml-2 text-blue-600">
+                      matching "{searchTerm}"
+                    </span>
+                  )}
+                  {filterStatus !== 'ALL' && (
+                    <span className="ml-2 text-green-600">
+                      with status "{filterStatus}"
+                    </span>
+                  )}
+                </div>
+                {(searchTerm || filterStatus !== 'ALL') && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSearchTerm('');
+                      setFilterStatus('ALL');
+                    }}
+                    className="text-sm text-blue-600 hover:text-blue-800 underline"
+                  >
+                    Clear filters
+                  </button>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -602,11 +700,43 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
           {filteredInitiatives.length === 0 ? (
             <Card className="shadow-sm">
               <CardContent className="text-center py-12">
-                <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No Initiatives Available</h3>
-                <p className="text-muted-foreground text-sm max-w-md mx-auto">
-                  You currently have no initiatives where Savings Monitoring has been approved and you are assigned as Site Lead.
-                </p>
+                {approvedInitiatives.length === 0 ? (
+                  <>
+                    <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No Initiatives Available</h3>
+                    <p className="text-muted-foreground text-sm max-w-md mx-auto">
+                      You currently have no initiatives where Savings Monitoring has been approved and you are assigned as Site Lead.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No Matching Initiatives</h3>
+                    <p className="text-muted-foreground text-sm max-w-md mx-auto mb-4">
+                      No initiatives found matching your current search criteria.
+                    </p>
+                    <div className="space-y-2 text-sm text-muted-foreground">
+                      {searchTerm && (
+                        <p>• Try different search terms or check spelling</p>
+                      )}
+                      {filterStatus !== 'ALL' && (
+                        <p>• Try changing the status filter</p>
+                      )}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSearchTerm('');
+                        setFilterStatus('ALL');
+                      }}
+                      className="mt-4"
+                    >
+                      Clear All Filters
+                    </Button>
+                  </>
+                )}
               </CardContent>
             </Card>
           ) : (
@@ -615,21 +745,56 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                 {paginatedInitiatives.map((initiative: Initiative) => (
                   <Card
                     key={initiative.id}
-                    className="cursor-pointer hover:shadow-md transition-all duration-200 hover:scale-[1.02] shadow-sm group"
-                    onClick={() => setSelectedInitiativeId(initiative.id)}
+                    className="initiative-card cursor-pointer hover:shadow-md transition-all duration-200 hover:scale-[1.02] shadow-sm group relative"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setSelectedInitiativeId(initiative.id);
+                    }}
                   >
-                    <div className="absolute inset-0 bg-gradient-to-br from-transparent to-gray-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"></div>
-                    <CardHeader className="pb-3 relative z-10">
+                    <div className="absolute inset-0 bg-gradient-to-br from-transparent to-gray-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg pointer-events-none"></div>
+                    <CardHeader 
+                      className="pb-3 relative z-10"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setSelectedInitiativeId(initiative.id);
+                      }}
+                    >
                       <div className="flex justify-between items-start gap-2">
                         <div className="flex-1 min-w-0">
-                          <CardTitle className="text-sm font-semibold line-clamp-1 mb-2">{initiative.initiativeNumber}</CardTitle>
-                          <Badge variant="outline" className="text-xs">{initiative.initiativeStatus}</Badge>
+                          <CardTitle 
+                            className="text-sm font-semibold line-clamp-1 mb-2 pointer-events-none"
+                          >
+                            {initiative.initiativeNumber}
+                          </CardTitle>
+                          <Badge 
+                            variant="outline" 
+                            className={`text-xs pointer-events-none ${
+                              initiative.initiativeStatus === 'Completed' 
+                                ? 'bg-green-50 text-green-700 border-green-200' 
+                                : initiative.initiativeStatus === 'In Progress'
+                                ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                : 'bg-gray-50 text-gray-700 border-gray-200'
+                            }`}
+                          >
+                            {initiative.initiativeStatus}
+                          </Badge>
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent className="pt-0 relative z-10">
-                      <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{initiative.initiativeTitle}</p>
-                      <div className="space-y-2 text-xs">
+                    <CardContent 
+                      className="pt-0 relative z-10"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setSelectedInitiativeId(initiative.id);
+                      }}
+                    >
+                      <p className="text-xs text-muted-foreground line-clamp-2 mb-3 pointer-events-none">
+                        {initiative.initiativeTitle}
+                      </p>
+                      <div className="space-y-2 text-xs pointer-events-none">
                         <div className="flex items-center justify-between">
                           <span className="text-muted-foreground">Site:</span>
                           <span className="font-medium">{initiative.site}</span>
@@ -646,22 +811,30 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex justify-center items-center space-x-2">
+                <div className="flex justify-center items-center space-x-2" onClick={(e) => e.stopPropagation()}>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setCurrentPage(prev => Math.max(prev - 1, 1));
+                    }}
                     disabled={currentPage === 1}
                   >
                     Previous
                   </Button>
-                  <span className="flex items-center px-3 text-sm">
+                  <span className="flex items-center px-3 text-sm pointer-events-none">
                     Page {currentPage} of {totalPages}
                   </span>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setCurrentPage(prev => Math.min(prev + 1, totalPages));
+                    }}
                     disabled={currentPage === totalPages}
                   >
                     Next
@@ -682,7 +855,15 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                 {approvedInitiatives.find((i: Initiative) => i.id === selectedInitiativeId)?.initiativeTitle}
               </p>
             </div>
-            <Button variant="outline" size="sm" onClick={() => setSelectedInitiativeId(null)}>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setSelectedInitiativeId(null);
+              }}
+            >
               Back to Initiatives
             </Button>
           </div>
@@ -720,20 +901,36 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
 
           {/* Tab Navigation - Match Dashboard style */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-            <TabsList className="grid w-full grid-cols-4 max-w-2xl mx-auto lg:mx-0 h-9">
-              <TabsTrigger value="overview" className="flex items-center gap-1.5 text-xs">
+            <TabsList className="grid w-full grid-cols-4 max-w-2xl mx-auto lg:mx-0 h-9" onClick={(e) => e.stopPropagation()}>
+              <TabsTrigger 
+                value="overview" 
+                className="flex items-center gap-1.5 text-xs"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <BarChart3 className="h-3.5 w-3.5" />
                 Overview
               </TabsTrigger>
-              <TabsTrigger value="monthly" className="flex items-center gap-1.5 text-xs">
+              <TabsTrigger 
+                value="monthly" 
+                className="flex items-center gap-1.5 text-xs"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <Calendar className="h-3.5 w-3.5" />
                 Monthly
               </TabsTrigger>
-              <TabsTrigger value="analytics" className="flex items-center gap-1.5 text-xs">
+              <TabsTrigger 
+                value="analytics" 
+                className="flex items-center gap-1.5 text-xs"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <Activity className="h-3.5 w-3.5" />
                 Analytics
               </TabsTrigger>
-              <TabsTrigger value="summary" className="flex items-center gap-1.5 text-xs">
+              <TabsTrigger 
+                value="summary" 
+                className="flex items-center gap-1.5 text-xs"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <PieChart className="h-3.5 w-3.5" />
                 Summary
               </TabsTrigger>
@@ -834,9 +1031,17 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                                     </div>
                                   </TableCell>
                                   <TableCell className="text-xs">
-                                    <div className="flex space-x-1">
+                                    <div className="flex space-x-1" onClick={(e) => e.stopPropagation()}>
                                       {canEdit(entry) && (
-                                        <Button size="sm" variant="outline" onClick={() => handleEdit(entry)}>
+                                        <Button 
+                                          size="sm" 
+                                          variant="outline" 
+                                          onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            handleEdit(entry);
+                                          }}
+                                        >
                                           <Edit className="h-3 w-3" />
                                         </Button>
                                       )}
@@ -844,7 +1049,11 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                                         <Button
                                           size="sm"
                                           variant="outline"
-                                          onClick={() => finalizeMutation.mutate({ id: entry.id!, isFinalized: 'Y' })}
+                                          onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            finalizeMutation.mutate({ id: entry.id!, isFinalized: 'Y' });
+                                          }}
                                         >
                                           <FileText className="h-3 w-3" />
                                         </Button>
@@ -853,10 +1062,14 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                                         <Button
                                           size="sm"
                                           variant="outline"
-                                          onClick={() => faApprovalMutation.mutate({ 
-                                            id: entry.id!, 
-                                            faApproval: entry.faApproval === 'Y' ? 'N' : 'Y' 
-                                          })}
+                                          onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            faApprovalMutation.mutate({ 
+                                              id: entry.id!, 
+                                              faApproval: entry.faApproval === 'Y' ? 'N' : 'Y' 
+                                            });
+                                          }}
                                         >
                                           <Target className="h-3 w-3" />
                                         </Button>
@@ -865,7 +1078,11 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                                         <Button
                                           size="sm"
                                           variant="outline"
-                                          onClick={() => deleteMutation.mutate(entry.id!)}
+                                          onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            deleteMutation.mutate(entry.id!);
+                                          }}
                                           className="text-red-600 hover:text-red-700"
                                         >
                                           <Trash2 className="h-3 w-3" />
@@ -898,16 +1115,21 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                         Filter entries by specific month
                       </CardDescription>
                     </div>
-                    <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-3" onClick={(e) => e.stopPropagation()}>
                       <Label htmlFor="monthSelect" className="text-sm font-medium text-gray-700 whitespace-nowrap">Month:</Label>
                       <Input
                         id="monthSelect"
                         type="month"
                         value={selectedMonth}
-                        onChange={(e) => setSelectedMonth(e.target.value)}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          setSelectedMonth(e.target.value);
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        onFocus={(e) => e.stopPropagation()}
                         className="w-40 h-9 border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                       />
-                      <Badge variant="outline" className="whitespace-nowrap">
+                      <Badge variant="outline" className="whitespace-nowrap pointer-events-none">
                         {monthlyEntries.length} entries
                       </Badge>
                     </div>

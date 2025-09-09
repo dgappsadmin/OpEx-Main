@@ -200,7 +200,7 @@ export default function PerformanceAnalysis({
           ))}
         </div>
 
-        Progress Section
+ 
         <Card className="bg-white border-0 shadow-sm">
           <CardContent className="p-3">
             <div className="flex items-center justify-between mb-2.5">
@@ -234,7 +234,8 @@ export default function PerformanceAnalysis({
           </CardContent>
         </Card>
 
-        {/* Summary Stats */}
+        {/* Summary Stats - Performance, Efficiency, Momentum commented out as not required */}
+        {/* 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white border-0 shadow-sm">
             <CardContent className="p-2.5 text-center">
@@ -272,6 +273,7 @@ export default function PerformanceAnalysis({
             </CardContent>
           </Card>
         </div>
+        */}
       </CardContent>
     </Card>
   );

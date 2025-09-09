@@ -87,7 +87,8 @@ export default function KPI({ user }: KPIProps) {
   const validatedInitiatives = initiatives.filter((i: any) => i.status === 'Validated').length;
   const closedInitiatives = initiatives.filter((i: any) => i.status === 'Closed').length;
   const droppedInitiatives = initiatives.filter((i: any) => i.status === 'Dropped').length;
-  const completedInitiatives = implementedInitiatives + validatedInitiatives + closedInitiatives;
+  const completedStatusInitiatives = initiatives.filter((i: any) => i.status === 'Completed').length;
+  const completedInitiatives = implementedInitiatives + validatedInitiatives + closedInitiatives + completedStatusInitiatives;
   
   const totalExpectedSavings = initiatives.reduce((sum: number, i: any) => {
     // Handle both string format (₹8.5L) and number format
@@ -98,7 +99,7 @@ export default function KPI({ user }: KPIProps) {
   }, 0);
   
   const completedSavings = initiatives
-    .filter((i: any) => i.status === 'Completed')
+    .filter((i: any) => ['Completed', 'Implemented', 'Validated', 'Closed'].includes(i.status))
     .reduce((sum: number, i: any) => {
       const savings = typeof i.expectedSavings === 'string' 
         ? parseFloat(i.expectedSavings.replace(/[₹L,]/g, '')) || 0
@@ -106,7 +107,18 @@ export default function KPI({ user }: KPIProps) {
       return sum + savings;
     }, 0);
 
-  const completionRate = totalInitiatives > 0 ? (completedInitiatives / totalInitiatives) * 100 : 0;
+  const completionRate = totalInitiatives > 0 ? Math.min(100, Math.max(0, (completedInitiatives / totalInitiatives) * 100)) : 0;
+  
+  // Debug logging for completion rate
+  console.log('KPI Completion Rate Debug:', {
+    totalInitiatives,
+    implementedInitiatives,
+    validatedInitiatives,
+    closedInitiatives,
+    completedStatusInitiatives,
+    completedInitiatives,
+    completionRate: completionRate.toFixed(1)
+  });
   const savingsRealizationRate = totalExpectedSavings > 0 ? (completedSavings / totalExpectedSavings) * 100 : 0;
 
   // Enhanced status distribution data
@@ -118,6 +130,7 @@ export default function KPI({ user }: KPIProps) {
     { name: 'In Progress', value: inProgressInitiatives, color: '#3b82f6' },
     { name: 'Implemented', value: implementedInitiatives, color: '#22c55e' },
     { name: 'Validated', value: validatedInitiatives, color: '#16a34a' },
+    { name: 'Completed', value: completedStatusInitiatives, color: '#065f46' },
     { name: 'Closed', value: closedInitiatives, color: '#059669' },
     { name: 'Dropped', value: droppedInitiatives, color: '#ef4444' },
   ].filter(item => item.value > 0); // Only show statuses with initiatives
@@ -361,7 +374,12 @@ export default function KPI({ user }: KPIProps) {
                 </div> */}
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Completion Rate:</span>
-                  <span className="font-semibold text-purple-600">{completionRate.toFixed(1)}%</span>
+                  <div className="text-right">
+                    <span className="font-semibold text-purple-600">{completionRate.toFixed(1)}%</span>
+                    <div className="text-xs text-muted-foreground">
+                      {completedInitiatives}/{totalInitiatives} completed
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>

@@ -29,7 +29,9 @@ import {
   Activity,
   Target,
   TrendingUp,
-  IndianRupee
+  IndianRupee,
+  Search,
+  X
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -129,11 +131,20 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
     },
   });
 
-  // Filter and search initiatives
+  // Filter and search initiatives - Enhanced search
   const filteredInitiatives = approvedInitiatives.filter((initiative: Initiative) => {
-    const matchesSearch = initiative.initiativeTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         initiative.initiativeNumber.toLowerCase().includes(searchTerm.toLowerCase());
+    // Enhanced search - include site and description in search
+    const searchLower = searchTerm.toLowerCase().trim();
+    const matchesSearch = !searchTerm || 
+                         initiative.initiativeTitle.toLowerCase().includes(searchLower) ||
+                         initiative.initiativeNumber.toLowerCase().includes(searchLower) ||
+                         initiative.site.toLowerCase().includes(searchLower) ||
+                         initiative.assignedUserEmail.toLowerCase().includes(searchLower) ||
+                         (initiative.description && initiative.description.toLowerCase().includes(searchLower));
+    
+    // Status filtering with exact match
     const matchesStatus = filterStatus === 'ALL' || initiative.initiativeStatus === filterStatus;
+    
     return matchesSearch && matchesStatus;
   });
 
@@ -636,24 +647,78 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
             </CardHeader>
             <CardContent>
               <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                <div className="flex-1">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                   <Input
-                    placeholder="Search initiatives..."
+                    placeholder="Search by title, number, site, lead, or description..."
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      setSearchTerm(e.target.value);
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    onFocus={(e) => e.stopPropagation()}
+                    className="h-10 border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors pl-10 pr-10"
                   />
+                  {searchTerm && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSearchTerm('');
+                      }}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-colors"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
                 </div>
-                <Select value={filterStatus} onValueChange={setFilterStatus}>
-                  <SelectTrigger className="sm:w-40">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ALL">All Status</SelectItem>
-                    <SelectItem value="PLANNING">Planning</SelectItem>
-                    <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-                    <SelectItem value="COMPLETED">Completed</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div onClick={(e) => e.stopPropagation()}>
+                  <Select value={filterStatus} onValueChange={(value) => {
+                    setFilterStatus(value);
+                  }}>
+                    <SelectTrigger className="sm:w-40 h-10 border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent onClick={(e) => e.stopPropagation()}>
+                      <SelectItem value="ALL">All Status</SelectItem>
+                      <SelectItem value="In Progress">In Progress</SelectItem>
+                      <SelectItem value="Completed">Completed</SelectItem>
+                      <SelectItem value="Planning">Planning</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              {/* Results counter */}
+              <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+                <div className="text-sm text-muted-foreground">
+                  {filteredInitiatives.length === approvedInitiatives.length ? (
+                    `Showing all ${approvedInitiatives.length} initiatives`
+                  ) : (
+                    `Showing ${filteredInitiatives.length} of ${approvedInitiatives.length} initiatives`
+                  )}
+                  {searchTerm && (
+                    <span className="ml-2 text-blue-600">
+                      matching "{searchTerm}"
+                    </span>
+                  )}
+                  {filterStatus !== 'ALL' && (
+                    <span className="ml-2 text-green-600">
+                      with status "{filterStatus}"
+                    </span>
+                  )}
+                </div>
+                {(searchTerm || filterStatus !== 'ALL') && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSearchTerm('');
+                      setFilterStatus('ALL');
+                    }}
+                    className="text-sm text-blue-600 hover:text-blue-800 underline"
+                  >
+                    Clear filters
+                  </button>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -661,11 +726,43 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
           {filteredInitiatives.length === 0 ? (
             <Card className="shadow-sm">
               <CardContent className="text-center py-12">
-                <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No Initiatives Available</h3>
-                <p className="text-muted-foreground text-sm max-w-md mx-auto">
-                  You currently have no initiatives where Stage 5 (Timeline Tracker) has been approved and you are assigned as Initiative Lead.
-                </p>
+                {approvedInitiatives.length === 0 ? (
+                  <>
+                    <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No Initiatives Available</h3>
+                    <p className="text-muted-foreground text-sm max-w-md mx-auto">
+                      You currently have no initiatives where Stage 5 (Timeline Tracker) has been approved and you are assigned as Initiative Lead.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No Matching Initiatives</h3>
+                    <p className="text-muted-foreground text-sm max-w-md mx-auto mb-4">
+                      No initiatives found matching your current search criteria.
+                    </p>
+                    <div className="space-y-2 text-sm text-muted-foreground">
+                      {searchTerm && (
+                        <p>• Try different search terms or check spelling</p>
+                      )}
+                      {filterStatus !== 'ALL' && (
+                        <p>• Try changing the status filter</p>
+                      )}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSearchTerm('');
+                        setFilterStatus('ALL');
+                      }}
+                      className="mt-4"
+                    >
+                      Clear All Filters
+                    </Button>
+                  </>
+                )}
               </CardContent>
             </Card>
           ) : (
@@ -674,21 +771,58 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                 {paginatedInitiatives.map((initiative: Initiative) => (
                   <Card
                     key={initiative.id}
-                    className="cursor-pointer hover:shadow-md transition-all duration-200 hover:scale-[1.02] shadow-sm group"
-                    onClick={() => setSelectedInitiativeId(initiative.id)}
+                    className="timeline-card cursor-pointer hover:shadow-md transition-all duration-200 hover:scale-[1.02] shadow-sm group relative"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setSelectedInitiativeId(initiative.id);
+                    }}
                   >
-                    <div className="absolute inset-0 bg-gradient-to-br from-transparent to-gray-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"></div>
-                    <CardHeader className="pb-3 relative z-10">
+                    <div className="absolute inset-0 bg-gradient-to-br from-transparent to-gray-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg pointer-events-none"></div>
+                    <CardHeader 
+                      className="pb-3 relative z-10"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setSelectedInitiativeId(initiative.id);
+                      }}
+                    >
                       <div className="flex justify-between items-start gap-2">
                         <div className="flex-1 min-w-0">
-                          <CardTitle className="text-sm font-semibold line-clamp-1 mb-2">{initiative.initiativeNumber}</CardTitle>
-                          <Badge variant="outline" className="text-xs">{initiative.initiativeStatus}</Badge>
+                          <CardTitle 
+                            className="text-sm font-semibold line-clamp-1 mb-2 pointer-events-none"
+                          >
+                            {initiative.initiativeNumber}
+                          </CardTitle>
+                          <Badge 
+                            variant="outline" 
+                            className={`text-xs pointer-events-none ${
+                              initiative.initiativeStatus === 'Completed' 
+                                ? 'bg-green-50 text-green-700 border-green-200' 
+                                : initiative.initiativeStatus === 'In Progress'
+                                ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                : initiative.initiativeStatus === 'Planning'
+                                ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                                : 'bg-gray-50 text-gray-700 border-gray-200'
+                            }`}
+                          >
+                            {initiative.initiativeStatus}
+                          </Badge>
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent className="pt-0 relative z-10">
-                      <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{initiative.initiativeTitle}</p>
-                      <div className="space-y-2 text-xs">
+                    <CardContent 
+                      className="pt-0 relative z-10"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setSelectedInitiativeId(initiative.id);
+                      }}
+                    >
+                      <p className="text-xs text-muted-foreground line-clamp-2 mb-3 pointer-events-none">
+                        {initiative.initiativeTitle}
+                      </p>
+                      <div className="space-y-2 text-xs pointer-events-none">
                         <div className="flex items-center justify-between">
                           <span className="text-muted-foreground">Site:</span>
                           <span className="font-medium">{initiative.site}</span>
@@ -709,22 +843,30 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex justify-center items-center space-x-2">
+                <div className="flex justify-center items-center space-x-2" onClick={(e) => e.stopPropagation()}>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setCurrentPage(prev => Math.max(prev - 1, 1));
+                    }}
                     disabled={currentPage === 1}
                   >
                     Previous
                   </Button>
-                  <span className="flex items-center px-3 text-sm">
+                  <span className="flex items-center px-3 text-sm pointer-events-none">
                     Page {currentPage} of {totalPages}
                   </span>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setCurrentPage(prev => Math.min(prev + 1, totalPages));
+                    }}
                     disabled={currentPage === totalPages}
                   >
                     Next

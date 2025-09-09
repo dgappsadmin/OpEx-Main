@@ -931,11 +931,11 @@ export default function Reports({ user }: ReportsProps) {
                     <TableRow>
                       <TableHead className="text-xs">Title</TableHead>
                       <TableHead className="text-xs">Site</TableHead>
-                      <TableHead className="text-xs">Priority</TableHead>
                       <TableHead className="text-xs">Status</TableHead>
                       <TableHead className="text-xs">Budget Type</TableHead>
                       <TableHead className="text-xs">Expected Savings</TableHead>
                       <TableHead className="text-xs">Start Date</TableHead>
+                      <TableHead className="text-xs">End Date</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -947,11 +947,6 @@ export default function Reports({ user }: ReportsProps) {
                           </div>
                         </TableCell>
                         <TableCell className="text-xs">{initiative.site}</TableCell>
-                        <TableCell className="text-xs">
-                          <Badge variant={getPriorityColor(initiative.priority)} className="text-xs">
-                            {initiative.priority}
-                          </Badge>
-                        </TableCell>
                         <TableCell className="text-xs">
                           <Badge className={`${getStatusColor(initiative.status)} text-xs`}>
                             {initiative.status}
@@ -968,7 +963,24 @@ export default function Reports({ user }: ReportsProps) {
                             : formatCurrency(initiative.expectedSavings || 0)
                           }
                         </TableCell>
-                        <TableCell className="text-xs">{initiative.submittedDate || 'N/A'}</TableCell>
+                        <TableCell className="text-xs">
+                          {initiative.startDate 
+                            ? new Date(initiative.startDate).toLocaleDateString('en-GB', {
+                                day: '2-digit',
+                                month: '2-digit', 
+                                year: 'numeric'
+                              })
+                            : 'N/A'}
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          {initiative.endDate 
+                            ? new Date(initiative.endDate).toLocaleDateString('en-GB', {
+                                day: '2-digit',
+                                month: '2-digit', 
+                                year: 'numeric'
+                              })
+                            : 'N/A'}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
