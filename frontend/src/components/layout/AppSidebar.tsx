@@ -98,13 +98,8 @@ export function AppSidebar({ user }: AppSidebarProps = {}) {
   const location = useLocation();
   const currentPath = location.pathname;
   
-  // Filter navigation items based on user role
-  const filteredNavigationItems = navigationItems.filter(item => {
-    if (item.title === "New Initiative") {
-      return user?.role === "STLD" || user?.role === "CR";
-    }
-    return true;
-  });
+  // All users can access all navigation items - no role restrictions
+  const filteredNavigationItems = navigationItems;
   
   const groupedItems = groupItems(filteredNavigationItems);
   const isCollapsed = state === "collapsed";

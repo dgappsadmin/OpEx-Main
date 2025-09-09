@@ -29,14 +29,7 @@ const disciplines = [
   { code: "OT", name: "Others" }
 ];
 
-const roles = [
-  // { code: "IL", name: "Initiative Lead" },
-  // { code: "STLD", name: "Site TSD Lead" },
-  // { code: "EH", name: "Engineering Head" },
-  // { code: "CTSD", name: "Corp TSD" },
-  { code: "VIEWER", name: "View" },
-  { code: "CR", name: "Create" }
-];
+// Removed roles array - using default role now
 
 interface AuthProps {
   onLogin: (user: any) => void;
@@ -53,7 +46,7 @@ export default function AuthPage({ onLogin }: AuthProps) {
     fullName: "",
     site: "",
     discipline: "",
-    role: "VIEWER"
+    role: "USER"
   });
   const [forgotPasswordData, setForgotPasswordData] = useState({
     email: "",
@@ -121,7 +114,7 @@ export default function AuthPage({ onLogin }: AuthProps) {
         setLoadingMessage("Sending Verification Code");
         setLoadingSubmessage("Please wait while we send the verification code to your email...");
         
-        if (!formData.fullName || !formData.site || !formData.discipline || !formData.role) {
+        if (!formData.fullName || !formData.site || !formData.discipline) {
           toast({
             title: "Signup Failed",
             description: "Please fill in all required fields.",
@@ -136,8 +129,8 @@ export default function AuthPage({ onLogin }: AuthProps) {
           password: formData.password,
           site: formData.site,
           discipline: formData.discipline,
-          role: formData.role,
-          roleName: roles.find(r => r.code === formData.role)?.name || ""
+          role: "USER",
+          roleName: "User"
         };
 
         // Send verification code instead of direct registration
@@ -216,7 +209,7 @@ export default function AuthPage({ onLogin }: AuthProps) {
           fullName: "",
           site: "",
           discipline: "",
-          role: "VIEWER"
+          role: "USER"
         });
         setIsLogin(true);
       } else {
@@ -629,7 +622,7 @@ export default function AuthPage({ onLogin }: AuthProps) {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
                       <Label htmlFor="site" className="text-gray-700 font-medium text-xs">Site *</Label>
                       <Select value={formData.site} onValueChange={(value) => handleInputChange("site", value)}>
@@ -656,22 +649,6 @@ export default function AuthPage({ onLogin }: AuthProps) {
                           {disciplines.map((discipline) => (
                             <SelectItem key={discipline.code} value={discipline.code} className="text-sm focus:bg-accent hover:bg-accent">
                               {discipline.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <Label htmlFor="role" className="text-gray-700 font-medium text-xs">Role *</Label>
-                      <Select value={formData.role} onValueChange={(value) => handleInputChange("role", value)}>
-                        <SelectTrigger className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 transition-colors duration-200 h-9 text-sm">
-                          <SelectValue placeholder="Role" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white border-gray-300">
-                          {roles.map((role) => (
-                            <SelectItem key={role.code} value={role.code} className="text-sm focus:bg-accent hover:bg-accent">
-                              {role.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
