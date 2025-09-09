@@ -476,6 +476,35 @@
   .border-secondary-blue {
     @apply border-blue-200;
   }
+
+  /* Enhanced form input styles for better appearance */
+  .form-input-enhanced {
+    @apply border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors duration-200;
+    @apply rounded-md shadow-sm;
+  }
+
+  .form-input-enhanced:hover {
+    @apply border-gray-300;
+  }
+
+  .form-label-enhanced {
+    @apply text-sm font-medium text-gray-700 mb-1.5 block;
+  }
+
+  /* Month input specific styling */
+  input[type="month"].form-input-enhanced {
+    @apply h-9 px-3 text-sm;
+  }
+
+  /* Select component enhanced styling */
+  .select-trigger-enhanced {
+    @apply h-9 border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors;
+  }
+
+  /* Textarea enhanced styling */
+  .textarea-enhanced {
+    @apply border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors resize-none;
+  }
 }
 
 /* Specific optimizations for 14-inch laptop screens */

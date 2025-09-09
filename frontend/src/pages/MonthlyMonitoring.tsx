@@ -423,42 +423,50 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>
+              <DialogHeader className="pb-4">
+                <DialogTitle className="text-lg font-semibold">
                   {editingEntry ? 'Edit KPI Entry' : 'Add Saving KPI Entry'}
                 </DialogTitle>
               </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="col-span-2">
-                    <Label htmlFor="kpiDescription">Saving Description *</Label>
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="md:col-span-2">
+                    <Label htmlFor="kpiDescription" className="text-sm font-medium text-gray-700 mb-1.5 block">
+                      Saving Description *
+                    </Label>
                     <Input
                       id="kpiDescription"
                       value={formData.kpiDescription || ''}
                       onChange={(e) => setFormData({ ...formData, kpiDescription: e.target.value })}
                       placeholder="Enter KPI description (e.g., Monthly Cost Savings)"
+                      className="h-9 border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                       required
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="monitoringMonth">Monitoring Month *</Label>
+                    <Label htmlFor="monitoringMonth" className="text-sm font-medium text-gray-700 mb-1.5 block">
+                      Monitoring Month *
+                    </Label>
                     <Input
                       id="monitoringMonth"
                       type="month"
                       value={formData.monitoringMonth || ''}
                       onChange={(e) => setFormData({ ...formData, monitoringMonth: e.target.value })}
+                      className="h-9 border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                       required
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="category">Category</Label>
+                    <Label htmlFor="category" className="text-sm font-medium text-gray-700 mb-1.5 block">
+                      Category
+                    </Label>
                     <Select 
                       value={formData.category || 'RMC'} 
                       onValueChange={(value) => setFormData({ ...formData, category: value })}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="h-9 border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                       <SelectContent>
@@ -471,9 +479,11 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="targetValue">Target Value (₹ Lakhs) *</Label>
+                    <Label htmlFor="targetValue" className="text-sm font-medium text-gray-700 mb-1.5 block">
+                      Target Value (₹ Lakhs) *
+                    </Label>
                     <Input
                       id="targetValue"
                       type="number"
@@ -482,11 +492,14 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                       value={formData.targetValue || ''}
                       onChange={(e) => setFormData({ ...formData, targetValue: parseFloat(e.target.value) })}
                       placeholder="Enter target value"
+                      className="h-9 border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                       required
                     />
                   </div>
                   <div>
-                    <Label htmlFor="achievedValue">Achieved Value (₹ Lakhs)</Label>
+                    <Label htmlFor="achievedValue" className="text-sm font-medium text-gray-700 mb-1.5 block">
+                      Achieved Value (₹ Lakhs)
+                    </Label>
                     <Input
                       id="achievedValue"
                       type="number"
@@ -495,14 +508,15 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                       value={formData.achievedValue || ''}
                       onChange={(e) => setFormData({ ...formData, achievedValue: parseFloat(e.target.value) })}
                       placeholder="Enter achieved value"
+                      className="h-9 border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                     />
                   </div>
                 </div>
 
                 {formData.achievedValue && formData.targetValue && (
-                  <Alert>
-                    <TrendingUp className="h-4 w-4" />
-                    <AlertDescription>
+                  <Alert className="border-blue-200 bg-blue-50">
+                    <TrendingUp className="h-4 w-4 text-blue-600" />
+                    <AlertDescription className="text-blue-800">
                       <strong>Deviation:</strong> ₹{((formData.achievedValue - formData.targetValue)).toFixed(2)} Lakhs
                       ({(((formData.achievedValue - formData.targetValue) / formData.targetValue) * 100).toFixed(1)}%)
                     </AlertDescription>
@@ -510,23 +524,31 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                 )}
 
                 <div>
-                  <Label htmlFor="remarks">Remarks & Analysis</Label>
+                  <Label htmlFor="remarks" className="text-sm font-medium text-gray-700 mb-1.5 block">
+                    Remarks & Analysis
+                  </Label>
                   <Textarea
                     id="remarks"
                     value={formData.remarks || ''}
                     onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
                     placeholder="Enter detailed remarks, analysis, and observations"
-                    className="min-h-[80px]"
+                    className="min-h-[80px] border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors resize-none"
                   />
                 </div>
 
-                <div className="flex justify-end space-x-2 pt-4">
-                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                <div className="flex justify-end space-x-3 pt-4 border-t border-gray-100">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setIsDialogOpen(false)}
+                    className="h-9 px-4 border-gray-200 hover:bg-gray-50"
+                  >
                     Cancel
                   </Button>
                   <Button 
                     type="submit" 
                     disabled={createMutation.isPending || updateMutation.isPending}
+                    className="h-9 px-4 bg-blue-600 hover:bg-blue-700 text-white"
                   >
                     {createMutation.isPending || updateMutation.isPending ? (
                       <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
@@ -877,15 +899,15 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                       </CardDescription>
                     </div>
                     <div className="flex items-center space-x-3">
-                      <Label htmlFor="monthSelect" className="text-sm font-medium">Month:</Label>
+                      <Label htmlFor="monthSelect" className="text-sm font-medium text-gray-700 whitespace-nowrap">Month:</Label>
                       <Input
                         id="monthSelect"
                         type="month"
                         value={selectedMonth}
                         onChange={(e) => setSelectedMonth(e.target.value)}
-                        className="w-40 h-9"
+                        className="w-40 h-9 border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                       />
-                      <Badge variant="outline">
+                      <Badge variant="outline" className="whitespace-nowrap">
                         {monthlyEntries.length} entries
                       </Badge>
                     </div>
