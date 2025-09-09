@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -6,8 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { CheckCircle, XCircle, Users, AlertTriangle, MapPin, Loader2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { CheckCircle, XCircle, Users, AlertTriangle, MapPin, Loader2, DollarSign, TrendingUp } from "lucide-react";
 import { useUsers, useInitiativeLeadsBySite } from "@/hooks/useUsers";
+import { useFinalizedPendingFAEntries, useBatchFAApproval, MonthlyMonitoringEntry } from "@/hooks/useMonthlyMonitoring";
 
 interface WorkflowStageModalProps {
   isOpen: boolean;
@@ -32,6 +34,16 @@ export default function WorkflowStageModal({
   const [mocNumber, setMocNumber] = useState("");
   const [capexRequired, setCapexRequired] = useState<string>("");
   const [capexNumber, setCapexNumber] = useState("");
+  
+  // Stage 9 F&A Approval states
+  const [selectedEntries, setSelectedEntries] = useState<Set<number>>(new Set());
+  const [faComments, setFaComments] = useState("");
+  
+  // Hooks for F&A functionality
+  const { data: monthlyEntries = [], isLoading: entriesLoading, refetch: refetchEntries } = useFinalizedPendingFAEntries(
+    transaction?.stageNumber === 9 ? transaction?.initiativeId : 0
+  );
+  const batchFAApprovalMutation = useBatchFAApproval();
 
   const { data: users = [], isLoading: usersLoading, error: usersError } = useUsers();
   
@@ -41,12 +53,32 @@ export default function WorkflowStageModal({
   console.log('Initiative Leads for site', transaction?.site, ':', initiativeLeads);
   console.log('IL loading:', ilLoading, 'IL Error:', ilError);
 
+  // Reset selection when modal opens or entries change
+  useEffect(() => {
+    if (isOpen && transaction?.stageNumber === 9) {
+      setSelectedEntries(new Set());
+      setFaComments("");
+    }
+  }, [isOpen, transaction?.stageNumber]);
+
+  useEffect(() => {
+    if (Array.isArray(monthlyEntries) && monthlyEntries.length > 0) {
+      setSelectedEntries(new Set());
+    }
+  }, [monthlyEntries]);
+
   // Early return if transaction is null
   if (!transaction) {
     return null;
   }
 
-  const handleApprove = () => {
+  const handleApprove = async () => {
+    // Handle F&A approval for stage 9
+    if (transaction.stageNumber === 9) {
+      await handleFAApproval();
+      return;
+    }
+
     const data: any = {
       transactionId: transaction.id,
       action: 'approved',
@@ -73,12 +105,61 @@ export default function WorkflowStageModal({
     onProcess(data);
   };
 
+  const handleFAApproval = async () => {
+    try {
+      // First, approve selected monthly monitoring entries
+      if (selectedEntries.size > 0) {
+        const entryIds = Array.from(selectedEntries);
+        await batchFAApprovalMutation.mutateAsync({
+          entryIds,
+          faComments: faComments || comment.trim()
+        });
+      }
+
+      // Then proceed with workflow approval
+      const data = {
+        transactionId: transaction.id,
+        action: 'approved',
+        remarks: comment.trim()
+      };
+
+      onProcess(data);
+    } catch (error) {
+      console.error('Error in F&A approval:', error);
+      // Handle error appropriately - could show toast or error message
+    }
+  };
+
   const handleReject = () => {
     onProcess({
       transactionId: transaction.id,
       action: 'rejected',
       remarks: comment.trim()
     });
+  };
+
+  const handleEntrySelection = (entryId: number, checked: boolean) => {
+    const newSelected = new Set(selectedEntries);
+    if (checked) {
+      newSelected.add(entryId);
+    } else {
+      newSelected.delete(entryId);
+    }
+    setSelectedEntries(newSelected);
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked && Array.isArray(monthlyEntries)) {
+      const allIds = new Set<number>();
+      monthlyEntries.forEach((entry: MonthlyMonitoringEntry) => {
+        if (entry.id) {
+          allIds.add(entry.id);
+        }
+      });
+      setSelectedEntries(allIds);
+    } else {
+      setSelectedEntries(new Set<number>());
+    }
   };
 
   const isFormValid = () => {
@@ -90,6 +171,10 @@ export default function WorkflowStageModal({
       if (!mocRequired || !capexRequired) return false;
       if (mocRequired === "yes" && !mocNumber.trim()) return false;
       if (capexRequired === "yes" && !capexNumber.trim()) return false;
+    }
+    if (transaction.stageNumber === 9) {
+      // F&A approval - at least one entry should be selected or no entries to approve
+      return !Array.isArray(monthlyEntries) || monthlyEntries.length === 0 || selectedEntries.size > 0;
     }
     
     return true;
@@ -210,7 +295,6 @@ export default function WorkflowStageModal({
       case 6: // Trial Implementation & Performance Check
       case 7: // Periodic Status Review with CMO
       case 8: // Savings Monitoring (1 Month)
-      case 9: // Saving Validation with F&A
         return (
           <div className="space-y-4 p-4 bg-blue-50 rounded-lg">
             <div className="flex items-center gap-2.5">
@@ -219,6 +303,103 @@ export default function WorkflowStageModal({
                 Review and provide your decision with comments.
               </p>
             </div>
+          </div>
+        );
+
+      case 9: // Saving Validation with F&A
+        return (
+          <div className="space-y-6">
+            <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+              <div className="flex items-center gap-2.5 mb-3">
+                <DollarSign className="h-5 w-5 text-green-600" />
+                <h4 className="text-sm font-semibold text-green-800 dark:text-green-200">
+                  Finance & Accounts Validation
+                </h4>
+              </div>
+              <p className="text-xs text-green-700 dark:text-green-300">
+                Review and approve finalized monthly monitoring entries below. Select entries to approve and provide validation comments.
+              </p>
+            </div>
+
+            {/* Monthly Monitoring Entries */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-semibold">Finalized Monitoring Entries</Label>
+                {Array.isArray(monthlyEntries) && monthlyEntries.length > 0 && (
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      checked={selectedEntries.size === monthlyEntries.length && monthlyEntries.length > 0}
+                      onCheckedChange={(checked) => handleSelectAll(!!checked)}
+                    />
+                    <Label className="text-xs">Select All</Label>
+                  </div>
+                )}
+              </div>
+
+              {entriesLoading ? (
+                <div className="flex items-center justify-center p-8 bg-muted rounded-lg">
+                  <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                  <span className="text-sm">Loading monitoring entries...</span>
+                </div>
+              ) : !Array.isArray(monthlyEntries) || monthlyEntries.length === 0 ? (
+                <div className="p-6 bg-muted rounded-lg text-center">
+                  <TrendingUp className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">No finalized entries pending F&A approval</p>
+                </div>
+              ) : (
+                <div className="border rounded-lg overflow-hidden">
+                  <div className="bg-muted px-4 py-2 border-b">
+                    <div className="grid grid-cols-12 gap-2 text-xs font-semibold">
+                      <div className="col-span-1">Select</div>
+                      <div className="col-span-3">Monitoring Month</div>
+                      <div className="col-span-4">KPI Description</div>
+                      <div className="col-span-2">Target Value</div>
+                      <div className="col-span-2">Achieved Value</div>
+                    </div>
+                  </div>
+                  <div className="max-h-64 overflow-y-auto">
+                    {Array.isArray(monthlyEntries) && monthlyEntries.map((entry: MonthlyMonitoringEntry) => (
+                      <div key={entry.id} className="px-4 py-3 border-b last:border-b-0 hover:bg-muted/50">
+                        <div className="grid grid-cols-12 gap-2 items-center text-xs">
+                          <div className="col-span-1">
+                            <Checkbox
+                              checked={entry.id ? selectedEntries.has(entry.id) : false}
+                              onCheckedChange={(checked) => entry.id && handleEntrySelection(entry.id, !!checked)}
+                            />
+                          </div>
+                          <div className="col-span-3 font-medium">{entry.monitoringMonth}</div>
+                          <div className="col-span-4 text-muted-foreground">{entry.kpiDescription}</div>
+                          <div className="col-span-2 font-mono">{entry.targetValue?.toLocaleString()}</div>
+                          <div className="col-span-2 font-mono">{entry.achievedValue?.toLocaleString()}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {Array.isArray(monthlyEntries) && monthlyEntries.length > 0 && (
+                <div className="text-xs text-muted-foreground">
+                  {selectedEntries.size} of {monthlyEntries.length} entries selected for approval
+                </div>
+              )}
+            </div>
+
+            {/* F&A Comments */}
+            {Array.isArray(monthlyEntries) && monthlyEntries.length > 0 && (
+              <div>
+                <Label htmlFor="faComments" className="text-xs font-semibold">
+                  F&A Validation Comments (Optional)
+                </Label>
+                <Textarea
+                  id="faComments"
+                  value={faComments}
+                  onChange={(e) => setFaComments(e.target.value)}
+                  placeholder="Provide specific validation comments for selected entries..."
+                  className="min-h-[60px] mt-2 text-xs"
+                />
+              </div>
+            )}
           </div>
         );
 
@@ -347,10 +528,10 @@ export default function WorkflowStageModal({
             <div className="flex gap-3 pt-3">
               <Button 
                 onClick={handleApprove}
-                disabled={!isFormValid() || isLoading}
+                disabled={!isFormValid() || isLoading || batchFAApprovalMutation.isPending}
                 className="bg-green-600 hover:bg-green-700 flex-1 h-9 text-xs font-medium"
               >
-                {isLoading ? (
+                {(isLoading || batchFAApprovalMutation.isPending) ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
                     Processing...

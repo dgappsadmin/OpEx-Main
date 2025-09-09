@@ -220,3 +220,41 @@ export const useApprovedInitiativesForMonitoring = (userEmail: string, site: str
     enabled: !!userEmail && !!site,
   });
 };
+
+export const useFinalizedPendingFAEntries = (initiativeId: number) => {
+  return useQuery({
+    queryKey: ['finalizedPendingFA', initiativeId],
+    queryFn: async () => {
+      try {
+        return await monthlyMonitoringAPI.getFinalizedPendingFAEntries(initiativeId);
+      } catch (error) {
+        console.warn('Failed to fetch finalized pending F&A entries from API:', error);
+        return [];
+      }
+    },
+    enabled: !!initiativeId,
+  });
+};
+
+export const useBatchFAApproval = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ entryIds, faComments }: { 
+      entryIds: number[]; 
+      faComments?: string;
+    }) => {
+      try {
+        return await monthlyMonitoringAPI.batchFAApproval(entryIds, faComments);
+      } catch (error) {
+        console.error('Failed to process batch F&A approval:', error);
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['monthlyMonitoring'] });
+      queryClient.invalidateQueries({ queryKey: ['finalizedPendingFA'] });
+      queryClient.invalidateQueries({ queryKey: ['approvedInitiatives'] });
+    },
+  });
+};

@@ -116,4 +116,23 @@ public class MonthlyMonitoringService {
     public List<MonthlyMonitoringEntry> getFinalizedEntries() {
         return monthlyMonitoringRepository.findByIsFinalized("Y");
     }
+
+    public List<MonthlyMonitoringEntry> getFinalizedPendingFAEntries(Long initiativeId) {
+        return monthlyMonitoringRepository.findFinalizedPendingFAEntries(initiativeId);
+    }
+
+    @Transactional
+    public List<MonthlyMonitoringEntry> batchFAApproval(List<Long> entryIds, String faComments) {
+        List<MonthlyMonitoringEntry> entries = monthlyMonitoringRepository.findAllById(entryIds);
+        
+        for (MonthlyMonitoringEntry entry : entries) {
+            // Only approve entries that are finalized but not yet F&A approved
+            if ("Y".equals(entry.getIsFinalized()) && !"Y".equals(entry.getFaApproval())) {
+                entry.setFaApproval("Y");
+                entry.setFaComments(faComments);
+            }
+        }
+        
+        return monthlyMonitoringRepository.saveAll(entries);
+    }
 }

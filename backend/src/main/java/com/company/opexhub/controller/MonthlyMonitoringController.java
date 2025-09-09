@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -247,6 +248,38 @@ public class MonthlyMonitoringController {
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body(new ApiResponse<>(false, "Error retrieving pending F&A approvals: " + e.getMessage(), null));
+        }
+    }
+
+    @GetMapping("/{initiativeId}/finalized-pending-fa")
+    public ResponseEntity<ApiResponse<List<MonthlyMonitoringEntry>>> getFinalizedPendingFAEntries(@PathVariable Long initiativeId) {
+        try {
+            List<MonthlyMonitoringEntry> entries = monthlyMonitoringService.getFinalizedPendingFAEntries(initiativeId);
+            return ResponseEntity.ok(new ApiResponse<>(true, "Finalized pending F&A entries retrieved successfully", entries));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse<>(false, "Error retrieving finalized pending F&A entries: " + e.getMessage(), null));
+        }
+    }
+
+    @PostMapping("/batch-fa-approval")
+    public ResponseEntity<ApiResponse<List<MonthlyMonitoringEntry>>> batchFAApproval(
+            @RequestBody Map<String, Object> requestBody) {
+        try {
+            @SuppressWarnings("unchecked")
+            List<Long> entryIds = (List<Long>) requestBody.get("entryIds");
+            String faComments = (String) requestBody.get("faComments");
+            
+            if (entryIds == null || entryIds.isEmpty()) {
+                return ResponseEntity.badRequest()
+                        .body(new ApiResponse<>(false, "Entry IDs are required for batch approval", null));
+            }
+            
+            List<MonthlyMonitoringEntry> updatedEntries = monthlyMonitoringService.batchFAApproval(entryIds, faComments);
+            return ResponseEntity.ok(new ApiResponse<>(true, "Batch F&A approval completed successfully", updatedEntries));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse<>(false, "Error processing batch F&A approval: " + e.getMessage(), null));
         }
     }
 }

@@ -162,4 +162,7 @@ public interface MonthlyMonitoringEntryRepository extends JpaRepository<MonthlyM
                                           @Param("site") String site,
                                           @Param("budgetType") String budgetType,
                                           @Param("category") String category);
+
+    @Query("SELECT m FROM MonthlyMonitoringEntry m WHERE m.initiative.id = :initiativeId AND m.isFinalized = 'Y' AND m.faApproval = 'N' ORDER BY m.monitoringMonth DESC")
+    List<MonthlyMonitoringEntry> findFinalizedPendingFAEntries(@Param("initiativeId") Long initiativeId);
 }

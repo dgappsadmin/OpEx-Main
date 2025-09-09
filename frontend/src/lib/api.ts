@@ -2586,6 +2586,21 @@ export const monthlyMonitoringAPI = {
   getPendingFAApprovals: async (initiativeId: number) => {
     const response = await api.get(`/monthly-monitoring/${initiativeId}/pending-fa-approvals`);
     return response.data;
+  },
+
+  getFinalizedPendingFAEntries: async (initiativeId: number) => {
+    const response = await api.get(`/monthly-monitoring/${initiativeId}/finalized-pending-fa`);
+    // Extract data from ApiResponse wrapper
+    return response.data?.data || [];
+  },
+
+  batchFAApproval: async (entryIds: number[], faComments?: string) => {
+    const response = await api.post('/monthly-monitoring/batch-fa-approval', {
+      entryIds,
+      faComments
+    });
+    // Extract data from ApiResponse wrapper
+    return response.data?.data || [];
   }
 };
 
