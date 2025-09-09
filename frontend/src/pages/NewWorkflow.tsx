@@ -12,11 +12,12 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CheckCircle, XCircle, Clock, ArrowLeft, User as UserIcon, Search, Filter, MapPin, GitBranch, Activity, Workflow } from "lucide-react";
+import { CheckCircle, XCircle, Clock, ArrowLeft, User as UserIcon, Search, Filter, MapPin, GitBranch, Activity, Workflow, Eye } from "lucide-react";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { useToast } from "@/hooks/use-toast";
 import WorkflowStageModal from "@/components/workflow/WorkflowStageModal";
 import { DynamicWorkflowTracker } from "@/components/workflow/DynamicWorkflowTracker";
+import InitiativeModal from "@/components/modals/InitiativeModal";
 
 interface NewWorkflowProps {
   user: User;
@@ -32,6 +33,11 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
   const [statusFilter, setStatusFilter] = useState("default"); // "default" or "completed"
   // const [siteFilter, setSiteFilter] = useState(user.site || ""); // Default to user's site
   const [siteFilter, setSiteFilter] = useState(user.site === "CORP" ? "all" : user.site || "");
+  
+  // Initiative Modal state
+  const [isInitiativeModalOpen, setIsInitiativeModalOpen] = useState(false);
+  const [selectedInitiativeForModal, setSelectedInitiativeForModal] = useState<any>(null);
+  
   const { toast } = useToast();
   
   // Site options
@@ -165,6 +171,11 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
         });
       }
     });
+  };
+
+  const handleViewInitiativeDetails = (initiative: any) => {
+    setSelectedInitiativeForModal(initiative);
+    setIsInitiativeModalOpen(true);
   };
 
   const getStatusIcon = (status: string) => {
@@ -389,7 +400,18 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
                           </div>
                         </div>
                         
-                        <div className="ml-4">
+                        <div className="ml-4 flex gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewInitiativeDetails(initiative);
+                            }}
+                            className="h-9 w-9 p-0 border-primary/20 hover:bg-primary/10 hover:border-primary/40 transition-all duration-200"
+                          >
+                            <Eye className="h-4 w-4 text-primary" />
+                          </Button>
                           <Button 
                             variant="default" 
                             size="sm" 
@@ -707,7 +729,18 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
                           </div>
                         </div>
                         
-                        <div className="ml-4">
+                        <div className="ml-4 flex gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewInitiativeDetails(initiative);
+                            }}
+                            className="h-9 w-9 p-0 border-primary/20 hover:bg-primary/10 hover:border-primary/40 transition-all duration-200"
+                          >
+                            <Eye className="h-4 w-4 text-primary" />
+                          </Button>
                           <Button 
                             variant="default" 
                             size="sm" 
@@ -797,6 +830,18 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
         userRole={user.role || ""}
         onProcess={handleProcessStage}
         isLoading={processStageAction.isPending}
+      />
+
+      {/* Initiative Details Modal */}
+      <InitiativeModal
+        isOpen={isInitiativeModalOpen}
+        onClose={() => {
+          setIsInitiativeModalOpen(false);
+          setSelectedInitiativeForModal(null);
+        }}
+        initiative={selectedInitiativeForModal}
+        mode="view"
+        user={user}
       />
     </div>
   );

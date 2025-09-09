@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -267,12 +268,29 @@ public class MonthlyMonitoringController {
             @RequestBody Map<String, Object> requestBody) {
         try {
             @SuppressWarnings("unchecked")
-            List<Long> entryIds = (List<Long>) requestBody.get("entryIds");
+            List<Object> entryIdsRaw = (List<Object>) requestBody.get("entryIds");
             String faComments = (String) requestBody.get("faComments");
             
-            if (entryIds == null || entryIds.isEmpty()) {
+            if (entryIdsRaw == null || entryIdsRaw.isEmpty()) {
                 return ResponseEntity.badRequest()
                         .body(new ApiResponse<>(false, "Entry IDs are required for batch approval", null));
+            }
+            
+            // Convert Object list to Long list with proper type handling
+            List<Long> entryIds = new ArrayList<>();
+            for (Object idObj : entryIdsRaw) {
+                try {
+                    if (idObj instanceof Number) {
+                        entryIds.add(((Number) idObj).longValue());
+                    } else if (idObj instanceof String) {
+                        entryIds.add(Long.parseLong((String) idObj));
+                    } else {
+                        throw new IllegalArgumentException("Invalid entry ID format: " + idObj);
+                    }
+                } catch (NumberFormatException e) {
+                    return ResponseEntity.badRequest()
+                            .body(new ApiResponse<>(false, "Invalid entry ID format: " + idObj, null));
+                }
             }
             
             List<MonthlyMonitoringEntry> updatedEntries = monthlyMonitoringService.batchFAApproval(entryIds, faComments);

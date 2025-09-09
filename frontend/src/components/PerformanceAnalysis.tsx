@@ -200,7 +200,7 @@ export default function PerformanceAnalysis({
           ))}
         </div>
 
-        {/* Progress Section */}
+        Progress Section
         <Card className="bg-white border-0 shadow-sm">
           <CardContent className="p-3">
             <div className="flex items-center justify-between mb-2.5">

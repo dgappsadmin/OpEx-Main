@@ -209,8 +209,8 @@ export default function WorkflowStageModal({
                 </SelectTrigger>
                 <SelectContent>
                   {initiativeLeads.map((user) => (
-                    <SelectItem key={user.id} value={user.id.toString()}>
-                      {user.fullName} - {user.email} ({user.site})
+                    <SelectItem key={user.id} value={user.id.toString()} className="text-sm focus:bg-accent hover:bg-accent">
+                      {user.fullName} - {user.discipline}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -431,7 +431,7 @@ export default function WorkflowStageModal({
       7: "Periodic status review with Chief Marketing Officer.",
       8: "Monitor savings achieved after implementation (1 month monitoring period).",
       9: "Validate savings with Finance & Accounts department.",
-      10: "Final closure of the initiative and documentation completion."
+      10: "Final closure of the initiative."
     };
     return descriptions[transaction.stageNumber] || "Process this workflow stage.";
   };
