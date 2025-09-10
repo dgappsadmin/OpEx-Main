@@ -34,7 +34,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { CalendarIcon, Upload, FileText, Send, IndianRupee, Percent, Banknote, Plus } from "lucide-react";
+import { CalendarIcon, Upload, FileText, Send, IndianRupee, Percent, Banknote, Plus, X, Download } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -99,60 +99,115 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
     },
   });
 
-  const onSubmit = (data: FormData) => {
+  const onSubmit = async (data: FormData) => {
     console.log("=== FORM SUBMISSION DEBUG ===");
     console.log("Form data:", data);
     console.log("Expected Value (data.expectedValue):", data.expectedValue);
     console.log("Target Value (data.targetValue):", data.targetValue);
     console.log("Estimated CAPEX (data.estimatedCapex):", data.estimatedCapex);
+    console.log("Files to upload:", files);
 
-    const initiativeData = {
-      title: data.title,
-      description: data.description,
-      initiatorName: data.initiatorName,
-      priority: "Medium",
-      expectedSavings: data.expectedValue,
-      site: data.site,
-      discipline: data.discipline,
-      startDate: data.date.toISOString().split("T")[0],
-      endDate: new Date(data.date.getTime() + 365 * 24 * 60 * 60 * 1000)
-        .toISOString()
-        .split("T")[0],
-      requiresMoc: data.estimatedCapex > 10,
-      requiresCapex: data.estimatedCapex > 0,
-      budgetType: data.budgetType,
-      baselineData: data.baselineData,
-      targetOutcome: data.targetOutcome,
-      targetValue: data.targetValue,
-      estimatedCapex: data.estimatedCapex,
-      assumption1: data.assumption1,
-      assumption2: data.assumption2,
-      assumption3: data.assumption3,
-    };
+    try {
+      let fPath = null;
+      let fName = null;
 
-    console.log("Initiative data being sent:", initiativeData);
-    createInitiativeMutation.mutate(initiativeData, {
-      onSuccess: () => {
-        toast({
-          title: "Initiative Submitted Successfully!",
-          description: "Initiative has been created and sent for approval.",
+      // Upload files first if any files are selected
+      if (files.length > 0) {
+        const formData = new FormData();
+        files.forEach(file => {
+          formData.append('files', file);
         });
-        form.reset();
-        setFiles([]);
-      },
-      onError: (error: any) => {
-        toast({
-          title: "Error",
-          description: error.response?.data?.message || "Failed to create initiative",
-          variant: "destructive",
+
+        const uploadResponse = await fetch(`${import.meta.env.REACT_APP_BACKEND_URL}/initiatives/upload`, {
+          method: 'POST',
+          body: formData,
         });
-      },
-    });
+
+        const uploadResult = await uploadResponse.json();
+        
+        if (!uploadResult.success) {
+          throw new Error(uploadResult.message || 'File upload failed');
+        }
+
+        fPath = uploadResult.data.fPath;
+        fName = uploadResult.data.fName;
+      }
+
+      // Prepare initiative data with file attachment data
+      const initiativeData = {
+        title: data.title,
+        description: data.description,
+        initiatorName: data.initiatorName,
+        priority: "Medium",
+        expectedSavings: data.expectedValue,
+        site: data.site,
+        discipline: data.discipline,
+        startDate: data.date.toISOString().split("T")[0],
+        endDate: new Date(data.date.getTime() + 365 * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .split("T")[0],
+        requiresMoc: data.estimatedCapex > 10,
+        requiresCapex: data.estimatedCapex > 0,
+        budgetType: data.budgetType,
+        baselineData: data.baselineData,
+        targetOutcome: data.targetOutcome,
+        targetValue: data.targetValue,
+        estimatedCapex: data.estimatedCapex,
+        assumption1: data.assumption1,
+        assumption2: data.assumption2,
+        assumption3: data.assumption3,
+        // Add file attachment data
+        fPath: fPath,
+        fName: fName,
+      };
+
+      console.log("Initiative data being sent:", initiativeData);
+      
+      // Submit the initiative with file data
+      createInitiativeMutation.mutate(initiativeData, {
+        onSuccess: () => {
+          toast({
+            title: "Initiative Submitted Successfully!",
+            description: `Initiative has been created and sent for approval${files.length > 0 ? ` with ${files.length} file(s)` : ''}.`,
+          });
+          form.reset();
+          setFiles([]);
+        },
+        onError: (error: any) => {
+          toast({
+            title: "Error",
+            description: error.response?.data?.message || "Failed to create initiative",
+            variant: "destructive",
+          });
+        },
+      });
+
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to submit initiative",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(event.target.files || []);
-    setFiles((prev) => [...prev, ...selectedFiles]);
+    
+    // Validate file sizes (5MB limit)
+    const validFiles = selectedFiles.filter(file => {
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File Too Large",
+          description: `${file.name} exceeds 5MB limit`,
+          variant: "destructive",
+        });
+        return false;
+      }
+      return true;
+    });
+
+    setFiles((prev) => [...prev, ...validFiles]);
   };
 
   const removeFile = (index: number) => {
@@ -614,6 +669,72 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
               </CardContent>
             </Card>
 
+            {/* Optional File Attachments */}
+            <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Upload className="h-4 w-4 text-blue-600" />
+                  File Attachments (Optional)
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  Upload supporting documents, reports, or any relevant files (Max 5MB per file). Files will be uploaded when you submit the initiative.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4 pt-0">
+                <div className="space-y-4">
+                  {/* File Upload Input */}
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium">Select Files</Label>
+                    <div className="flex flex-col gap-2">
+                      <input
+                        type="file"
+                        multiple
+                        onChange={handleFileUpload}
+                        className="file:mr-2 file:py-1 file:px-2 file:border-0 file:text-xs file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 file:rounded-md text-xs"
+                        disabled={isSubmitting}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Supported formats: PDF, Excel, and all other file types. Maximum 5MB per file. Files will be uploaded when you submit the initiative.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Selected Files Preview */}
+                  {files.length > 0 && (
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium">Selected Files ({files.length}) - Will be uploaded on form submission</Label>
+                      <div className="space-y-2 max-h-32 overflow-y-auto">
+                        {files.map((file, index) => (
+                          <div key={index} className="flex items-center justify-between p-2 bg-blue-50 rounded-md border border-blue-200">
+                            <div className="flex items-center gap-2">
+                              <FileText className="h-4 w-4 text-blue-600" />
+                              <span className="text-xs font-medium truncate">{file.name}</span>
+                              <span className="text-xs text-muted-foreground">
+                                ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                              </span>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeFile(index)}
+                              disabled={isSubmitting}
+                              className="h-8 w-8 p-0"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                      <p className="text-xs text-blue-600 bg-blue-50 p-2 rounded border border-blue-200">
+                        📎 {files.length} file(s) ready to upload. Files will be uploaded when you submit the initiative for approval.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Submit Button */}
             <div className="flex justify-end pt-3">
               <Button 
@@ -621,8 +742,17 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                 className="h-10 px-6 text-xs font-medium bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800" 
                 disabled={isSubmitting}
               >
-                <Send className="h-4 w-4 mr-1.5" />
-                Submit for Approval
+                {isSubmitting ? (
+                  <div className="flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Submitting Initiative...
+                  </div>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4 mr-1.5" />
+                    Submit for Approval
+                  </>
+                )}
               </Button>
             </div>
           </form>

@@ -2,6 +2,14 @@ package com.company.opexhub.controller;
 
 import java.util.Map;
 import java.util.HashMap;
+import java.util.List;
+import java.util.ArrayList;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.company.opexhub.dto.ApiResponse;
 import com.company.opexhub.dto.InitiativeRequest;
@@ -25,6 +34,7 @@ import com.company.opexhub.dto.InitiativeResponse;
 import com.company.opexhub.entity.Initiative;
 import com.company.opexhub.security.UserPrincipal;
 import com.company.opexhub.service.InitiativeService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @RestController
 @RequestMapping("/api/initiatives")
@@ -32,6 +42,70 @@ public class InitiativeController {
 
     @Autowired
     private InitiativeService initiativeService;
+
+    // Upload directory path
+    private static final String UPLOAD_DIR = "D:\\DNLOPEX";
+    private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
+
+    @PostMapping("/upload")
+    public ResponseEntity<?> uploadFiles(@RequestParam("files") MultipartFile[] files) {
+        try {
+            // Create upload directory if it doesn't exist
+            File uploadDir = new File(UPLOAD_DIR);
+            if (!uploadDir.exists()) {
+                uploadDir.mkdirs();
+            }
+
+            List<String> filePaths = new ArrayList<>();
+            List<String> fileNames = new ArrayList<>();
+
+            for (MultipartFile file : files) {
+                // Validate file size
+                if (file.getSize() > MAX_FILE_SIZE) {
+                    return ResponseEntity.badRequest()
+                            .body(new ApiResponse(false, "File " + file.getOriginalFilename() + " exceeds maximum size of 5MB"));
+                }
+
+                // Validate file is not empty
+                if (file.isEmpty()) {
+                    continue;
+                }
+
+                String originalFileName = file.getOriginalFilename();
+                if (originalFileName == null) {
+                    continue;
+                }
+
+                // Create unique filename to avoid conflicts
+                String fileName = System.currentTimeMillis() + "_" + originalFileName;
+                Path filePath = Paths.get(UPLOAD_DIR, fileName);
+
+                // Save file
+                Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+                filePaths.add(filePath.toString());
+                fileNames.add(originalFileName); // Store original name for display
+            }
+
+            // Convert lists to JSON strings
+            ObjectMapper objectMapper = new ObjectMapper();
+            String filePathsJson = objectMapper.writeValueAsString(filePaths);
+            String fileNamesJson = objectMapper.writeValueAsString(fileNames);
+
+            Map<String, String> response = new HashMap<>();
+            response.put("fPath", filePathsJson);
+            response.put("fName", fileNamesJson);
+
+            return ResponseEntity.ok(new ApiResponse(true, "Files uploaded successfully", response));
+
+        } catch (IOException e) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse(false, "Failed to upload files: " + e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse(false, "Error uploading files: " + e.getMessage()));
+        }
+    }
 
     @GetMapping
     public Page<InitiativeResponse> getAllInitiatives(
@@ -151,6 +225,10 @@ public class InitiativeController {
         // Set MOC and CAPEX numbers - FIXED: These were missing!
         response.setMocNumber(initiative.getMocNumber());
         response.setCapexNumber(initiative.getCapexNumber());
+        
+        // Set file attachment fields
+        response.setFPath(initiative.getFPath());
+        response.setFName(initiative.getFName());
         
         return response;
     }

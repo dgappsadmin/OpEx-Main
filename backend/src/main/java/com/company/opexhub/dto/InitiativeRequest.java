@@ -48,6 +48,10 @@ public class InitiativeRequest {
     @Size(max = 100)
     private String initiatorName;
 
+    // File attachment fields
+    private String fPath; // JSON array of file paths
+    private String fName; // JSON array of file names
+
     // Constructors
     public InitiativeRequest() {}
 
@@ -119,4 +123,11 @@ public class InitiativeRequest {
 
     public String getInitiatorName() { return initiatorName; }
     public void setInitiatorName(String initiatorName) { this.initiatorName = initiatorName; }
+
+    // File attachment getters and setters
+    public String getFPath() { return fPath; }
+    public void setFPath(String fPath) { this.fPath = fPath; }
+
+    public String getFName() { return fName; }
+    public void setFName(String fName) { this.fName = fName; }
 }

@@ -24,7 +24,9 @@ import {
   Settings,
   Clock,
   User,
-  CheckCircle2
+  CheckCircle2,
+  Download,
+  Paperclip
 } from 'lucide-react';
 import { useProgressPercentage, useCurrentPendingStage } from '@/hooks/useWorkflowTransactions';
 import { useUser } from '@/hooks/useUsers';
@@ -70,6 +72,8 @@ interface Initiative {
   createdBy?: number | string; // User ID who created the initiative
   initiatorName?: string; // Name of the person who initiated the initiative
   initiator?: string; // Fallback initiator name from mock data
+  fPath?: string; // JSON string containing file paths
+  fName?: string; // JSON string containing file names
 }
 
 interface InitiativeModalProps {
@@ -573,6 +577,60 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                       </div>
                     </CardContent>
                   </Card>
+
+                  {/* File Attachments Section */}
+                  {((initiative?.fPath && initiative?.fName) && 
+                    (JSON.parse(initiative.fPath || '[]').length > 0 || JSON.parse(initiative.fName || '[]').length > 0)) && (
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="flex items-center gap-2 text-base">
+                          <Paperclip className="h-4 w-4" />
+                          File Attachments
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2">
+                          {JSON.parse(initiative.fName || '[]').map((fileName: string, index: number) => {
+                            const filePaths = JSON.parse(initiative.fPath || '[]');
+                            const filePath = filePaths[index];
+                            
+                            return (
+                              <div key={index} className="flex items-center justify-between p-3 border rounded-lg bg-gray-50">
+                                <div className="flex items-center gap-3">
+                                  <div className="p-2 bg-blue-100 rounded-lg">
+                                    <FileText className="h-4 w-4 text-blue-600" />
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-medium">{fileName}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                      Uploaded file attachment
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="outline" className="text-xs">
+                                    Attachment
+                                  </Badge>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => {
+                                      // For now, just show a toast since direct download needs backend implementation
+                                      console.log('Download requested for:', filePath);
+                                      // You can implement download functionality here
+                                    }}
+                                  >
+                                    <Download className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="details" className="mt-6 space-y-6 px-1">

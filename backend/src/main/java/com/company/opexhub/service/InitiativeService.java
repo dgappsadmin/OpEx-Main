@@ -110,6 +110,10 @@ public class InitiativeService {
         initiative.setEstimatedCapex(request.getEstimatedCapex()); // Allow zero values
         initiative.setBudgetType(request.getBudgetType());
         
+        // Set file attachment fields
+        initiative.setFPath(request.getFPath());
+        initiative.setFName(request.getFName());
+        
         // Generate initiative number
         String initiativeNumber = generateInitiativeNumber(request.getSite(), request.getDiscipline());
         initiative.setInitiativeNumber(initiativeNumber);
@@ -187,6 +191,10 @@ public class InitiativeService {
         initiative.setConfidenceLevel(request.getConfidenceLevel());
         initiative.setEstimatedCapex(request.getEstimatedCapex());
         initiative.setBudgetType(request.getBudgetType());
+
+        // Update file attachment fields
+        initiative.setFPath(request.getFPath());
+        initiative.setFName(request.getFName());
 
         return initiativeRepository.save(initiative);
     }
