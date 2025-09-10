@@ -333,7 +333,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
               </TabsTrigger>
               <TabsTrigger value="settings" className="flex items-center gap-2 text-sm py-2">
                 <Settings className="h-4 w-4" />
-                Settings
+                References
               </TabsTrigger>
             </TabsList>
 
