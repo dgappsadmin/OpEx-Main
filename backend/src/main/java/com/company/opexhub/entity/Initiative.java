@@ -120,13 +120,6 @@ public class Initiative {
     @Column(name = "budget_type")
     private String budgetType;
 
-    // File attachment fields
-    @Column(name = "F_PATH", length = 2000) // Increased length for multiple file paths as JSON
-    private String fPath;
-
-    @Column(name = "F_NAME", length = 2000) // Increased length for multiple file names as JSON
-    private String fName;
-
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -283,13 +276,6 @@ public class Initiative {
 
     public String getBudgetType() { return budgetType; }
     public void setBudgetType(String budgetType) { this.budgetType = budgetType; }
-
-    // File attachment getters and setters
-    public String getFPath() { return fPath; }
-    public void setFPath(String fPath) { this.fPath = fPath; }
-
-    public String getFName() { return fName; }
-    public void setFName(String fName) { this.fName = fName; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
