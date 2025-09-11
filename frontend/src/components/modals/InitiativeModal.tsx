@@ -322,9 +322,9 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden px-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full h-full flex flex-col">
-            <TabsList className="grid w-full grid-cols-4 h-12 flex-shrink-0 mx-6 mt-6 gap-1">
+            <TabsList className="grid w-full grid-cols-4 h-12 flex-shrink-0 mt-6 gap-1">
               <TabsTrigger value="overview" className="flex items-center gap-2 text-sm py-2 px-3">
                 <Target className="h-4 w-4" />
                 <span className="hidden sm:inline">Overview</span>
@@ -344,8 +344,9 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
             </TabsList>
 
             <div className="flex-1 overflow-hidden">
-              <ScrollArea className="h-full px-6 pb-6">
-                <TabsContent value="overview" className="mt-6 space-y-6 px-2">
+              <ScrollArea className="h-full">
+                <div className="px-6 pb-6">
+                  <TabsContent value="overview" className="mt-6 space-y-6">
                   {/* Quick Stats */}
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
                     <Card className="border-l-4 border-l-primary">
@@ -581,7 +582,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                   </Card>
                 </TabsContent>
 
-                <TabsContent value="details" className="mt-6 space-y-6 px-1">
+                <TabsContent value="details" className="mt-6 space-y-6">
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2 text-lg">
@@ -927,7 +928,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                   </Card>
                 </TabsContent>
 
-                <TabsContent value="references" className="mt-6 space-y-6 px-1">
+                <TabsContent value="references" className="mt-6 space-y-6">
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2 text-lg">
@@ -1109,9 +1110,10 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                   </Card>
                 </TabsContent>
 
-                <TabsContent value="documents" className="mt-6 space-y-6 px-1">
+                <TabsContent value="documents" className="mt-6 space-y-6">
                   <UploadedDocuments initiativeId={initiative?.id} />
                 </TabsContent>
+                </div>
               </ScrollArea>
             </div>
           </Tabs>

@@ -51,35 +51,52 @@ public class FileUploadService {
         }
 
         for (MultipartFile file : files) {
-            // Validate file
-            validateFile(file);
-            
-            // Generate unique filename
-            String originalFilename = file.getOriginalFilename();
-            String fileExtension = getFileExtension(originalFilename);
-            String uniqueFilename = UUID.randomUUID().toString() + "_" + originalFilename;
-            
-            // Save file to disk
-            Path filePath = dirPath.resolve(uniqueFilename);
-            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-            
-            // Create file record
-            InitiativeFile initiativeFile = new InitiativeFile(
-                originalFilename,
-                filePath.toString(),
-                file.getContentType(),
-                file.getSize(),
-                initiative
-            );
-            
-            uploadedFiles.add(initiativeFileRepository.save(initiativeFile));
+            try {
+                // Validate file
+                validateFile(file);
+                
+                // Generate unique filename
+                String originalFilename = file.getOriginalFilename();
+                String fileExtension = getFileExtension(originalFilename);
+                String uniqueFilename = UUID.randomUUID().toString() + "_" + originalFilename;
+                
+                // Save file to disk
+                Path filePath = dirPath.resolve(uniqueFilename);
+                Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+                
+                // Create file record
+                InitiativeFile initiativeFile = new InitiativeFile(
+                    originalFilename,
+                    filePath.toString(),
+                    file.getContentType(),
+                    file.getSize(),
+                    initiative
+                );
+                
+                InitiativeFile savedFile = initiativeFileRepository.save(initiativeFile);
+                uploadedFiles.add(savedFile);
+                
+                System.out.println("Successfully uploaded file: " + originalFilename + " for initiative: " + initiative.getId());
+                
+            } catch (Exception e) {
+                System.err.println("Failed to upload file: " + file.getOriginalFilename() + ". Error: " + e.getMessage());
+                throw new RuntimeException("Failed to upload file: " + file.getOriginalFilename() + ". " + e.getMessage());
+            }
         }
         
         return uploadedFiles;
     }
 
     public List<InitiativeFile> getFilesByInitiativeId(Long initiativeId) {
+        if (initiativeId == null) {
+            return new ArrayList<>(); // Return empty list for null initiative ID
+        }
         return initiativeFileRepository.findByInitiativeId(initiativeId);
+    }
+
+    public InitiativeFile getFileById(Long fileId) {
+        return initiativeFileRepository.findById(fileId)
+            .orElseThrow(() -> new RuntimeException("File not found with ID: " + fileId));
     }
 
     public byte[] downloadFile(Long fileId) throws IOException {

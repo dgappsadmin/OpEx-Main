@@ -127,12 +127,39 @@ export default function UploadedDocuments({ initiativeId }: UploadedDocumentsPro
 
   const handleDownload = async (fileId: number, fileName: string) => {
     try {
-      await fileAPI.downloadFile(fileId, fileName);
-    } catch (error) {
-      console.error('Error downloading file:', error);
+      console.log(`Attempting to download file ID: ${fileId}, Name: ${fileName}`);
+      
+      // Show download starting toast
       toast({
-        title: "Error",
-        description: "Failed to download file",
+        title: "Download Starting",
+        description: `Preparing to download ${fileName}...`,
+      });
+      
+      await fileAPI.downloadFile(fileId, fileName);
+      
+      // Show success toast
+      toast({
+        title: "Download Complete",
+        description: `${fileName} downloaded successfully`,
+      });
+      
+    } catch (error: any) {
+      console.error('Error downloading file:', error);
+      
+      let errorMessage = "Failed to download file";
+      if (error.response) {
+        if (error.response.status === 404) {
+          errorMessage = "File not found. It may have been deleted.";
+        } else if (error.response.status === 500) {
+          errorMessage = "Server error occurred while downloading file.";
+        } else if (error.response.data?.message) {
+          errorMessage = error.response.data.message;
+        }
+      }
+      
+      toast({
+        title: "Download Error",
+        description: errorMessage,
         variant: "destructive",
       });
     }

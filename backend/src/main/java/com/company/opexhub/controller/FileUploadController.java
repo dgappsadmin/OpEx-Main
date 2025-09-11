@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.List;
 
 @RestController
@@ -32,15 +34,31 @@ public class FileUploadController {
             @PathVariable Long initiativeId,
             @RequestParam("files") List<MultipartFile> files) {
         try {
+            // Validate inputs
+            if (files == null || files.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse(false, "No files provided for upload", null));
+            }
+
             Initiative initiative = initiativeRepository.findById(initiativeId)
-                .orElseThrow(() -> new RuntimeException("Initiative not found"));
+                .orElseThrow(() -> new RuntimeException("Initiative not found with ID: " + initiativeId));
 
             List<InitiativeFile> uploadedFiles = fileUploadService.uploadFiles(files, initiative);
             
-            return ResponseEntity.ok(new ApiResponse(true, "Files uploaded successfully", uploadedFiles));
-        } catch (Exception e) {
+            System.out.println("Successfully uploaded " + uploadedFiles.size() + " files for initiative: " + initiativeId);
+            
+            return ResponseEntity.ok(new ApiResponse(true, 
+                "Successfully uploaded " + uploadedFiles.size() + " file(s)", 
+                uploadedFiles));
+                
+        } catch (RuntimeException e) {
+            System.err.println("File upload error: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ApiResponse(false, e.getMessage(), null));
+        } catch (Exception e) {
+            System.err.println("Unexpected error during file upload: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponse(false, "Internal server error during file upload", null));
         }
     }
 
@@ -58,33 +76,50 @@ public class FileUploadController {
     @GetMapping("/download/{fileId}")
     public ResponseEntity<byte[]> downloadFile(@PathVariable Long fileId) {
         try {
-            // Get file record from database first to get filename and content type
-            List<InitiativeFile> allFiles = fileUploadService.getFilesByInitiativeId(null);
-            InitiativeFile fileRecord = null;
+            // Get file record directly by ID
+            InitiativeFile fileRecord = fileUploadService.getFileById(fileId);
             
-            // Find the file record (this is a simple approach, you might want to add a direct method)
-            for (InitiativeFile file : allFiles) {
-                if (file.getId().equals(fileId)) {
-                    fileRecord = file;
-                    break;
-                }
-            }
-            
-            if (fileRecord == null) {
-                return ResponseEntity.notFound().build();
-            }
-            
+            // Get file bytes from disk
             byte[] fileBytes = fileUploadService.downloadFile(fileId);
             
+            // Sanitize filename for download - replace spaces and special characters
+            String sanitizedFileName = fileRecord.getFileName()
+                .replaceAll("[<>:\"/\\\\|?*]", "_")  // Replace illegal characters
+                .replaceAll("\\s+", "_")             // Replace spaces with underscores
+                .replaceAll("_{2,}", "_");           // Replace multiple underscores with single
+            
+            // Set proper headers for download
             HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.parseMediaType(fileRecord.getFileType()));
-            headers.setContentDispositionFormData("attachment", fileRecord.getFileName());
+            
+            // Set content type
+            String contentType = fileRecord.getFileType();
+            if (contentType == null || contentType.isEmpty()) {
+                contentType = "application/octet-stream";
+            }
+            headers.setContentType(MediaType.parseMediaType(contentType));
+            
+            // Set content disposition with both the original and sanitized filename
+            headers.add("Content-Disposition", 
+                String.format("attachment; filename=\"%s\"; filename*=UTF-8''%s", 
+                    sanitizedFileName, 
+                    java.net.URLEncoder.encode(sanitizedFileName, "UTF-8")));
+            
             headers.setContentLength(fileBytes.length);
+            
+            // Add cache control headers
+            headers.add("Cache-Control", "no-cache, no-store, must-revalidate");
+            headers.add("Pragma", "no-cache");
+            headers.add("Expires", "0");
             
             return ResponseEntity.ok()
                 .headers(headers)
                 .body(fileBytes);
+                
+        } catch (RuntimeException e) {
+            System.err.println("File download error: " + e.getMessage());
+            return ResponseEntity.notFound().build();
         } catch (Exception e) {
+            System.err.println("Unexpected error during file download: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }

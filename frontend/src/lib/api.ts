@@ -2923,14 +2923,29 @@ export const fileAPI = {
       responseType: 'blob',
     });
 
-    // Create download link
-    const url = window.URL.createObjectURL(new Blob([response.data]));
+    // Create download link with proper blob handling
+    const blob = new Blob([response.data], { 
+      type: response.headers['content-type'] || 'application/octet-stream' 
+    });
+    const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', fileName);
+    
+    // Sanitize filename - remove or replace problematic characters for better compatibility
+    const sanitizedFileName = fileName
+      .replace(/[<>:"/\\|?*]/g, '_')  // Replace illegal characters with underscores
+      .replace(/\s+/g, '_')           // Replace spaces with underscores
+      .replace(/_{2,}/g, '_');        // Replace multiple underscores with single underscore
+    
+    link.download = sanitizedFileName;
+    link.style.display = 'none';  // Hide the link
+    
+    // Append to body, click, and remove
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    
+    // Clean up the blob URL
     window.URL.revokeObjectURL(url);
     
     return response.data;

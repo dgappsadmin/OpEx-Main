@@ -104,6 +104,7 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
   const onSubmit = async (data: FormData) => {
     console.log("=== FORM SUBMISSION DEBUG ===");
     console.log("Form data:", data);
+    console.log("Files selected:", files.length);
     console.log("Expected Value (data.expectedValue):", data.expectedValue);
     console.log("Target Value (data.targetValue):", data.targetValue);
     console.log("Estimated CAPEX (data.estimatedCapex):", data.estimatedCapex);
@@ -135,32 +136,43 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
     console.log("Initiative data being sent:", initiativeData);
     createInitiativeMutation.mutate(initiativeData, {
       onSuccess: async (response: any) => {
+        console.log("Initiative created successfully:", response);
+        
         // Upload files if any
         if (files.length > 0 && response?.data?.id) {
           try {
+            console.log(`Attempting to upload ${files.length} files for initiative ID: ${response.data.id}`);
             await uploadFiles(response.data.id);
+            
+            toast({
+              title: "Initiative Submitted Successfully!",
+              description: `Initiative created with ${files.length} file(s) uploaded successfully.`,
+            });
           } catch (error) {
             console.error("File upload failed:", error);
             toast({
-              title: "Warning",
-              description: "Initiative created but file upload failed. You can upload files later.",
+              title: "Initiative Created - File Upload Warning",
+              description: "Initiative was created successfully, but some files failed to upload. You can upload files later from the initiative details.",
               variant: "destructive",
             });
           }
+        } else {
+          toast({
+            title: "Initiative Submitted Successfully!",
+            description: "Initiative has been created and sent for approval.",
+          });
         }
         
-        toast({
-          title: "Initiative Submitted Successfully!",
-          description: "Initiative has been created and sent for approval.",
-        });
+        // Reset form and files
         form.reset();
         setFiles([]);
         setUploadedFiles([]);
       },
       onError: (error: any) => {
+        console.error("Initiative creation failed:", error);
         toast({
           title: "Error",
-          description: error.response?.data?.message || "Failed to create initiative",
+          description: error.response?.data?.message || "Failed to create initiative. Please try again.",
           variant: "destructive",
         });
       },
@@ -168,13 +180,38 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
   };
 
   const uploadFiles = async (initiativeId: number) => {
-    if (files.length === 0) return;
+    if (files.length === 0) {
+      console.log("No files to upload");
+      return;
+    }
     
-    return await fileAPI.uploadFiles(initiativeId, files);
+    console.log(`Starting upload of ${files.length} files for initiative ${initiativeId}`);
+    
+    try {
+      const result = await fileAPI.uploadFiles(initiativeId, files);
+      console.log("File upload successful:", result);
+      return result;
+    } catch (error: any) {
+      console.error("File upload error:", error);
+      
+      // More detailed error logging
+      if (error.response) {
+        console.error("Error response:", error.response.data);
+        console.error("Error status:", error.response.status);
+      }
+      
+      throw new Error(error.response?.data?.message || "Failed to upload files");
+    }
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(event.target.files || []);
+    
+    if (selectedFiles.length === 0) {
+      return;
+    }
+    
+    console.log(`Processing ${selectedFiles.length} selected files`);
     
     // Validate file size (5MB limit)
     const maxSize = 5 * 1024 * 1024; // 5MB in bytes
@@ -203,7 +240,7 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
       if (!allowedTypes.includes(file.type)) {
         toast({
           title: "Invalid file type",
-          description: `${file.name} is not a supported file type.`,
+          description: `${file.name} is not a supported file type and will be skipped.`,
           variant: "destructive",
         });
         return false;
@@ -211,11 +248,51 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
       return true;
     });
 
-    setFiles((prev) => [...prev, ...typeValidFiles]);
-    
-    // Store file names for display
-    const fileNames = typeValidFiles.map(file => file.name);
-    setUploadedFiles((prev) => [...prev, ...fileNames]);
+    if (typeValidFiles.length === 0) {
+      toast({
+        title: "No valid files",
+        description: "No files were selected due to size or type restrictions.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check for duplicate file names
+    const existingFileNames = uploadedFiles;
+    const duplicateFiles: string[] = [];
+    const newFiles = typeValidFiles.filter(file => {
+      if (existingFileNames.includes(file.name)) {
+        duplicateFiles.push(file.name);
+        return false;
+      }
+      return true;
+    });
+
+    if (duplicateFiles.length > 0) {
+      toast({
+        title: "Duplicate files",
+        description: `The following files are already selected: ${duplicateFiles.join(', ')}`,
+        variant: "destructive",
+      });
+    }
+
+    if (newFiles.length > 0) {
+      setFiles((prev) => [...prev, ...newFiles]);
+      
+      // Store file names for display
+      const fileNames = newFiles.map(file => file.name);
+      setUploadedFiles((prev) => [...prev, ...fileNames]);
+      
+      console.log(`Added ${newFiles.length} valid files to upload queue`);
+      
+      toast({
+        title: "Files selected",
+        description: `${newFiles.length} file(s) ready for upload.`,
+      });
+    }
+
+    // Clear the input
+    event.target.value = '';
   };
 
   const removeFile = (index: number) => {
