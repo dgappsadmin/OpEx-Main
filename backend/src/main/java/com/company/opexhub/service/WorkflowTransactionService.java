@@ -257,8 +257,8 @@ public class WorkflowTransactionService {
     private void setNextStageInfo(WorkflowTransactionDetailDTO dto, WorkflowTransaction transaction) {
         Integer nextStageNumber = transaction.getStageNumber() + 1;
         
-        // Check if next stage is an IL stage (4, 5) - handle dynamically
-        if (nextStageNumber >= 4 && nextStageNumber <= 5) {
+        // Check if next stage is an IL stage (5, 6, 9, 11) - handle dynamically
+        if (nextStageNumber == 5 || nextStageNumber == 6 || nextStageNumber == 9 || nextStageNumber == 11) {
             // For IL stages, get info from existing WorkflowTransaction if it exists
             Optional<WorkflowTransaction> nextTransaction = workflowTransactionRepository
                     .findByInitiativeIdAndStageNumber(transaction.getInitiativeId(), nextStageNumber);
@@ -356,7 +356,7 @@ public class WorkflowTransactionService {
                 
                 workflowTransactionRepository.save(transaction);
                 
-                // Create Stage 2 as pending
+                // Create Stage 2 as pending (NEW STAGE - Initiative assessment)
                 createNextStage(initiative.getId(), 2);
                 
                 // Send email notification to Stage 2 approver
@@ -383,8 +383,8 @@ public class WorkflowTransactionService {
     
     @Transactional
     private void createNextStage(Long initiativeId, Integer stageNumber) {
-        // Skip IL stages (4, 5) as they are created dynamically by createStagesWithAssignedIL
-        if (stageNumber >= 4 && stageNumber <= 5) {
+        // Skip IL stages (5, 6, 9, 11) as they are created dynamically by createStagesWithAssignedIL
+        if (stageNumber == 5 || stageNumber == 6 || stageNumber == 9 || stageNumber == 11) {
             return; // IL stages are handled separately
         }
         
@@ -455,52 +455,51 @@ public class WorkflowTransactionService {
         if ("approved".equals(action)) {
             Integer currentStageNumber = transaction.getStageNumber();
             
-            // Special handling for Stage 3 - Create and assign IL for stages 4, 5
-            if (currentStageNumber == 3 && assignedUserId != null) {
+            // NEW 11-STAGE WORKFLOW PROCESSING
+            if (currentStageNumber == 1) {
+                // After Stage 1 (Register), create Stage 2 (Assessment)
+                createNextStage(initiative.getId(), 2);
+            } else if (currentStageNumber == 2) {
+                // After Stage 2 (Assessment), create Stage 3 (Approval)
+                createNextStage(initiative.getId(), 3);
+            } else if (currentStageNumber == 3) {
+                // After Stage 3 (Approval), create Stage 4 (Define Responsibilities)
+                createNextStage(initiative.getId(), 4);
+            } else if (currentStageNumber == 4 && assignedUserId != null) {
+                // After Stage 4 (Define Responsibilities), create and assign IL for stages 5, 6
                 createStagesWithAssignedIL(initiative.getId(), assignedUserId);
-            } else if (currentStageNumber == 4) {
-                // After Stage 4 (MOC-CAPEX), activate Stage 5 (Timeline)
-                activateNextILStage(initiative.getId(), 5);
             } else if (currentStageNumber == 5) {
-                // After Stage 5 (Timeline), create Stage 6 for STLD
-                createStageForRole(initiative.getId(), 6, "Trial Implementation & Performance Check", "STLD");
+                // After Stage 5 (MOC-CAPEX), activate Stage 6 (Timeline)
+                activateNextILStage(initiative.getId(), 6);
             } else if (currentStageNumber == 6) {
-                // After Stage 6 (Trial Implementation), create Stage 7 for CTSD
-                createStageForRole(initiative.getId(), 7, "Periodic Status Review with CMO", "CTSD");
+                // After Stage 6 (Timeline), create Stage 7 (Progress monitoring)
+                createNextStage(initiative.getId(), 7);
             } else if (currentStageNumber == 7) {
-                // After Stage 7 (Review), create Stage 8 for STLD
-                createStageForRole(initiative.getId(), 8, "Savings Monitoring (1 Month)", "STLD");
+                // After Stage 7 (Progress monitoring), create Stage 8 (CMO Review)
+                createNextStage(initiative.getId(), 8);
             } else if (currentStageNumber == 8) {
-                // After Stage 8 (Savings Monitoring), create Stage 9 for STLD
-                createStageForRole(initiative.getId(), 9, "Saving Validation with F&A", "STLD");
+                // After Stage 8 (CMO Review), create Stage 9 (Savings Monitoring) for IL
+                createILStage(initiative.getId(), 9, "Savings Monitoring (1 Month)");
             } else if (currentStageNumber == 9) {
-                // After Stage 9 (Validation), create Stage 10 for STLD (final closure)
-                createStageForRole(initiative.getId(), 10, "Initiative Closure", "STLD");
-            } else if (currentStageNumber < 10) {
-                // For other stages beyond our defined workflow, try to get from wf_master
-                createNextStage(initiative.getId(), currentStageNumber + 1);
+                // After Stage 9 (Savings Monitoring), create Stage 10 (F&A Validation)
+                createNextStage(initiative.getId(), 10);
+            } else if (currentStageNumber == 10) {
+                // After Stage 10 (F&A Validation), create Stage 11 (Initiative Closure) for IL
+                createILStage(initiative.getId(), 11, "Initiative Closure");
             }
             
-            // Update initiative current stage - Cap at stage 10 (final stage)
-            if (currentStageNumber < 10) {
+            // Update initiative current stage - Cap at stage 11 (final stage)
+            if (currentStageNumber < 11) {
                 initiative.setCurrentStage(currentStageNumber + 1);
                 initiative.setStatus("In Progress");
-            } else if (currentStageNumber == 10) {
-                // Stage 10 is the final stage, don't increment beyond 10
-                initiative.setCurrentStage(10);
-                initiative.setStatus("Completed");
-            }
-            
-            // Legacy check for dynamic stages (keeping for backward compatibility)
-            Integer totalStages = wfMasterRepository.findBySiteAndIsActiveOrderByStageNumber(
-                initiative.getSite(), "Y").size();
-            
-            if (totalStages > 10 && currentStageNumber >= totalStages) {
+            } else if (currentStageNumber == 11) {
+                // Stage 11 is the final stage, don't increment beyond 11
+                initiative.setCurrentStage(11);
                 initiative.setStatus("Completed");
             }
             
             // Send email notification to next user (only if not the final stage)
-            if (currentStageNumber < 10) {
+            if (currentStageNumber < 11) {
                 Optional<WorkflowTransaction> nextTransaction = workflowTransactionRepository
                         .findByInitiativeIdAndStageNumber(initiative.getId(), currentStageNumber + 1);
                 
@@ -510,7 +509,7 @@ public class WorkflowTransactionService {
             } else {
                 // Final stage completed - log completion
                 Logger.getLogger(this.getClass().getName()).info(
-                    String.format("🎉 Initiative %s has been completed successfully (Stage 10 approved)", 
+                    String.format("🎉 Initiative %s has been completed successfully (Stage 11 approved)", 
                         initiative.getInitiativeNumber()));
             }
         } else {
@@ -531,11 +530,11 @@ public class WorkflowTransactionService {
         Initiative initiative = initiativeRepository.findById(initiativeId)
                 .orElseThrow(() -> new RuntimeException("Initiative not found"));
 
-        // Create IL stages 4, 5 dynamically with the selected IL
+        // Create IL stages 5, 6 dynamically with the selected IL
         // DO NOT create WfMaster entries - keep workflow dynamic
         String[][] ilStages = {
-            {"4", "MOC-CAPEX Evaluation", "IL"},
-            {"5", "Initiative Timeline Tracker", "IL"}
+            {"5", "MOC-CAPEX Evaluation", "IL"},
+            {"6", "Initiative Timeline Tracker", "IL"}
         };
         
         for (String[] stageData : ilStages) {
@@ -557,12 +556,12 @@ public class WorkflowTransactionService {
                     assignedUser.getEmail()  // Use assigned IL's email for reference
                 );
                 
-                if (stageNumber == 4) {
-                    // Stage 4 is pending after Stage 3 approval
+                if (stageNumber == 5) {
+                    // Stage 5 is pending after Stage 4 approval
                     transaction.setApproveStatus("pending");
                     transaction.setPendingWith(assignedUser.getEmail());
                 } else {
-                    // Stage 5 is not started yet
+                    // Stage 6 is not started yet
                     transaction.setApproveStatus("not_started");
                     transaction.setPendingWith(null);
                 }
@@ -570,9 +569,42 @@ public class WorkflowTransactionService {
                 // Store assigned user ID for dynamic user resolution
                 transaction.setAssignedUserId(assignedUserId);
                 workflowTransactionRepository.save(transaction);
+            }
+        }
+    }
+
+    @Transactional
+    private void createILStage(Long initiativeId, Integer stageNumber, String stageName) {
+        // Get the IL assigned in stage 4 for stages 9 and 11
+        Optional<WorkflowTransaction> stage5Transaction = workflowTransactionRepository
+                .findByInitiativeIdAndStageNumber(initiativeId, 5);
+        
+        if (stage5Transaction.isPresent() && stage5Transaction.get().getAssignedUserId() != null) {
+            Long assignedUserId = stage5Transaction.get().getAssignedUserId();
+            User assignedUser = userRepository.findById(assignedUserId)
+                    .orElseThrow(() -> new RuntimeException("Assigned IL user not found"));
+                    
+            Initiative initiative = initiativeRepository.findById(initiativeId)
+                    .orElseThrow(() -> new RuntimeException("Initiative not found"));
+            
+            // Check if transaction already exists
+            Optional<WorkflowTransaction> existingTransaction = workflowTransactionRepository
+                    .findByInitiativeIdAndStageNumber(initiativeId, stageNumber);
+                    
+            if (!existingTransaction.isPresent()) {
+                WorkflowTransaction transaction = new WorkflowTransaction(
+                    initiativeId,
+                    stageNumber,
+                    stageName,
+                    initiative.getSite(),
+                    "IL",
+                    assignedUser.getEmail()
+                );
                 
-                // REMOVED: WfMaster creation to keep workflow dynamic
-                // This allows future IL changes without being locked to specific users
+                transaction.setApproveStatus("pending");
+                transaction.setPendingWith(assignedUser.getEmail());
+                transaction.setAssignedUserId(assignedUserId);
+                workflowTransactionRepository.save(transaction);
             }
         }
     }
@@ -607,8 +639,7 @@ public class WorkflowTransactionService {
         Initiative initiative = initiativeRepository.findById(initiativeId)
                 .orElseThrow(() -> new RuntimeException("Initiative not found"));
                 
-        // For stages 6,7,8,9,10: Use WfMaster table to get predefined user assignments
-        // For stages 4,5,6 (IL): These are handled separately by createStagesWithAssignedIL method
+        // For stages from WfMaster table, get predefined user assignments
         Optional<WfMaster> wfMasterConfig = wfMasterRepository
                 .findBySiteAndStageNumberAndIsActive(initiative.getSite(), stageNumber, "Y");
         
@@ -629,7 +660,6 @@ public class WorkflowTransactionService {
             workflowTransactionRepository.save(transaction);
         } else {
             // Fallback: If no WfMaster configuration found, try to find user from Users table
-            // This provides backward compatibility
             List<User> roleUsers = userRepository.findByRoleAndSite(roleCode, initiative.getSite());
             
             if (roleUsers.isEmpty()) {
@@ -674,21 +704,21 @@ public class WorkflowTransactionService {
     }
 
     public List<WorkflowTransactionDetailDTO> getInitiativesReadyForClosure() {
-        // Get initiatives that have approved stage 9 and are ready for stage 10 closure
-        List<WorkflowTransaction> stage9Approved = workflowTransactionRepository.findInitiativesReadyForClosure();
-        return stage9Approved.stream()
+        // Get initiatives that have approved stage 10 and are ready for stage 11 closure
+        List<WorkflowTransaction> stage10Approved = workflowTransactionRepository.findByStageNumberAndApproveStatusAndSite(10, "approved", "");
+        return stage10Approved.stream()
                 .map(this::convertToDetailDTO)
                 .collect(Collectors.toList());
     }
 
     /**
-     * Get initiatives where Stage 5 (Timeline Tracker) is approved and user is assigned as IL
+     * Get initiatives where Stage 6 (Timeline Tracker) is approved and user is assigned as IL
      */
-    public List<WorkflowTransactionDetailDTO> getInitiativesWithApprovedStage5ForUser(String userEmail, String site) {
-        List<WorkflowTransaction> approvedStage5 = workflowTransactionRepository
-                .findByStageNumberAndApproveStatusAndSite(5, "approved", site);
+    public List<WorkflowTransactionDetailDTO> getInitiativesWithApprovedStage6ForUser(String userEmail, String site) {
+        List<WorkflowTransaction> approvedStage6 = workflowTransactionRepository
+                .findByStageNumberAndApproveStatusAndSite(6, "approved", site);
         
-        return approvedStage5.stream()
+        return approvedStage6.stream()
                 .filter(transaction -> userEmail.equals(transaction.getPendingWith()) || 
                        (transaction.getAssignedUserId() != null && 
                         userRepository.findById(transaction.getAssignedUserId())
@@ -699,29 +729,32 @@ public class WorkflowTransactionService {
     }
 
     /**
-     * Get initiatives where Stage 8 (Savings Monitoring) is approved and user is assigned as STLD
+     * Get initiatives where Stage 9 (Savings Monitoring) is approved and user is assigned as IL
      */
-    public List<WorkflowTransactionDetailDTO> getInitiativesWithApprovedStage8ForUser(String userEmail, String site) {
-        List<WorkflowTransaction> approvedStage8 = workflowTransactionRepository
-                .findByStageNumberAndApproveStatusAndSite(8, "approved", site);
+    public List<WorkflowTransactionDetailDTO> getInitiativesWithApprovedStage9ForUser(String userEmail, String site) {
+        List<WorkflowTransaction> approvedStage9 = workflowTransactionRepository
+                .findByStageNumberAndApproveStatusAndSite(9, "approved", site);
         
-        return approvedStage8.stream()
+        return approvedStage9.stream()
                 .filter(transaction -> userEmail.equals(transaction.getPendingWith()) || 
-                       "STLD".equals(transaction.getRequiredRole()))
+                       (transaction.getAssignedUserId() != null && 
+                        userRepository.findById(transaction.getAssignedUserId())
+                                .map(user -> userEmail.equals(user.getEmail()))
+                                .orElse(false)))
                 .map(this::convertToDetailDTO)
                 .collect(Collectors.toList());
     }
 
     /**
-     * Check if user has access to Stage 5 (Timeline Tracker) for a specific initiative
+     * Check if user has access to Stage 6 (Timeline Tracker) for a specific initiative
      */
     public boolean hasTimelineTrackerAccess(Long initiativeId, String userEmail) {
-        Optional<WorkflowTransaction> stage5Transaction = workflowTransactionRepository
-                .findByInitiativeIdAndStageNumber(initiativeId, 5);
+        Optional<WorkflowTransaction> stage6Transaction = workflowTransactionRepository
+                .findByInitiativeIdAndStageNumber(initiativeId, 6);
         
-        if (stage5Transaction.isPresent()) {
-            WorkflowTransaction transaction = stage5Transaction.get();
-            // Check if stage 5 is approved and user is assigned as IL
+        if (stage6Transaction.isPresent()) {
+            WorkflowTransaction transaction = stage6Transaction.get();
+            // Check if stage 6 is approved and user is assigned as IL
             if ("approved".equals(transaction.getApproveStatus())) {
                 if (transaction.getAssignedUserId() != null) {
                     Optional<User> assignedUser = userRepository.findById(transaction.getAssignedUserId());
@@ -734,17 +767,22 @@ public class WorkflowTransactionService {
     }
 
     /**
-     * Check if user has access to Stage 8 (Savings Monitoring) for a specific initiative
+     * Check if user has access to Stage 9 (Savings Monitoring) for a specific initiative
      */
     public boolean hasSavingsMonitoringAccess(Long initiativeId, String userEmail, String userRole) {
-        Optional<WorkflowTransaction> stage8Transaction = workflowTransactionRepository
-                .findByInitiativeIdAndStageNumber(initiativeId, 8);
+        Optional<WorkflowTransaction> stage9Transaction = workflowTransactionRepository
+                .findByInitiativeIdAndStageNumber(initiativeId, 9);
         
-        if (stage8Transaction.isPresent()) {
-            WorkflowTransaction transaction = stage8Transaction.get();
-            // Check if stage 8 is approved and user has STLD role
-            return "approved".equals(transaction.getApproveStatus()) && 
-                   ("STLD".equals(userRole) || userEmail.equals(transaction.getPendingWith()));
+        if (stage9Transaction.isPresent()) {
+            WorkflowTransaction transaction = stage9Transaction.get();
+            // Check if stage 9 is approved and user is assigned as IL
+            if ("approved".equals(transaction.getApproveStatus())) {
+                if (transaction.getAssignedUserId() != null) {
+                    Optional<User> assignedUser = userRepository.findById(transaction.getAssignedUserId());
+                    return assignedUser.map(user -> userEmail.equals(user.getEmail())).orElse(false);
+                }
+                return userEmail.equals(transaction.getPendingWith());
+            }
         }
         return false;
     }

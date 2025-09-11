@@ -5,6 +5,7 @@ import {
   useWorkflowTransactions, 
   useProcessStageAction 
 } from "@/hooks/useWorkflowTransactions";
+import { useAllStageNames, useAllRoleDescriptions } from "@/hooks/useWorkflowMaster";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,10 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
   
   const { toast } = useToast();
   
+  // Get dynamic workflow data from API
+  const { data: stageNames = {}, isLoading: stageNamesLoading } = useAllStageNames();
+  const { data: roleDescriptions = {}, isLoading: roleDescriptionsLoading } = useAllRoleDescriptions();
+  
   // Site options
   const sites = [
     { code: "NDS", name: "NDS" },
@@ -60,7 +65,7 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
   const { data: workflowTransactions = [], refetch: refetchTransactions } = useWorkflowTransactions(selectedInitiative || 0);
   const processStageAction = useProcessStageAction();
   
-  // Function to get stage name from workflow transactions
+  // Function to get stage name from workflow transactions or dynamic API
   const getStageName = (stageNumber: number, initiativeId?: number) => {
     // If we have an initiative ID and workflow transactions loaded, use them
     if (initiativeId && workflowTransactions.length > 0) {
@@ -78,21 +83,13 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
       }
     }
     
-    // Fallback to hardcoded stage names based on stage number (updated to 10 stages)
-    const stageNames: { [key: number]: string } = {
-      1: "Register Initiative",
-      2: "Approval", 
-      3: "Define Responsibilities",
-      4: "MOC-CAPEX Evaluation",
-      5: "Initiative Timeline Tracker",
-      6: "Trial Implementation & Performance Check",
-      7: "Periodic Status Review with CMO",
-      8: "Savings Monitoring (1 Month)",
-      9: "Saving Validation with F&A", 
-      10: "Initiative Closure"
-    };
+    // Use dynamic stage names from API (NEW FLEXIBLE APPROACH)
+    if (stageNames && stageNames[stageNumber]) {
+      return stageNames[stageNumber];
+    }
     
-    return stageNames[stageNumber] || `Stage ${stageNumber}`;
+    // Final fallback
+    return `Stage ${stageNumber}`;
   };
   
   // Mock data fallback - removed to use only real API data
@@ -199,14 +196,13 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
   };
 
   const getRoleCodeDescription = (roleCode: string) => {
-    const roles: { [key: string]: string } = {
-      'STLD': 'Site TSD Lead',
-      'SH': 'Site Head',
-      'EH': 'Engineering Head',
-      'IL': 'Initiative Lead',
-      'CTSD': 'Corp TSD'
-    };
-    return roles[roleCode] || roleCode;
+    // Use dynamic role descriptions from API (NEW FLEXIBLE APPROACH)
+    if (roleDescriptions && roleDescriptions[roleCode]) {
+      return roleDescriptions[roleCode];
+    }
+    
+    // Fallback for unknown roles
+    return roleCode;
   };
 
   const selectedInitiativeData = initiatives.find((i: any) => i.id === selectedInitiative);
@@ -375,11 +371,11 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
                                 if (status === 'Completed') {
                                   return 100;
                                 } else {
-                                  // Calculate progress: each approved stage = 10%
-                                  // If currentStage is 3, it means stages 1 and 2 are approved = 20%
+                                  // Calculate progress: each approved stage = ~9.09% (100/11 stages)
+                                  // If currentStage is 3, it means stages 1 and 2 are approved = ~18%
                                   // Current stage is the next pending stage, so approved stages = currentStage - 1
                                   const approvedStages = Math.max(0, currentStage - 1);
-                                  return Math.min(100, Math.round((approvedStages * 100) / 10));
+                                  return Math.min(100, Math.round((approvedStages * 100) / 11));
                                 }
                               })()}%</span>
                             </div>
@@ -390,11 +386,11 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
                               if (status === 'Completed') {
                                 return 100;
                               } else {
-                                // Calculate progress: each approved stage = 10%
-                                // If currentStage is 3, it means stages 1 and 2 are approved = 20%
+                                // Calculate progress: each approved stage = ~9.09% (100/11 stages)
+                                // If currentStage is 3, it means stages 1 and 2 are approved = ~18%
                                 // Current stage is the next pending stage, so approved stages = currentStage - 1
                                 const approvedStages = Math.max(0, currentStage - 1);
-                                return Math.min(100, Math.round((approvedStages * 100) / 10));
+                                return Math.min(100, Math.round((approvedStages * 100) / 11));
                               }
                             })()} className="h-1.5" />
                           </div>

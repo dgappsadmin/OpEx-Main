@@ -100,12 +100,12 @@ public class WorkflowTransactionController {
             System.out.println("Processed transaction ID: " + transaction.getId() + " for initiative ID: " + transaction.getInitiativeId());
 
             // If approved and this is the combined MOC-CAPEX stage, update the Initiative table
-            if ("approved".equals(action) && transaction.getStageNumber() == 4) {
+            if ("approved".equals(action) && transaction.getStageNumber() == 5) {
                 System.out.println("Processing MOC/CAPEX update for approved stage " + transaction.getStageNumber() + "...");
                 
                 Map<String, Object> mocCapexData = new HashMap<>();
                 
-                // Save both MOC and CAPEX data for combined Stage 4
+                // Save both MOC and CAPEX data for combined Stage 5 (was Stage 4)
                 if (requiresMoc != null) {
                     mocCapexData.put("requiresMoc", requiresMoc);
                 }

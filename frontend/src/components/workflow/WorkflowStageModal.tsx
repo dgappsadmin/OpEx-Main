@@ -41,7 +41,7 @@ export default function WorkflowStageModal({
   
   // Hooks for F&A functionality
   const { data: monthlyEntries = [], isLoading: entriesLoading, refetch: refetchEntries } = useFinalizedPendingFAEntries(
-    transaction?.stageNumber === 9 ? transaction?.initiativeId : 0
+    transaction?.stageNumber === 10 ? transaction?.initiativeId : 0
   );
   const batchFAApprovalMutation = useBatchFAApproval();
 
@@ -55,7 +55,7 @@ export default function WorkflowStageModal({
 
   // Reset selection when modal opens or entries change
   useEffect(() => {
-    if (isOpen && transaction?.stageNumber === 9) {
+    if (isOpen && transaction?.stageNumber === 10) {
       setSelectedEntries(new Set());
       setFaComments("");
     }
@@ -73,8 +73,8 @@ export default function WorkflowStageModal({
   }
 
   const handleApprove = async () => {
-    // Handle F&A approval for stage 9
-    if (transaction.stageNumber === 9) {
+    // Handle F&A approval for stage 10
+    if (transaction.stageNumber === 10) {
       await handleFAApproval();
       return;
     }
@@ -86,12 +86,12 @@ export default function WorkflowStageModal({
     };
 
     // Add stage-specific data
-    if (transaction.stageNumber === 3 && assignedUserId) {
+    if (transaction.stageNumber === 4 && assignedUserId) {
       data.assignedUserId = parseInt(assignedUserId);
     }
     
-    if (transaction.stageNumber === 4) {
-      // Combined MOC-CAPEX stage
+    if (transaction.stageNumber === 5) {
+      // Combined MOC-CAPEX stage (was stage 4)
       data.requiresMoc = mocRequired === "yes" ? "Y" : "N";
       if (mocRequired === "yes" && mocNumber) {
         data.mocNumber = mocNumber;
@@ -165,14 +165,14 @@ export default function WorkflowStageModal({
   const isFormValid = () => {
     if (!comment.trim()) return false;
     
-    if (transaction.stageNumber === 3 && !assignedUserId) return false;
-    if (transaction.stageNumber === 4) {
-      // Combined MOC-CAPEX validation
+    if (transaction.stageNumber === 4 && !assignedUserId) return false;
+    if (transaction.stageNumber === 5) {
+      // Combined MOC-CAPEX validation (was stage 4)
       if (!mocRequired || !capexRequired) return false;
       if (mocRequired === "yes" && !mocNumber.trim()) return false;
       if (capexRequired === "yes" && !capexNumber.trim()) return false;
     }
-    if (transaction.stageNumber === 9) {
+    if (transaction.stageNumber === 10) {
       // F&A approval - at least one entry should be selected or no entries to approve
       return !Array.isArray(monthlyEntries) || monthlyEntries.length === 0 || selectedEntries.size > 0;
     }
@@ -184,7 +184,7 @@ export default function WorkflowStageModal({
     if (!transaction?.stageNumber) return null;
     
     switch (transaction.stageNumber) {
-      case 3: // Engineering Head assigns Initiative Lead
+      case 4: // Define Responsibilities - CTSD assigns Initiative Lead (changed from EH to CTSD)
         return (
           <div className="space-y-4">
             {/* <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
@@ -224,7 +224,7 @@ export default function WorkflowStageModal({
           </div>
         );
 
-      case 4: // MOC-CAPEX Evaluation - Initiative Lead decides both MOC and CAPEX in single stage
+      case 5: // MOC-CAPEX Evaluation - Initiative Lead decides both MOC and CAPEX in single stage (was stage 4 previously)
         return (
           <div className="space-y-6">
             {/* MOC Section */}
@@ -291,10 +291,9 @@ export default function WorkflowStageModal({
           </div>
         );
 
-      case 5: // Initiative Timeline Tracker
-      case 6: // Trial Implementation & Performance Check
-      case 7: // Periodic Status Review with CMO
-      case 8: // Savings Monitoring (1 Month)
+      case 6: // Initiative Timeline Tracker (was stage 5)
+      case 7: // Progress monitoring (was stage 6 - "Trial Implementation")
+      case 8: // Periodic Status Review with CMO (was stage 7)
         return (
           <div className="space-y-4 p-4 bg-blue-50 rounded-lg">
             <div className="flex items-center gap-2.5">
@@ -306,7 +305,19 @@ export default function WorkflowStageModal({
           </div>
         );
 
-      case 9: // Saving Validation with F&A
+      case 9: // Savings Monitoring (1 Month) - NOW IL instead of STLD
+        return (
+          <div className="space-y-4 p-4 bg-blue-50 rounded-lg">
+            <div className="flex items-center gap-2.5">
+              <CheckCircle className="h-5 w-5 text-blue-600" />
+              <p className="text-blue-800 font-semibold text-sm">
+                Review savings monitoring data and provide your approval with comments.
+              </p>
+            </div>
+          </div>
+        );
+
+      case 10: // Saving Validation with F&A (was stage 9)
         return (
           <div className="space-y-6">
             <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
@@ -403,7 +414,7 @@ export default function WorkflowStageModal({
           </div>
         );
 
-      case 10: // Initiative Closure
+      case 11: // Initiative Closure - NOW IL instead of STLD (was stage 10)
         return (
           <div className="space-y-4 p-4 bg-red-50 rounded-lg">
             <div className="flex items-center gap-2.5">
@@ -423,15 +434,16 @@ export default function WorkflowStageModal({
   const getStageDescription = () => {
     const descriptions: { [key: number]: string } = {
       1: "Initiative has been registered and is ready for approval.",
-      2: "Review the initiative details and provide your approval decision.",
-      3: "Assign an Initiative Lead who will be responsible for driving this initiative forward.",
-      4: "Evaluate both Management of Change (MOC) and Capital Expenditure (CAPEX) requirements.",
-      5: "Prepare detailed timeline for initiative implementation.",
-      6: "Conduct trial implementation and performance checks.",
-      7: "Periodic status review with Chief Marketing Officer.",
-      8: "Monitor savings achieved after implementation (1 month monitoring period).",
-      9: "Validate savings with Finance & Accounts department.",
-      10: "Final closure of the initiative."
+      2: "Initial assessment and approval of the initiative by Corporate TSD.",
+      3: "Review the initiative details and provide your approval decision.",
+      4: "Assign an Initiative Lead who will be responsible for driving this initiative forward.",
+      5: "Evaluate both Management of Change (MOC) and Capital Expenditure (CAPEX) requirements.",
+      6: "Prepare detailed timeline for initiative implementation.",
+      7: "Monitor progress of initiative implementation.",
+      8: "Periodic status review with Chief Marketing Officer.",
+      9: "Monitor savings achieved after implementation (1 month monitoring period).",
+      10: "Validate savings with Finance & Accounts department.",
+      11: "Final closure of the initiative."
     };
     return descriptions[transaction.stageNumber] || "Process this workflow stage.";
   };
@@ -483,7 +495,7 @@ export default function WorkflowStageModal({
           </div>
 
           {/* Action buttons - Compact */}
-          {transaction.stageNumber === 10 ? (
+          {transaction.stageNumber === 11 ? (
             <div className="flex gap-3 pt-3">
               <Button 
                 onClick={handleApprove}
