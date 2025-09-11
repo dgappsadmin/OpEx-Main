@@ -144,6 +144,10 @@ public class Initiative {
     @JsonManagedReference("initiative-comments")
     private Set<Comment> comments = new HashSet<>();
 
+    @OneToMany(mappedBy = "initiative", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonManagedReference("initiative-files")
+    private Set<InitiativeFile> files = new HashSet<>();
+
     // Constructors
     public Initiative() {}
 
@@ -291,6 +295,9 @@ public class Initiative {
 
     public Set<Comment> getComments() { return comments; }
     public void setComments(Set<Comment> comments) { this.comments = comments; }
+
+    public Set<InitiativeFile> getFiles() { return files; }
+    public void setFiles(Set<InitiativeFile> files) { this.files = files; }
 
     public String getInitiatorName() { return initiatorName; }
     public void setInitiatorName(String initiatorName) { this.initiatorName = initiatorName; }

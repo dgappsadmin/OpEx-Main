@@ -21,13 +21,15 @@ import {
   Target, 
   DollarSign, 
   FileText, 
-  Settings,
   Clock,
   User,
-  CheckCircle2
+  CheckCircle2,
+  Files,
+  FolderOpen
 } from 'lucide-react';
 import { useProgressPercentage, useCurrentPendingStage } from '@/hooks/useWorkflowTransactions';
 import { useUser } from '@/hooks/useUsers';
+import UploadedDocuments from '@/components/UploadedDocuments';
 import { initiativeAPI } from '@/lib/api';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -322,18 +324,22 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
 
         <div className="flex-1 overflow-hidden">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full h-full flex flex-col">
-            <TabsList className="grid w-full grid-cols-3 h-12 flex-shrink-0 mx-6 mt-6">
-              <TabsTrigger value="overview" className="flex items-center gap-2 text-sm py-2">
+            <TabsList className="grid w-full grid-cols-4 h-12 flex-shrink-0 mx-6 mt-6 gap-1">
+              <TabsTrigger value="overview" className="flex items-center gap-2 text-sm py-2 px-3">
                 <Target className="h-4 w-4" />
-                Overview
+                <span className="hidden sm:inline">Overview</span>
               </TabsTrigger>
-              <TabsTrigger value="details" className="flex items-center gap-2 text-sm py-2">
+              <TabsTrigger value="details" className="flex items-center gap-2 text-sm py-2 px-3">
                 <FileText className="h-4 w-4" />
-                Details
+                <span className="hidden sm:inline">Details</span>
               </TabsTrigger>
-              <TabsTrigger value="settings" className="flex items-center gap-2 text-sm py-2">
-                <Settings className="h-4 w-4" />
-                Settings
+              <TabsTrigger value="references" className="flex items-center gap-2 text-sm py-2 px-3">
+                <Files className="h-4 w-4" />
+                <span className="hidden sm:inline">References</span>
+              </TabsTrigger>
+              <TabsTrigger value="documents" className="flex items-center gap-2 text-sm py-2 px-3">
+                <FolderOpen className="h-4 w-4" />
+                <span className="hidden sm:inline">Documents</span>
               </TabsTrigger>
             </TabsList>
 
@@ -921,7 +927,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                   </Card>
                 </TabsContent>
 
-                <TabsContent value="settings" className="mt-6 space-y-6 px-1">
+                <TabsContent value="references" className="mt-6 space-y-6 px-1">
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2 text-lg">
@@ -1101,6 +1107,10 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                       </div>
                     </CardContent>
                   </Card>
+                </TabsContent>
+
+                <TabsContent value="documents" className="mt-6 space-y-6 px-1">
+                  <UploadedDocuments initiativeId={initiative?.id} />
                 </TabsContent>
               </ScrollArea>
             </div>

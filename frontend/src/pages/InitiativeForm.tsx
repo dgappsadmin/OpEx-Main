@@ -34,7 +34,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { CalendarIcon, Upload, FileText, Send, IndianRupee, Percent, Banknote, Plus } from "lucide-react";
+import { CalendarIcon, Upload, FileText, Send, IndianRupee, Percent, Banknote, Plus, X, File } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -42,6 +42,7 @@ import { Badge } from "@/components/ui/badge";
 import { sites, disciplines, User } from "@/lib/mockData";
 import { useCreateInitiative } from "@/hooks/useInitiatives";
 import GlassmorphLoader from "@/components/ui/GlassmorphLoader";
+import { fileAPI } from "@/lib/api";
 
 interface InitiativeFormProps {
   user: User;
@@ -71,6 +72,7 @@ type FormData = z.infer<typeof formSchema>;
 
 export default function InitiativeForm({ user }: InitiativeFormProps) {
   const [files, setFiles] = useState<File[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
   const { toast } = useToast();
 
   // All users can now create initiatives - no role restrictions
@@ -99,7 +101,7 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
     },
   });
 
-  const onSubmit = (data: FormData) => {
+  const onSubmit = async (data: FormData) => {
     console.log("=== FORM SUBMISSION DEBUG ===");
     console.log("Form data:", data);
     console.log("Expected Value (data.expectedValue):", data.expectedValue);
@@ -132,13 +134,28 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
 
     console.log("Initiative data being sent:", initiativeData);
     createInitiativeMutation.mutate(initiativeData, {
-      onSuccess: () => {
+      onSuccess: async (response: any) => {
+        // Upload files if any
+        if (files.length > 0 && response?.data?.id) {
+          try {
+            await uploadFiles(response.data.id);
+          } catch (error) {
+            console.error("File upload failed:", error);
+            toast({
+              title: "Warning",
+              description: "Initiative created but file upload failed. You can upload files later.",
+              variant: "destructive",
+            });
+          }
+        }
+        
         toast({
           title: "Initiative Submitted Successfully!",
           description: "Initiative has been created and sent for approval.",
         });
         form.reset();
         setFiles([]);
+        setUploadedFiles([]);
       },
       onError: (error: any) => {
         toast({
@@ -150,13 +167,60 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
     });
   };
 
+  const uploadFiles = async (initiativeId: number) => {
+    if (files.length === 0) return;
+    
+    return await fileAPI.uploadFiles(initiativeId, files);
+  };
+
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(event.target.files || []);
-    setFiles((prev) => [...prev, ...selectedFiles]);
+    
+    // Validate file size (5MB limit)
+    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+    const validFiles = selectedFiles.filter(file => {
+      if (file.size > maxSize) {
+        toast({
+          title: "File too large",
+          description: `${file.name} exceeds 5MB limit and will be skipped.`,
+          variant: "destructive",
+        });
+        return false;
+      }
+      return true;
+    });
+
+    // Validate file types
+    const allowedTypes = [
+      'application/pdf', 'application/msword', 
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel', 
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'text/plain', 'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/bmp'
+    ];
+
+    const typeValidFiles = validFiles.filter(file => {
+      if (!allowedTypes.includes(file.type)) {
+        toast({
+          title: "Invalid file type",
+          description: `${file.name} is not a supported file type.`,
+          variant: "destructive",
+        });
+        return false;
+      }
+      return true;
+    });
+
+    setFiles((prev) => [...prev, ...typeValidFiles]);
+    
+    // Store file names for display
+    const fileNames = typeValidFiles.map(file => file.name);
+    setUploadedFiles((prev) => [...prev, ...fileNames]);
   };
 
   const removeFile = (index: number) => {
     setFiles((prev) => prev.filter((_, i) => i !== index));
+    setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   return (
@@ -610,6 +674,63 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                       </FormItem>
                     )}
                   />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* File Upload Section */}
+            <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Upload className="h-4 w-4 text-purple-600" />
+                  File Uploads
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  Upload supporting documents and images (Max 5MB per file)
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4 pt-0">
+                <div className="grid grid-cols-1 gap-4">
+                  <div>
+                    <Label className="text-xs font-medium">Select Files</Label>
+                    <div className="mt-1">
+                      <input
+                        type="file"
+                        multiple
+                        accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.gif,.bmp"
+                        onChange={handleFileUpload}
+                        className="w-full text-xs file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 file:cursor-pointer"
+                        disabled={isSubmitting}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Supported: Documents (PDF, DOC, DOCX, XLS, XLSX, TXT) and Images (JPG, PNG, GIF, BMP)
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {uploadedFiles.length > 0 && (
+                    <div>
+                      <Label className="text-xs font-medium">Selected Files ({uploadedFiles.length})</Label>
+                      <div className="mt-2 space-y-2 max-h-32 overflow-y-auto">
+                        {uploadedFiles.map((fileName, index) => (
+                          <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded text-xs">
+                            <div className="flex items-center gap-2">
+                              <File className="h-3 w-3 text-blue-600" />
+                              <span className="truncate">{fileName}</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeFile(index)}
+                              className="text-red-500 hover:text-red-700"
+                              disabled={isSubmitting}
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

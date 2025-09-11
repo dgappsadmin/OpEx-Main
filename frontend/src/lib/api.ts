@@ -1,4 +1,63 @@
-// // // import axios from 'axios';
+// import axios from 'axios';
+
+// // Function to determine API base URL based on current location
+// const getApiBaseUrl = (): string => {
+//   const hostname = window.location.hostname;
+  
+//   if (hostname === 'localhost' || hostname === '127.0.0.1') {
+//     // Development environment
+//     return 'http://localhost:9090/opexhub/api';
+//   } else if (hostname === 'dgapps.godeepak.com') {
+//     // Production environment
+//     return 'https://dgapps.godeepak.com/opexhub/api';
+//   } else if (hostname === 'dgpilotapps.godeepak.com') {
+//     // Pilot environment
+//     return 'https://dgpilotapps.godeepak.com/opexhub/api';
+//   } else {
+//     // Fallback to localhost for unknown environments
+//     return 'http://localhost:9090/opexhub/api';
+//   }
+// };
+
+// const API_BASE_URL = getApiBaseUrl();
+
+// // Create axios instance with default config
+// const api = axios.create({
+//   baseURL: API_BASE_URL,
+//   headers: {
+//     'Content-Type': 'application/json',
+//   },
+// });
+
+// // Add token to requests if available
+// api.interceptors.request.use((config) => {
+//   const token = localStorage.getItem('opex_token');
+//   if (token) {
+//     config.headers.Authorization = `Bearer ${token}`;
+//   }
+//   console.log('API Request:', config.method?.toUpperCase(), config.url, config.data);
+//   return config;
+// });
+
+// // Handle token expiration
+// api.interceptors.response.use(
+//   (response) => {
+//     console.log('API Response:', response.status, response.config.url, response.data);
+//     return response;
+//   },
+//   (error) => {
+//     console.error('API Error:', error.response?.status, error.response?.data, error.message);
+//     if (error.response?.status === 401) {
+//       localStorage.removeItem('opex_token');
+//       localStorage.removeItem('opex_user');
+//       window.location.href = '/';
+//     }
+//     return Promise.reject(error);
+//   }
+// );
+
+
+// export default api;
 
 // // // const API_BASE_URL = 'http://localhost:9090/api';
 
@@ -2834,6 +2893,51 @@ export const reportsAPI = {
 
   getAvailableFinancialYears: async () => {
     const response = await api.get('/reports/available-financial-years');
+    return response.data;
+  }
+};
+
+// File Upload API
+export const fileAPI = {
+  uploadFiles: async (initiativeId: number, files: File[]) => {
+    const formData = new FormData();
+    files.forEach((file) => {
+      formData.append('files', file);
+    });
+
+    const response = await api.post(`/files/upload/${initiativeId}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  getFilesByInitiative: async (initiativeId: number) => {
+    const response = await api.get(`/files/initiative/${initiativeId}`);
+    return response.data;
+  },
+
+  downloadFile: async (fileId: number, fileName: string) => {
+    const response = await api.get(`/files/download/${fileId}`, {
+      responseType: 'blob',
+    });
+
+    // Create download link
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', fileName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    
+    return response.data;
+  },
+
+  deleteFile: async (fileId: number) => {
+    const response = await api.delete(`/files/${fileId}`);
     return response.data;
   }
 };
