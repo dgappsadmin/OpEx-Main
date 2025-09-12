@@ -61,4 +61,13 @@ public class DashboardController {
         PerformanceAnalysisDTO performanceAnalysis = dashboardService.getPerformanceAnalysis();
         return ResponseEntity.ok(performanceAnalysis);
     }
+
+    /**
+     * Get available sites for dashboard filter (excluding CORP)
+     */
+    @GetMapping("/sites")
+    public ResponseEntity<List<String>> getAvailableSites() {
+        List<String> sites = dashboardService.getAvailableSites();
+        return ResponseEntity.ok(sites);
+    }
 }

@@ -2373,7 +2373,6 @@ export const timelineAPI = {
     return response.data;
   }
 };
-
 export const dashboardAPI = {
   // Get overall dashboard statistics
   getStats: async () => {
@@ -2403,10 +2402,14 @@ export const dashboardAPI = {
   getPerformanceAnalysis: async () => {
     const response = await api.get('/dashboard/performance-analysis');
     return response.data;
+  },
+
+  // Get available sites for dashboard filter
+  getSites: async () => {
+    const response = await api.get('/dashboard/sites');
+    return response.data;
   }
 };
-
-
 // Workflow API
 export const workflowAPI = {
   getStages: async (initiativeId: number) => {

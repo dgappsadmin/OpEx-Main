@@ -36,3 +36,13 @@ export const usePerformanceAnalysis = () => {
     staleTime: 5 * 60 * 1000, // Still valid
   });
 };
+
+export const useDashboardSites = () => {
+  return useQuery({
+    queryKey: ['dashboard', 'sites'],
+    queryFn: async () => {
+      return await dashboardAPI.getSites();
+    },
+    staleTime: 10 * 60 * 1000, // Sites don't change often, cache for 10 minutes
+  });
+};

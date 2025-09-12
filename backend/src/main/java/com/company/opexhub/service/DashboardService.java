@@ -18,6 +18,7 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -93,6 +94,13 @@ public class DashboardService {
         Long pendingApprovals = workflowTransactionRepository.countBySiteAndApproveStatusAndPendingWithIsNotNull(site, "pending");
 
         return new DashboardStatsDTO(totalInitiatives, actualSavings, completedInitiatives, pendingApprovals);
+    }
+
+    /**
+     * Get available sites for dashboard filtering (excluding CORP)
+     */
+    public List<String> getAvailableSites() {
+        return Arrays.asList("NDS", "DHJ", "HSD", "APL", "TCD");
     }
 
     /**

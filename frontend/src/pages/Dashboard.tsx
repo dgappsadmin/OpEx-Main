@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   BarChart3, 
   TrendingUp, 
@@ -15,11 +16,13 @@ import {
   RefreshCw,
   PieChart,
   Activity,
-  TrendingDown
+  TrendingDown,
+  Filter
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { User } from "@/lib/mockData";
-import { useDashboardStats, useRecentInitiatives, usePerformanceAnalysis } from "@/hooks/useDashboard";
+import { useDashboardStats, useRecentInitiatives, usePerformanceAnalysis, useDashboardSites } from "@/hooks/useDashboard";
 import PerformanceAnalysis from "@/components/PerformanceAnalysis";
 
 interface DashboardProps {
@@ -29,12 +32,18 @@ interface DashboardProps {
 export default function Dashboard({ user }: DashboardProps) {
   const navigate = useNavigate();
   
-  // Use site-specific data if user has a site, otherwise get overall stats
-  const userSite = user.site !== 'ALL' ? user.site : undefined;
+  // State for site filter - defaults to "Overall"
+  const [selectedSite, setSelectedSite] = useState<string>("overall");
   
-  // Fetch real dashboard data
-  const { data: dashboardStats, isLoading: statsLoading, error: statsError } = useDashboardStats(userSite);
-  const { data: recentInitiativesData, isLoading: initiativesLoading, error: initiativesError } = useRecentInitiatives(userSite);
+  // Determine which site to use for API calls
+  const apiSite = selectedSite === "overall" ? undefined : selectedSite;
+  
+  // Fetch available sites for filter
+  const { data: availableSites, isLoading: sitesLoading } = useDashboardSites();
+  
+  // Fetch real dashboard data based on selected filter
+  const { data: dashboardStats, isLoading: statsLoading, error: statsError } = useDashboardStats(apiSite);
+  const { data: recentInitiativesData, isLoading: initiativesLoading, error: initiativesError } = useRecentInitiatives(apiSite);
   const { data: performanceAnalysisData, isLoading: performanceLoading, error: performanceError } = usePerformanceAnalysis();
 
   // Enhanced currency formatting
@@ -148,16 +157,49 @@ export default function Dashboard({ user }: DashboardProps) {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            OpEx Dashboard
+            OpEx Dashboard {selectedSite !== "overall" && `- ${selectedSite}`}
           </h1>
           <p className="text-muted-foreground text-xs mt-0.5">
-            Welcome back, {user.fullName}!
+            Welcome back, {user.fullName}! {selectedSite === "overall" ? "Viewing overall stats" : `Viewing ${selectedSite} site data`}
           </p>
         </div>
         <Button onClick={() => navigate('/initiative/new')} className="gap-1.5 shrink-0 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 h-9 px-4 text-xs">
           <Plus className="h-3.5 w-3.5" />
           New Initiative
         </Button>
+      </div>
+
+      {/* Site Filter */}
+      <div className="flex items-center justify-between bg-white/50 backdrop-blur-sm rounded-lg p-3 border border-gray-200">
+        <div className="flex items-center gap-2">
+          <Filter className="h-4 w-4 text-blue-600" />
+          <span className="text-sm font-medium text-gray-700">Filter by Site:</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Select value={selectedSite} onValueChange={setSelectedSite}>
+            <SelectTrigger className="w-40 h-8 text-xs bg-white border-gray-300 focus:border-blue-500">
+              <SelectValue placeholder="Select site" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="overall" className="text-xs">Overall</SelectItem>
+              {!sitesLoading && availableSites?.map((site: string) => (
+                <SelectItem key={site} value={site} className="text-xs">
+                  {site}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {selectedSite !== "overall" && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelectedSite("overall")}
+              className="h-8 px-2 text-xs text-gray-500 hover:text-gray-700"
+            >
+              Clear
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Tab Navigation */}
@@ -224,10 +266,13 @@ export default function Dashboard({ user }: DashboardProps) {
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-base">
                   <BarChart3 className="h-4 w-4 text-blue-600" />
-                  Recent Initiatives
+                  Recent Initiatives {selectedSite !== "overall" && `- ${selectedSite}`}
                 </CardTitle>
                 <CardDescription className="text-xs">
-                  Latest submitted initiatives requiring attention
+                  {selectedSite === "overall" 
+                    ? "Latest submitted initiatives requiring attention" 
+                    : `Latest initiatives from ${selectedSite} site`
+                  }
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
