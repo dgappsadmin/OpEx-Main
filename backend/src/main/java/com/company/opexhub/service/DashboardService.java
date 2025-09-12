@@ -218,38 +218,69 @@ public class DashboardService {
             String budgetType, LocalDateTime fyStart, LocalDateTime fyEnd, 
             String startMonth, String endMonth) {
         
+        // Get previous financial year data for trend calculation
+        LocalDateTime[] prevFyRange = getPreviousFinancialYearRange();
+        LocalDateTime prevFyStart = prevFyRange[0];
+        LocalDateTime prevFyEnd = prevFyRange[1];
+        String[] prevMonthRange = getPreviousFinancialYearMonthRange();
+        String prevStartMonth = prevMonthRange[0];
+        String prevEndMonth = prevMonthRange[1];
+        
         Long totalInitiatives;
         BigDecimal potentialSavingsAnnualized;
         BigDecimal potentialSavingsCurrentFY;
         BigDecimal actualSavingsCurrentFY;
         BigDecimal savingsProjectionCurrentFY;
         
+        // Previous year data for trends
+        Long prevTotalInitiatives;
+        BigDecimal prevPotentialSavingsAnnualized;
+        BigDecimal prevPotentialSavingsCurrentFY;
+        BigDecimal prevActualSavingsCurrentFY;
+        BigDecimal prevSavingsProjectionCurrentFY;
+        
         if (budgetType == null) {
-            // Overall metrics
+            // Overall metrics - current FY
             totalInitiatives = initiativeRepository.count();
             BigDecimal totalExpectedSavings = initiativeRepository.sumAllExpectedSavings();
-            // Fix: Don't multiply by 12 for annualized - use the total expected savings as is
-            // The expected savings in the database already represents the full potential
             potentialSavingsAnnualized = totalExpectedSavings != null ? totalExpectedSavings : BigDecimal.ZERO;
             potentialSavingsCurrentFY = initiativeRepository.sumExpectedSavingsByCreatedAtBetween(fyStart, fyEnd);
             actualSavingsCurrentFY = monthlyMonitoringEntryRepository.sumAchievedValueByMonitoringMonthBetween(startMonth, endMonth);
             savingsProjectionCurrentFY = monthlyMonitoringEntryRepository.sumTargetValueByMonitoringMonthBetween(startMonth, endMonth);
+            
+            // Overall metrics - previous FY
+            prevTotalInitiatives = initiativeRepository.countByCreatedAtBetween(prevFyStart, prevFyEnd);
+            BigDecimal prevTotalExpectedSavings = initiativeRepository.sumExpectedSavingsByCreatedAtBetween(prevFyStart, prevFyEnd);
+            prevPotentialSavingsAnnualized = prevTotalExpectedSavings != null ? prevTotalExpectedSavings : BigDecimal.ZERO;
+            prevPotentialSavingsCurrentFY = prevPotentialSavingsAnnualized;
+            prevActualSavingsCurrentFY = monthlyMonitoringEntryRepository.sumAchievedValueByMonitoringMonthBetween(prevStartMonth, prevEndMonth);
+            prevSavingsProjectionCurrentFY = monthlyMonitoringEntryRepository.sumTargetValueByMonitoringMonthBetween(prevStartMonth, prevEndMonth);
         } else {
-            // Budget type specific metrics
+            // Budget type specific metrics - current FY
             totalInitiatives = initiativeRepository.countByBudgetType(budgetType);
             BigDecimal totalExpectedSavings = initiativeRepository.sumExpectedSavingsByBudgetType(budgetType);
-            // Fix: Don't multiply by 12 for annualized - use the total expected savings as is
-            // The expected savings in the database already represents the full potential
             potentialSavingsAnnualized = totalExpectedSavings != null ? totalExpectedSavings : BigDecimal.ZERO;
             potentialSavingsCurrentFY = initiativeRepository.sumExpectedSavingsByCreatedAtBetweenAndBudgetType(fyStart, fyEnd, budgetType);
             actualSavingsCurrentFY = monthlyMonitoringEntryRepository.sumAchievedValueByMonitoringMonthBetweenAndBudgetType(startMonth, endMonth, budgetType);
             savingsProjectionCurrentFY = monthlyMonitoringEntryRepository.sumTargetValueByMonitoringMonthBetweenAndBudgetType(startMonth, endMonth, budgetType);
+            
+            // Budget type specific metrics - previous FY
+            prevTotalInitiatives = initiativeRepository.countByBudgetTypeAndCreatedAtBetween(budgetType, prevFyStart, prevFyEnd);
+            BigDecimal prevTotalExpectedSavings = initiativeRepository.sumExpectedSavingsByCreatedAtBetweenAndBudgetType(prevFyStart, prevFyEnd, budgetType);
+            prevPotentialSavingsAnnualized = prevTotalExpectedSavings != null ? prevTotalExpectedSavings : BigDecimal.ZERO;
+            prevPotentialSavingsCurrentFY = prevPotentialSavingsAnnualized;
+            prevActualSavingsCurrentFY = monthlyMonitoringEntryRepository.sumAchievedValueByMonitoringMonthBetweenAndBudgetType(prevStartMonth, prevEndMonth, budgetType);
+            prevSavingsProjectionCurrentFY = monthlyMonitoringEntryRepository.sumTargetValueByMonitoringMonthBetweenAndBudgetType(prevStartMonth, prevEndMonth, budgetType);
         }
         
         // Ensure non-null values
         potentialSavingsCurrentFY = potentialSavingsCurrentFY != null ? potentialSavingsCurrentFY : BigDecimal.ZERO;
         actualSavingsCurrentFY = actualSavingsCurrentFY != null ? actualSavingsCurrentFY : BigDecimal.ZERO;
         savingsProjectionCurrentFY = savingsProjectionCurrentFY != null ? savingsProjectionCurrentFY : BigDecimal.ZERO;
+        
+        prevPotentialSavingsCurrentFY = prevPotentialSavingsCurrentFY != null ? prevPotentialSavingsCurrentFY : BigDecimal.ZERO;
+        prevActualSavingsCurrentFY = prevActualSavingsCurrentFY != null ? prevActualSavingsCurrentFY : BigDecimal.ZERO;
+        prevSavingsProjectionCurrentFY = prevSavingsProjectionCurrentFY != null ? prevSavingsProjectionCurrentFY : BigDecimal.ZERO;
         
         // Calculate progress percentage: (Savings Projection / Potential Savings) * 100
         BigDecimal progressPercentage = BigDecimal.ZERO;
@@ -259,13 +290,34 @@ public class DashboardService {
                 .multiply(BigDecimal.valueOf(100));
         }
         
+        BigDecimal prevProgressPercentage = BigDecimal.ZERO;
+        if (prevPotentialSavingsCurrentFY.compareTo(BigDecimal.ZERO) > 0) {
+            prevProgressPercentage = prevSavingsProjectionCurrentFY
+                .divide(prevPotentialSavingsCurrentFY, 4, RoundingMode.HALF_UP)
+                .multiply(BigDecimal.valueOf(100));
+        }
+        
+        // Calculate trends
+        BigDecimal totalInitiativesTrend = BigDecimal.valueOf(calculateTrend(totalInitiatives, prevTotalInitiatives));
+        BigDecimal potentialSavingsAnnualizedTrend = BigDecimal.valueOf(calculateTrend(potentialSavingsAnnualized, prevPotentialSavingsAnnualized));
+        BigDecimal potentialSavingsCurrentFYTrend = BigDecimal.valueOf(calculateTrend(potentialSavingsCurrentFY, prevPotentialSavingsCurrentFY));
+        BigDecimal actualSavingsCurrentFYTrend = BigDecimal.valueOf(calculateTrend(actualSavingsCurrentFY, prevActualSavingsCurrentFY));
+        BigDecimal savingsProjectionCurrentFYTrend = BigDecimal.valueOf(calculateTrend(savingsProjectionCurrentFY, prevSavingsProjectionCurrentFY));
+        BigDecimal progressPercentageTrend = BigDecimal.valueOf(calculateTrend(progressPercentage, prevProgressPercentage));
+        
         return new PerformanceAnalysisDTO.PerformanceMetrics(
                 totalInitiatives, 
                 potentialSavingsAnnualized, 
                 potentialSavingsCurrentFY, 
                 actualSavingsCurrentFY, 
                 savingsProjectionCurrentFY, 
-                progressPercentage
+                progressPercentage,
+                totalInitiativesTrend,
+                potentialSavingsAnnualizedTrend,
+                potentialSavingsCurrentFYTrend,
+                actualSavingsCurrentFYTrend,
+                savingsProjectionCurrentFYTrend,
+                progressPercentageTrend
         );
     }
     
@@ -358,34 +410,69 @@ public class DashboardService {
             String site, String budgetType, LocalDateTime fyStart, LocalDateTime fyEnd, 
             String startMonth, String endMonth) {
         
+        // Get previous financial year data for trend calculation
+        LocalDateTime[] prevFyRange = getPreviousFinancialYearRange();
+        LocalDateTime prevFyStart = prevFyRange[0];
+        LocalDateTime prevFyEnd = prevFyRange[1];
+        String[] prevMonthRange = getPreviousFinancialYearMonthRange();
+        String prevStartMonth = prevMonthRange[0];
+        String prevEndMonth = prevMonthRange[1];
+        
         Long totalInitiatives;
         BigDecimal potentialSavingsAnnualized;
         BigDecimal potentialSavingsCurrentFY;
         BigDecimal actualSavingsCurrentFY;
         BigDecimal savingsProjectionCurrentFY;
         
+        // Previous year data for trends
+        Long prevTotalInitiatives;
+        BigDecimal prevPotentialSavingsAnnualized;
+        BigDecimal prevPotentialSavingsCurrentFY;
+        BigDecimal prevActualSavingsCurrentFY;
+        BigDecimal prevSavingsProjectionCurrentFY;
+        
         if (budgetType == null) {
-            // Overall metrics for site
+            // Overall metrics for site - current FY
             totalInitiatives = initiativeRepository.countBySite(site);
             BigDecimal totalExpectedSavings = initiativeRepository.sumAllExpectedSavingsBySite(site);
             potentialSavingsAnnualized = totalExpectedSavings != null ? totalExpectedSavings : BigDecimal.ZERO;
             potentialSavingsCurrentFY = initiativeRepository.sumExpectedSavingsBySiteAndCreatedAtBetween(site, fyStart, fyEnd);
             actualSavingsCurrentFY = monthlyMonitoringEntryRepository.sumAchievedValueBySiteAndMonitoringMonthBetween(site, startMonth, endMonth);
             savingsProjectionCurrentFY = monthlyMonitoringEntryRepository.sumTargetValueBySiteAndMonitoringMonthBetween(site, startMonth, endMonth);
+            
+            // Overall metrics for site - previous FY
+            prevTotalInitiatives = initiativeRepository.countBySiteAndCreatedAtBetween(site, prevFyStart, prevFyEnd);
+            BigDecimal prevTotalExpectedSavings = initiativeRepository.sumExpectedSavingsBySiteAndCreatedAtBetween(site, prevFyStart, prevFyEnd);
+            prevPotentialSavingsAnnualized = prevTotalExpectedSavings != null ? prevTotalExpectedSavings : BigDecimal.ZERO;
+            prevPotentialSavingsCurrentFY = prevPotentialSavingsAnnualized;
+            prevActualSavingsCurrentFY = monthlyMonitoringEntryRepository.sumAchievedValueBySiteAndMonitoringMonthBetween(site, prevStartMonth, prevEndMonth);
+            prevSavingsProjectionCurrentFY = monthlyMonitoringEntryRepository.sumTargetValueBySiteAndMonitoringMonthBetween(site, prevStartMonth, prevEndMonth);
         } else {
-            // Budget type specific metrics for site
+            // Budget type specific metrics for site - current FY
             totalInitiatives = initiativeRepository.countBySiteAndBudgetType(site, budgetType);
             BigDecimal totalExpectedSavings = initiativeRepository.sumExpectedSavingsBySiteAndBudgetType(site, budgetType);
             potentialSavingsAnnualized = totalExpectedSavings != null ? totalExpectedSavings : BigDecimal.ZERO;
             potentialSavingsCurrentFY = initiativeRepository.sumExpectedSavingsBySiteAndCreatedAtBetweenAndBudgetType(site, fyStart, fyEnd, budgetType);
             actualSavingsCurrentFY = monthlyMonitoringEntryRepository.sumAchievedValueBySiteAndMonitoringMonthBetweenAndBudgetType(site, startMonth, endMonth, budgetType);
             savingsProjectionCurrentFY = monthlyMonitoringEntryRepository.sumTargetValueBySiteAndMonitoringMonthBetweenAndBudgetType(site, startMonth, endMonth, budgetType);
+            
+            // Budget type specific metrics for site - previous FY
+            prevTotalInitiatives = initiativeRepository.countBySiteAndBudgetTypeAndCreatedAtBetween(site, budgetType, prevFyStart, prevFyEnd);
+            BigDecimal prevTotalExpectedSavings = initiativeRepository.sumExpectedSavingsBySiteAndCreatedAtBetweenAndBudgetType(site, prevFyStart, prevFyEnd, budgetType);
+            prevPotentialSavingsAnnualized = prevTotalExpectedSavings != null ? prevTotalExpectedSavings : BigDecimal.ZERO;
+            prevPotentialSavingsCurrentFY = prevPotentialSavingsAnnualized;
+            prevActualSavingsCurrentFY = monthlyMonitoringEntryRepository.sumAchievedValueBySiteAndMonitoringMonthBetweenAndBudgetType(site, prevStartMonth, prevEndMonth, budgetType);
+            prevSavingsProjectionCurrentFY = monthlyMonitoringEntryRepository.sumTargetValueBySiteAndMonitoringMonthBetweenAndBudgetType(site, prevStartMonth, prevEndMonth, budgetType);
         }
         
         // Ensure non-null values
         potentialSavingsCurrentFY = potentialSavingsCurrentFY != null ? potentialSavingsCurrentFY : BigDecimal.ZERO;
         actualSavingsCurrentFY = actualSavingsCurrentFY != null ? actualSavingsCurrentFY : BigDecimal.ZERO;
         savingsProjectionCurrentFY = savingsProjectionCurrentFY != null ? savingsProjectionCurrentFY : BigDecimal.ZERO;
+        
+        prevPotentialSavingsCurrentFY = prevPotentialSavingsCurrentFY != null ? prevPotentialSavingsCurrentFY : BigDecimal.ZERO;
+        prevActualSavingsCurrentFY = prevActualSavingsCurrentFY != null ? prevActualSavingsCurrentFY : BigDecimal.ZERO;
+        prevSavingsProjectionCurrentFY = prevSavingsProjectionCurrentFY != null ? prevSavingsProjectionCurrentFY : BigDecimal.ZERO;
         
         // Calculate progress percentage: (Savings Projection / Potential Savings) * 100
         BigDecimal progressPercentage = BigDecimal.ZERO;
@@ -395,13 +482,34 @@ public class DashboardService {
                 .multiply(BigDecimal.valueOf(100));
         }
         
+        BigDecimal prevProgressPercentage = BigDecimal.ZERO;
+        if (prevPotentialSavingsCurrentFY.compareTo(BigDecimal.ZERO) > 0) {
+            prevProgressPercentage = prevSavingsProjectionCurrentFY
+                .divide(prevPotentialSavingsCurrentFY, 4, RoundingMode.HALF_UP)
+                .multiply(BigDecimal.valueOf(100));
+        }
+        
+        // Calculate trends
+        BigDecimal totalInitiativesTrend = BigDecimal.valueOf(calculateTrend(totalInitiatives, prevTotalInitiatives));
+        BigDecimal potentialSavingsAnnualizedTrend = BigDecimal.valueOf(calculateTrend(potentialSavingsAnnualized, prevPotentialSavingsAnnualized));
+        BigDecimal potentialSavingsCurrentFYTrend = BigDecimal.valueOf(calculateTrend(potentialSavingsCurrentFY, prevPotentialSavingsCurrentFY));
+        BigDecimal actualSavingsCurrentFYTrend = BigDecimal.valueOf(calculateTrend(actualSavingsCurrentFY, prevActualSavingsCurrentFY));
+        BigDecimal savingsProjectionCurrentFYTrend = BigDecimal.valueOf(calculateTrend(savingsProjectionCurrentFY, prevSavingsProjectionCurrentFY));
+        BigDecimal progressPercentageTrend = BigDecimal.valueOf(calculateTrend(progressPercentage, prevProgressPercentage));
+        
         return new PerformanceAnalysisDTO.PerformanceMetrics(
                 totalInitiatives, 
                 potentialSavingsAnnualized, 
                 potentialSavingsCurrentFY, 
                 actualSavingsCurrentFY, 
                 savingsProjectionCurrentFY, 
-                progressPercentage
+                progressPercentage,
+                totalInitiativesTrend,
+                potentialSavingsAnnualizedTrend,
+                potentialSavingsCurrentFYTrend,
+                actualSavingsCurrentFYTrend,
+                savingsProjectionCurrentFYTrend,
+                progressPercentageTrend
         );
     }
     
@@ -463,6 +571,53 @@ public class DashboardService {
             // Current FY: 2024-04 to 2025-03
             startMonth = (year - 1) + "-04";  // "2024-04"
             endMonth = year + "-03";          // "2025-03"
+        }
+        
+        return new String[]{startMonth, endMonth};
+    }
+
+    /**
+     * Get previous financial year date range as LocalDateTime array [start, end]
+     * For current FY 2025-26: returns 2024-25 (April 1, 2024 to March 31, 2025)
+     */
+    private LocalDateTime[] getPreviousFinancialYearRange() {
+        LocalDate today = LocalDate.now();
+        int year = today.getYear(); // 2025
+        
+        LocalDate fyStart, fyEnd;
+        if (today.getMonthValue() >= 4) {
+            // Previous FY: April 1st 2024 to March 31st 2025
+            fyStart = LocalDate.of(year - 1, 4, 1);   // 2024-04-01
+            fyEnd = LocalDate.of(year, 3, 31);        // 2025-03-31
+        } else {
+            // Previous FY: April 1st 2023 to March 31st 2024
+            fyStart = LocalDate.of(year - 2, 4, 1);   // 2023-04-01
+            fyEnd = LocalDate.of(year - 1, 3, 31);    // 2024-03-31
+        }
+        
+        return new LocalDateTime[]{
+            fyStart.atStartOfDay(),
+            fyEnd.atTime(23, 59, 59)
+        };
+    }
+    
+    /**
+     * Get previous financial year month range as string array [startMonth, endMonth] in YYYY-MM format
+     * For current FY 2025-26: returns "2024-04" to "2025-03"
+     */
+    private String[] getPreviousFinancialYearMonthRange() {
+        LocalDate today = LocalDate.now();
+        int year = today.getYear(); // 2025
+        
+        String startMonth, endMonth;
+        if (today.getMonthValue() >= 4) {
+            // Previous FY: 2024-04 to 2025-03
+            startMonth = (year - 1) + "-04";  // "2024-04"
+            endMonth = year + "-03";          // "2025-03"
+        } else {
+            // Previous FY: 2023-04 to 2024-03
+            startMonth = (year - 2) + "-04";  // "2023-04"
+            endMonth = (year - 1) + "-03";    // "2024-03"
         }
         
         return new String[]{startMonth, endMonth};

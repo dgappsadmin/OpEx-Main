@@ -121,4 +121,11 @@ public interface InitiativeRepository extends JpaRepository<Initiative, Long> {
     
     @Query("SELECT COUNT(i) FROM Initiative i WHERE i.status = :status AND i.site = :site AND i.updatedAt >= :startDate AND i.updatedAt <= :endDate")
     Long countByStatusAndSiteAndUpdatedAtBetween(@Param("status") String status, @Param("site") String site, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+    
+    // Additional queries for performance analysis trends
+    @Query("SELECT COUNT(i) FROM Initiative i WHERE LOWER(COALESCE(i.budgetType, 'budgeted')) = :budgetType AND i.createdAt >= :startDate AND i.createdAt <= :endDate")
+    Long countByBudgetTypeAndCreatedAtBetween(@Param("budgetType") String budgetType, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+    
+    @Query("SELECT COUNT(i) FROM Initiative i WHERE i.site = :site AND LOWER(COALESCE(i.budgetType, 'budgeted')) = :budgetType AND i.createdAt >= :startDate AND i.createdAt <= :endDate")
+    Long countBySiteAndBudgetTypeAndCreatedAtBetween(@Param("site") String site, @Param("budgetType") String budgetType, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 }

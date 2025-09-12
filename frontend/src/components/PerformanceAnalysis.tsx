@@ -90,41 +90,59 @@ export default function PerformanceAnalysis({
   // Calculate progress bar value (capped at 100%)
   const progressValue = Math.min(metrics?.progressPercentage || 0, 100);
 
+  // Helper function to format trend percentage (similar to Dashboard)
+  const formatTrend = (trend: number | null | undefined): string => {
+    if (trend === null || trend === undefined || isNaN(trend)) return "0%";
+    const sign = trend >= 0 ? "+" : "";
+    return `${sign}${trend.toFixed(1)}%`;
+  };
+
+  // Helper function to determine trend direction
+  const getTrendDirection = (trend: number | null | undefined): "up" | "down" => {
+    if (trend === null || trend === undefined || isNaN(trend)) return "up";
+    return trend >= 0 ? "up" : "down";
+  };
+
   const kpiCards = [
     {
       title: "Total Initiatives",
       value: metrics?.totalInitiatives?.toString() || "0",
       subtitle: "Listed initiatives",
       icon: Target,
-      trend: "+12% vs last FY"
+      trend: formatTrend(metrics?.totalInitiativesTrend) + " vs last period",
+      trendDirection: getTrendDirection(metrics?.totalInitiativesTrend)
     },
     {
       title: "Annualized Potential",
       value: formatCurrencyInLakhs(metrics?.potentialSavingsAnnualized || 0),
       subtitle: "Total yearly potential",
       icon: TrendingUp,
-      trend: "+18% vs target"
+      trend: formatTrend(metrics?.potentialSavingsAnnualizedTrend) + " vs target",
+      trendDirection: getTrendDirection(metrics?.potentialSavingsAnnualizedTrend)
     },
     {
       title: "Current FY Potential",
       value: formatCurrencyInLakhs(metrics?.potentialSavingsCurrentFY || 0),
       subtitle: "This financial year",
       icon: IndianRupee,
-      trend: "On track"
+      trend: formatTrend(metrics?.potentialSavingsCurrentFYTrend) + " vs last FY",
+      trendDirection: getTrendDirection(metrics?.potentialSavingsCurrentFYTrend)
     },
     {
       title: "Actual Savings",
       value: formatCurrencyInLakhs(metrics?.actualSavingsCurrentFY || 0),
       subtitle: "Achieved this FY",
       icon: BarChart3,
-      trend: "+24% vs last FY"
+      trend: formatTrend(metrics?.actualSavingsCurrentFYTrend) + " vs last FY",
+      trendDirection: getTrendDirection(metrics?.actualSavingsCurrentFYTrend)
     },
     {
       title: "Projected Savings",
       value: formatCurrencyInLakhs(metrics?.savingsProjectionCurrentFY || 0),
       subtitle: "Expected this FY",
       icon: Activity,
-      trend: "Forecasted"
+      trend: formatTrend(metrics?.savingsProjectionCurrentFYTrend) + " vs forecast",
+      trendDirection: getTrendDirection(metrics?.savingsProjectionCurrentFYTrend)
     }
   ];
 
@@ -185,8 +203,20 @@ export default function PerformanceAnalysis({
             <Card key={index} className="bg-white border-0 shadow-sm hover:shadow-md transition-all duration-200">
               <CardContent className="p-2.5">
                 <div className="flex items-center justify-between mb-1.5">
-                  <kpi.icon className={`h-3.5 w-3.5 ${colors.primary}`} />
-                  <Badge variant="secondary" className="text-2xs px-1 py-0.5">
+                  <div className="flex items-center gap-1">
+                    <kpi.icon className={`h-3.5 w-3.5 ${colors.primary}`} />
+                    {kpi.trendDirection === 'up' ? (
+                      <TrendingUp className="h-2.5 w-2.5 text-green-600" />
+                    ) : (
+                      <TrendingDown className="h-2.5 w-2.5 text-red-600" />
+                    )}
+                  </div>
+                  <Badge 
+                    variant="secondary" 
+                    className={`text-2xs px-1 py-0.5 ${
+                      kpi.trendDirection === 'up' ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'
+                    }`}
+                  >
                     {kpi.trend}
                   </Badge>
                 </div>

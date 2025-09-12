@@ -18,6 +18,13 @@ export interface PerformanceMetrics {
   actualSavingsCurrentFY: number;
   savingsProjectionCurrentFY: number;
   progressPercentage: number;
+  // Trend fields for real-time comparison
+  totalInitiativesTrend?: number;
+  potentialSavingsAnnualizedTrend?: number;
+  potentialSavingsCurrentFYTrend?: number;
+  actualSavingsCurrentFYTrend?: number;
+  savingsProjectionCurrentFYTrend?: number;
+  progressPercentageTrend?: number;
 }
 
 export interface PerformanceAnalysisData {

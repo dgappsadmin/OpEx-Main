@@ -39,6 +39,14 @@ public class PerformanceAnalysisDTO {
         private BigDecimal savingsProjectionCurrentFY;
         private BigDecimal progressPercentage;
         
+        // Trend fields for real-time comparison
+        private BigDecimal totalInitiativesTrend;
+        private BigDecimal potentialSavingsAnnualizedTrend;
+        private BigDecimal potentialSavingsCurrentFYTrend;
+        private BigDecimal actualSavingsCurrentFYTrend;
+        private BigDecimal savingsProjectionCurrentFYTrend;
+        private BigDecimal progressPercentageTrend;
+        
         public PerformanceMetrics() {}
         
         public PerformanceMetrics(Long totalInitiatives, BigDecimal potentialSavingsAnnualized,
@@ -50,6 +58,35 @@ public class PerformanceAnalysisDTO {
             this.actualSavingsCurrentFY = actualSavingsCurrentFY != null ? actualSavingsCurrentFY : BigDecimal.ZERO;
             this.savingsProjectionCurrentFY = savingsProjectionCurrentFY != null ? savingsProjectionCurrentFY : BigDecimal.ZERO;
             this.progressPercentage = progressPercentage != null ? progressPercentage : BigDecimal.ZERO;
+            
+            // Initialize trends to zero by default
+            this.totalInitiativesTrend = BigDecimal.ZERO;
+            this.potentialSavingsAnnualizedTrend = BigDecimal.ZERO;
+            this.potentialSavingsCurrentFYTrend = BigDecimal.ZERO;
+            this.actualSavingsCurrentFYTrend = BigDecimal.ZERO;
+            this.savingsProjectionCurrentFYTrend = BigDecimal.ZERO;
+            this.progressPercentageTrend = BigDecimal.ZERO;
+        }
+        
+        public PerformanceMetrics(Long totalInitiatives, BigDecimal potentialSavingsAnnualized,
+                                BigDecimal potentialSavingsCurrentFY, BigDecimal actualSavingsCurrentFY,
+                                BigDecimal savingsProjectionCurrentFY, BigDecimal progressPercentage,
+                                BigDecimal totalInitiativesTrend, BigDecimal potentialSavingsAnnualizedTrend,
+                                BigDecimal potentialSavingsCurrentFYTrend, BigDecimal actualSavingsCurrentFYTrend,
+                                BigDecimal savingsProjectionCurrentFYTrend, BigDecimal progressPercentageTrend) {
+            this.totalInitiatives = totalInitiatives;
+            this.potentialSavingsAnnualized = potentialSavingsAnnualized != null ? potentialSavingsAnnualized : BigDecimal.ZERO;
+            this.potentialSavingsCurrentFY = potentialSavingsCurrentFY != null ? potentialSavingsCurrentFY : BigDecimal.ZERO;
+            this.actualSavingsCurrentFY = actualSavingsCurrentFY != null ? actualSavingsCurrentFY : BigDecimal.ZERO;
+            this.savingsProjectionCurrentFY = savingsProjectionCurrentFY != null ? savingsProjectionCurrentFY : BigDecimal.ZERO;
+            this.progressPercentage = progressPercentage != null ? progressPercentage : BigDecimal.ZERO;
+            
+            this.totalInitiativesTrend = totalInitiativesTrend != null ? totalInitiativesTrend : BigDecimal.ZERO;
+            this.potentialSavingsAnnualizedTrend = potentialSavingsAnnualizedTrend != null ? potentialSavingsAnnualizedTrend : BigDecimal.ZERO;
+            this.potentialSavingsCurrentFYTrend = potentialSavingsCurrentFYTrend != null ? potentialSavingsCurrentFYTrend : BigDecimal.ZERO;
+            this.actualSavingsCurrentFYTrend = actualSavingsCurrentFYTrend != null ? actualSavingsCurrentFYTrend : BigDecimal.ZERO;
+            this.savingsProjectionCurrentFYTrend = savingsProjectionCurrentFYTrend != null ? savingsProjectionCurrentFYTrend : BigDecimal.ZERO;
+            this.progressPercentageTrend = progressPercentageTrend != null ? progressPercentageTrend : BigDecimal.ZERO;
         }
         
         // Getters and Setters
@@ -79,6 +116,37 @@ public class PerformanceAnalysisDTO {
         public BigDecimal getProgressPercentage() { return progressPercentage; }
         public void setProgressPercentage(BigDecimal progressPercentage) { 
             this.progressPercentage = progressPercentage; 
+        }
+        
+        // Trend getters and setters
+        public BigDecimal getTotalInitiativesTrend() { return totalInitiativesTrend; }
+        public void setTotalInitiativesTrend(BigDecimal totalInitiativesTrend) { 
+            this.totalInitiativesTrend = totalInitiativesTrend; 
+        }
+        
+        public BigDecimal getPotentialSavingsAnnualizedTrend() { return potentialSavingsAnnualizedTrend; }
+        public void setPotentialSavingsAnnualizedTrend(BigDecimal potentialSavingsAnnualizedTrend) { 
+            this.potentialSavingsAnnualizedTrend = potentialSavingsAnnualizedTrend; 
+        }
+        
+        public BigDecimal getPotentialSavingsCurrentFYTrend() { return potentialSavingsCurrentFYTrend; }
+        public void setPotentialSavingsCurrentFYTrend(BigDecimal potentialSavingsCurrentFYTrend) { 
+            this.potentialSavingsCurrentFYTrend = potentialSavingsCurrentFYTrend; 
+        }
+        
+        public BigDecimal getActualSavingsCurrentFYTrend() { return actualSavingsCurrentFYTrend; }
+        public void setActualSavingsCurrentFYTrend(BigDecimal actualSavingsCurrentFYTrend) { 
+            this.actualSavingsCurrentFYTrend = actualSavingsCurrentFYTrend; 
+        }
+        
+        public BigDecimal getSavingsProjectionCurrentFYTrend() { return savingsProjectionCurrentFYTrend; }
+        public void setSavingsProjectionCurrentFYTrend(BigDecimal savingsProjectionCurrentFYTrend) { 
+            this.savingsProjectionCurrentFYTrend = savingsProjectionCurrentFYTrend; 
+        }
+        
+        public BigDecimal getProgressPercentageTrend() { return progressPercentageTrend; }
+        public void setProgressPercentageTrend(BigDecimal progressPercentageTrend) { 
+            this.progressPercentageTrend = progressPercentageTrend; 
         }
     }
     
