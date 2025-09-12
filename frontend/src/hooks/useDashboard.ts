@@ -27,10 +27,13 @@ export const useRecentInitiatives = (site?: string) => {
   });
 };
 
-export const usePerformanceAnalysis = () => {
+export const usePerformanceAnalysis = (site?: string) => {
   return useQuery({
-    queryKey: ['dashboard', 'performance-analysis'],
+    queryKey: ['dashboard', 'performance-analysis', site],
     queryFn: async () => {
+      if (site) {
+        return await dashboardAPI.getPerformanceAnalysisBySite(site);
+      }
       return await dashboardAPI.getPerformanceAnalysis();
     },
     staleTime: 5 * 60 * 1000, // Still valid

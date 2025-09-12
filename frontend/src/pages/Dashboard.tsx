@@ -23,6 +23,7 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { User } from "@/lib/mockData";
 import { useDashboardStats, useRecentInitiatives, usePerformanceAnalysis, useDashboardSites } from "@/hooks/useDashboard";
+import { DashboardStats } from "@/lib/types";
 import PerformanceAnalysis from "@/components/PerformanceAnalysis";
 
 interface DashboardProps {
@@ -44,7 +45,7 @@ export default function Dashboard({ user }: DashboardProps) {
   // Fetch real dashboard data based on selected filter
   const { data: dashboardStats, isLoading: statsLoading, error: statsError } = useDashboardStats(apiSite);
   const { data: recentInitiativesData, isLoading: initiativesLoading, error: initiativesError } = useRecentInitiatives(apiSite);
-  const { data: performanceAnalysisData, isLoading: performanceLoading, error: performanceError } = usePerformanceAnalysis();
+  const { data: performanceAnalysisData, isLoading: performanceLoading, error: performanceError } = usePerformanceAnalysis(apiSite);
 
   // Enhanced currency formatting
   const formatCurrency = (amount: number): string => {
@@ -59,37 +60,50 @@ export default function Dashboard({ user }: DashboardProps) {
     }
   };
 
-  // Create stats array from API data
+  // Helper function to format trend percentage
+  const formatTrend = (trend: number | null | undefined): string => {
+    if (trend === null || trend === undefined || isNaN(trend)) return "0%";
+    const sign = trend >= 0 ? "+" : "";
+    return `${sign}${trend.toFixed(1)}%`;
+  };
+
+  // Helper function to determine trend direction
+  const getTrendDirection = (trend: number | null | undefined): "up" | "down" => {
+    if (trend === null || trend === undefined || isNaN(trend)) return "up";
+    return trend >= 0 ? "up" : "down";
+  };
+
+  // Create stats array from API data with real trends
   const stats = [
     {
       title: "Total Initiatives",
       value: statsLoading ? "..." : (dashboardStats?.totalInitiatives || 0).toString(),
-      change: "+12%",
-      trend: "up",
+      change: statsLoading ? "..." : formatTrend(dashboardStats?.totalInitiativesTrend),
+      trend: getTrendDirection(dashboardStats?.totalInitiativesTrend),
       icon: FileText,
       color: "text-blue-600"
     },
     {
       title: "Actual Savings",
       value: statsLoading ? "..." : formatCurrency(dashboardStats?.actualSavings || 0),
-      change: "+28%",
-      trend: "up",
+      change: statsLoading ? "..." : formatTrend(dashboardStats?.actualSavingsTrend),
+      trend: getTrendDirection(dashboardStats?.actualSavingsTrend),
       icon: IndianRupee,
       color: "text-green-600"
     },
     {
       title: "Completed",
       value: statsLoading ? "..." : (dashboardStats?.completedInitiatives || 0).toString(),
-      change: "+5%",
-      trend: "up",
+      change: statsLoading ? "..." : formatTrend(dashboardStats?.completedInitiativesTrend),
+      trend: getTrendDirection(dashboardStats?.completedInitiativesTrend),
       icon: CheckCircle,
       color: "text-emerald-600"
     },
     {
       title: "Pending Approval",
       value: statsLoading ? "..." : (dashboardStats?.pendingApprovals || 0).toString(),
-      change: "-2%",
-      trend: "down",
+      change: statsLoading ? "..." : formatTrend(dashboardStats?.pendingApprovalsTrend),
+      trend: getTrendDirection(dashboardStats?.pendingApprovalsTrend),
       icon: Clock,
       color: "text-orange-600"
     }
@@ -251,7 +265,11 @@ export default function Dashboard({ user }: DashboardProps) {
                     <p className={`text-2xs flex items-center gap-1 ${
                       stat.trend === 'up' ? 'text-green-600' : 'text-red-600'
                     }`}>
-                      <TrendingUp className="h-2.5 w-2.5" />
+                      {stat.trend === 'up' ? (
+                        <TrendingUp className="h-2.5 w-2.5" />
+                      ) : (
+                        <TrendingDown className="h-2.5 w-2.5" />
+                      )}
                       {stat.change} from last month
                     </p>
                   </CardContent>
@@ -461,8 +479,8 @@ export default function Dashboard({ user }: DashboardProps) {
 
           {/* Performance Analysis - Overall */}
           <PerformanceAnalysis
-            title="PERFORMANCE ANALYSIS - OVERALL"
-            subtitle="Total performance metrics for all listed initiatives"
+            title={selectedSite === "overall" ? "PERFORMANCE ANALYSIS - OVERALL" : `PERFORMANCE ANALYSIS - OVERALL (${selectedSite})`}
+            subtitle={selectedSite === "overall" ? "Total performance metrics for all listed initiatives" : `Total performance metrics for ${selectedSite} site initiatives`}
             metrics={performanceAnalysisData?.overall || {
               totalInitiatives: 0,
               potentialSavingsAnnualized: 0,
@@ -477,8 +495,8 @@ export default function Dashboard({ user }: DashboardProps) {
 
           {/* Performance Analysis - Budget */}
           <PerformanceAnalysis
-            title="PERFORMANCE ANALYSIS - BUDGET"
-            subtitle="Performance metrics for budgeted initiatives only"
+            title={selectedSite === "overall" ? "PERFORMANCE ANALYSIS - BUDGET" : `PERFORMANCE ANALYSIS - BUDGET (${selectedSite})`}
+            subtitle={selectedSite === "overall" ? "Performance metrics for budgeted initiatives only" : `Performance metrics for ${selectedSite} site budgeted initiatives only`}
             metrics={performanceAnalysisData?.budget || {
               totalInitiatives: 0,
               potentialSavingsAnnualized: 0,
@@ -493,8 +511,8 @@ export default function Dashboard({ user }: DashboardProps) {
 
           {/* Performance Analysis - Non-Budget */}
           <PerformanceAnalysis
-            title="PERFORMANCE ANALYSIS - NON-BUDGET"
-            subtitle="Performance metrics for non-budgeted initiatives only"
+            title={selectedSite === "overall" ? "PERFORMANCE ANALYSIS - NON-BUDGET" : `PERFORMANCE ANALYSIS - NON-BUDGET (${selectedSite})`}
+            subtitle={selectedSite === "overall" ? "Performance metrics for non-budgeted initiatives only" : `Performance metrics for ${selectedSite} site non-budgeted initiatives only`}
             metrics={performanceAnalysisData?.nonBudget || {
               totalInitiatives: 0,
               potentialSavingsAnnualized: 0,

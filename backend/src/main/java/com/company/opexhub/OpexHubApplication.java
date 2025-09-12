@@ -13,7 +13,7 @@ public class OpexHubApplication extends SpringBootServletInitializer {
         System.out.println("Application is running and up!");
     }
 
-    @Override
+    @Override 
     protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
         return application.sources(OpexHubApplication.class);
     }

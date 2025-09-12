@@ -55,6 +55,9 @@ public interface InitiativeRepository extends JpaRepository<Initiative, Long> {
     @Query("SELECT COUNT(i) FROM Initiative i WHERE i.status = :status")
     Long countByStatus(@Param("status") String status);
     
+    @Query("SELECT COUNT(i) FROM Initiative i WHERE i.status = :status AND i.site = :site")
+    Long countByStatusAndSite(@Param("status") String status, @Param("site") String site);
+    
     @Query("SELECT i FROM Initiative i WHERE i.createdAt >= :startDate AND i.createdAt <= :endDate")
     List<Initiative> findByCreatedAtBetween(@Param("startDate") LocalDateTime startDate, 
                                            @Param("endDate") LocalDateTime endDate);
@@ -86,4 +89,36 @@ public interface InitiativeRepository extends JpaRepository<Initiative, Long> {
     
     @Query("SELECT SUM(i.expectedSavings) FROM Initiative i WHERE LOWER(COALESCE(i.budgetType, 'budgeted')) = :budgetType")
     java.math.BigDecimal sumExpectedSavingsByBudgetType(@Param("budgetType") String budgetType);
+    
+    // Site-specific performance analysis queries
+    @Query("SELECT COUNT(i) FROM Initiative i WHERE i.site = :site")
+    Long countBySite(@Param("site") String site);
+    
+    @Query("SELECT COUNT(i) FROM Initiative i WHERE i.site = :site AND LOWER(COALESCE(i.budgetType, 'budgeted')) = :budgetType")
+    Long countBySiteAndBudgetType(@Param("site") String site, @Param("budgetType") String budgetType);
+    
+    @Query("SELECT SUM(i.expectedSavings) FROM Initiative i WHERE i.site = :site")
+    java.math.BigDecimal sumAllExpectedSavingsBySite(@Param("site") String site);
+    
+    @Query("SELECT SUM(i.expectedSavings) FROM Initiative i WHERE i.site = :site AND LOWER(COALESCE(i.budgetType, 'budgeted')) = :budgetType")
+    java.math.BigDecimal sumExpectedSavingsBySiteAndBudgetType(@Param("site") String site, @Param("budgetType") String budgetType);
+    
+    @Query("SELECT SUM(i.expectedSavings) FROM Initiative i WHERE i.site = :site AND i.createdAt >= :startDate AND i.createdAt <= :endDate")
+    java.math.BigDecimal sumExpectedSavingsBySiteAndCreatedAtBetween(@Param("site") String site, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+    
+    @Query("SELECT SUM(i.expectedSavings) FROM Initiative i WHERE i.site = :site AND i.createdAt >= :startDate AND i.createdAt <= :endDate AND LOWER(COALESCE(i.budgetType, 'budgeted')) = :budgetType")
+    java.math.BigDecimal sumExpectedSavingsBySiteAndCreatedAtBetweenAndBudgetType(@Param("site") String site, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate, @Param("budgetType") String budgetType);
+    
+    // Trend calculation queries - for previous month comparison
+    @Query("SELECT COUNT(i) FROM Initiative i WHERE i.createdAt >= :startDate AND i.createdAt <= :endDate")
+    Long countByCreatedAtBetween(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+    
+    @Query("SELECT COUNT(i) FROM Initiative i WHERE i.site = :site AND i.createdAt >= :startDate AND i.createdAt <= :endDate")
+    Long countBySiteAndCreatedAtBetween(@Param("site") String site, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+    
+    @Query("SELECT COUNT(i) FROM Initiative i WHERE i.status = :status AND i.updatedAt >= :startDate AND i.updatedAt <= :endDate")
+    Long countByStatusAndUpdatedAtBetween(@Param("status") String status, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+    
+    @Query("SELECT COUNT(i) FROM Initiative i WHERE i.status = :status AND i.site = :site AND i.updatedAt >= :startDate AND i.updatedAt <= :endDate")
+    Long countByStatusAndSiteAndUpdatedAtBetween(@Param("status") String status, @Param("site") String site, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 }

@@ -38,19 +38,36 @@ public class DashboardService {
      * Get dashboard statistics
      */
     public DashboardStatsDTO getDashboardStats() {
+        // Current month data
+        LocalDateTime[] currentMonth = getCurrentMonthRange();
+        LocalDateTime[] previousMonth = getPreviousMonthRange();
+        String currentMonthStr = getCurrentMonthString();
+        String previousMonthStr = getPreviousMonthString();
+        
         // Total Initiatives
         Long totalInitiatives = initiativeRepository.count();
+        Long previousTotalInitiatives = initiativeRepository.countByCreatedAtBetween(previousMonth[0], previousMonth[1]);
 
         // Actual Savings - Sum of ACHIEVED_VALUE from OPEX_MONTHLY_MONITORING_ENTRIES
         BigDecimal actualSavings = getTotalActualSavings();
+        BigDecimal previousActualSavings = monthlyMonitoringEntryRepository.sumAchievedValueByMonth(previousMonthStr);
 
         // Completed Initiatives
         Long completedInitiatives = initiativeRepository.countByStatus("Completed");
+        Long previousCompletedInitiatives = initiativeRepository.countByStatusAndUpdatedAtBetween("Completed", previousMonth[0], previousMonth[1]);
 
         // Pending Approvals - Count from OPEX_WORKFLOW_TRANSACTIONS where PENDING_WITH is not null
         Long pendingApprovals = workflowTransactionRepository.countByApproveStatusAndPendingWithIsNotNull("pending");
+        Long previousPendingApprovals = workflowTransactionRepository.countByApproveStatusAndPendingWithIsNotNullAndCreatedAtBetween("pending", previousMonth[0], previousMonth[1]);
 
-        return new DashboardStatsDTO(totalInitiatives, actualSavings, completedInitiatives, pendingApprovals);
+        // Calculate trends
+        Double totalInitiativesTrend = calculateTrend(totalInitiatives, previousTotalInitiatives);
+        Double actualSavingsTrend = calculateTrend(actualSavings, previousActualSavings);
+        Double completedInitiativesTrend = calculateTrend(completedInitiatives, previousCompletedInitiatives);
+        Double pendingApprovalsTrend = calculateTrend(pendingApprovals, previousPendingApprovals);
+
+        return new DashboardStatsDTO(totalInitiatives, actualSavings, completedInitiatives, pendingApprovals,
+                                   totalInitiativesTrend, actualSavingsTrend, completedInitiativesTrend, pendingApprovalsTrend);
     }
 
     /**
@@ -81,19 +98,36 @@ public class DashboardService {
      * Get dashboard statistics for a specific site
      */
     public DashboardStatsDTO getDashboardStatsBySite(String site) {
+        // Current and previous month data
+        LocalDateTime[] currentMonth = getCurrentMonthRange();
+        LocalDateTime[] previousMonth = getPreviousMonthRange();
+        String currentMonthStr = getCurrentMonthString();
+        String previousMonthStr = getPreviousMonthString();
+        
         // Total Initiatives for site
         Long totalInitiatives = initiativeRepository.findBySite(site, Pageable.unpaged()).getTotalElements();
+        Long previousTotalInitiatives = initiativeRepository.countBySiteAndCreatedAtBetween(site, previousMonth[0], previousMonth[1]);
 
         // Actual Savings for site
         BigDecimal actualSavings = getTotalActualSavingsBySite(site);
+        BigDecimal previousActualSavings = monthlyMonitoringEntryRepository.sumAchievedValueBySiteAndMonth(site, previousMonthStr);
 
         // Completed Initiatives for site
-        Long completedInitiatives = initiativeRepository.countByStatus("Completed"); // Need to create query for site-specific
+        Long completedInitiatives = initiativeRepository.countByStatusAndSite("Completed", site);
+        Long previousCompletedInitiatives = initiativeRepository.countByStatusAndSiteAndUpdatedAtBetween("Completed", site, previousMonth[0], previousMonth[1]);
 
         // Pending Approvals for site
         Long pendingApprovals = workflowTransactionRepository.countBySiteAndApproveStatusAndPendingWithIsNotNull(site, "pending");
+        Long previousPendingApprovals = workflowTransactionRepository.countBySiteAndApproveStatusAndPendingWithIsNotNullAndCreatedAtBetween(site, "pending", previousMonth[0], previousMonth[1]);
 
-        return new DashboardStatsDTO(totalInitiatives, actualSavings, completedInitiatives, pendingApprovals);
+        // Calculate trends
+        Double totalInitiativesTrend = calculateTrend(totalInitiatives, previousTotalInitiatives);
+        Double actualSavingsTrend = calculateTrend(actualSavings, previousActualSavings);
+        Double completedInitiativesTrend = calculateTrend(completedInitiatives, previousCompletedInitiatives);
+        Double pendingApprovalsTrend = calculateTrend(pendingApprovals, previousPendingApprovals);
+
+        return new DashboardStatsDTO(totalInitiatives, actualSavings, completedInitiatives, pendingApprovals,
+                                   totalInitiativesTrend, actualSavingsTrend, completedInitiativesTrend, pendingApprovalsTrend);
     }
 
     /**
@@ -151,6 +185,33 @@ public class DashboardService {
     }
     
     /**
+     * Get Performance Analysis Dashboard Data for a specific site
+     */
+    public PerformanceAnalysisDTO getPerformanceAnalysisBySite(String site) {
+        String currentFY = getCurrentFinancialYear();
+        LocalDateTime[] fyRange = getFinancialYearRange();
+        LocalDateTime fyStart = fyRange[0];
+        LocalDateTime fyEnd = fyRange[1];
+        String[] monthRange = getFinancialYearMonthRange();
+        String startMonth = monthRange[0];
+        String endMonth = monthRange[1];
+        
+        // Calculate Overall Metrics for site
+        PerformanceAnalysisDTO.PerformanceMetrics overall = calculatePerformanceMetricsBySite(
+                site, null, fyStart, fyEnd, startMonth, endMonth);
+        
+        // Calculate Budget Metrics for site
+        PerformanceAnalysisDTO.PerformanceMetrics budget = calculatePerformanceMetricsBySite(
+                site, "budgeted", fyStart, fyEnd, startMonth, endMonth);
+        
+        // Calculate Non-Budget Metrics for site
+        PerformanceAnalysisDTO.PerformanceMetrics nonBudget = calculatePerformanceMetricsBySite(
+                site, "non-budgeted", fyStart, fyEnd, startMonth, endMonth);
+        
+        return new PerformanceAnalysisDTO(overall, budget, nonBudget, currentFY);
+    }
+    
+    /**
      * Calculate performance metrics for a specific budget type
      */
     private PerformanceAnalysisDTO.PerformanceMetrics calculatePerformanceMetrics(
@@ -183,6 +244,142 @@ public class DashboardService {
             potentialSavingsCurrentFY = initiativeRepository.sumExpectedSavingsByCreatedAtBetweenAndBudgetType(fyStart, fyEnd, budgetType);
             actualSavingsCurrentFY = monthlyMonitoringEntryRepository.sumAchievedValueByMonitoringMonthBetweenAndBudgetType(startMonth, endMonth, budgetType);
             savingsProjectionCurrentFY = monthlyMonitoringEntryRepository.sumTargetValueByMonitoringMonthBetweenAndBudgetType(startMonth, endMonth, budgetType);
+        }
+        
+        // Ensure non-null values
+        potentialSavingsCurrentFY = potentialSavingsCurrentFY != null ? potentialSavingsCurrentFY : BigDecimal.ZERO;
+        actualSavingsCurrentFY = actualSavingsCurrentFY != null ? actualSavingsCurrentFY : BigDecimal.ZERO;
+        savingsProjectionCurrentFY = savingsProjectionCurrentFY != null ? savingsProjectionCurrentFY : BigDecimal.ZERO;
+        
+        // Calculate progress percentage: (Savings Projection / Potential Savings) * 100
+        BigDecimal progressPercentage = BigDecimal.ZERO;
+        if (potentialSavingsCurrentFY.compareTo(BigDecimal.ZERO) > 0) {
+            progressPercentage = savingsProjectionCurrentFY
+                .divide(potentialSavingsCurrentFY, 4, RoundingMode.HALF_UP)
+                .multiply(BigDecimal.valueOf(100));
+        }
+        
+        return new PerformanceAnalysisDTO.PerformanceMetrics(
+                totalInitiatives, 
+                potentialSavingsAnnualized, 
+                potentialSavingsCurrentFY, 
+                actualSavingsCurrentFY, 
+                savingsProjectionCurrentFY, 
+                progressPercentage
+        );
+    }
+    
+    /**
+     * Get current month date range as LocalDateTime array [start, end]
+     */
+    private LocalDateTime[] getCurrentMonthRange() {
+        LocalDate today = LocalDate.now();
+        LocalDate startOfMonth = today.withDayOfMonth(1);
+        LocalDate endOfMonth = today.withDayOfMonth(today.lengthOfMonth());
+        
+        return new LocalDateTime[]{
+            startOfMonth.atStartOfDay(),
+            endOfMonth.atTime(23, 59, 59)
+        };
+    }
+    
+    /**
+     * Get previous month date range as LocalDateTime array [start, end]
+     */
+    private LocalDateTime[] getPreviousMonthRange() {
+        LocalDate today = LocalDate.now();
+        LocalDate previousMonth = today.minusMonths(1);
+        LocalDate startOfPreviousMonth = previousMonth.withDayOfMonth(1);
+        LocalDate endOfPreviousMonth = previousMonth.withDayOfMonth(previousMonth.lengthOfMonth());
+        
+        return new LocalDateTime[]{
+            startOfPreviousMonth.atStartOfDay(),
+            endOfPreviousMonth.atTime(23, 59, 59)
+        };
+    }
+    
+    /**
+     * Get current month string in YYYY-MM format
+     */
+    private String getCurrentMonthString() {
+        LocalDate today = LocalDate.now();
+        return today.format(DateTimeFormatter.ofPattern("yyyy-MM"));
+    }
+    
+    /**
+     * Get previous month string in YYYY-MM format
+     */
+    private String getPreviousMonthString() {
+        LocalDate today = LocalDate.now().minusMonths(1);
+        return today.format(DateTimeFormatter.ofPattern("yyyy-MM"));
+    }
+    
+    /**
+     * Calculate percentage trend between current and previous values
+     */
+    private Double calculateTrend(Number current, Number previous) {
+        if (current == null || previous == null) {
+            return 0.0;
+        }
+        
+        double currentValue = current.doubleValue();
+        double previousValue = previous.doubleValue();
+        
+        if (previousValue == 0) {
+            return currentValue > 0 ? 100.0 : 0.0;
+        }
+        
+        return ((currentValue - previousValue) / previousValue) * 100.0;
+    }
+    
+    /**
+     * Calculate percentage trend between current and previous BigDecimal values
+     */
+    private Double calculateTrend(BigDecimal current, BigDecimal previous) {
+        if (current == null || previous == null) {
+            return 0.0;
+        }
+        
+        if (previous.compareTo(BigDecimal.ZERO) == 0) {
+            return current.compareTo(BigDecimal.ZERO) > 0 ? 100.0 : 0.0;
+        }
+        
+        BigDecimal trend = current.subtract(previous)
+                                 .divide(previous, 4, RoundingMode.HALF_UP)
+                                 .multiply(BigDecimal.valueOf(100));
+        
+        return trend.doubleValue();
+    }
+    
+    /**
+     * Calculate performance metrics for a specific site and budget type
+     */
+    private PerformanceAnalysisDTO.PerformanceMetrics calculatePerformanceMetricsBySite(
+            String site, String budgetType, LocalDateTime fyStart, LocalDateTime fyEnd, 
+            String startMonth, String endMonth) {
+        
+        Long totalInitiatives;
+        BigDecimal potentialSavingsAnnualized;
+        BigDecimal potentialSavingsCurrentFY;
+        BigDecimal actualSavingsCurrentFY;
+        BigDecimal savingsProjectionCurrentFY;
+        
+        if (budgetType == null) {
+            // Overall metrics for site
+            totalInitiatives = initiativeRepository.countBySite(site);
+            BigDecimal totalExpectedSavings = initiativeRepository.sumAllExpectedSavingsBySite(site);
+            potentialSavingsAnnualized = totalExpectedSavings != null ? totalExpectedSavings : BigDecimal.ZERO;
+            potentialSavingsCurrentFY = initiativeRepository.sumExpectedSavingsBySiteAndCreatedAtBetween(site, fyStart, fyEnd);
+            actualSavingsCurrentFY = monthlyMonitoringEntryRepository.sumAchievedValueBySiteAndMonitoringMonthBetween(site, startMonth, endMonth);
+            savingsProjectionCurrentFY = monthlyMonitoringEntryRepository.sumTargetValueBySiteAndMonitoringMonthBetween(site, startMonth, endMonth);
+        } else {
+            // Budget type specific metrics for site
+            totalInitiatives = initiativeRepository.countBySiteAndBudgetType(site, budgetType);
+            BigDecimal totalExpectedSavings = initiativeRepository.sumExpectedSavingsBySiteAndBudgetType(site, budgetType);
+            potentialSavingsAnnualized = totalExpectedSavings != null ? totalExpectedSavings : BigDecimal.ZERO;
+            potentialSavingsCurrentFY = initiativeRepository.sumExpectedSavingsBySiteAndCreatedAtBetweenAndBudgetType(site, fyStart, fyEnd, budgetType);
+            actualSavingsCurrentFY = monthlyMonitoringEntryRepository.sumAchievedValueBySiteAndMonitoringMonthBetweenAndBudgetType(site, startMonth, endMonth, budgetType);
+            savingsProjectionCurrentFY = monthlyMonitoringEntryRepository.sumTargetValueBySiteAndMonitoringMonthBetweenAndBudgetType(site, startMonth, endMonth, budgetType);
         }
         
         // Ensure non-null values

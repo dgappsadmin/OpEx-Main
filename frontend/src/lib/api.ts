@@ -2404,6 +2404,12 @@ export const dashboardAPI = {
     return response.data;
   },
 
+  // Get performance analysis dashboard data for a specific site
+  getPerformanceAnalysisBySite: async (site: string) => {
+    const response = await api.get(`/dashboard/performance-analysis/${site}`);
+    return response.data;
+  },
+
   // Get available sites for dashboard filter
   getSites: async () => {
     const response = await api.get('/dashboard/sites');

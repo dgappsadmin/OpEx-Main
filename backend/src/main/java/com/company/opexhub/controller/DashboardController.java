@@ -63,6 +63,15 @@ public class DashboardController {
     }
 
     /**
+     * Get performance analysis dashboard data for a specific site
+     */
+    @GetMapping("/performance-analysis/{site}")
+    public ResponseEntity<PerformanceAnalysisDTO> getPerformanceAnalysisBySite(@PathVariable String site) {
+        PerformanceAnalysisDTO performanceAnalysis = dashboardService.getPerformanceAnalysisBySite(site);
+        return ResponseEntity.ok(performanceAnalysis);
+    }
+
+    /**
      * Get available sites for dashboard filter (excluding CORP)
      */
     @GetMapping("/sites")

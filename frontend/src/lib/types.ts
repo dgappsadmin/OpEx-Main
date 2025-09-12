@@ -1,3 +1,15 @@
+// Dashboard stats types
+export interface DashboardStats {
+  totalInitiatives: number;
+  actualSavings: number;
+  completedInitiatives: number;
+  pendingApprovals: number;
+  totalInitiativesTrend: number;
+  actualSavingsTrend: number;
+  completedInitiativesTrend: number;
+  pendingApprovalsTrend: number;
+}
+
 // Performance analysis types
 export interface PerformanceMetrics {
   totalInitiatives: number;

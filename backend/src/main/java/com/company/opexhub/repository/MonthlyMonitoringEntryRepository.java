@@ -99,6 +99,26 @@ public interface MonthlyMonitoringEntryRepository extends JpaRepository<MonthlyM
     java.math.BigDecimal sumTargetValueByMonitoringMonthBetweenAndBudgetType(@Param("startMonth") String startMonth, 
                                                                             @Param("endMonth") String endMonth,
                                                                             @Param("budgetType") String budgetType);
+    
+    // Site-specific performance analysis queries
+    @Query("SELECT SUM(mme.achievedValue) FROM MonthlyMonitoringEntry mme WHERE mme.initiative.site = :site AND mme.monitoringMonth >= :startMonth AND mme.monitoringMonth <= :endMonth AND mme.achievedValue IS NOT NULL")
+    java.math.BigDecimal sumAchievedValueBySiteAndMonitoringMonthBetween(@Param("site") String site, @Param("startMonth") String startMonth, @Param("endMonth") String endMonth);
+    
+    @Query("SELECT SUM(mme.achievedValue) FROM MonthlyMonitoringEntry mme WHERE mme.initiative.site = :site AND mme.monitoringMonth >= :startMonth AND mme.monitoringMonth <= :endMonth AND mme.achievedValue IS NOT NULL AND LOWER(COALESCE(mme.initiative.budgetType, 'budgeted')) = :budgetType")
+    java.math.BigDecimal sumAchievedValueBySiteAndMonitoringMonthBetweenAndBudgetType(@Param("site") String site, @Param("startMonth") String startMonth, @Param("endMonth") String endMonth, @Param("budgetType") String budgetType);
+    
+    @Query("SELECT SUM(mme.targetValue) FROM MonthlyMonitoringEntry mme WHERE mme.initiative.site = :site AND mme.monitoringMonth >= :startMonth AND mme.monitoringMonth <= :endMonth AND mme.targetValue IS NOT NULL")
+    java.math.BigDecimal sumTargetValueBySiteAndMonitoringMonthBetween(@Param("site") String site, @Param("startMonth") String startMonth, @Param("endMonth") String endMonth);
+    
+    @Query("SELECT SUM(mme.targetValue) FROM MonthlyMonitoringEntry mme WHERE mme.initiative.site = :site AND mme.monitoringMonth >= :startMonth AND mme.monitoringMonth <= :endMonth AND mme.targetValue IS NOT NULL AND LOWER(COALESCE(mme.initiative.budgetType, 'budgeted')) = :budgetType")
+    java.math.BigDecimal sumTargetValueBySiteAndMonitoringMonthBetweenAndBudgetType(@Param("site") String site, @Param("startMonth") String startMonth, @Param("endMonth") String endMonth, @Param("budgetType") String budgetType);
+    
+    // Trend calculation queries for previous month comparison
+    @Query("SELECT SUM(mme.achievedValue) FROM MonthlyMonitoringEntry mme WHERE mme.monitoringMonth = :month AND mme.achievedValue IS NOT NULL")
+    java.math.BigDecimal sumAchievedValueByMonth(@Param("month") String month);
+    
+    @Query("SELECT SUM(mme.achievedValue) FROM MonthlyMonitoringEntry mme WHERE mme.initiative.site = :site AND mme.monitoringMonth = :month AND mme.achievedValue IS NOT NULL")
+    java.math.BigDecimal sumAchievedValueBySiteAndMonth(@Param("site") String site, @Param("month") String month);
 
     // Financial Year Reporting Queries
     @Query("SELECT mme.monitoringMonth, " +
