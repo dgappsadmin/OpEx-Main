@@ -560,7 +560,7 @@ export default function Reports({ user }: ReportsProps) {
   // ];
 
   return (
-    <div className="container mx-auto p-4 space-y-4 max-w-6xl">
+    <div className="container mx-auto space-y-4 max-w-6xl">
       {/* Header - Match Dashboard style */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
@@ -726,8 +726,8 @@ export default function Reports({ user }: ReportsProps) {
                     <XAxis dataKey="month" />
                     <YAxis />
                     <Tooltip />
-                    <Line type="monotone" dataKey="initiatives" stroke="#3b82f6" strokeWidth={2} />
-                    <Line type="monotone" dataKey="completed" stroke="#22c55e" strokeWidth={2} />
+                    <Line type="monotone" dataKey="initiatives" stroke="#2563EB" strokeWidth={2} />
+                    <Line type="monotone" dataKey="completed" stroke="#059669" strokeWidth={2} />
                   </LineChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -750,7 +750,7 @@ export default function Reports({ user }: ReportsProps) {
                     <XAxis dataKey="month" />
                     <YAxis />
                     <Tooltip formatter={(value) => [formatCurrency(Number(value)), 'Savings']} />
-                    <Bar dataKey="savings" fill="#f59e0b" />
+                    <Bar dataKey="savings" fill="#EA580C" />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -806,35 +806,35 @@ export default function Reports({ user }: ReportsProps) {
                     <YAxis />
                     <Tooltip formatter={(value, name) => [formatCurrency(Number(value)), name]} />
                     
-                    {/* Last Financial Year Cumulative Savings - Solid Orange Bar */}
-                    <Bar dataKey="lastFYCumulativeSavings" fill="#f97316" name="Last FY Cumulative Savings" />
+                    {/* Last Financial Year Cumulative Savings - Professional Orange Bar */}
+                    <Bar dataKey="lastFYCumulativeSavings" fill="#EA580C" name="Last FY Cumulative Savings" />
                     
-                    {/* Current Financial Year Target - Blue Bar */}
-                    <Bar dataKey="currentFYTarget" fill="#3b82f6" name="Current FY Target" />
+                    {/* Current Financial Year Target - Professional Blue Bar */}
+                    <Bar dataKey="currentFYTarget" fill="#2563EB" name="Current FY Target" />
                     
-                    {/* Potential Monthly Savings Cumulative - Thick Blue Line */}
+                    {/* Potential Monthly Savings Cumulative - Thick Professional Blue Line */}
                     <Line 
                       type="monotone" 
                       dataKey="potentialMonthlySavingsCumulative" 
-                      stroke="#1d4ed8" 
+                      stroke="#1D4ED8" 
                       strokeWidth={4}
                       name="Potential Monthly Savings Cumulative"
                     />
                     
-                    {/* Actual Savings - Blue Line */}
+                    {/* Actual Savings - Professional Green Line */}
                     <Line 
                       type="monotone" 
                       dataKey="actualSavings" 
-                      stroke="#3b82f6" 
+                      stroke="#059669" 
                       strokeWidth={2}
                       name="Actual Savings"
                     />
                     
-                    {/* Monthly Cumulative Projected Savings - Broken Blue Line */}
+                    {/* Monthly Cumulative Projected Savings - Professional Purple Dashed Line */}
                     <Line 
                       type="monotone" 
                       dataKey="monthlyCumulativeProjectedSavings" 
-                      stroke="#3b82f6" 
+                      stroke="#7C3AED" 
                       strokeWidth={2}
                       strokeDasharray="5 5"
                       name="Monthly Cumulative Projected Savings"
