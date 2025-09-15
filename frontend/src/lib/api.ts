@@ -2551,6 +2551,12 @@ export const timelineTrackerAPI = {
   getPendingApprovals: async (initiativeId: number) => {
     const response = await api.get(`/timeline-tracker/${initiativeId}/pending-approvals`);
     return response.data;
+  },
+
+  // New API for Stage 7 - Get timeline entries for progress monitoring modal
+  getTimelineEntriesForProgressMonitoring: async (initiativeId: number) => {
+    const response = await api.get(`/timeline-tracker/progress-monitoring/${initiativeId}`);
+    return response.data;
   }
 };
 

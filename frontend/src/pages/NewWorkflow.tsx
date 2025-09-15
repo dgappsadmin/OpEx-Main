@@ -504,12 +504,12 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
                               <CardTitle className="text-base text-foreground">
                                 {transaction.stageName}
                               </CardTitle>
-                              <div className="flex items-center gap-1.5 mt-0.5">
+                              {/* <div className="flex items-center gap-1.5 mt-0.5">
                                 <span className="text-xs text-muted-foreground">Required Role:</span>
                                 <Badge variant="secondary" className="text-xs font-medium">
                                   {getRoleCodeDescription(transaction.requiredRole)}
                                 </Badge>
-                              </div>
+                              </div> */}
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
@@ -570,7 +570,7 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
                               return (
                                 <>
                                   <span className="font-medium">Status:</span>
-                                  <span className="ml-2 text-green-600">All stages completed</span>
+                                   <span className="ml-2 text-green-600">Initiative has been marked as closed</span>
                                 </>
                               );
                             })()}

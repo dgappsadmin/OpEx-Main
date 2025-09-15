@@ -183,6 +183,23 @@ public class TimelineTrackerController {
         }
     }
     
+    /**
+     * Get timeline entries for Stage 7 Progress Monitoring modal
+     * This endpoint is used in Stage 7 workflow modal to display timeline entries
+     */
+    @GetMapping("/progress-monitoring/{initiativeId}")
+    public ResponseEntity<ApiResponse<List<TimelineEntry>>> getTimelineEntriesForProgressMonitoring(
+            @PathVariable Long initiativeId) {
+        try {
+            // Get all timeline entries for the initiative for progress monitoring review
+            List<TimelineEntry> entries = timelineEntryService.getTimelineEntriesByInitiative(initiativeId);
+            return ResponseEntity.ok(new ApiResponse<>(true, "Timeline entries for progress monitoring retrieved successfully", entries));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse<>(false, "Error retrieving timeline entries for progress monitoring: " + e.getMessage(), null));
+        }
+    }
+    
     @PutMapping("/entry/{id}/status")
     public ResponseEntity<ApiResponse<TimelineEntry>> updateStatus(
             @PathVariable Long id,

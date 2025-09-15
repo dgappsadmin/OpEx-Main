@@ -3,13 +3,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CheckCircle, XCircle, Users, AlertTriangle, MapPin, Loader2, DollarSign, TrendingUp } from "lucide-react";
+import { CheckCircle, XCircle, Users, AlertTriangle, MapPin, Loader2, DollarSign, TrendingUp, Activity, FileText } from "lucide-react";
 import { useUsers, useInitiativeLeadsBySite } from "@/hooks/useUsers";
 import { useFinalizedPendingFAEntries, useBatchFAApproval, MonthlyMonitoringEntry } from "@/hooks/useMonthlyMonitoring";
+import { useTimelineEntriesProgressMonitoring } from "@/hooks/useTimelineEntriesProgressMonitoring";
 
 interface WorkflowStageModalProps {
   isOpen: boolean;
@@ -44,6 +46,11 @@ export default function WorkflowStageModal({
     transaction?.stageNumber === 10 ? transaction?.initiativeId : 0
   );
   const batchFAApprovalMutation = useBatchFAApproval();
+
+  // Hook for Stage 7 Timeline Entries Progress Monitoring
+  const { data: timelineEntries = [], isLoading: timelineEntriesLoading } = useTimelineEntriesProgressMonitoring(
+    transaction?.stageNumber === 7 ? transaction?.initiativeId : 0
+  );
 
   const { data: users = [], isLoading: usersLoading, error: usersError } = useUsers();
   
@@ -292,7 +299,6 @@ export default function WorkflowStageModal({
         );
 
       case 6: // Initiative Timeline Tracker (was stage 5)
-      case 7: // Progress monitoring (was stage 6 - "Trial Implementation")
       case 8: // Periodic Status Review with CMO (was stage 7)
         return (
           <div className="space-y-4 p-4 bg-blue-50 rounded-lg">
@@ -301,6 +307,101 @@ export default function WorkflowStageModal({
               <p className="text-blue-800 font-semibold text-sm">
                 Review and provide your decision with comments.
               </p>
+            </div>
+          </div>
+        );
+
+      case 7: // Progress monitoring (was stage 6 - "Trial Implementation")
+        return (
+          <div className="space-y-6">
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <div className="flex items-center gap-2.5 mb-3">
+                <Activity className="h-5 w-5 text-blue-600" />
+                <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-200">
+                  Progress Monitoring - Timeline Review
+                </h4>
+              </div>
+              <p className="text-xs text-blue-700 dark:text-blue-300">
+                Review timeline entries and monitor progress of initiative implementation.
+              </p>
+            </div>
+
+            {/* Timeline Entries Display */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-semibold">Timeline Entries Overview</Label>
+              </div>
+
+              {timelineEntriesLoading ? (
+                <div className="flex items-center justify-center p-8 bg-muted rounded-lg">
+                  <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                  <span className="text-sm">Loading timeline entries...</span>
+                </div>
+              ) : !Array.isArray(timelineEntries) || timelineEntries.length === 0 ? (
+                <div className="p-6 bg-muted rounded-lg text-center">
+                  <FileText className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">No timeline entries found for this initiative</p>
+                </div>
+              ) : (
+                <div className="border rounded-lg overflow-hidden">
+                  <div className="bg-muted px-4 py-2 border-b">
+                    <div className="grid grid-cols-12 gap-2 text-xs font-semibold">
+                      <div className="col-span-3">Stage Name</div>
+                      <div className="col-span-2">Status</div>
+                      <div className="col-span-3">Planned Duration</div>
+                      <div className="col-span-2">Responsible Person</div>
+                      <div className="col-span-2">Approvals</div>
+                    </div>
+                  </div>
+                  <div className="max-h-64 overflow-y-auto">
+                    {Array.isArray(timelineEntries) && timelineEntries.map((entry: any) => (
+                      <div key={entry.id} className="px-4 py-3 border-b last:border-b-0 hover:bg-muted/50">
+                        <div className="grid grid-cols-12 gap-2 items-center text-xs">
+                          <div className="col-span-3 font-medium">{entry.stageName}</div>
+                          <div className="col-span-2">
+                            <Badge 
+                              className={`text-xs ${
+                                entry.status === 'COMPLETED' ? 'bg-green-500 text-white' :
+                                entry.status === 'IN_PROGRESS' ? 'bg-blue-500 text-white' :
+                                entry.status === 'DELAYED' ? 'bg-red-500 text-white' :
+                                'bg-yellow-500 text-white'
+                              }`}
+                            >
+                              {entry.status}
+                            </Badge>
+                          </div>
+                          <div className="col-span-3 text-muted-foreground">
+                            <div>{new Date(entry.plannedStartDate).toLocaleDateString()}</div>
+                            <div className="text-xs">to {new Date(entry.plannedEndDate).toLocaleDateString()}</div>
+                          </div>
+                          <div className="col-span-2 font-mono text-muted-foreground">
+                            {entry.responsiblePerson}
+                          </div>
+                          <div className="col-span-2 flex gap-1">
+                            <Badge variant={entry.siteLeadApproval === 'Y' ? "default" : "outline"} className="text-xs">
+                              {entry.siteLeadApproval === 'Y' ? "✓ SL" : "○ SL"}
+                            </Badge>
+                            <Badge variant={entry.initiativeLeadApproval === 'Y' ? "default" : "outline"} className="text-xs">
+                              {entry.initiativeLeadApproval === 'Y' ? "✓ IL" : "○ IL"}
+                            </Badge>
+                          </div>
+                        </div>
+                        {entry.remarks && (
+                          <div className="mt-2 col-span-12 text-xs text-muted-foreground bg-muted p-2 rounded">
+                            <strong>Remarks:</strong> {entry.remarks}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {Array.isArray(timelineEntries) && timelineEntries.length > 0 && (
+                <div className="text-xs text-muted-foreground">
+                  Total {timelineEntries.length} timeline entries found for progress monitoring review
+                </div>
+              )}
             </div>
           </div>
         );

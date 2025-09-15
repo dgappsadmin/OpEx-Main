@@ -245,43 +245,47 @@ export default function Timeline({ user }: TimelineProps) {
               </DialogTrigger>
               <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>Create New Timeline Task</DialogTitle>
+                  <DialogTitle>Add Timeline Entry</DialogTitle>
                 </DialogHeader>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="title">Task Name</Label>
+                    <Label htmlFor="title">Activity Name *</Label>
                     <Input
                       id="title"
                       value={newTask.title}
                       onChange={(e) => setNewTask({...newTask, title: e.target.value})}
-                      placeholder="Enter task name"
+                      placeholder="Enter stage or activity name"
+                      className="focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="responsible">Responsible (R)</Label>
+                    <Label htmlFor="responsible">Responsible Person *</Label>
                     <Input
                       id="responsible"
                       value={newTask.responsible}
                       onChange={(e) => setNewTask({...newTask, responsible: e.target.value})}
-                      placeholder="Who executes the task"
+                      placeholder="Enter responsible person name"
+                      className="focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="startDate">Start Date</Label>
+                    <Label htmlFor="startDate">Planned Start Date *</Label>
                     <Input
                       id="startDate"
                       type="date"
                       value={newTask.startDate}
                       onChange={(e) => setNewTask({...newTask, startDate: e.target.value})}
+                      className="focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="endDate">End Date</Label>
+                    <Label htmlFor="endDate">Planned End Date *</Label>
                     <Input
                       id="endDate"
                       type="date"
                       value={newTask.endDate}
                       onChange={(e) => setNewTask({...newTask, endDate: e.target.value})}
+                      className="focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                   <div className="space-y-2">
@@ -291,6 +295,7 @@ export default function Timeline({ user }: TimelineProps) {
                       value={newTask.accountable}
                       onChange={(e) => setNewTask({...newTask, accountable: e.target.value})}
                       placeholder="Who is ultimately accountable"
+                      className="focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                   <div className="space-y-2">
@@ -300,6 +305,7 @@ export default function Timeline({ user }: TimelineProps) {
                       value={newTask.consulted}
                       onChange={(e) => setNewTask({...newTask, consulted: e.target.value})}
                       placeholder="Who provides input"
+                      className="focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                   <div className="space-y-2 col-span-2">
@@ -309,6 +315,7 @@ export default function Timeline({ user }: TimelineProps) {
                       value={newTask.informed}
                       onChange={(e) => setNewTask({...newTask, informed: e.target.value})}
                       placeholder="Who needs to be kept informed"
+                      className="focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                   <div className="space-y-2 col-span-2">
@@ -318,24 +325,26 @@ export default function Timeline({ user }: TimelineProps) {
                       value={newTask.description}
                       onChange={(e) => setNewTask({...newTask, description: e.target.value})}
                       placeholder="Task description"
+                      className="focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                   <div className="space-y-2 col-span-2">
-                    <Label htmlFor="comments">Comments/Notes</Label>
+                    <Label htmlFor="comments">Remarks & Notes</Label>
                     <Textarea
                       id="comments"
                       value={newTask.comments}
                       onChange={(e) => setNewTask({...newTask, comments: e.target.value})}
-                      placeholder="Additional comments or notes"
+                      placeholder="Enter any remarks, notes, or additional information"
+                      className="focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                 </div>
-                <div className="flex justify-end gap-2">
+                <div className="flex justify-end gap-2 pt-4">
                   <Button variant="outline" onClick={() => setNewTaskOpen(false)}>
                     Cancel
                   </Button>
                   <Button onClick={handleCreateTask} disabled={createTaskMutation.isPending}>
-                    Create Task
+                    Create Entry
                   </Button>
                 </div>
               </DialogContent>
@@ -457,42 +466,46 @@ export default function Timeline({ user }: TimelineProps) {
       <Dialog open={editTaskOpen} onOpenChange={setEditTaskOpen}>
         <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit Timeline Task</DialogTitle>
+            <DialogTitle>Edit Timeline Entry</DialogTitle>
           </DialogHeader>
           {editingTask && (
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-title">Task Name</Label>
+                <Label htmlFor="edit-title">Activity Name *</Label>
                 <Input
                   id="edit-title"
                   value={editingTask.title}
                   onChange={(e) => setEditingTask({...editingTask, title: e.target.value})}
+                  className="focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-responsible">Responsible (R)</Label>
+                <Label htmlFor="edit-responsible">Responsible Person *</Label>
                 <Input
                   id="edit-responsible"
                   value={editingTask.responsible}
                   onChange={(e) => setEditingTask({...editingTask, responsible: e.target.value})}
+                  className="focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-startDate">Start Date</Label>
+                <Label htmlFor="edit-startDate">Planned Start Date *</Label>
                 <Input
                   id="edit-startDate"
                   type="date"
                   value={editingTask.startDate}
                   onChange={(e) => setEditingTask({...editingTask, startDate: e.target.value})}
+                  className="focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-endDate">End Date</Label>
+                <Label htmlFor="edit-endDate">Planned End Date *</Label>
                 <Input
                   id="edit-endDate"
                   type="date"
                   value={editingTask.endDate}
                   onChange={(e) => setEditingTask({...editingTask, endDate: e.target.value})}
+                  className="focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div className="space-y-2">
@@ -501,6 +514,7 @@ export default function Timeline({ user }: TimelineProps) {
                   id="edit-accountable"
                   value={editingTask.accountable}
                   onChange={(e) => setEditingTask({...editingTask, accountable: e.target.value})}
+                  className="focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div className="space-y-2">
@@ -509,6 +523,7 @@ export default function Timeline({ user }: TimelineProps) {
                   id="edit-consulted"
                   value={editingTask.consulted}
                   onChange={(e) => setEditingTask({...editingTask, consulted: e.target.value})}
+                  className="focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div className="space-y-2 col-span-2">
@@ -517,6 +532,7 @@ export default function Timeline({ user }: TimelineProps) {
                   id="edit-informed"
                   value={editingTask.informed}
                   onChange={(e) => setEditingTask({...editingTask, informed: e.target.value})}
+                  className="focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div className="space-y-2 col-span-2">
@@ -525,24 +541,26 @@ export default function Timeline({ user }: TimelineProps) {
                   id="edit-description"
                   value={editingTask.description}
                   onChange={(e) => setEditingTask({...editingTask, description: e.target.value})}
+                  className="focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div className="space-y-2 col-span-2">
-                <Label htmlFor="edit-comments">Comments/Notes</Label>
+                <Label htmlFor="edit-comments">Remarks & Notes</Label>
                 <Textarea
                   id="edit-comments"
                   value={editingTask.comments}
                   onChange={(e) => setEditingTask({...editingTask, comments: e.target.value})}
+                  className="focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
           )}
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-2 pt-4">
             <Button variant="outline" onClick={() => setEditTaskOpen(false)}>
               Cancel
             </Button>
             <Button onClick={handleEditTask} disabled={updateTaskMutation.isPending}>
-              Update Task
+              Update Entry
             </Button>
           </div>
         </DialogContent>

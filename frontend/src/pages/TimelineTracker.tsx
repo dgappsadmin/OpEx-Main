@@ -528,6 +528,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                       value={formData.stageName || ''}
                       onChange={(e) => setFormData({ ...formData, stageName: e.target.value })}
                       placeholder="Enter stage or activity name"
+                      className="focus:ring-2 focus:ring-blue-500"
                       required
                     />
                   </div>
@@ -539,6 +540,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                       value={formData.responsiblePerson || ''}
                       onChange={(e) => setFormData({ ...formData, responsiblePerson: e.target.value })}
                       placeholder="Enter responsible person name"
+                      className="focus:ring-2 focus:ring-blue-500"
                       required
                     />
                   </div>
@@ -549,7 +551,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                       value={formData.status || 'PENDING'} 
                       onValueChange={(value) => setFormData({ ...formData, status: value as any })}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="focus:ring-2 focus:ring-blue-500">
                         <SelectValue placeholder="Select status" />
                       </SelectTrigger>
                       <SelectContent>
@@ -607,7 +609,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                     value={formData.remarks || ''}
                     onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
                     placeholder="Enter any remarks, notes, or additional information"
-                    className="min-h-[80px]"
+                    className="min-h-[80px] focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
 
