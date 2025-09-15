@@ -314,7 +314,7 @@ export default function WorkflowStageModal({
       case 7: // Progress monitoring (was stage 6 - "Trial Implementation")
         return (
           <div className="space-y-6">
-            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+            {/* <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
               <div className="flex items-center gap-2.5 mb-3">
                 <Activity className="h-5 w-5 text-blue-600" />
                 <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-200">
@@ -324,7 +324,7 @@ export default function WorkflowStageModal({
               <p className="text-xs text-blue-700 dark:text-blue-300">
                 Review timeline entries and monitor progress of initiative implementation.
               </p>
-            </div>
+            </div> */}
 
             {/* Timeline Entries Display */}
             <div className="space-y-4">
@@ -345,50 +345,60 @@ export default function WorkflowStageModal({
               ) : (
                 <div className="border rounded-lg overflow-hidden">
                   <div className="bg-muted px-4 py-2 border-b">
-                    <div className="grid grid-cols-12 gap-2 text-xs font-semibold">
-                      <div className="col-span-3">Stage Name</div>
+                    <div className="grid grid-cols-10 gap-3 text-xs font-semibold">
+                      <div className="col-span-3">Activity Name</div>
                       <div className="col-span-2">Status</div>
                       <div className="col-span-3">Planned Duration</div>
                       <div className="col-span-2">Responsible Person</div>
-                      <div className="col-span-2">Approvals</div>
                     </div>
                   </div>
                   <div className="max-h-64 overflow-y-auto">
                     {Array.isArray(timelineEntries) && timelineEntries.map((entry: any) => (
                       <div key={entry.id} className="px-4 py-3 border-b last:border-b-0 hover:bg-muted/50">
-                        <div className="grid grid-cols-12 gap-2 items-center text-xs">
-                          <div className="col-span-3 font-medium">{entry.stageName}</div>
+                        <div className="grid grid-cols-10 gap-3 items-center text-xs">
+                          <div className="col-span-3 font-medium">
+                            <div 
+                              className="truncate cursor-help" 
+                              title={entry.stageName}
+                              style={{ maxWidth: '100%' }}
+                            >
+                              {entry.stageName}
+                            </div>
+                          </div>
                           <div className="col-span-2">
                             <Badge 
-                              className={`text-xs ${
-                                entry.status === 'COMPLETED' ? 'bg-green-500 text-white' :
-                                entry.status === 'IN_PROGRESS' ? 'bg-blue-500 text-white' :
-                                entry.status === 'DELAYED' ? 'bg-red-500 text-white' :
-                                'bg-yellow-500 text-white'
+                              variant="outline"
+                              className={`text-xs px-2 py-1 text-center font-medium whitespace-nowrap ${
+                                entry.status === 'COMPLETED' ? 'bg-green-100 text-green-800 border-green-300' :
+                                entry.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-800 border-blue-300' :
+                                entry.status === 'DELAYED' ? 'bg-red-100 text-red-800 border-red-300' :
+                                'bg-yellow-100 text-yellow-800 border-yellow-300'
                               }`}
                             >
-                              {entry.status}
+                              {entry.status === 'COMPLETED' ? 'Completed' :
+                               entry.status === 'IN_PROGRESS' ? 'In Progress' :
+                               entry.status === 'DELAYED' ? 'Delayed' :
+                               'Pending'}
                             </Badge>
                           </div>
                           <div className="col-span-3 text-muted-foreground">
-                            <div>{new Date(entry.plannedStartDate).toLocaleDateString()}</div>
-                            <div className="text-xs">to {new Date(entry.plannedEndDate).toLocaleDateString()}</div>
+                            <div className="text-xs whitespace-nowrap">{new Date(entry.plannedStartDate).toLocaleDateString()}</div>
+                            <div className="text-xs text-muted-foreground/80 whitespace-nowrap">to {new Date(entry.plannedEndDate).toLocaleDateString()}</div>
                           </div>
-                          <div className="col-span-2 font-mono text-muted-foreground">
-                            {entry.responsiblePerson}
-                          </div>
-                          <div className="col-span-2 flex gap-1">
-                            <Badge variant={entry.siteLeadApproval === 'Y' ? "default" : "outline"} className="text-xs">
-                              {entry.siteLeadApproval === 'Y' ? "✓ SL" : "○ SL"}
-                            </Badge>
-                            <Badge variant={entry.initiativeLeadApproval === 'Y' ? "default" : "outline"} className="text-xs">
-                              {entry.initiativeLeadApproval === 'Y' ? "✓ IL" : "○ IL"}
-                            </Badge>
+                          <div className="col-span-2">
+                            <div 
+                              className="text-xs text-muted-foreground truncate cursor-help" 
+                              title={entry.responsiblePerson}
+                              style={{ maxWidth: '100%' }}
+                            >
+                              {entry.responsiblePerson}
+                            </div>
                           </div>
                         </div>
                         {entry.remarks && (
-                          <div className="mt-2 col-span-12 text-xs text-muted-foreground bg-muted p-2 rounded">
-                            <strong>Remarks:</strong> {entry.remarks}
+                          <div className="mt-2 text-xs text-muted-foreground bg-muted p-2 rounded">
+                            <strong>Remarks:</strong> 
+                            <span className="ml-1 break-words">{entry.remarks}</span>
                           </div>
                         )}
                       </div>

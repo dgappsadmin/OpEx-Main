@@ -223,10 +223,8 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
       siteLeadApproval?: string;
       initiativeLeadApproval?: string;
     }) => {
-      // Convert string to boolean for API call
-      const siteApproval = siteLeadApproval === 'Y';
-      const initApproval = initiativeLeadApproval === 'Y';
-      const result = await timelineTrackerAPI.updateApprovals(id, siteApproval, initApproval);
+      // Send string values directly to API (Y/N expected by backend)
+      const result = await timelineTrackerAPI.updateApprovals(id, siteLeadApproval, initiativeLeadApproval);
       return result.data;
     },
     onSuccess: () => {
@@ -374,11 +372,15 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
 
     const entryData = {
       ...formData,
-      siteLeadApproval: 'N',
-      initiativeLeadApproval: 'N',
-      status: formData.status || 'PENDING',
-      progressPercentage: 0
+      status: formData.status || 'IN_PROGRESS',
+      progressPercentage: formData.progressPercentage || 0
     } as TimelineEntry;
+
+    // For new entries, set default approval values
+    if (!editingEntry) {
+      entryData.siteLeadApproval = 'N';
+      entryData.initiativeLeadApproval = 'N';
+    }
 
     if (editingEntry) {
       updateMutation.mutate({ id: editingEntry.id!, entry: entryData });
@@ -454,15 +456,15 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
       description: "Successfully finished"
     },
     {
-      title: "Approval Rate",
+      title: "Progress Monitoring",
       value: `${timelineEntries.length > 0 ? 
-        ((timelineEntries.filter((e: TimelineEntry) => e.siteLeadApproval === 'Y' && e.initiativeLeadApproval === 'Y').length / timelineEntries.length) * 100).toFixed(0) 
+        ((timelineEntries.filter((e: TimelineEntry) => e.status === 'COMPLETED').length / timelineEntries.length) * 100).toFixed(0) 
         : 0}%`,
       change: "+12%",
       trend: "up",
       icon: Target,
       color: "text-purple-600",
-      description: "Both approvals"
+      description: "Stage 7 completion rate"
     }
   ];
 
@@ -471,7 +473,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
       <div className="container mx-auto p-4 space-y-4 max-w-6xl">
         <div className="flex items-center justify-center h-64">
           <div className="text-center space-y-2">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600 mx-auto"></div>
             <p className="text-sm text-muted-foreground">Loading Timeline Tracker...</p>
           </div>
         </div>
@@ -528,7 +530,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                       value={formData.stageName || ''}
                       onChange={(e) => setFormData({ ...formData, stageName: e.target.value })}
                       placeholder="Enter stage or activity name"
-                      className="focus:ring-2 focus:ring-blue-500"
+                      className="focus:ring-2 focus:ring-gray-500"
                       required
                     />
                   </div>
@@ -540,7 +542,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                       value={formData.responsiblePerson || ''}
                       onChange={(e) => setFormData({ ...formData, responsiblePerson: e.target.value })}
                       placeholder="Enter responsible person name"
-                      className="focus:ring-2 focus:ring-blue-500"
+                      className="focus:ring-2 focus:ring-gray-500"
                       required
                     />
                   </div>
@@ -548,17 +550,15 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                   <div>
                     <Label htmlFor="status">Status</Label>
                     <Select 
-                      value={formData.status || 'PENDING'} 
+                      value={formData.status || 'IN_PROGRESS'} 
                       onValueChange={(value) => setFormData({ ...formData, status: value as any })}
                     >
-                      <SelectTrigger className="focus:ring-2 focus:ring-blue-500">
+                      <SelectTrigger className="focus:ring-2 focus:ring-gray-500">
                         <SelectValue placeholder="Select status" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="PENDING">Pending</SelectItem>
                         <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
                         <SelectItem value="COMPLETED">Completed</SelectItem>
-                        <SelectItem value="DELAYED">Delayed</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -609,7 +609,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                     value={formData.remarks || ''}
                     onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
                     placeholder="Enter any remarks, notes, or additional information"
-                    className="min-h-[80px] focus:ring-2 focus:ring-blue-500"
+                    className="min-h-[80px] focus:ring-2 focus:ring-gray-500"
                   />
                 </div>
 
@@ -660,7 +660,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                     }}
                     onClick={(e) => e.stopPropagation()}
                     onFocus={(e) => e.stopPropagation()}
-                    className="h-10 border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors pl-10 pr-10"
+                    className="h-10 border-gray-200 focus:border-gray-500 focus:ring-1 focus:ring-gray-500 transition-colors pl-10 pr-10"
                   />
                   {searchTerm && (
                     <button
@@ -678,7 +678,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                   <Select value={filterStatus} onValueChange={(value) => {
                     setFilterStatus(value);
                   }}>
-                    <SelectTrigger className="sm:w-40 h-10 border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    <SelectTrigger className="sm:w-40 h-10 border-gray-200 focus:border-gray-500 focus:ring-1 focus:ring-gray-500">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent onClick={(e) => e.stopPropagation()}>
@@ -802,7 +802,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                               initiative.initiativeStatus === 'Completed' 
                                 ? 'bg-green-50 text-green-700 border-green-200' 
                                 : initiative.initiativeStatus === 'In Progress'
-                                ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                ? 'bg-gray-50 text-gray-700 border-gray-200'
                                 : initiative.initiativeStatus === 'Planning'
                                 ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
                                 : 'bg-gray-50 text-gray-700 border-gray-200'
@@ -942,7 +942,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
               {entriesLoading ? (
                 <div className="flex justify-center items-center h-64">
                   <div className="text-center space-y-2">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600 mx-auto"></div>
                     <p className="text-sm text-muted-foreground">Loading timeline entries...</p>
                   </div>
                 </div>
@@ -958,120 +958,152 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                       </CardContent>
                     </Card>
                   ) : (
-                    <div className="grid gap-4">
+                    <div className="space-y-3">
                       {timelineEntries.map((entry: TimelineEntry) => (
-                        <Card key={entry.id} className="hover:shadow-md transition-shadow shadow-sm">
-                          <CardHeader className="pb-3">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-3">
+                        <Card key={entry.id} className="hover:shadow-md transition-shadow shadow-sm border-l-4" 
+                              style={{ borderLeftColor: 
+                                entry.status === 'COMPLETED' ? '#10b981' :
+                                entry.status === 'IN_PROGRESS' ? '#3b82f6' :
+                                entry.status === 'DELAYED' ? '#ef4444' : '#f59e0b'
+                              }}>
+                          <CardContent className="p-4">
+                            {/* Header Row */}
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center space-x-3 flex-1 min-w-0">
                                 {getStatusIcon(entry.status)}
-                                <div>
-                                  <CardTitle className="text-base">{entry.stageName}</CardTitle>
-                                  <p className="text-sm text-muted-foreground">
-                                    Responsible: {entry.responsiblePerson}
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="text-sm font-semibold truncate" title={entry.stageName}>
+                                    {entry.stageName}
+                                  </h4>
+                                  <p className="text-xs text-muted-foreground truncate">
+                                    {entry.responsiblePerson}
                                   </p>
                                 </div>
                               </div>
-                              <div className="flex items-center space-x-2">
-                                <Badge className={`${getStatusBadgeColor(entry.status)} text-xs`}>{entry.status}</Badge>
+                              <div className="flex items-center space-x-2 flex-shrink-0">
+                                <Badge 
+                                  variant="outline"
+                                  className={`text-xs px-2 py-1 font-medium ${
+                                    entry.status === 'COMPLETED' ? 'bg-green-50 text-green-700 border-green-200' :
+                                    entry.status === 'IN_PROGRESS' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                    entry.status === 'DELAYED' ? 'bg-red-50 text-red-700 border-red-200' :
+                                    'bg-yellow-50 text-yellow-700 border-yellow-200'
+                                  }`}
+                                >
+                                  {entry.status === 'COMPLETED' ? 'Completed' :
+                                   entry.status === 'IN_PROGRESS' ? 'In Progress' :
+                                   entry.status === 'DELAYED' ? 'Delayed' : 'Pending'}
+                                </Badge>
                                 {user.role !== 'VIEWER' && (
-                                  <>
-                                    <Button size="sm" variant="outline" onClick={() => handleEdit(entry)}>
+                                  <div className="flex space-x-1">
+                                    <Button size="sm" variant="ghost" onClick={() => handleEdit(entry)} className="h-7 w-7 p-0">
                                       <Edit className="h-3 w-3" />
                                     </Button>
                                     <Button
                                       size="sm"
-                                      variant="outline"
+                                      variant="ghost"
                                       onClick={() => deleteMutation.mutate(entry.id!)}
-                                      className="text-red-600 hover:text-red-700"
+                                      className="h-7 w-7 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
                                     >
                                       <Trash2 className="h-3 w-3" />
                                     </Button>
-                                  </>
+                                  </div>
                                 )}
                               </div>
                             </div>
-                          </CardHeader>
-                          <CardContent>
+
+                            {/* Duration and Progress */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                              <div>
-                                <Label className="text-sm font-medium">Planned Duration</Label>
-                                <p className="text-sm">
-                                  {format(new Date(entry.plannedStartDate), 'PPP')} - {format(new Date(entry.plannedEndDate), 'PPP')}
+                              <div className="space-y-1">
+                                <p className="text-xs font-medium text-muted-foreground">Planned Duration</p>
+                                <p className="text-xs">
+                                  {format(new Date(entry.plannedStartDate), 'MMM dd')} - {format(new Date(entry.plannedEndDate), 'MMM dd, yyyy')}
                                 </p>
                               </div>
                               {entry.actualStartDate && (
-                                <div>
-                                  <Label className="text-sm font-medium">Actual Duration</Label>
-                                  <p className="text-sm">
-                                    {format(new Date(entry.actualStartDate), 'PPP')}
-                                    {entry.actualEndDate && ` - ${format(new Date(entry.actualEndDate), 'PPP')}`}
+                                <div className="space-y-1">
+                                  <p className="text-xs font-medium text-muted-foreground">Actual Duration</p>
+                                  <p className="text-xs">
+                                    {format(new Date(entry.actualStartDate), 'MMM dd')}
+                                    {entry.actualEndDate && ` - ${format(new Date(entry.actualEndDate), 'MMM dd, yyyy')}`}
                                   </p>
                                 </div>
                               )}
                             </div>
                             
-                            {/* Progress Bar */}
+                            {/* Compact Progress Bar */}
                             <div className="mb-3">
-                              <div className="flex justify-between text-sm mb-1">
-                                <span>Progress</span>
-                                <span>{calculateProgress(entry)}%</span>
+                              <div className="flex justify-between items-center text-xs mb-1">
+                                <span className="font-medium">Progress</span>
+                                <span className="text-muted-foreground">{calculateProgress(entry)}%</span>
                               </div>
-                              <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div className="w-full bg-gray-200 rounded-full h-1.5">
                                 <div 
-                                  className={`h-2 rounded-full ${getStatusColor(entry.status)}`}
+                                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                                    entry.status === 'COMPLETED' ? 'bg-green-500' :
+                                    entry.status === 'IN_PROGRESS' ? 'bg-blue-500' :
+                                    entry.status === 'DELAYED' ? 'bg-red-500' : 'bg-yellow-500'
+                                  }`}
                                   style={{ width: `${calculateProgress(entry)}%` }}
                                 ></div>
                               </div>
                             </div>
 
+                            {/* Remarks - Compact */}
                             {entry.remarks && (
-                              <div className="mb-3 p-3 bg-muted rounded-lg">
-                                <Label className="text-sm font-medium">Remarks</Label>
-                                <p className="text-sm mt-1">{entry.remarks}</p>
+                              <div className="mb-3 p-2 bg-gray-50 rounded text-xs">
+                                <span className="font-medium text-muted-foreground">Remarks: </span>
+                                <span className="text-muted-foreground">{entry.remarks}</span>
                               </div>
                             )}
 
-                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pt-3 border-t">
-                              <div className="flex items-center space-x-2">
-                                <Badge variant={entry.siteLeadApproval === 'Y' ? "default" : "outline"} className="text-xs">
-                                  {entry.siteLeadApproval === 'Y' ? "✓ Site Lead" : "○ Site Lead"}
-                                </Badge>
-                                <Badge variant={entry.initiativeLeadApproval === 'Y' ? "default" : "outline"} className="text-xs">
-                                  {entry.initiativeLeadApproval === 'Y' ? "✓ Initiative Lead" : "○ Initiative Lead"}
-                                </Badge>
-                              </div>
-                              <div className="flex space-x-1">
-                                {user.role !== 'VIEWER' && (
-                                  <>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => approvalMutation.mutate({ 
-                                        id: entry.id!, 
-                                        siteLeadApproval: entry.siteLeadApproval === 'Y' ? 'N' : 'Y' 
-                                      })}
-                                      disabled={user.role !== 'STLD'}
-                                      className="text-xs"
-                                    >
-                                      Site Lead
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => approvalMutation.mutate({ 
-                                        id: entry.id!, 
-                                        initiativeLeadApproval: entry.initiativeLeadApproval === 'Y' ? 'N' : 'Y' 
-                                      })}
-                                      disabled={user.role !== 'IL'}
-                                      className="text-xs"
-                                    >
-                                      IL Approve
-                                    </Button>
-                                  </>
-                                )}
+                            {/* Approval Status - Bottom Row */}
+                            <div className="flex items-center justify-center pt-2 border-t border-gray-100">
+                              <div className="flex items-center space-x-3">
+                                <div className="flex items-center space-x-1">
+                                  <div className={`w-2 h-2 rounded-full ${entry.siteLeadApproval === 'Y' ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                                  <span className="text-xs text-muted-foreground">Site Lead</span>
+                                </div>
+                                <div className="flex items-center space-x-1">
+                                  <div className={`w-2 h-2 rounded-full ${entry.initiativeLeadApproval === 'Y' ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                                  <span className="text-xs text-muted-foreground">Initiative Lead</span>
+                                </div>
                               </div>
                             </div>
+
+                            {/* COMMENTED OUT - Approval buttons removed to reduce UI complexity */}
+                            {/* 
+                            <div className="flex space-x-1">
+                              {user.role !== 'VIEWER' && (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => approvalMutation.mutate({ 
+                                      id: entry.id!, 
+                                      siteLeadApproval: entry.siteLeadApproval === 'Y' ? 'N' : 'Y' 
+                                    })}
+                                    disabled={user.role !== 'STLD'}
+                                    className="text-xs"
+                                  >
+                                    Site Lead
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => approvalMutation.mutate({ 
+                                      id: entry.id!, 
+                                      initiativeLeadApproval: entry.initiativeLeadApproval === 'Y' ? 'N' : 'Y' 
+                                    })}
+                                    disabled={user.role !== 'IL'}
+                                    className="text-xs"
+                                  >
+                                    IL Approve
+                                  </Button>
+                                </>
+                              )}
+                            </div>
+                            */}
                           </CardContent>
                         </Card>
                       ))}
