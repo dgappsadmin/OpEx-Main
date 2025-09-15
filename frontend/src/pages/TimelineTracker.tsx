@@ -20,7 +20,6 @@ import {
   CheckCircle, 
   Clock, 
   AlertCircle, 
-  Lock, 
   Filter, 
   RefreshCw, 
   FileText, 
@@ -29,7 +28,6 @@ import {
   Activity,
   Target,
   TrendingUp,
-  IndianRupee,
   Search,
   X
 } from 'lucide-react';
@@ -69,8 +67,9 @@ interface TimelineEntry {
   responsiblePerson: string;
   remarks?: string;
   documentPath?: string;
-  siteLeadApproval: string; // Changed from boolean to string ('Y' or 'N')
-  initiativeLeadApproval: string; // Changed from boolean to string ('Y' or 'N')
+  // Keeping approval fields for backend compatibility but not using in UI
+  siteLeadApproval: string;
+  initiativeLeadApproval: string;
   progressPercentage?: number;
   milestones?: string[];
 }
@@ -172,7 +171,10 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
       const result = await timelineTrackerAPI.createTimelineEntry(selectedInitiativeId!, {
         ...entry,
         enteredBy: user.email,
-        initiativeId: selectedInitiativeId
+        initiativeId: selectedInitiativeId,
+        // Don't send approval fields for new entries - backend will set defaults
+        siteLeadApproval: undefined,
+        initiativeLeadApproval: undefined
       });
       return result.data;
     },
@@ -194,10 +196,21 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, entry }: { id: number; entry: TimelineEntry }) => {
-      const result = await timelineTrackerAPI.updateTimelineEntry(id, {
-        ...entry,
+      // Don't send approval fields during regular updates to prevent overwriting
+      const updateData = {
+        stageName: entry.stageName,
+        plannedStartDate: entry.plannedStartDate,
+        plannedEndDate: entry.plannedEndDate,
+        actualStartDate: entry.actualStartDate,
+        actualEndDate: entry.actualEndDate,
+        status: entry.status,
+        responsiblePerson: entry.responsiblePerson,
+        remarks: entry.remarks,
+        documentPath: entry.documentPath,
         updatedBy: user.email
-      });
+      };
+      
+      const result = await timelineTrackerAPI.updateTimelineEntry(id, updateData);
       return result.data;
     },
     onSuccess: () => {
@@ -217,29 +230,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
     }
   });
 
-  const approvalMutation = useMutation({
-    mutationFn: async ({ id, siteLeadApproval, initiativeLeadApproval }: {
-      id: number;
-      siteLeadApproval?: string;
-      initiativeLeadApproval?: string;
-    }) => {
-      // Send string values directly to API (Y/N expected by backend)
-      const result = await timelineTrackerAPI.updateApprovals(id, siteLeadApproval, initiativeLeadApproval);
-      return result.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['timeline-entries'] });
-      toast({ title: "Success", description: "Approval status updated" });
-      refetchEntries();
-    },
-    onError: (error: any) => {
-      toast({ 
-        title: "Error", 
-        description: error.message || "Failed to update approval", 
-        variant: "destructive" 
-      });
-    }
-  });
+  // REMOVED: approvalMutation - Approval logic removed for simplicity
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
@@ -372,15 +363,13 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
 
     const entryData = {
       ...formData,
+      // Set default status to IN_PROGRESS for new entries or preserve existing status for updates
       status: formData.status || 'IN_PROGRESS',
-      progressPercentage: formData.progressPercentage || 0
+      progressPercentage: formData.progressPercentage || 0,
+      // Set default approval values for backend compatibility
+      siteLeadApproval: editingEntry?.siteLeadApproval || 'N',
+      initiativeLeadApproval: editingEntry?.initiativeLeadApproval || 'N'
     } as TimelineEntry;
-
-    // For new entries, set default approval values
-    if (!editingEntry) {
-      entryData.siteLeadApproval = 'N';
-      entryData.initiativeLeadApproval = 'N';
-    }
 
     if (editingEntry) {
       updateMutation.mutate({ id: editingEntry.id!, entry: entryData });
@@ -559,6 +548,8 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                       <SelectContent>
                         <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
                         <SelectItem value="COMPLETED">Completed</SelectItem>
+                        <SelectItem value="PENDING">Pending</SelectItem>
+                        <SelectItem value="DELAYED">Delayed</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -1032,7 +1023,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                             </div>
                             
                             {/* Compact Progress Bar */}
-                            <div className="mb-3">
+                            {/* <div className="mb-3">
                               <div className="flex justify-between items-center text-xs mb-1">
                                 <span className="font-medium">Progress</span>
                                 <span className="text-muted-foreground">{calculateProgress(entry)}%</span>
@@ -1047,7 +1038,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                                   style={{ width: `${calculateProgress(entry)}%` }}
                                 ></div>
                               </div>
-                            </div>
+                            </div> */}
 
                             {/* Remarks - Compact */}
                             {entry.remarks && (
@@ -1057,53 +1048,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                               </div>
                             )}
 
-                            {/* Approval Status - Bottom Row */}
-                            <div className="flex items-center justify-center pt-2 border-t border-gray-100">
-                              <div className="flex items-center space-x-3">
-                                <div className="flex items-center space-x-1">
-                                  <div className={`w-2 h-2 rounded-full ${entry.siteLeadApproval === 'Y' ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                                  <span className="text-xs text-muted-foreground">Site Lead</span>
-                                </div>
-                                <div className="flex items-center space-x-1">
-                                  <div className={`w-2 h-2 rounded-full ${entry.initiativeLeadApproval === 'Y' ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                                  <span className="text-xs text-muted-foreground">Initiative Lead</span>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* COMMENTED OUT - Approval buttons removed to reduce UI complexity */}
-                            {/* 
-                            <div className="flex space-x-1">
-                              {user.role !== 'VIEWER' && (
-                                <>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => approvalMutation.mutate({ 
-                                      id: entry.id!, 
-                                      siteLeadApproval: entry.siteLeadApproval === 'Y' ? 'N' : 'Y' 
-                                    })}
-                                    disabled={user.role !== 'STLD'}
-                                    className="text-xs"
-                                  >
-                                    Site Lead
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => approvalMutation.mutate({ 
-                                      id: entry.id!, 
-                                      initiativeLeadApproval: entry.initiativeLeadApproval === 'Y' ? 'N' : 'Y' 
-                                    })}
-                                    disabled={user.role !== 'IL'}
-                                    className="text-xs"
-                                  >
-                                    IL Approve
-                                  </Button>
-                                </>
-                              )}
-                            </div>
-                            */}
+                            {/* REMOVED: Approval Status section - approval logic removed for simplicity */}
                           </CardContent>
                         </Card>
                       ))}

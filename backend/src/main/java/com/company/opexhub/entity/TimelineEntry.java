@@ -36,7 +36,7 @@ public class TimelineEntry {
     
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private TimelineStatus status = TimelineStatus.PENDING;
+    private TimelineStatus status = TimelineStatus.IN_PROGRESS; // Changed default to IN_PROGRESS
     
     @Column(name = "responsible_person", nullable = false)
     private String responsiblePerson;
@@ -73,44 +73,28 @@ public class TimelineEntry {
         this.plannedStartDate = plannedStartDate;
         this.plannedEndDate = plannedEndDate;
         this.responsiblePerson = responsiblePerson;
+        this.status = TimelineStatus.IN_PROGRESS; // Set default status to IN_PROGRESS
     }
     
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
+        
+        // Set default status if not already set
+        if (status == null) {
+            status = TimelineStatus.IN_PROGRESS;
+        }
     }
     
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
-        updateStatusFromDates();
+        // Removed automatic status calculation to prevent overriding user selections
+        // Status should only be updated explicitly through user actions or API calls
     }
     
-    private void updateStatusFromDates() {
-        LocalDate today = LocalDate.now();
-        
-        // Don't auto-update status if it's manually set to DELAYED
-        if (status == TimelineStatus.DELAYED) {
-            return;
-        }
-        
-        if (actualEndDate != null) {
-            status = TimelineStatus.COMPLETED;
-        } else if (actualStartDate != null || 
-                  (plannedStartDate != null && !today.isBefore(plannedStartDate))) {
-            // Check if we're past the planned end date without completion - set to DELAYED
-            if (plannedEndDate != null && today.isAfter(plannedEndDate)) {
-                status = TimelineStatus.DELAYED;
-            } else {
-                status = TimelineStatus.IN_PROGRESS;
-            }
-        } else {
-            status = TimelineStatus.PENDING;
-        }
-    }
-    
-    // Helper methods for Boolean to CHAR conversion
+    // Helper methods for Boolean to CHAR conversion (kept for backward compatibility)
     public Boolean getSiteLeadApprovalBoolean() {
         return "Y".equals(this.siteLeadApproval);
     }

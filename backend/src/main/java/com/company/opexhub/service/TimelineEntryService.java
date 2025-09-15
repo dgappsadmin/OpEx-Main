@@ -35,32 +35,43 @@ public class TimelineEntryService {
                 .orElseThrow(() -> new RuntimeException("Initiative not found"));
         
         timelineEntry.setInitiative(initiative);
+        
+        // Ensure default status is set for new entries
+        if (timelineEntry.getStatus() == null) {
+            timelineEntry.setStatus(TimelineEntry.TimelineStatus.IN_PROGRESS);
+        }
+        
         return timelineEntryRepository.save(timelineEntry);
     }
 
     @Transactional
     public TimelineEntry updateTimelineEntry(Long id, TimelineEntry entryDetails) {
-        TimelineEntry entry = timelineEntryRepository.findById(id)
+        TimelineEntry existingEntry = timelineEntryRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Timeline entry not found"));
 
-        entry.setStageName(entryDetails.getStageName());
-        entry.setPlannedStartDate(entryDetails.getPlannedStartDate());
-        entry.setPlannedEndDate(entryDetails.getPlannedEndDate());
-        entry.setActualStartDate(entryDetails.getActualStartDate());
-        entry.setActualEndDate(entryDetails.getActualEndDate());
-        entry.setResponsiblePerson(entryDetails.getResponsiblePerson());
-        entry.setRemarks(entryDetails.getRemarks());
-        entry.setDocumentPath(entryDetails.getDocumentPath());
+        // Update only the fields that should be updatable
+        // Preserve approval fields during regular updates to prevent overwriting
+        existingEntry.setStageName(entryDetails.getStageName());
+        existingEntry.setPlannedStartDate(entryDetails.getPlannedStartDate());
+        existingEntry.setPlannedEndDate(entryDetails.getPlannedEndDate());
+        existingEntry.setActualStartDate(entryDetails.getActualStartDate());
+        existingEntry.setActualEndDate(entryDetails.getActualEndDate());
+        existingEntry.setResponsiblePerson(entryDetails.getResponsiblePerson());
+        existingEntry.setRemarks(entryDetails.getRemarks());
+        existingEntry.setDocumentPath(entryDetails.getDocumentPath());
         
-        // Set status if provided, otherwise it will be auto-calculated in @PreUpdate
+        // Update status only if explicitly provided
         if (entryDetails.getStatus() != null) {
-            entry.setStatus(entryDetails.getStatus());
+            existingEntry.setStatus(entryDetails.getStatus());
         }
         
-        // Validate date logic
-        validateDates(entry);
+        // DO NOT update approval fields during regular updates
+        // Approval fields should only be updated through the dedicated updateApprovals method
         
-        return timelineEntryRepository.save(entry);
+        // Validate date logic
+        validateDates(existingEntry);
+        
+        return timelineEntryRepository.save(existingEntry);
     }
 
     @Transactional
