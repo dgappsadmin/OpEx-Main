@@ -513,7 +513,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-2">
-                    <Label htmlFor="stageName">Stage/Activity Name *</Label>
+                    <Label htmlFor="stageName">Activity Name *</Label>
                     <Input
                       id="stageName"
                       value={formData.stageName || ''}
