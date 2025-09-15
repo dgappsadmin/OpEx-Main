@@ -548,8 +548,8 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                       <SelectContent>
                         <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
                         <SelectItem value="COMPLETED">Completed</SelectItem>
-                        <SelectItem value="PENDING">Pending</SelectItem>
-                        <SelectItem value="DELAYED">Delayed</SelectItem>
+                        {/* <SelectItem value="PENDING">Pending</SelectItem>
+                        <SelectItem value="DELAYED">Delayed</SelectItem> */}
                       </SelectContent>
                     </Select>
                   </div>
@@ -676,7 +676,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                       <SelectItem value="ALL">All Status</SelectItem>
                       <SelectItem value="In Progress">In Progress</SelectItem>
                       <SelectItem value="Completed">Completed</SelectItem>
-                      <SelectItem value="Planning">Planning</SelectItem>
+                      {/* <SelectItem value="Planning">Planning</SelectItem> */}
                     </SelectContent>
                   </Select>
                 </div>
