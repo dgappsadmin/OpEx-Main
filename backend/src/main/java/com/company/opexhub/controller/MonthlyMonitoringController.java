@@ -52,11 +52,11 @@ public class MonthlyMonitoringController {
             String userEmail = (String) request.getAttribute("userEmail");
             String userRole = (String) request.getAttribute("userRole");
             
-            // Check if user has access to this initiative's savings monitoring
-            if (userEmail != null && !workflowTransactionService.hasSavingsMonitoringAccess(initiativeId, userEmail, userRole)) {
+            // Check if user has view access to this initiative's savings monitoring
+            if (userEmail != null && !workflowTransactionService.hasSavingsMonitoringViewAccess(initiativeId, userEmail, userRole)) {
               return ResponseEntity
         .status(HttpStatus.FORBIDDEN)
-        .body(new ApiResponse<>(false, "Access denied: Stage 9 not approved or user not assigned as STLD", null));
+        .body(new ApiResponse<>(false, "Access denied: Stage 9 not approved", null));
             }
             
             List<MonthlyMonitoringEntry> entries = monthlyMonitoringService.getMonitoringEntriesByInitiative(initiativeId);
@@ -77,11 +77,11 @@ public class MonthlyMonitoringController {
             String userEmail = (String) request.getAttribute("userEmail");
             String userRole = (String) request.getAttribute("userRole");
             
-            // Check if user has access to this initiative's savings monitoring
-            if (userEmail != null && !workflowTransactionService.hasSavingsMonitoringAccess(initiativeId, userEmail, userRole)) {
+            // Check if user has view access to this initiative's savings monitoring
+            if (userEmail != null && !workflowTransactionService.hasSavingsMonitoringViewAccess(initiativeId, userEmail, userRole)) {
               return ResponseEntity
         .status(HttpStatus.FORBIDDEN)
-        .body(new ApiResponse<>(false, "Access denied: Stage 9 not approved or user not assigned as STLD", null));
+        .body(new ApiResponse<>(false, "Access denied: Stage 9 not approved", null));
             }
             
             // Validate month format - accepts YYYY-MM format

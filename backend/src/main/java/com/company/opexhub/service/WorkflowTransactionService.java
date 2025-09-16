@@ -729,18 +729,14 @@ public class WorkflowTransactionService {
     }
 
     /**
-     * Get initiatives where Stage 9 (Savings Monitoring) is approved and user is assigned as IL
+     * Get initiatives where Stage 9 (Savings Monitoring) is approved - all users can view, IL can perform actions
      */
     public List<WorkflowTransactionDetailDTO> getInitiativesWithApprovedStage9ForUser(String userEmail, String site) {
         List<WorkflowTransaction> approvedStage9 = workflowTransactionRepository
                 .findByStageNumberAndApproveStatusAndSite(9, "approved", site);
         
+        // Return all approved Stage 9 initiatives for the site - frontend will handle role-based action restrictions
         return approvedStage9.stream()
-                .filter(transaction -> userEmail.equals(transaction.getPendingWith()) || 
-                       (transaction.getAssignedUserId() != null && 
-                        userRepository.findById(transaction.getAssignedUserId())
-                                .map(user -> userEmail.equals(user.getEmail()))
-                                .orElse(false)))
                 .map(this::convertToDetailDTO)
                 .collect(Collectors.toList());
     }
@@ -767,7 +763,24 @@ public class WorkflowTransactionService {
     }
 
     /**
-     * Check if user has access to Stage 9 (Savings Monitoring) for a specific initiative
+     * Check if user has view access to Stage 9 (Savings Monitoring) for a specific initiative
+     * All users can view if Stage 9 is approved
+     */
+    public boolean hasSavingsMonitoringViewAccess(Long initiativeId, String userEmail, String userRole) {
+        Optional<WorkflowTransaction> stage9Transaction = workflowTransactionRepository
+                .findByInitiativeIdAndStageNumber(initiativeId, 9);
+        
+        if (stage9Transaction.isPresent()) {
+            WorkflowTransaction transaction = stage9Transaction.get();
+            // Check if stage 9 is approved - all users can view
+            return "approved".equals(transaction.getApproveStatus());
+        }
+        return false;
+    }
+
+    /**
+     * Check if user has action access to Stage 9 (Savings Monitoring) for a specific initiative
+     * Only IL role can perform actions (create, edit, delete, finalize)
      */
     public boolean hasSavingsMonitoringAccess(Long initiativeId, String userEmail, String userRole) {
         Optional<WorkflowTransaction> stage9Transaction = workflowTransactionRepository

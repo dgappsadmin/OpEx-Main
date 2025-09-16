@@ -333,23 +333,18 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
   };
 
   const canEdit = (entry: MonthlyMonitoringEntry) => {
-    // VIEWER role cannot edit anything
-    if (user.role === 'VIEWER') return false;
-    return (user.role === 'STLD' && user.email === entry.enteredBy) || 
-           user.role === 'F&A Approver' || 
-           user.role === 'ADMIN';
+    // Only IL (Initiative Lead) role can edit
+    return user.role === 'IL';
   };
 
   const canApprove = () => {
-    // VIEWER role cannot approve anything
-    if (user.role === 'VIEWER') return false;
-    return user.role === 'F&A Approver' || user.role === 'ADMIN';
+    // Only IL (Initiative Lead) role can approve
+    return user.role === 'IL';
   };
 
   const canFinalize = (entry: MonthlyMonitoringEntry) => {
-    // VIEWER role cannot finalize anything
-    if (user.role === 'VIEWER') return false;
-    return (user.role === 'STLD' && user.email === entry.enteredBy) || user.role === 'ADMIN';
+    // Only IL (Initiative Lead) role can finalize
+    return user.role === 'IL';
   };
 
   const formatCurrency = (amount: number) => {
@@ -430,7 +425,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
             Monthly monitoring and validation of savings achievements
           </p>
         </div>
-        {selectedInitiativeId && user.role !== 'VIEWER' && (
+        {selectedInitiativeId && user.role === 'IL' && (
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button 
@@ -1076,7 +1071,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                                           <Target className="h-3 w-3" />
                                         </Button>
                                       )}
-                                      {user.role !== 'VIEWER' && (
+                                      {user.role === 'IL' && (
                                         <Button
                                           size="sm"
                                           variant="outline"
