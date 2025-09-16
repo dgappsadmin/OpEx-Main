@@ -350,7 +350,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.stageName || !formData.plannedStartDate || !formData.plannedEndDate || !formData.responsiblePerson) {
+    if (!formData.stageName || !formData.plannedStartDate || !formData.plannedEndDate) {
       toast({ title: "Error", description: "Please fill in all required fields", variant: "destructive" });
       return;
     }
@@ -363,6 +363,8 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
 
     const entryData = {
       ...formData,
+      // Always use current logged-in user as responsible person
+      responsiblePerson: user.fullName,
       // Set default status to IN_PROGRESS for new entries or preserve existing status for updates
       status: formData.status || 'IN_PROGRESS',
       progressPercentage: formData.progressPercentage || 0,
@@ -528,11 +530,11 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                     <Label htmlFor="responsiblePerson">Responsible Person *</Label>
                     <Input
                       id="responsiblePerson"
-                      value={formData.responsiblePerson || ''}
-                      onChange={(e) => setFormData({ ...formData, responsiblePerson: e.target.value })}
-                      placeholder="Enter responsible person name"
-                      className="focus:ring-2 focus:ring-gray-500"
-                      required
+                      value={user.fullName}
+                      readOnly
+                      disabled
+                      className="focus:ring-2 focus:ring-gray-500 bg-gray-50 text-gray-700 cursor-not-allowed"
+                      placeholder="Current logged in user"
                     />
                   </div>
 
@@ -1022,7 +1024,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                               )}
                             </div>
                             
-                            {/* Compact Progress Bar */}
+                            {/* Compact Progress Bar - Commented out for future use */}
                             {/* <div className="mb-3">
                               <div className="flex justify-between items-center text-xs mb-1">
                                 <span className="font-medium">Progress</span>

@@ -411,8 +411,9 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
 
   // Handle global clicks to prevent unwanted initiative selections
   const handleGlobalClick = (e: React.MouseEvent) => {
-    // Only allow initiative selection through explicit card clicks
-    if (!(e.target as HTMLElement).closest('.initiative-card')) {
+    // Only allow initiative selection through explicit card clicks, but don't interfere with dialog triggers
+    const target = e.target as HTMLElement;
+    if (!target.closest('.initiative-card') && !target.closest('[role="dialog"]') && !target.closest('[data-radix-collection-item]')) {
       e.stopPropagation();
     }
   };
@@ -437,7 +438,8 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                   e.preventDefault();
                   e.stopPropagation();
                   setEditingEntry(null); 
-                  setFormData({}); 
+                  setFormData({});
+                  setIsDialogOpen(true); // Explicitly open dialog
                 }} 
                 className="gap-2 shrink-0 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 h-9 px-4 text-xs"
               >
@@ -448,7 +450,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader className="pb-4">
                 <DialogTitle className="text-lg font-semibold">
-                  {editingEntry ? 'Edit KPI Entry' : 'Add Saving KPI Entry'}
+                  {editingEntry ? 'Edit Saving Entry' : 'Add Saving Entry'}
                 </DialogTitle>
               </DialogHeader>
               <form 
