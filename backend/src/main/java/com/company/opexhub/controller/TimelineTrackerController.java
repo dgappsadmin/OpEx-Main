@@ -26,7 +26,7 @@ public class TimelineTrackerController {
     private WorkflowTransactionService workflowTransactionService;
 
     /**
-     * Get initiatives where Stage 6 is approved and user has access
+     * Get initiatives where Stage 5 is approved and current stage is 6 (Timeline Tracker)
      */
     @GetMapping("/approved-initiatives/{userEmail}/{site}")
     public ResponseEntity<ApiResponse<List<WorkflowTransactionDetailDTO>>> getApprovedInitiativesForUser(
@@ -46,14 +46,15 @@ public class TimelineTrackerController {
             @PathVariable Long initiativeId,
             HttpServletRequest request) {
         try {
-            // Get user email from request (assuming it's set in authentication)
+            // Get user email and role from request (assuming it's set in authentication)
             String userEmail = (String) request.getAttribute("userEmail");
+            String userRole = (String) request.getAttribute("userRole");
             
-            // Check if user has access to this initiative's timeline tracker
-            if (userEmail != null && !workflowTransactionService.hasTimelineTrackerAccess(initiativeId, userEmail)) {
-              return ResponseEntity
-        .status(HttpStatus.FORBIDDEN)
-        .body(new ApiResponse<>(false, "Access denied: Stage 6 not approved or user not assigned", null));
+            // Check if user has view access to this initiative's timeline tracker
+            if (userEmail != null && !workflowTransactionService.hasTimelineTrackerViewAccess(initiativeId, userEmail, userRole)) {
+                return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body(new ApiResponse<>(false, "Access denied: Stage 6 not approved", null));
             }
             
             List<TimelineEntry> entries = timelineEntryService.getTimelineEntriesByInitiative(initiativeId);
@@ -88,11 +89,11 @@ public class TimelineTrackerController {
             // Get user email from request
             String userEmail = (String) request.getAttribute("userEmail");
             
-            // Check if user has access to create timeline entries for this initiative
+            // Check if user has edit access to create timeline entries for this initiative (IL role only)
             if (userEmail != null && !workflowTransactionService.hasTimelineTrackerAccess(initiativeId, userEmail)) {
-              return ResponseEntity
-        .status(HttpStatus.FORBIDDEN)
-        .body(new ApiResponse<>(false, "Access denied: Stage 6 not approved or user not assigned", null));
+                return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body(new ApiResponse<>(false, "Access denied: Only IL role can create timeline entries", null));
             }
             
             TimelineEntry createdEntry = timelineEntryService.createTimelineEntry(initiativeId, timelineEntry);
@@ -115,11 +116,11 @@ public class TimelineTrackerController {
                 String userEmail = (String) request.getAttribute("userEmail");
                 Long initiativeId = existingEntry.get().getInitiative().getId();
                 
-                // Check if user has access
+                // Check if user has edit access (IL role only)
                 if (userEmail != null && !workflowTransactionService.hasTimelineTrackerAccess(initiativeId, userEmail)) {
-                  return ResponseEntity
-        .status(HttpStatus.FORBIDDEN)
-        .body(new ApiResponse<>(false, "Access denied: Stage 6 not approved or user not assigned", null));
+                    return ResponseEntity
+                        .status(HttpStatus.FORBIDDEN)
+                        .body(new ApiResponse<>(false, "Access denied: Only IL role can edit timeline entries", null));
                 }
             }
             
@@ -156,11 +157,11 @@ public class TimelineTrackerController {
                 String userEmail = (String) request.getAttribute("userEmail");
                 Long initiativeId = existingEntry.get().getInitiative().getId();
                 
-                // Check if user has access
+                // Check if user has edit access (IL role only)
                 if (userEmail != null && !workflowTransactionService.hasTimelineTrackerAccess(initiativeId, userEmail)) {
-              return ResponseEntity
-        .status(HttpStatus.FORBIDDEN)
-        .body(new ApiResponse<>(false, "Access denied: Stage 6 not approved or user not assigned", null));
+                    return ResponseEntity
+                        .status(HttpStatus.FORBIDDEN)
+                        .body(new ApiResponse<>(false, "Access denied: Only IL role can delete timeline entries", null));
                 }
             }
             

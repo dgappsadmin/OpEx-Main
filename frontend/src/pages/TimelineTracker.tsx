@@ -20,6 +20,7 @@ import {
   CheckCircle, 
   Clock, 
   AlertCircle, 
+  Lock,
   Filter, 
   RefreshCw, 
   FileText, 
@@ -380,6 +381,22 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
     }
   };
 
+  // Role-based permission functions - matching MonthlyMonitoring pattern
+  const canEdit = (entry: TimelineEntry) => {
+    // Only IL (Initiative Lead) role can edit
+    return user.role === 'IL';
+  };
+
+  const canDelete = (entry: TimelineEntry) => {
+    // Only IL (Initiative Lead) role can delete
+    return user.role === 'IL';
+  };
+
+  const canCreate = () => {
+    // Only IL (Initiative Lead) role can create
+    return user.role === 'IL';
+  };
+
   const handleEdit = (entry: TimelineEntry) => {
     setEditingEntry(entry);
     setFormData(entry);
@@ -481,7 +498,9 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
             Initiative Timeline Tracker
           </h1>
           <p className="text-muted-foreground text-xs mt-0.5">
-            Manage and track initiative timelines and milestones
+            {user.role === 'IL' 
+              ? 'Manage and track initiative timelines and milestones' 
+              : 'View initiative timelines and milestones (Read-only)'}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -495,7 +514,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
             <span className="font-medium">Download Template</span>
           </Button>
           
-          {selectedInitiativeId && user.role !== 'VIEWER' && (
+          {selectedInitiativeId && canCreate() && (
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button 
@@ -887,6 +906,17 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
             </Button>
           </div>
 
+          {/* Role-based access info - matching MonthlyMonitoring pattern */}
+          {user.role !== 'IL' && (
+            <Alert className="mb-6 border-blue-200 bg-blue-50">
+              <Lock className="h-4 w-4 text-blue-600" />
+              <AlertDescription className="text-blue-800">
+                <strong>Read-Only Access:</strong> You can view timeline entries but cannot create, edit, or delete entries. 
+                Only users with Initiative Lead (IL) role can modify timeline data.
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Summary Stats Cards - Dashboard pattern */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
             {overviewStats.map((stat) => (
@@ -894,7 +924,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                 <div className="absolute inset-0 bg-gradient-to-br from-transparent to-gray-50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10 pt-3 px-3">
                   <CardTitle className="text-xs font-medium text-muted-foreground">
-                    {stat.title}
+                    {stat.title}c
                   </CardTitle>
                   <div className={`p-1.5 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200`}>
                     <stat.icon className={`h-3.5 w-3.5 ${stat.color}`} />
@@ -947,7 +977,9 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                         <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                         <h3 className="text-lg font-semibold mb-2">No Timeline Entries</h3>
                         <p className="text-muted-foreground text-sm">No timeline entries found for this initiative.</p>
-                        <p className="text-sm text-muted-foreground mt-2">Click "Add Timeline Entry" to get started.</p>
+                        {user.role === 'IL' && (
+                          <p className="text-sm text-muted-foreground mt-2">Click "Add Timeline Entry" to get started.</p>
+                        )}
                       </CardContent>
                     </Card>
                   ) : (
@@ -987,11 +1019,13 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                                    entry.status === 'IN_PROGRESS' ? 'In Progress' :
                                    entry.status === 'DELAYED' ? 'Delayed' : 'Pending'}
                                 </Badge>
-                                {user.role !== 'VIEWER' && (
-                                  <div className="flex space-x-1">
+                                <div className="flex space-x-1">
+                                  {canEdit(entry) && (
                                     <Button size="sm" variant="ghost" onClick={() => handleEdit(entry)} className="h-7 w-7 p-0">
                                       <Edit className="h-3 w-3" />
                                     </Button>
+                                  )}
+                                  {canDelete(entry) && (
                                     <Button
                                       size="sm"
                                       variant="ghost"
@@ -1000,8 +1034,8 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                                     >
                                       <Trash2 className="h-3 w-3" />
                                     </Button>
-                                  </div>
-                                )}
+                                  )}
+                                </div>
                               </div>
                             </div>
 

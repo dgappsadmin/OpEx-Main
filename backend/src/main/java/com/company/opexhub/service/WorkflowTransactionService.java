@@ -712,84 +712,121 @@ public class WorkflowTransactionService {
     }
 
     /**
-     * Get initiatives where Stage 6 (Timeline Tracker) is approved and user is assigned as IL
+     * Get initiatives where previous stage of Timeline Tracker (Stage 5) is approved and current stage is 6 - all users can view, IL can perform actions
      */
     public List<WorkflowTransactionDetailDTO> getInitiativesWithApprovedStage6ForUser(String userEmail, String site) {
-        List<WorkflowTransaction> approvedStage6 = workflowTransactionRepository
-                .findByStageNumberAndApproveStatusAndSite(6, "approved", site);
-        
-        return approvedStage6.stream()
-                .filter(transaction -> userEmail.equals(transaction.getPendingWith()) || 
-                       (transaction.getAssignedUserId() != null && 
-                        userRepository.findById(transaction.getAssignedUserId())
-                                .map(user -> userEmail.equals(user.getEmail()))
-                                .orElse(false)))
-                .map(this::convertToDetailDTO)
-                .collect(Collectors.toList());
+        return getInitiativesForCurrentStage(6, site);
     }
 
     /**
-     * Get initiatives where Stage 9 (Savings Monitoring) is approved - all users can view, IL can perform actions
+     * Get initiatives where previous stage of Savings Monitoring (Stage 8) is approved and current stage is 9 - all users can view, IL can perform actions
      */
     public List<WorkflowTransactionDetailDTO> getInitiativesWithApprovedStage9ForUser(String userEmail, String site) {
-        List<WorkflowTransaction> approvedStage9 = workflowTransactionRepository
-                .findByStageNumberAndApproveStatusAndSite(9, "approved", site);
-        
-        // Return all approved Stage 9 initiatives for the site - frontend will handle role-based action restrictions
-        return approvedStage9.stream()
-                .map(this::convertToDetailDTO)
-                .collect(Collectors.toList());
+        return getInitiativesForCurrentStage(9, site);
     }
 
     /**
-     * Check if user has access to Stage 6 (Timeline Tracker) for a specific initiative
+     * Check if user has view access to Stage 6 (Timeline Tracker) for a specific initiative
+     * All users can view if Stage 5 is approved and Stage 6 exists (current stage is 6)
+     */
+    public boolean hasTimelineTrackerViewAccess(Long initiativeId, String userEmail, String userRole) {
+        return hasStageViewAccess(initiativeId, 6, userEmail, userRole);
+    }
+
+    /**
+     * Check if user has action access to Stage 6 (Timeline Tracker) for a specific initiative
+     * Only IL role can perform actions (create, edit, delete) - when Stage 5 is approved and Stage 6 exists
      */
     public boolean hasTimelineTrackerAccess(Long initiativeId, String userEmail) {
-        Optional<WorkflowTransaction> stage6Transaction = workflowTransactionRepository
-                .findByInitiativeIdAndStageNumber(initiativeId, 6);
-        
-        if (stage6Transaction.isPresent()) {
-            WorkflowTransaction transaction = stage6Transaction.get();
-            // Check if stage 6 is approved and user is assigned as IL
-            if ("approved".equals(transaction.getApproveStatus())) {
-                if (transaction.getAssignedUserId() != null) {
-                    Optional<User> assignedUser = userRepository.findById(transaction.getAssignedUserId());
-                    return assignedUser.map(user -> userEmail.equals(user.getEmail())).orElse(false);
-                }
-                return userEmail.equals(transaction.getPendingWith());
-            }
-        }
-        return false;
+        return hasStageActionAccess(initiativeId, 6, userEmail);
     }
 
     /**
      * Check if user has view access to Stage 9 (Savings Monitoring) for a specific initiative
-     * All users can view if Stage 9 is approved
+     * All users can view if Stage 8 is approved and Stage 9 exists (current stage is 9)
      */
     public boolean hasSavingsMonitoringViewAccess(Long initiativeId, String userEmail, String userRole) {
-        Optional<WorkflowTransaction> stage9Transaction = workflowTransactionRepository
-                .findByInitiativeIdAndStageNumber(initiativeId, 9);
+        return hasStageViewAccess(initiativeId, 9, userEmail, userRole);
+    }
+
+    /**
+     * Check if user has action access to Stage 9 (Savings Monitoring) for a specific initiative
+     * Only IL role can perform actions (create, edit, delete, finalize) - when Stage 8 is approved and Stage 9 exists
+     */
+    public boolean hasSavingsMonitoringAccess(Long initiativeId, String userEmail, String userRole) {
+        return hasStageActionAccess(initiativeId, 9, userEmail);
+    }
+
+    /**
+     * Generic method to get initiatives where previous stage is approved and current stage exists
+     * @param currentStageNumber The stage number to check for (e.g., 6 for Timeline Tracker, 9 for Savings Monitoring)
+     * @param site The site to filter by
+     * @return List of initiatives where previous stage is approved and current stage exists
+     */
+    public List<WorkflowTransactionDetailDTO> getInitiativesForCurrentStage(Integer currentStageNumber, String site) {
+        Integer previousStageNumber = currentStageNumber - 1;
         
-        if (stage9Transaction.isPresent()) {
-            WorkflowTransaction transaction = stage9Transaction.get();
-            // Check if stage 9 is approved - all users can view
-            return "approved".equals(transaction.getApproveStatus());
+        // Get initiatives where previous stage is approved
+        List<WorkflowTransaction> approvedPreviousStage = workflowTransactionRepository
+                .findByStageNumberAndApproveStatusAndSite(previousStageNumber, "approved", site);
+        
+        // Filter to only include initiatives where current stage exists (meaning current stage is active)
+        return approvedPreviousStage.stream()
+                .filter(previousTransaction -> {
+                    // Check if current stage exists for this initiative
+                    Optional<WorkflowTransaction> currentTransaction = workflowTransactionRepository
+                            .findByInitiativeIdAndStageNumber(previousTransaction.getInitiativeId(), currentStageNumber);
+                    return currentTransaction.isPresent();
+                })
+                .map(this::convertToDetailDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Generic method to check if user has view access to a specific stage
+     * @param initiativeId The initiative ID
+     * @param currentStageNumber The stage number to check access for
+     * @param userEmail User's email
+     * @param userRole User's role
+     * @return true if user has view access
+     */
+    public boolean hasStageViewAccess(Long initiativeId, Integer currentStageNumber, String userEmail, String userRole) {
+        Integer previousStageNumber = currentStageNumber - 1;
+        
+        // Check if previous stage is approved
+        Optional<WorkflowTransaction> previousTransaction = workflowTransactionRepository
+                .findByInitiativeIdAndStageNumber(initiativeId, previousStageNumber);
+        
+        if (previousTransaction.isPresent() && "approved".equals(previousTransaction.get().getApproveStatus())) {
+            // Check if current stage exists (indicating current stage is active)
+            Optional<WorkflowTransaction> currentTransaction = workflowTransactionRepository
+                    .findByInitiativeIdAndStageNumber(initiativeId, currentStageNumber);
+            return currentTransaction.isPresent();
         }
         return false;
     }
 
     /**
-     * Check if user has action access to Stage 9 (Savings Monitoring) for a specific initiative
-     * Only IL role can perform actions (create, edit, delete, finalize)
+     * Generic method to check if user has action access to a specific stage (for IL stages)
+     * @param initiativeId The initiative ID
+     * @param currentStageNumber The stage number to check access for
+     * @param userEmail User's email
+     * @return true if user has action access
      */
-    public boolean hasSavingsMonitoringAccess(Long initiativeId, String userEmail, String userRole) {
-        Optional<WorkflowTransaction> stage9Transaction = workflowTransactionRepository
-                .findByInitiativeIdAndStageNumber(initiativeId, 9);
+    public boolean hasStageActionAccess(Long initiativeId, Integer currentStageNumber, String userEmail) {
+        Integer previousStageNumber = currentStageNumber - 1;
         
-        if (stage9Transaction.isPresent()) {
-            WorkflowTransaction transaction = stage9Transaction.get();
-            // Check if stage 9 is approved and user is assigned as IL
-            if ("approved".equals(transaction.getApproveStatus())) {
+        // Check if previous stage is approved
+        Optional<WorkflowTransaction> previousTransaction = workflowTransactionRepository
+                .findByInitiativeIdAndStageNumber(initiativeId, previousStageNumber);
+        
+        if (previousTransaction.isPresent() && "approved".equals(previousTransaction.get().getApproveStatus())) {
+            // Check if current stage exists and user is assigned as IL
+            Optional<WorkflowTransaction> currentTransaction = workflowTransactionRepository
+                    .findByInitiativeIdAndStageNumber(initiativeId, currentStageNumber);
+            
+            if (currentTransaction.isPresent()) {
+                WorkflowTransaction transaction = currentTransaction.get();
                 if (transaction.getAssignedUserId() != null) {
                     Optional<User> assignedUser = userRepository.findById(transaction.getAssignedUserId());
                     return assignedUser.map(user -> userEmail.equals(user.getEmail())).orElse(false);

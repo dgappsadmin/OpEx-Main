@@ -28,7 +28,7 @@ public class MonthlyMonitoringController {
     private WorkflowTransactionService workflowTransactionService;
 
     /**
-     * Get initiatives where Stage 9 is approved and user has access
+     * Get initiatives where Stage 8 is approved and current stage is 9 (Savings Monitoring)
      */
     @GetMapping("/approved-initiatives/{userEmail}/{site}")
     public ResponseEntity<ApiResponse<List<WorkflowTransactionDetailDTO>>> getApprovedInitiativesForUser(

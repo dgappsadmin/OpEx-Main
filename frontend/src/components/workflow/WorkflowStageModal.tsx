@@ -314,7 +314,7 @@ export default function WorkflowStageModal({
       case 7: // Progress monitoring (was stage 6 - "Trial Implementation")
         return (
           <div className="space-y-6">
-            {/* <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
               <div className="flex items-center gap-2.5 mb-3">
                 <Activity className="h-5 w-5 text-blue-600" />
                 <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-200">
@@ -324,25 +324,26 @@ export default function WorkflowStageModal({
               <p className="text-xs text-blue-700 dark:text-blue-300">
                 Review timeline entries and monitor progress of initiative implementation.
               </p>
-            </div> */}
+            </div>
 
-            {/* Timeline Entries Display */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label className="text-sm font-semibold">Timeline Entries Overview</Label>
-              </div>
+            {/* Timeline Entries Display - ONLY FOR STAGE 7 PROGRESS MONITORING */}
+            {transaction?.stageNumber === 7 && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-semibold">Timeline Entries Overview</Label>
+                </div>
 
-              {timelineEntriesLoading ? (
-                <div className="flex items-center justify-center p-8 bg-muted rounded-lg">
-                  <Loader2 className="h-6 w-6 animate-spin mr-2" />
-                  <span className="text-sm">Loading timeline entries...</span>
-                </div>
-              ) : !Array.isArray(timelineEntries) || timelineEntries.length === 0 ? (
-                <div className="p-6 bg-muted rounded-lg text-center">
-                  <FileText className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">No timeline entries found for this initiative</p>
-                </div>
-              ) : (
+                {timelineEntriesLoading ? (
+                  <div className="flex items-center justify-center p-8 bg-muted rounded-lg">
+                    <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                    <span className="text-sm">Loading timeline entries...</span>
+                  </div>
+                ) : !Array.isArray(timelineEntries) || timelineEntries.length === 0 ? (
+                  <div className="p-6 bg-muted rounded-lg text-center">
+                    <FileText className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">No timeline entries found for this initiative</p>
+                  </div>
+                ) : (
                 <div className="border rounded-lg overflow-hidden">
                   <div className="bg-muted px-4 py-2 border-b">
                     <div className="grid grid-cols-10 gap-3 text-xs font-semibold">
@@ -413,6 +414,7 @@ export default function WorkflowStageModal({
                 </div>
               )}
             </div>
+            )}
           </div>
         );
 
@@ -431,7 +433,7 @@ export default function WorkflowStageModal({
       case 10: // Saving Validation with F&A (was stage 9)
         return (
           <div className="space-y-6">
-            <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+            {/* <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
               <div className="flex items-center gap-2.5 mb-3">
                 <DollarSign className="h-5 w-5 text-green-600" />
                 <h4 className="text-sm font-semibold text-green-800 dark:text-green-200">
@@ -441,7 +443,7 @@ export default function WorkflowStageModal({
               <p className="text-xs text-green-700 dark:text-green-300">
                 Review and approve finalized monthly monitoring entries below. Select entries to approve and provide validation comments.
               </p>
-            </div>
+            </div> */}
 
             {/* Monthly Monitoring Entries */}
             <div className="space-y-4">
