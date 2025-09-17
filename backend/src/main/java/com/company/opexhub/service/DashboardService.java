@@ -282,18 +282,18 @@ public class DashboardService {
         prevActualSavingsCurrentFY = prevActualSavingsCurrentFY != null ? prevActualSavingsCurrentFY : BigDecimal.ZERO;
         prevSavingsProjectionCurrentFY = prevSavingsProjectionCurrentFY != null ? prevSavingsProjectionCurrentFY : BigDecimal.ZERO;
         
-        // Calculate progress percentage: (Savings Projection / Potential Savings) * 100 - NO ROUNDING
+        // Calculate progress percentage: (Actual Savings / Projected Savings) * 100 - Real Performance Tracking
         BigDecimal progressPercentage = BigDecimal.ZERO;
-        if (potentialSavingsCurrentFY.compareTo(BigDecimal.ZERO) > 0) {
-            progressPercentage = savingsProjectionCurrentFY
-                .divide(potentialSavingsCurrentFY, 10, RoundingMode.UNNECESSARY)
+        if (savingsProjectionCurrentFY.compareTo(BigDecimal.ZERO) > 0) {
+            progressPercentage = actualSavingsCurrentFY
+                .divide(savingsProjectionCurrentFY, 4, RoundingMode.HALF_UP)
                 .multiply(BigDecimal.valueOf(100));
         }
         
         BigDecimal prevProgressPercentage = BigDecimal.ZERO;
-        if (prevPotentialSavingsCurrentFY.compareTo(BigDecimal.ZERO) > 0) {
-            prevProgressPercentage = prevSavingsProjectionCurrentFY
-                .divide(prevPotentialSavingsCurrentFY, 10, RoundingMode.UNNECESSARY)
+        if (prevSavingsProjectionCurrentFY.compareTo(BigDecimal.ZERO) > 0) {
+            prevProgressPercentage = prevActualSavingsCurrentFY
+                .divide(prevSavingsProjectionCurrentFY, 4, RoundingMode.HALF_UP)
                 .multiply(BigDecimal.valueOf(100));
         }
         
@@ -385,7 +385,7 @@ public class DashboardService {
     }
     
     /**
-     * Calculate percentage trend between current and previous BigDecimal values - NO ROUNDING
+     * Calculate percentage trend between current and previous BigDecimal values
      */
     private Double calculateTrend(BigDecimal current, BigDecimal previous) {
         if (current == null || previous == null) {
@@ -397,7 +397,7 @@ public class DashboardService {
         }
         
         BigDecimal trend = current.subtract(previous)
-                                 .divide(previous, 10, RoundingMode.UNNECESSARY)
+                                 .divide(previous, 4, RoundingMode.HALF_UP)
                                  .multiply(BigDecimal.valueOf(100));
         
         return trend.doubleValue();
@@ -474,18 +474,18 @@ public class DashboardService {
         prevActualSavingsCurrentFY = prevActualSavingsCurrentFY != null ? prevActualSavingsCurrentFY : BigDecimal.ZERO;
         prevSavingsProjectionCurrentFY = prevSavingsProjectionCurrentFY != null ? prevSavingsProjectionCurrentFY : BigDecimal.ZERO;
         
-        // Calculate progress percentage: (Savings Projection / Potential Savings) * 100 - NO ROUNDING
+        // Calculate progress percentage: (Actual Savings / Projected Savings) * 100 - Real Performance Tracking
         BigDecimal progressPercentage = BigDecimal.ZERO;
-        if (potentialSavingsCurrentFY.compareTo(BigDecimal.ZERO) > 0) {
-            progressPercentage = savingsProjectionCurrentFY
-                .divide(potentialSavingsCurrentFY, 10, RoundingMode.UNNECESSARY)
+        if (savingsProjectionCurrentFY.compareTo(BigDecimal.ZERO) > 0) {
+            progressPercentage = actualSavingsCurrentFY
+                .divide(savingsProjectionCurrentFY, 4, RoundingMode.HALF_UP)
                 .multiply(BigDecimal.valueOf(100));
         }
         
         BigDecimal prevProgressPercentage = BigDecimal.ZERO;
-        if (prevPotentialSavingsCurrentFY.compareTo(BigDecimal.ZERO) > 0) {
-            prevProgressPercentage = prevSavingsProjectionCurrentFY
-                .divide(prevPotentialSavingsCurrentFY, 10, RoundingMode.UNNECESSARY)
+        if (prevSavingsProjectionCurrentFY.compareTo(BigDecimal.ZERO) > 0) {
+            prevProgressPercentage = prevActualSavingsCurrentFY
+                .divide(prevSavingsProjectionCurrentFY, 4, RoundingMode.HALF_UP)
                 .multiply(BigDecimal.valueOf(100));
         }
         

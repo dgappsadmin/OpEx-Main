@@ -28,23 +28,41 @@ export default function PerformanceAnalysis({
   isLoading 
 }: PerformanceAnalysisProps) {
   
-  // Enhanced currency formatting to show exact values without rounding
+  // Smart currency formatting that handles all amounts automatically and removes trailing zeros
   const formatCurrencyInLakhs = (amount: number): string => {
-    if (amount >= 10000000) {
-      // >= 1 Crore: show in Crores with full precision
+    if (amount === 0) return "₹0";
+    
+    // Helper function to remove trailing zeros and unnecessary decimal points
+    const cleanNumber = (num: number, decimals: number): string => {
+      return parseFloat(num.toFixed(decimals)).toString();
+    };
+    
+    if (amount >= 1000000000000) {
+      // >= 1 Trillion: show in Trillion
+      const trillions = amount / 1000000000000;
+      return `₹${cleanNumber(trillions, 2)}T`;
+    } else if (amount >= 10000000000) {
+      // >= 1000 Crores: show in Thousand Crores
+      const thousandCrores = amount / 10000000000;
+      return `₹${cleanNumber(thousandCrores, 2)}TCr`;
+    } else if (amount >= 10000000) {
+      // >= 1 Crore: show in Crores
       const crores = amount / 10000000;
-      return `₹${crores}Cr`;
+      return `₹${cleanNumber(crores, 2)}Cr`;
     } else if (amount >= 100000) {
-      // >= 1 Lakh: show in Lakhs with full precision
+      // >= 1 Lakh: show in Lakhs
       const lakhs = amount / 100000;
-      return `₹${lakhs}L`;
+      return `₹${cleanNumber(lakhs, 2)}L`;
     } else if (amount >= 1000) {
-      // >= 1 Thousand: show in Thousands with full precision
+      // >= 1 Thousand: show in Thousands
       const thousands = amount / 1000;
-      return `₹${thousands}K`;
+      return `₹${cleanNumber(thousands, 2)}K`;
+    } else if (amount >= 1) {
+      // >= 1 Rupee: show in Rupees without decimals for whole numbers
+      return amount % 1 === 0 ? `₹${amount}` : `₹${cleanNumber(amount, 2)}`;
     } else {
-      // < 1 Thousand: show exact amount
-      return `₹${amount}`;
+      // < 1 Rupee: show in paisa with appropriate decimals
+      return `₹${cleanNumber(amount, 2)}`;
     }
   };
 
@@ -87,14 +105,15 @@ export default function PerformanceAnalysis({
 
   const colors = getVariantColors();
 
-  // Calculate progress bar value (capped at 100%)
+  // Calculate progress bar value (capped at 100% for display, but percentage can exceed 100%)
   const progressValue = Math.min(metrics?.progressPercentage || 0, 100);
 
-  // Helper function to format trend percentage with exact values
+  // Helper function to format trend percentage with proper rounding and no trailing zeros
   const formatTrend = (trend: number | null | undefined): string => {
     if (trend === null || trend === undefined || isNaN(trend)) return "0%";
     const sign = trend >= 0 ? "+" : "";
-    return `${sign}${trend}%`;
+    const cleanTrend = parseFloat(trend.toFixed(2));
+    return `${sign}${cleanTrend}%`;
   };
 
   // Helper function to determine trend direction
@@ -239,15 +258,27 @@ export default function PerformanceAnalysis({
                   <Target className={`h-3.5 w-3.5 ${colors.primary}`} />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-sm">Progress Tracking</h3>
-                  <p className="text-xs text-muted-foreground">Savings Projection vs Potential Savings</p>
+                  <h3 className="font-semibold text-sm">Performance Tracking</h3>
+                  <p className="text-xs text-muted-foreground">Actual Savings vs Target Projection</p>
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-lg font-bold text-foreground">
-                  {(metrics?.progressPercentage || 0)}%
+                <div className={`text-lg font-bold ${
+                  (metrics?.progressPercentage || 0) > 100 
+                    ? 'text-green-600' 
+                    : (metrics?.progressPercentage || 0) >= 75 
+                      ? 'text-blue-600' 
+                      : 'text-foreground'
+                }`}>
+                  {parseFloat((metrics?.progressPercentage || 0).toFixed(2))}%
                 </div>
-                <div className="text-2xs text-muted-foreground">Completion</div>
+                <div className="text-2xs text-muted-foreground">
+                  {(metrics?.progressPercentage || 0) > 100 
+                    ? 'Over-achieved!' 
+                    : (metrics?.progressPercentage || 0) >= 100 
+                      ? 'Target Met' 
+                      : 'Progress'}
+                </div>
               </div>
             </div>
             
@@ -257,8 +288,8 @@ export default function PerformanceAnalysis({
                 className="h-1.5"
               />
               <div className="flex justify-between text-2xs text-muted-foreground">
-                <span>Projected: {formatCurrencyInLakhs(metrics?.savingsProjectionCurrentFY || 0)}</span>
-                <span>Target: {formatCurrencyInLakhs(metrics?.potentialSavingsCurrentFY || 0)}</span>
+                <span>Actual: {formatCurrencyInLakhs(metrics?.actualSavingsCurrentFY || 0)}</span>
+                <span>Target: {formatCurrencyInLakhs(metrics?.savingsProjectionCurrentFY || 0)}</span>
               </div>
             </div>
           </CardContent>
