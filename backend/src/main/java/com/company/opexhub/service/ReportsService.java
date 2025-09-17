@@ -32,15 +32,21 @@ import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.poi.util.Units;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class ReportsService {
+
+    private static final Logger logger = LoggerFactory.getLogger(ReportsService.class);
 
     @Autowired
     private InitiativeRepository initiativeRepository;
@@ -1625,6 +1631,9 @@ public class ReportsService {
         // Create Word document
         XWPFDocument document = new XWPFDocument();
         
+        // Add logo at the top
+        addLogoToDocument(document);
+        
         // Add title
         XWPFParagraph titlePara = document.createParagraph();
         titlePara.setAlignment(ParagraphAlignment.CENTER);
@@ -1827,5 +1836,43 @@ public class ReportsService {
             cell.setColor("4F81BD"); // Blue background for headers
         }
         run.setFontSize(10);
+    }
+    
+    /**
+     * Add logo to the top of the document
+     */
+    private void addLogoToDocument(XWPFDocument document) {
+        try {
+            // Create a paragraph for the logo
+            XWPFParagraph logoPara = document.createParagraph();
+            logoPara.setAlignment(ParagraphAlignment.CENTER);
+            
+            XWPFRun logoRun = logoPara.createRun();
+            
+            // Load the logo from resources
+            InputStream logoStream = getClass().getResourceAsStream("/static/images/dnl.png");
+            if (logoStream != null) {
+                // Add the logo image to the document
+                logoRun.addPicture(logoStream, 
+                    XWPFDocument.PICTURE_TYPE_PNG, 
+                    "dnl.png", 
+                    Units.toEMU(100), // width in EMU (English Metric Units)
+                    Units.toEMU(50));  // height in EMU
+                
+                logoStream.close();
+            } else {
+                // If logo not found, add placeholder text
+                logoRun.setText("[DNL LOGO]");
+                logoRun.setBold(true);
+                logoRun.setFontSize(12);
+            }
+            
+            // Add some spacing after logo
+            document.createParagraph();
+            
+        } catch (Exception e) {
+            logger.warn("⚠️ Could not add logo to document: {}", e.getMessage());
+            // Continue without logo if there's an error
+        }
     }
 }

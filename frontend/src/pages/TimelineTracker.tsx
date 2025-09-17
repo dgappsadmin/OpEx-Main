@@ -924,7 +924,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                 <div className="absolute inset-0 bg-gradient-to-br from-transparent to-gray-50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10 pt-3 px-3">
                   <CardTitle className="text-xs font-medium text-muted-foreground">
-                    {stat.title}c
+                    {stat.title}
                   </CardTitle>
                   <div className={`p-1.5 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200`}>
                     <stat.icon className={`h-3.5 w-3.5 ${stat.color}`} />

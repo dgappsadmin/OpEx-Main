@@ -1019,12 +1019,12 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                                           Finalized
                                         </Badge>
                                       )}
-                                      {entry.faApproval === 'Y' && (
+                                      {/* {entry.faApproval === 'Y' && (
                                         <Badge variant="outline" className="text-xs bg-green-50">
                                           <Target className="h-3 w-3 mr-1" />
                                           F&A Approved
                                         </Badge>
-                                      )}
+                                      )} */}
                                     </div>
                                   </TableCell>
                                   <TableCell className="text-xs">
@@ -1055,7 +1055,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                                           <FileText className="h-3 w-3" />
                                         </Button>
                                       )}
-                                      {canApprove() && (
+                                      {/* {canApprove() && (
                                         <Button
                                           size="sm"
                                           variant="outline"
@@ -1070,7 +1070,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                                         >
                                           <Target className="h-3 w-3" />
                                         </Button>
-                                      )}
+                                      )} */}
                                       {user.role === 'IL' && (
                                         <Button
                                           size="sm"
