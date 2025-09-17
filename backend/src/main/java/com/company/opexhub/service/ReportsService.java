@@ -1856,7 +1856,7 @@ public class ReportsService {
                 logoRun.addPicture(logoStream, 
                     XWPFDocument.PICTURE_TYPE_PNG, 
                     "dnl.png", 
-                    Units.toEMU(100), // width in EMU (English Metric Units)
+                    Units.toEMU(80), // width in EMU (English Metric Units)
                     Units.toEMU(50));  // height in EMU
                 
                 logoStream.close();
