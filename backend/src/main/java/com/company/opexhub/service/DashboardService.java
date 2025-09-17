@@ -282,18 +282,18 @@ public class DashboardService {
         prevActualSavingsCurrentFY = prevActualSavingsCurrentFY != null ? prevActualSavingsCurrentFY : BigDecimal.ZERO;
         prevSavingsProjectionCurrentFY = prevSavingsProjectionCurrentFY != null ? prevSavingsProjectionCurrentFY : BigDecimal.ZERO;
         
-        // Calculate progress percentage: (Savings Projection / Potential Savings) * 100
+        // Calculate progress percentage: (Savings Projection / Potential Savings) * 100 - NO ROUNDING
         BigDecimal progressPercentage = BigDecimal.ZERO;
         if (potentialSavingsCurrentFY.compareTo(BigDecimal.ZERO) > 0) {
             progressPercentage = savingsProjectionCurrentFY
-                .divide(potentialSavingsCurrentFY, 4, RoundingMode.HALF_UP)
+                .divide(potentialSavingsCurrentFY, 10, RoundingMode.UNNECESSARY)
                 .multiply(BigDecimal.valueOf(100));
         }
         
         BigDecimal prevProgressPercentage = BigDecimal.ZERO;
         if (prevPotentialSavingsCurrentFY.compareTo(BigDecimal.ZERO) > 0) {
             prevProgressPercentage = prevSavingsProjectionCurrentFY
-                .divide(prevPotentialSavingsCurrentFY, 4, RoundingMode.HALF_UP)
+                .divide(prevPotentialSavingsCurrentFY, 10, RoundingMode.UNNECESSARY)
                 .multiply(BigDecimal.valueOf(100));
         }
         
@@ -385,7 +385,7 @@ public class DashboardService {
     }
     
     /**
-     * Calculate percentage trend between current and previous BigDecimal values
+     * Calculate percentage trend between current and previous BigDecimal values - NO ROUNDING
      */
     private Double calculateTrend(BigDecimal current, BigDecimal previous) {
         if (current == null || previous == null) {
@@ -397,7 +397,7 @@ public class DashboardService {
         }
         
         BigDecimal trend = current.subtract(previous)
-                                 .divide(previous, 4, RoundingMode.HALF_UP)
+                                 .divide(previous, 10, RoundingMode.UNNECESSARY)
                                  .multiply(BigDecimal.valueOf(100));
         
         return trend.doubleValue();
@@ -474,18 +474,18 @@ public class DashboardService {
         prevActualSavingsCurrentFY = prevActualSavingsCurrentFY != null ? prevActualSavingsCurrentFY : BigDecimal.ZERO;
         prevSavingsProjectionCurrentFY = prevSavingsProjectionCurrentFY != null ? prevSavingsProjectionCurrentFY : BigDecimal.ZERO;
         
-        // Calculate progress percentage: (Savings Projection / Potential Savings) * 100
+        // Calculate progress percentage: (Savings Projection / Potential Savings) * 100 - NO ROUNDING
         BigDecimal progressPercentage = BigDecimal.ZERO;
         if (potentialSavingsCurrentFY.compareTo(BigDecimal.ZERO) > 0) {
             progressPercentage = savingsProjectionCurrentFY
-                .divide(potentialSavingsCurrentFY, 4, RoundingMode.HALF_UP)
+                .divide(potentialSavingsCurrentFY, 10, RoundingMode.UNNECESSARY)
                 .multiply(BigDecimal.valueOf(100));
         }
         
         BigDecimal prevProgressPercentage = BigDecimal.ZERO;
         if (prevPotentialSavingsCurrentFY.compareTo(BigDecimal.ZERO) > 0) {
             prevProgressPercentage = prevSavingsProjectionCurrentFY
-                .divide(prevPotentialSavingsCurrentFY, 4, RoundingMode.HALF_UP)
+                .divide(prevPotentialSavingsCurrentFY, 10, RoundingMode.UNNECESSARY)
                 .multiply(BigDecimal.valueOf(100));
         }
         

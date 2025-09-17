@@ -2854,6 +2854,17 @@ export const reportsAPI = {
   },
 
   downloadInitiativeForm: async (initiativeId: string) => {
+    // First get initiative details to fetch the initiative number
+    let initiativeNumber = initiativeId; // fallback to ID if number not available
+    try {
+      const initiativeResponse = await api.get(`/initiatives/${initiativeId}`);
+      if (initiativeResponse.data && initiativeResponse.data.initiativeNumber) {
+        initiativeNumber = initiativeResponse.data.initiativeNumber;
+      }
+    } catch (error) {
+      console.warn('Could not fetch initiative number, using ID as fallback');
+    }
+
     const response = await api.get(`/reports/export/initiative-form/${initiativeId}`, {
       responseType: 'blob',
     });
@@ -2863,11 +2874,8 @@ export const reportsAPI = {
     });
     const url = window.URL.createObjectURL(blob);
     
-    const contentDisposition = response.headers['content-disposition'];
-    let filename = 'initiative-form.docx';
-    if (contentDisposition && contentDisposition.includes('filename=')) {
-      filename = contentDisposition.split('filename=')[1].replace(/"/g, '');
-    }
+    // Use initiative number for filename
+    const filename = `${initiativeNumber}.docx`;
     
     const link = document.createElement('a');
     link.href = url;

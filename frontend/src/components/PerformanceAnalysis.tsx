@@ -28,23 +28,23 @@ export default function PerformanceAnalysis({
   isLoading 
 }: PerformanceAnalysisProps) {
   
-  // Enhanced currency formatting to show values in appropriate units (fixed scaling issue)
+  // Enhanced currency formatting to show exact values without rounding
   const formatCurrencyInLakhs = (amount: number): string => {
     if (amount >= 10000000) {
-      // >= 1 Crore: show in Crores
+      // >= 1 Crore: show in Crores with full precision
       const crores = amount / 10000000;
-      return `₹${crores.toFixed(2)}Cr`;
+      return `₹${crores}Cr`;
     } else if (amount >= 100000) {
-      // >= 1 Lakh: show in Lakhs
+      // >= 1 Lakh: show in Lakhs with full precision
       const lakhs = amount / 100000;
-      return `₹${lakhs.toFixed(2)}L`;
+      return `₹${lakhs}L`;
     } else if (amount >= 1000) {
-      // >= 1 Thousand: show in Thousands
+      // >= 1 Thousand: show in Thousands with full precision
       const thousands = amount / 1000;
-      return `₹${thousands.toFixed(0)}K`;
+      return `₹${thousands}K`;
     } else {
-      // < 1 Thousand: show actual amount
-      return `₹${amount.toFixed(0)}`;
+      // < 1 Thousand: show exact amount
+      return `₹${amount}`;
     }
   };
 
@@ -90,11 +90,11 @@ export default function PerformanceAnalysis({
   // Calculate progress bar value (capped at 100%)
   const progressValue = Math.min(metrics?.progressPercentage || 0, 100);
 
-  // Helper function to format trend percentage (similar to Dashboard)
+  // Helper function to format trend percentage with exact values
   const formatTrend = (trend: number | null | undefined): string => {
     if (trend === null || trend === undefined || isNaN(trend)) return "0%";
     const sign = trend >= 0 ? "+" : "";
-    return `${sign}${trend.toFixed(1)}%`;
+    return `${sign}${trend}%`;
   };
 
   // Helper function to determine trend direction
@@ -245,7 +245,7 @@ export default function PerformanceAnalysis({
               </div>
               <div className="text-right">
                 <div className="text-lg font-bold text-foreground">
-                  {(metrics?.progressPercentage || 0).toFixed(1)}%
+                  {(metrics?.progressPercentage || 0)}%
                 </div>
                 <div className="text-2xs text-muted-foreground">Completion</div>
               </div>

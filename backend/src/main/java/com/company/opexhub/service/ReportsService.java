@@ -34,6 +34,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -1631,18 +1632,8 @@ public class ReportsService {
         // Create Word document
         XWPFDocument document = new XWPFDocument();
         
-        // Add logo at the top
-        addLogoToDocument(document);
-        
-        // Add title
-        XWPFParagraph titlePara = document.createParagraph();
-        titlePara.setAlignment(ParagraphAlignment.CENTER);
-        XWPFRun titleRun = titlePara.createRun();
-        titleRun.setBold(true);
-        titleRun.setFontSize(16);
-        titleRun.setText("INITIATIVE");
-        titleRun.addBreak();
-        titleRun.setText("APPROVAL FORM");
+        // Add title with logo beside it
+        addLogoAndTitleToDocument(document);
         
         document.createParagraph(); // Empty line
         
@@ -1839,14 +1830,47 @@ public class ReportsService {
     }
     
     /**
-     * Add logo to the top of the document
+     * Add logo beside the title in the top right corner
      */
-    private void addLogoToDocument(XWPFDocument document) {
+    private void addLogoAndTitleToDocument(XWPFDocument document) {
         try {
-            // Create a paragraph for the logo
-            XWPFParagraph logoPara = document.createParagraph();
-            logoPara.setAlignment(ParagraphAlignment.CENTER);
+            // Create a table with 3 columns for proper centering: empty, title, logo
+            XWPFTable titleLogoTable = document.createTable(1, 3);
+            titleLogoTable.setWidth("100%");
             
+            // Remove default borders
+            titleLogoTable.getCTTbl().getTblPr().unsetTblBorders();
+            
+            XWPFTableRow row = titleLogoTable.getRow(0);
+            
+            // Empty cell (left side) for balancing
+            XWPFTableCell emptyCell = row.getCell(0);
+            emptyCell.setVerticalAlignment(XWPFTableCell.XWPFVertAlign.CENTER);
+            emptyCell.getCTTc().getTcPr().addNewTcW().setW(BigInteger.valueOf(2000)); // 20% width
+            XWPFParagraph emptyPara = emptyCell.getParagraphs().get(0);
+            emptyPara.createRun().setText(""); // Empty cell
+            
+            // Title cell (center) - this will be truly centered
+            XWPFTableCell titleCell = row.getCell(1);
+            titleCell.setVerticalAlignment(XWPFTableCell.XWPFVertAlign.CENTER);
+            titleCell.getCTTc().getTcPr().addNewTcW().setW(BigInteger.valueOf(6000)); // 60% width
+            
+            XWPFParagraph titlePara = titleCell.getParagraphs().get(0);
+            titlePara.setAlignment(ParagraphAlignment.CENTER);
+            XWPFRun titleRun = titlePara.createRun();
+            titleRun.setBold(true);
+            titleRun.setFontSize(16);
+            titleRun.setText("INITIATIVE");
+            titleRun.addBreak();
+            titleRun.setText("APPROVAL FORM");
+            
+            // Logo cell (right side)
+            XWPFTableCell logoCell = row.getCell(2);
+            logoCell.setVerticalAlignment(XWPFTableCell.XWPFVertAlign.CENTER);
+            logoCell.getCTTc().getTcPr().addNewTcW().setW(BigInteger.valueOf(2000)); // 20% width
+            
+            XWPFParagraph logoPara = logoCell.getParagraphs().get(0);
+            logoPara.setAlignment(ParagraphAlignment.RIGHT);
             XWPFRun logoRun = logoPara.createRun();
             
             // Load the logo from resources
@@ -1856,23 +1880,32 @@ public class ReportsService {
                 logoRun.addPicture(logoStream, 
                     XWPFDocument.PICTURE_TYPE_PNG, 
                     "dnl.png", 
-                    Units.toEMU(80), // width in EMU (English Metric Units)
-                    Units.toEMU(50));  // height in EMU
+                    Units.toEMU(50), // width in EMU (smaller size)
+                    Units.toEMU(35));  // height in EMU (smaller size)
                 
                 logoStream.close();
             } else {
                 // If logo not found, add placeholder text
                 logoRun.setText("[DNL LOGO]");
                 logoRun.setBold(true);
-                logoRun.setFontSize(12);
+                logoRun.setFontSize(8);
             }
             
-            // Add some spacing after logo
+            // Add spacing after title/logo section
             document.createParagraph();
             
         } catch (Exception e) {
-            logger.warn("⚠️ Could not add logo to document: {}", e.getMessage());
-            // Continue without logo if there's an error
+            logger.warn("⚠️ Could not add logo and title to document: {}", e.getMessage());
+            // Fallback to simple title if there's an error
+            XWPFParagraph titlePara = document.createParagraph();
+            titlePara.setAlignment(ParagraphAlignment.CENTER);
+            XWPFRun titleRun = titlePara.createRun();
+            titleRun.setBold(true);
+            titleRun.setFontSize(16);
+            titleRun.setText("INITIATIVE");
+            titleRun.addBreak();
+            titleRun.setText("APPROVAL FORM");
+            document.createParagraph();
         }
     }
 }
