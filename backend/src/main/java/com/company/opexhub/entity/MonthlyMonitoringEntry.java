@@ -1,11 +1,13 @@
 package com.company.opexhub.entity;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
+import javax.persistence.ForeignKey;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -19,16 +21,17 @@ import javax.persistence.Table;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
-@Table(name = "OPEX_MONTHLY_MONITORING_ENTRIES")
+@Table(name = "OPEX_MONTHLY_MON_ENTRIES")
 public class MonthlyMonitoringEntry {
     
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "monthly_monitoring_seq")
-    @SequenceGenerator(name = "monthly_monitoring_seq", sequenceName = "OPEX_MONTHLY_MON_SEQ", allocationSize = 1)
+    @SequenceGenerator(name = "monthly_monitoring_seq", sequenceName = "OPEX_MONTHLY_MON_SEQ", allocationSize = 1, initialValue = 1)
     private Long id;
     
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "initiative_id", nullable = false)
+    @JoinColumn(name = "initiative_id", nullable = false, 
+                foreignKey = @ForeignKey(name = "FK_MON_ENTRY_INITIATIVE"))
     @JsonIgnore
     private Initiative initiative;
     
@@ -56,10 +59,10 @@ public class MonthlyMonitoringEntry {
     @Column(name = "deviation_percentage", precision = 5, scale = 2)
     private BigDecimal deviationPercentage;
     
-    @Column(name = "is_finalized", nullable = false, columnDefinition = "CHAR(1) DEFAULT 'N'")
+    @Column(name = "is_finalized", nullable = false, length = 1)
     private String isFinalized = "N";
     
-    @Column(name = "fa_approval", nullable = false, columnDefinition = "CHAR(1) DEFAULT 'N'")
+    @Column(name = "fa_approval", nullable = false, length = 1)
     private String faApproval = "N";
     
     @Column(name = "fa_remarks", columnDefinition = "CLOB")
@@ -75,10 +78,15 @@ public class MonthlyMonitoringEntry {
     private LocalDateTime updatedAt;
     
     // Constructors
-    public MonthlyMonitoringEntry() {}
+    public MonthlyMonitoringEntry() {
+        this.category = "General";
+        this.isFinalized = "N";
+        this.faApproval = "N";
+    }
     
     public MonthlyMonitoringEntry(Initiative initiative, String monitoringMonth, 
                                  String kpiDescription, BigDecimal targetValue, String enteredBy) {
+        this();  // Call default constructor first
         this.initiative = initiative;
         this.monitoringMonth = monitoringMonth;
         this.kpiDescription = kpiDescription;
@@ -106,7 +114,7 @@ public class MonthlyMonitoringEntry {
             deviation = achievedValue.subtract(targetValue);
             // Calculate deviation percentage
             if (targetValue.compareTo(BigDecimal.ZERO) != 0) {
-                deviationPercentage = deviation.divide(targetValue, 4, BigDecimal.ROUND_HALF_UP)
+                deviationPercentage = deviation.divide(targetValue, 4, RoundingMode.HALF_UP)
                     .multiply(BigDecimal.valueOf(100));
             }
         }

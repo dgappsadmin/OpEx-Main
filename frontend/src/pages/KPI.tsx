@@ -129,12 +129,12 @@ export default function KPI({ user }: KPIProps) {
     { name: 'Accepted', value: acceptedInitiatives, color: '#06b6d4' }, // Cyan-500
     { name: 'Under Approvals', value: underApprovalsInitiatives, color: '#8b5cf6' }, // Violet-500
     { name: 'Approved', value: approvedInitiatives, color: '#10b981' }, // Emerald-500
-    { name: 'In Progress', value: inProgressInitiatives, color: '#3b82f6' }, // Blue-500
+    { name: 'In Progress', value: inProgressInitiatives, color: '#2b77f2ff' }, // Blue-500
     { name: 'Implemented', value: implementedInitiatives, color: '#22c55e' }, // Green-500
     { name: 'Validated', value: validatedInitiatives, color: '#16a34a' }, // Green-600
-    { name: 'Completed', value: completedStatusInitiatives, color: '#15803d' }, // Green-700
+    { name: 'Completed', value: completedStatusInitiatives, color: '#29df6cff' }, // Green-700
     { name: 'Closed', value: closedInitiatives, color: '#059669' }, // Emerald-600
-    { name: 'Rejected', value: rejectedInitiatives, color: '#ef4444' }, // Red-500
+    { name: 'Rejected', value: rejectedInitiatives, color: '#ff0404ff' }, // Red-500
     { name: 'Dropped', value: droppedInitiatives, color: '#b91c1c' }, // Red-700
   ].filter(item => item.value > 0); // Only show statuses with initiatives
 

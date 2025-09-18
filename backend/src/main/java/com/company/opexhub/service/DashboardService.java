@@ -48,7 +48,7 @@ public class DashboardService {
         Long totalInitiatives = initiativeRepository.count();
         Long previousTotalInitiatives = initiativeRepository.countByCreatedAtBetween(previousMonth[0], previousMonth[1]);
 
-        // Actual Savings - Sum of ACHIEVED_VALUE from OPEX_MONTHLY_MONITORING_ENTRIES
+        // Actual Savings - Sum of ACHIEVED_VALUE from OPEX_MONTHLY_MON_ENTRIES
         BigDecimal actualSavings = getTotalActualSavings();
         BigDecimal previousActualSavings = monthlyMonitoringEntryRepository.sumAchievedValueByMonth(previousMonthStr);
 
