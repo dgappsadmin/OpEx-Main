@@ -160,8 +160,17 @@ export default function Reports({ user }: ReportsProps) {
             year: yearToUse,
             budgetType: selectedBudgetType !== 'all' ? selectedBudgetType : undefined,
           });
-          actualSavingsData = actualSavingsResponse || {};
-          console.log('Actual Savings Data Response:', actualSavingsData);
+          // Extract actual data from the ApiResponse structure
+          actualSavingsData = actualSavingsResponse?.data || {};
+          
+          // Validate that we have the expected data structure
+          if (!actualSavingsData || typeof actualSavingsData !== 'object') {
+            console.warn('Invalid actual savings data structure:', actualSavingsData);
+            actualSavingsData = {};
+          }
+          
+          console.log('Actual Savings Data Response:', actualSavingsResponse);
+          console.log('Extracted Actual Savings Data:', actualSavingsData);
           setMonthlyActualSavingsData(actualSavingsResponse);
         } catch (error) {
           console.warn('Could not fetch actual savings data:', error);
@@ -176,10 +185,19 @@ export default function Reports({ user }: ReportsProps) {
             year: yearToUse,
             budgetType: selectedBudgetType !== 'all' ? selectedBudgetType : undefined,
           });
-          targetAchievedData = targetAchievedResponse || {};
-          console.log('Target Achieved Data Response:', targetAchievedData);
+          
+          // Extract actual data from the ApiResponse structure
+          targetAchievedData = targetAchievedResponse?.data || {};
+          
+          // Validate that we have the expected data structure
+          if (!targetAchievedData || typeof targetAchievedData !== 'object') {
+            console.warn('Invalid target achieved data structure:', targetAchievedData);
+            targetAchievedData = {};
+          }
+          
+          console.log('Target Achieved Data Response:', targetAchievedResponse);
+          console.log('Extracted Target Achieved Data:', targetAchievedData);
           console.log('Target Achieved Data Keys:', Object.keys(targetAchievedData));
-          console.log('Target Achieved Data Values:', Object.values(targetAchievedData));
           
           // Debug each month's data structure
           Object.entries(targetAchievedData).forEach(([key, value]) => {
@@ -239,10 +257,10 @@ export default function Reports({ user }: ReportsProps) {
             let targetValue = 0;
             let achievedValue = 0;
             
-            if (monthTargetData) {
+            if (monthTargetData && typeof monthTargetData === 'object') {
               // Backend returns "target" and "achieved" fields based on MonthlyMonitoringService.java
-              targetValue = monthTargetData.target || monthTargetData.targetValue || 0;
-              achievedValue = monthTargetData.achieved || monthTargetData.achievedValue || 0;
+              targetValue = monthTargetData.target || 0;
+              achievedValue = monthTargetData.achieved || 0;
               
               // Handle values that might come as strings or numbers
               if (typeof targetValue === 'string') {
@@ -260,8 +278,8 @@ export default function Reports({ user }: ReportsProps) {
               achievedValue,
               targetAchievedData,
               actualSavingsForMonth,
-              finalTargetValue: typeof targetValue === 'object' && targetValue !== null ? parseFloat(targetValue.toString()) || 0 : (targetValue || 0),
-              finalAchievedValue: typeof achievedValue === 'object' && achievedValue !== null ? parseFloat(achievedValue.toString()) || 0 : (achievedValue || 0)
+              finalTargetValue: targetValue,
+              finalAchievedValue: achievedValue
             });
             
             dynamicData.push({
@@ -270,8 +288,8 @@ export default function Reports({ user }: ReportsProps) {
               savings: expectedSavings,
               completed: completedCount,
               actualSavings: actualSavingsForMonth,
-              targetValue: typeof targetValue === 'object' && targetValue !== null ? parseFloat(targetValue.toString()) || 0 : (targetValue || 0),
-              achievedValue: typeof achievedValue === 'object' && achievedValue !== null ? parseFloat(achievedValue.toString()) || 0 : (achievedValue || 0)
+              targetValue: targetValue,
+              achievedValue: achievedValue
             });
           }
         }
@@ -279,6 +297,16 @@ export default function Reports({ user }: ReportsProps) {
         console.log('Final Dynamic Data:', dynamicData);
         console.log('Dynamic Data Length:', dynamicData.length);
         console.log('Sample item:', dynamicData[0]);
+        console.log('Target/Achieved Summary:', dynamicData.map(d => ({ 
+          month: d.month, 
+          target: d.targetValue, 
+          achieved: d.achievedValue 
+        })));
+        
+        // Additional validation - check if we have any non-zero values
+        const hasTargetData = dynamicData.some(d => d.targetValue > 0);
+        const hasAchievedData = dynamicData.some(d => d.achievedValue > 0);
+        console.log('Has Target Data:', hasTargetData, 'Has Achieved Data:', hasAchievedData);
         
         return dynamicData;
       } catch (error) {
@@ -794,7 +822,7 @@ export default function Reports({ user }: ReportsProps) {
 
       {/* Tab Navigation - Match Dashboard style */}
       <Tabs defaultValue="trends" className="w-full">
-        <TabsList className="grid w-full grid-cols-5 max-w-2xl mx-auto lg:mx-0 h-9">
+        <TabsList className="grid w-full grid-cols-4 max-w-2xl mx-auto lg:mx-0 h-9">
           <TabsTrigger value="trends" className="flex items-center gap-1.5 text-xs">
             <Activity className="h-3.5 w-3.5" />
             Trends
@@ -810,10 +838,6 @@ export default function Reports({ user }: ReportsProps) {
           <TabsTrigger value="detailed" className="flex items-center gap-1.5 text-xs">
             <FileText className="h-3.5 w-3.5" />
             Detailed
-          </TabsTrigger>
-          <TabsTrigger value="export" className="flex items-center gap-1.5 text-xs">
-            <Download className="h-3.5 w-3.5" />
-            Export
           </TabsTrigger>
         </TabsList>
 
@@ -866,6 +890,9 @@ export default function Reports({ user }: ReportsProps) {
                     targetValue: m.targetValue,
                     achievedValue: m.achievedValue
                   })));
+                  console.log('Data being passed to BarChart:', monthlyData);
+                  console.log('Total non-zero target values:', monthlyData.filter(m => m.targetValue > 0).length);
+                  console.log('Total non-zero achieved values:', monthlyData.filter(m => m.achievedValue > 0).length);
                   return null;
                 })()}
                 <ResponsiveContainer width="100%" height={280}>
@@ -1047,13 +1074,24 @@ export default function Reports({ user }: ReportsProps) {
         <TabsContent value="detailed" className="space-y-4 mt-4">
           <Card className="shadow-sm">
             <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <FileText className="h-4 w-4 text-blue-600" />
-                Initiative Details
-              </CardTitle>
-              <CardDescription className="text-xs">
-                Detailed view of filtered initiatives
-              </CardDescription>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <FileText className="h-4 w-4 text-blue-600" />
+                    Initiative Details
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    Detailed view of filtered initiatives
+                  </CardDescription>
+                </div>
+                <Button 
+                  onClick={() => handleDownloadReport('Detailed Report (Excel)')}
+                  className="bg-green-600 hover:bg-green-700 text-white transition-all duration-200 h-9 px-4 text-xs"
+                >
+                  <FileSpreadsheet className="h-3.5 w-3.5 mr-2" />
+                  Download Excel
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
@@ -1132,44 +1170,6 @@ export default function Reports({ user }: ReportsProps) {
           </Card>
         </TabsContent>
 
-        <TabsContent value="export" className="space-y-4 mt-4">
-          <Card className="shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Download className="h-4 w-4 text-blue-600" />
-                Export Reports
-              </CardTitle>
-              <CardDescription className="text-xs">
-                Download detailed reports in various formats (Data includes current month: {getCurrentMonth()} {new Date().getFullYear()})
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* <Button 
-                  onClick={() => handleDownloadReport('DNL Plant Initiatives PDF')}
-                  className="w-full justify-start gap-2.5 h-10 text-xs hover:bg-blue-50 hover:border-blue-200 transition-all"
-                  variant="outline"
-                >
-                  <div className="p-1 rounded bg-blue-100">
-                    <Download className="h-3.5 w-3.5 text-blue-600" />
-                  </div>
-                  DNL Plant Initiatives Report (Excel)
-                </Button> */}
-                
-                <Button 
-                  onClick={() => handleDownloadReport('Detailed Report (Excel)')}
-                  className="w-full justify-start gap-2.5 h-10 text-xs hover:bg-green-50 hover:border-green-200 transition-all"
-                  variant="outline"
-                >
-                  <div className="p-1 rounded bg-green-100">
-                    <FileSpreadsheet className="h-3.5 w-3.5 text-green-600" />
-                  </div>
-                  Detailed Report (Excel)
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
     </div>
   );

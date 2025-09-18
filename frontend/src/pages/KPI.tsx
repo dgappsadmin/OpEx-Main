@@ -77,7 +77,7 @@ export default function KPI({ user }: KPIProps) {
   // Calculate KPIs with proper status categories
   const totalInitiatives = initiatives.length;
   
-  // Status Categories as per requirements
+  // Status Categories as per requirements - including Rejected
   const pendingInitiatives = initiatives.filter((i: any) => i.status === 'Pending').length;
   const acceptedInitiatives = initiatives.filter((i: any) => i.status === 'Accepted').length;
   const underApprovalsInitiatives = initiatives.filter((i: any) => i.status === 'Under Approvals').length;
@@ -87,6 +87,7 @@ export default function KPI({ user }: KPIProps) {
   const validatedInitiatives = initiatives.filter((i: any) => i.status === 'Validated').length;
   const closedInitiatives = initiatives.filter((i: any) => i.status === 'Closed').length;
   const droppedInitiatives = initiatives.filter((i: any) => i.status === 'Dropped').length;
+  const rejectedInitiatives = initiatives.filter((i: any) => i.status === 'Rejected').length; // Added Rejected
   const completedStatusInitiatives = initiatives.filter((i: any) => i.status === 'Completed').length;
   const completedInitiatives = implementedInitiatives + validatedInitiatives + closedInitiatives + completedStatusInitiatives;
   
@@ -116,23 +117,25 @@ export default function KPI({ user }: KPIProps) {
     validatedInitiatives,
     closedInitiatives,
     completedStatusInitiatives,
+    rejectedInitiatives, // Added for debugging
     completedInitiatives,
     completionRate: completionRate.toFixed(1)
   });
   const savingsRealizationRate = totalExpectedSavings > 0 ? (completedSavings / totalExpectedSavings) * 100 : 0;
 
-  // Enhanced status distribution data
+  // Enhanced status distribution data with improved colors
   const statusData = [
-    { name: 'Pending', value: pendingInitiatives, color: '#f59e0b' },
-    { name: 'Accepted', value: acceptedInitiatives, color: '#06b6d4' },
-    { name: 'Under Approvals', value: underApprovalsInitiatives, color: '#8b5cf6' },
-    { name: 'Approved', value: approvedInitiatives, color: '#10b981' },
-    { name: 'In Progress', value: inProgressInitiatives, color: '#3b82f6' },
-    { name: 'Implemented', value: implementedInitiatives, color: '#22c55e' },
-    { name: 'Validated', value: validatedInitiatives, color: '#16a34a' },
-    { name: 'Completed', value: completedStatusInitiatives, color: '#065f46' },
-    { name: 'Closed', value: closedInitiatives, color: '#059669' },
-    { name: 'Dropped', value: droppedInitiatives, color: '#ef4444' },
+    { name: 'Pending', value: pendingInitiatives, color: '#fbbf24' }, // Amber-400
+    { name: 'Accepted', value: acceptedInitiatives, color: '#06b6d4' }, // Cyan-500
+    { name: 'Under Approvals', value: underApprovalsInitiatives, color: '#8b5cf6' }, // Violet-500
+    { name: 'Approved', value: approvedInitiatives, color: '#10b981' }, // Emerald-500
+    { name: 'In Progress', value: inProgressInitiatives, color: '#3b82f6' }, // Blue-500
+    { name: 'Implemented', value: implementedInitiatives, color: '#22c55e' }, // Green-500
+    { name: 'Validated', value: validatedInitiatives, color: '#16a34a' }, // Green-600
+    { name: 'Completed', value: completedStatusInitiatives, color: '#15803d' }, // Green-700
+    { name: 'Closed', value: closedInitiatives, color: '#059669' }, // Emerald-600
+    { name: 'Rejected', value: rejectedInitiatives, color: '#ef4444' }, // Red-500
+    { name: 'Dropped', value: droppedInitiatives, color: '#b91c1c' }, // Red-700
   ].filter(item => item.value > 0); // Only show statuses with initiatives
 
   // Site distribution
@@ -325,7 +328,11 @@ export default function KPI({ user }: KPIProps) {
                           initiative.status === 'Completed' ? 'bg-green-500 hover:bg-green-600 text-white' :
                           initiative.status === 'In Progress' ? 'bg-blue-500 hover:bg-blue-600 text-white' :
                           initiative.status === 'Rejected' ? 'bg-red-500 hover:bg-red-600 text-white' :
-                          'bg-yellow-500 hover:bg-yellow-600 text-white'
+                          initiative.status === 'Approved' ? 'bg-emerald-500 hover:bg-emerald-600 text-white' :
+                          initiative.status === 'Under Approvals' ? 'bg-violet-500 hover:bg-violet-600 text-white' :
+                          initiative.status === 'Pending' ? 'bg-amber-500 hover:bg-amber-600 text-white' :
+                          initiative.status === 'Dropped' ? 'bg-red-700 hover:bg-red-800 text-white' :
+                          'bg-gray-500 hover:bg-gray-600 text-white'
                         }`}>
                           {initiative.status === 'In Progress' ? 'In Prog.' : 
                            initiative.status === 'Under Approvals' ? 'Pending' : 

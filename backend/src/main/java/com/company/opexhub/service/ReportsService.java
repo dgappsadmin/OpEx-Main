@@ -1143,7 +1143,7 @@ public class ReportsService {
         CellStyle dataStyle = createDataStyle(workbook);
         CellStyle dateStyle = createDateStyle(workbook);
         
-        // Set column widths
+        // Set column widths - Updated to accommodate selected fields (23 columns)
         sheet.setColumnWidth(0, 2500);  // Sr. No. (Column A)
         sheet.setColumnWidth(1, 6000);  // Description (Column B)
         sheet.setColumnWidth(2, 3000);  // Category (Column C)
@@ -1156,7 +1156,17 @@ public class ReportsService {
         sheet.setColumnWidth(9, 4000);  // Expected Savings (Column J)
         sheet.setColumnWidth(10, 4000); // Actual Savings (Column K)
         sheet.setColumnWidth(11, 4500); // Annualized Value (Column L)
-        sheet.setColumnWidth(12, 3000); // Remarks (Column M)
+        sheet.setColumnWidth(12, 3000); // Budget Type (Column M)
+        sheet.setColumnWidth(13, 3000); // Site (Column N)
+        sheet.setColumnWidth(14, 3500); // Discipline (Column O)
+        sheet.setColumnWidth(15, 3000); // Stage (Column P)
+        sheet.setColumnWidth(16, 3000); // Requires MOC (Column Q)
+        sheet.setColumnWidth(17, 3000); // Requires CAPEX (Column R)
+        sheet.setColumnWidth(18, 4000); // MOC Number (Column S)
+        sheet.setColumnWidth(19, 4000); // CAPEX Number (Column T)
+        sheet.setColumnWidth(20, 4000); // Target Value (Column U)
+        sheet.setColumnWidth(21, 3000); // Created Date (Column V)
+        sheet.setColumnWidth(22, 3000); // Updated Date (Column W)
         
         int rowNum = 0;
         
@@ -1165,8 +1175,8 @@ public class ReportsService {
         org.apache.poi.ss.usermodel.Cell titleCell = titleRow.createCell(0);
         titleCell.setCellValue("INITIATIVE TRACKER SHEET");
         titleCell.setCellStyle(titleStyle);
-        // Merge cells A1 to M1 for title
-        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 12));
+        // Merge cells A1 to W1 for title
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 22));
         
         // Row 2: Empty
         Row emptyRow1 = sheet.createRow(rowNum++);
@@ -1182,20 +1192,23 @@ public class ReportsService {
         currentDateCell.setCellValue(LocalDate.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy")));
         currentDateCell.setCellStyle(dateStyle);
         
-        // Add form reference in the right corner (L3)
-        org.apache.poi.ss.usermodel.Cell formRefCell = dateRow.createCell(11);
+        // Add form reference in the right corner (W3)
+        org.apache.poi.ss.usermodel.Cell formRefCell = dateRow.createCell(22);
         formRefCell.setCellValue("(CRP-002/F4-01)");
         formRefCell.setCellStyle(dateStyle);
         
         // Row 4: Empty
         Row emptyRow2 = sheet.createRow(rowNum++);
         
-        // Row 5 (A5): Headers starting from column A
+        // Row 5 (A5): Headers starting from column A - Excluding remarks, priority, progress, confidence level
         Row headerRow = sheet.createRow(rowNum++);
         String[] headers = {
             "Sr. No.", "Description of Initiative", "Category", "Initiative No.", 
             "Initiation Date", "Initiative Leader", "Target Date", "Modification or CAPEX Cost", 
-            "Current Status", "Expected Savings", "Actual Savings", "Annualized Value FY" + getCurrentFiscalYear() + "-" + (Integer.parseInt(getCurrentFiscalYear()) + 1), "Remarks"
+            "Current Status", "Expected Savings", "Actual Savings", "Annualized Value FY" + getCurrentFiscalYear() + "-" + (Integer.parseInt(getCurrentFiscalYear()) + 1), 
+            "Budget Type", "Site", "Discipline", "Current Stage", 
+            "Requires MOC", "Requires CAPEX", "MOC Number", "CAPEX Number", "Target Value", 
+            "Created Date", "Updated Date"
         };
         
         for (int i = 0; i < headers.length; i++) {
@@ -1204,7 +1217,7 @@ public class ReportsService {
             headerCell.setCellStyle(headerStyle);
         }
         
-        // Add data rows starting from Row 6 (A6)
+        // Add data rows starting from Row 6 (A6) - Excluding remarks, priority, progress, confidence level
         int dataRowNum = 1;
         for (Initiative initiative : initiatives) {
             Row dataRow = sheet.createRow(rowNum++);
@@ -1265,12 +1278,48 @@ public class ReportsService {
                 dataRow.createCell(11).setCellValue(initiative.getExpectedSavings().doubleValue());
             }
             
-            // Remarks (Current Stage Name) (Column M)
+            // Budget Type (Column M)
+            dataRow.createCell(12).setCellValue(initiative.getBudgetType() != null ? initiative.getBudgetType() : "Budgeted");
+            
+            // Site (Column N)
+            dataRow.createCell(13).setCellValue(initiative.getSite() != null ? initiative.getSite() : "");
+            
+            // Discipline (Column O)
+            dataRow.createCell(14).setCellValue(initiative.getDiscipline() != null ? initiative.getDiscipline() : "");
+            
+            // Current Stage (Column P)
             String stageName = getStageName(initiative.getCurrentStage());
-            dataRow.createCell(12).setCellValue(stageName);
+            dataRow.createCell(15).setCellValue(stageName);
+            
+            // Requires MOC (Column Q)
+            dataRow.createCell(16).setCellValue(initiative.getRequiresMoc() != null ? initiative.getRequiresMoc() : "N");
+            
+            // Requires CAPEX (Column R)
+            dataRow.createCell(17).setCellValue(initiative.getRequiresCapex() != null ? initiative.getRequiresCapex() : "N");
+            
+            // MOC Number (Column S)
+            dataRow.createCell(18).setCellValue(initiative.getMocNumber() != null ? initiative.getMocNumber() : "");
+            
+            // CAPEX Number (Column T)
+            dataRow.createCell(19).setCellValue(initiative.getCapexNumber() != null ? initiative.getCapexNumber() : "");
+            
+            // Target Value (Column U)
+            if (initiative.getTargetValue() != null) {
+                dataRow.createCell(20).setCellValue(initiative.getTargetValue().doubleValue());
+            }
+            
+            // Created Date (Column V)
+            if (initiative.getCreatedAt() != null) {
+                dataRow.createCell(21).setCellValue(initiative.getCreatedAt().toLocalDate().toString());
+            }
+            
+            // Updated Date (Column W)
+            if (initiative.getUpdatedAt() != null) {
+                dataRow.createCell(22).setCellValue(initiative.getUpdatedAt().toLocalDate().toString());
+            }
             
             // Apply data style to all cells
-            for (int i = 0; i < 13; i++) {
+            for (int i = 0; i < 23; i++) {
                 org.apache.poi.ss.usermodel.Cell cell = dataRow.getCell(i);
                 if (cell != null) {
                     cell.setCellStyle(dataStyle);
@@ -1282,8 +1331,8 @@ public class ReportsService {
         int minRows = Math.max(25, rowNum + 15); // At least 25 rows total
         while (rowNum < minRows) {
             Row emptyDataRow = sheet.createRow(rowNum++);
-            // Create empty cells with borders
-            for (int i = 0; i < 13; i++) {
+            // Create empty cells with borders - Updated to 23 columns
+            for (int i = 0; i < 23; i++) {
                 org.apache.poi.ss.usermodel.Cell emptyCell = emptyDataRow.createCell(i);
                 emptyCell.setCellValue("");
                 emptyCell.setCellStyle(dataStyle);
