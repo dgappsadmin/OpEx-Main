@@ -352,6 +352,7 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                             placeholder="Enter a descriptive title for your initiative"
                             {...field}
                             className="h-9 text-xs"
+                            style={{ fontSize: '13px' }}
                             disabled={isSubmitting}
                           />
                         </FormControl>
@@ -373,6 +374,7 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                               {...field}
                               disabled
                               className="h-9 text-xs bg-muted text-muted-foreground"
+                              style={{ fontSize: '13px' }}
                             />
                           </FormControl>
                           <FormMessage className="text-xs" />
@@ -391,6 +393,7 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                               {...field}
                               disabled
                               className="h-9 text-xs bg-muted text-muted-foreground"
+                              style={{ fontSize: '13px' }}
                             />
                           </FormControl>
                           <FormMessage className="text-xs" />
@@ -408,7 +411,7 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                           <FormLabel className="text-xs font-medium">Discipline *</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting}>
                             <FormControl>
-                              <SelectTrigger className="h-9 text-xs">
+                              <SelectTrigger className="h-9 text-xs" style={{ fontSize: '13px' }}>
                                 <SelectValue placeholder="Select discipline" />
                               </SelectTrigger>
                             </FormControl>
@@ -446,6 +449,7 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                                     "w-full h-9 pl-3 text-left font-normal text-xs",
                                     !field.value && "text-muted-foreground"
                                   )}
+                                  style={{ fontSize: '13px' }}
                                   disabled={isSubmitting}
                                 >
                                   {field.value ? (
@@ -484,6 +488,7 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                           <Textarea
                             placeholder="Provide a detailed description of the initiative, including background, objectives, and expected outcomes..."
                             className="min-h-[100px] text-xs resize-y"
+                            style={{ fontSize: '13px' }}
                             {...field}
                             disabled={isSubmitting}
                           />
@@ -520,6 +525,7 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                         <Textarea
                           placeholder="Provide 12-month historical data that supports this initiative, including current performance metrics, costs, and relevant operational data..."
                           className="min-h-[80px] text-xs resize-y"
+                          style={{ fontSize: '13px' }}
                           {...field}
                           disabled={isSubmitting}
                         />
@@ -541,6 +547,7 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                             placeholder="e.g., Reduce energy consumption by 15%"
                             {...field}
                             className="h-9 text-xs"
+                            style={{ fontSize: '13px' }}
                             disabled={isSubmitting}
                           />
                         </FormControl>
@@ -570,6 +577,7 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                               }
                             }}
                             className="h-9 text-xs"
+                            style={{ fontSize: '13px' }}
                             disabled={isSubmitting}
                           />
                         </FormControl>
@@ -602,6 +610,7 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                               }
                             }}
                             className="h-9 text-xs"
+                            style={{ fontSize: '13px' }}
                             disabled={isSubmitting}
                           />
                         </FormControl>
@@ -631,6 +640,7 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                               }
                             }}
                             className="h-9 text-xs"
+                            style={{ fontSize: '13px' }}
                             disabled={isSubmitting}
                           />
                         </FormControl>
@@ -648,7 +658,7 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                       <FormLabel className="text-xs font-medium">Budget Type *</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting}>
                         <FormControl>
-                          <SelectTrigger className="h-9 text-xs">
+                          <SelectTrigger className="h-9 text-xs" style={{ fontSize: '13px' }}>
                             <SelectValue placeholder="Select budget type" />
                           </SelectTrigger>
                         </FormControl>
@@ -708,6 +718,7 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                             placeholder="e.g., Current production volume remains stable throughout implementation"
                             {...field}
                             className="h-9 text-xs"
+                            style={{ fontSize: '13px' }}
                             disabled={isSubmitting}
                           />
                         </FormControl>
@@ -726,6 +737,7 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                             placeholder="e.g., Energy prices increase by 10% annually"
                             {...field}
                             className="h-9 text-xs"
+                            style={{ fontSize: '13px' }}
                             disabled={isSubmitting}
                           />
                         </FormControl>
@@ -744,6 +756,7 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                             placeholder="e.g., Technology implementation completed within 6 months"
                             {...field}
                             className="h-9 text-xs"
+                            style={{ fontSize: '13px' }}
                             disabled={isSubmitting}
                           />
                         </FormControl>

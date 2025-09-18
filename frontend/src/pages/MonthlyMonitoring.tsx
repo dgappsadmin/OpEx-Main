@@ -583,7 +583,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="targetValue" className="text-sm font-medium text-gray-700 mb-1.5 block">
-                      Target Value (₹ Lakhs) *
+                      Target Value
                     </Label>
                     <Input
                       id="targetValue"
@@ -599,7 +599,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                   </div>
                   <div>
                     <Label htmlFor="achievedValue" className="text-sm font-medium text-gray-700 mb-1.5 block">
-                      Achieved Value (₹ Lakhs)
+                      Achieved Value
                     </Label>
                     <Input
                       id="achievedValue"
@@ -618,7 +618,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                   <Alert className="border-blue-200 bg-blue-50">
                     <TrendingUp className="h-4 w-4 text-blue-600" />
                     <AlertDescription className="text-blue-800">
-                      <strong>Deviation:</strong> ₹{((formData.achievedValue - formData.targetValue)).toFixed(2)} Lakhs
+                      <strong>Deviation:</strong> ₹{((formData.achievedValue - formData.targetValue)).toFixed(2)}
                       ({(((formData.achievedValue - formData.targetValue) / formData.targetValue) * 100).toFixed(1)}%)
                     </AlertDescription>
                   </Alert>

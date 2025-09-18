@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { reportsAPI } from "@/lib/api";
+import { monthlyMonitoringAPI } from "@/lib/api";
 import DNLBarChart from "@/components/DNLBarChart";
 
 interface ReportsProps {
@@ -36,6 +37,7 @@ interface MonthlyData {
   initiatives: number;
   savings: number;
   completed: number;
+  actualSavings: number; // Add actual savings field
 }
 
 interface DNLChartData {
@@ -65,6 +67,7 @@ export default function Reports({ user }: ReportsProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
+  const [monthlyActualSavingsData, setMonthlyActualSavingsData] = useState<any>(null);
   const [dnlChartData, setDnlChartData] = useState<DNLChartData | null>(null);
   const [financialYearData, setFinancialYearData] = useState<FinancialYearData[]>([]);
   const [availableFinancialYears, setAvailableFinancialYears] = useState<string[]>([]);
@@ -125,9 +128,9 @@ export default function Reports({ user }: ReportsProps) {
     }
   };
 
-  // Generate dynamic monthly data based on current fiscal year
+  // Generate dynamic monthly data based on current fiscal year - with filtering support
   useEffect(() => {
-    const generateDynamicMonthlyData = () => {
+    const generateDynamicMonthlyData = async () => {
       try {
         const currentDate = new Date();
         const currentMonth = currentDate.getMonth();
@@ -143,6 +146,21 @@ export default function Reports({ user }: ReportsProps) {
         
         const dynamicData: MonthlyData[] = [];
         
+        // Fetch actual savings data with current filters
+        let actualSavingsData: any = {};
+        try {
+          const actualSavingsResponse = await monthlyMonitoringAPI.getMonthlyActualSavings({
+            site: selectedSite !== 'all' ? selectedSite : undefined,
+            year: selectedYear,
+            budgetType: selectedBudgetType !== 'all' ? selectedBudgetType : undefined,
+          });
+          actualSavingsData = actualSavingsResponse || {};
+          setMonthlyActualSavingsData(actualSavingsResponse);
+        } catch (error) {
+          console.warn('Could not fetch actual savings data:', error);
+          actualSavingsData = {};
+        }
+        
         for (let i = 0; i < months.length; i++) {
           const monthIndex = (3 + i) % 12; // Start from April (index 3)
           const year = monthIndex < 3 ? fiscalYearStart + 1 : fiscalYearStart;
@@ -156,7 +174,7 @@ export default function Reports({ user }: ReportsProps) {
           
           if (isPastMonth || monthIndex === currentMonth) {
             // Calculate dynamic values based on filtered initiatives for the month
-            const monthInitiatives = initiatives.filter((initiative: any) => {
+            const monthInitiatives = filteredInitiatives.filter((initiative: any) => {
               try {
                 const startDate = new Date(initiative.submittedDate || initiative.startDate);
                 return startDate.getMonth() === monthIndex && startDate.getFullYear() === year;
@@ -166,7 +184,7 @@ export default function Reports({ user }: ReportsProps) {
               }
             });
             
-            const savings = monthInitiatives.reduce((sum: number, initiative: any) => {
+            const expectedSavings = monthInitiatives.reduce((sum: number, initiative: any) => {
               try {
                 const savingsValue = typeof initiative.expectedSavings === 'string' 
                   ? parseFloat(initiative.expectedSavings.replace(/[₹L,]/g, '')) || 0
@@ -180,11 +198,16 @@ export default function Reports({ user }: ReportsProps) {
             
             const completedCount = monthInitiatives.filter((i: any) => i.status === 'Completed').length;
             
+            // Get actual savings for this month from the API response
+            const monthKey = months[i];
+            const actualSavingsForMonth = actualSavingsData[monthKey] || 0;
+            
             dynamicData.push({
               month: months[i],
               initiatives: monthInitiatives.length,
-              savings: savings,
-              completed: completedCount
+              savings: expectedSavings,
+              completed: completedCount,
+              actualSavings: actualSavingsForMonth
             });
           }
         }
@@ -196,8 +219,8 @@ export default function Reports({ user }: ReportsProps) {
       }
     };
 
-    setMonthlyData(generateDynamicMonthlyData());
-  }, [initiatives]);
+    generateDynamicMonthlyData().then(setMonthlyData);
+  }, [filteredInitiatives, selectedSite, selectedBudgetType, selectedYear]); // Added filter dependencies
 
   // Fetch available financial years on component mount
   useEffect(() => {
@@ -339,7 +362,7 @@ export default function Reports({ user }: ReportsProps) {
   // Get unique sites for filter
   const sites = [...new Set(initiatives.map((i: any) => i.site))];
 
-  // Calculate summary statistics from real data
+  // Calculate summary statistics from filtered data
   const totalSavings = filteredInitiatives.reduce((sum: number, i: any) => {
     const savings = typeof i.expectedSavings === 'string' 
       ? parseFloat(i.expectedSavings.replace(/[₹L,]/g, '')) || 0
@@ -481,22 +504,22 @@ export default function Reports({ user }: ReportsProps) {
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
-      case 'completed': return 'bg-green-500 hover:bg-green-600 text-white';
-      case 'in progress': return 'bg-blue-500 hover:bg-blue-600 text-white';
-      case 'rejected': return 'bg-red-500 hover:bg-red-600 text-white';
-      case 'draft': return 'bg-yellow-500 hover:bg-yellow-600 text-white';
-      case 'approved': return 'bg-emerald-500 hover:bg-emerald-600 text-white';
-      case 'pending': return 'bg-orange-500 hover:bg-orange-600 text-white';
-      default: return 'bg-gray-500 hover:bg-gray-600 text-white';
+      case 'completed': return 'bg-emerald-500 hover:bg-emerald-600 text-white border-emerald-500';
+      case 'in progress': return 'bg-blue-500 hover:bg-blue-600 text-white border-blue-500';
+      case 'rejected': return 'bg-red-500 hover:bg-red-600 text-white border-red-500';
+      case 'draft': return 'bg-amber-500 hover:bg-amber-600 text-white border-amber-500';
+      case 'approved': return 'bg-green-500 hover:bg-green-600 text-white border-green-500';
+      case 'pending': return 'bg-orange-500 hover:bg-orange-600 text-white border-orange-500';
+      default: return 'bg-slate-500 hover:bg-slate-600 text-white border-slate-500';
     }
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority?.toLowerCase()) {
-      case 'high': return 'destructive';
-      case 'medium': return 'default';
-      case 'low': return 'secondary';
-      default: return 'outline';
+      case 'high': return 'bg-red-500 hover:bg-red-600 text-white border-red-500';
+      case 'medium': return 'bg-amber-500 hover:bg-amber-600 text-white border-amber-500';
+      case 'low': return 'bg-green-500 hover:bg-green-600 text-white border-green-500';
+      default: return 'bg-slate-500 hover:bg-slate-600 text-white border-slate-500';
     }
   };
 
@@ -585,7 +608,7 @@ export default function Reports({ user }: ReportsProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">Site</label>
               <Select value={selectedSite} onValueChange={setSelectedSite}>
@@ -597,6 +620,21 @@ export default function Reports({ user }: ReportsProps) {
                   {sites.map((site: string) => (
                     <SelectItem key={site} value={site}>{site}</SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Year Filter for Trends */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">Year</label>
+              <Select value={selectedYear} onValueChange={setSelectedYear}>
+                <SelectTrigger className="w-full h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={(new Date().getFullYear()).toString()}>{new Date().getFullYear()}</SelectItem>
+                  <SelectItem value={(new Date().getFullYear() - 1).toString()}>{new Date().getFullYear() - 1}</SelectItem>
+                  <SelectItem value={(new Date().getFullYear() - 2).toString()}>{new Date().getFullYear() - 2}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -726,8 +764,8 @@ export default function Reports({ user }: ReportsProps) {
                     <XAxis dataKey="month" />
                     <YAxis />
                     <Tooltip />
-                    <Line type="monotone" dataKey="initiatives" stroke="#2563EB" strokeWidth={2} />
-                    <Line type="monotone" dataKey="completed" stroke="#059669" strokeWidth={2} />
+                    <Line type="monotone" dataKey="initiatives" stroke="#2563EB" strokeWidth={2} name="New Initiatives" />
+                    <Line type="monotone" dataKey="completed" stroke="#059669" strokeWidth={2} name="Completed" />
                   </LineChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -740,7 +778,7 @@ export default function Reports({ user }: ReportsProps) {
                   Monthly Savings Trends (FY'{getCurrentFiscalYear()})
                 </CardTitle>
                 <CardDescription className="text-xs">
-                  Expected savings distribution by month
+                  Expected vs Actual savings distribution by month
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -749,8 +787,15 @@ export default function Reports({ user }: ReportsProps) {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="month" />
                     <YAxis />
-                    <Tooltip formatter={(value) => [formatCurrency(Number(value)), 'Savings']} />
-                    <Bar dataKey="savings" fill="#EA580C" />
+                    <Tooltip formatter={(value, name) => {
+                      const labels: { [key: string]: string } = {
+                        'savings': 'Expected Savings',
+                        'actualSavings': 'Actual Savings'
+                      };
+                      return [formatCurrency(Number(value)), labels[name] || name];
+                    }} />
+                    <Bar dataKey="savings" fill="#EA580C" name="Expected Savings" />
+                    <Bar dataKey="actualSavings" fill="#059669" name="Actual Savings" />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -948,12 +993,16 @@ export default function Reports({ user }: ReportsProps) {
                         </TableCell>
                         <TableCell className="text-xs">{initiative.site}</TableCell>
                         <TableCell className="text-xs">
-                          <Badge className={`${getStatusColor(initiative.status)} text-xs`}>
+                          <Badge className={`${getStatusColor(initiative.status)} text-xs font-medium shadow-sm`}>
                             {initiative.status}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-xs">
-                          <Badge variant={initiative.budgetType?.toLowerCase() === 'budgeted' ? 'default' : 'secondary'} className="text-xs">
+                          <Badge 
+                            className={`${initiative.budgetType?.toLowerCase() === 'budgeted' ? 
+                              'bg-blue-500 hover:bg-blue-600 text-white border-blue-500' : 
+                              'bg-purple-500 hover:bg-purple-600 text-white border-purple-500'} text-xs font-medium shadow-sm`}
+                          >
                             {initiative.budgetType || 'Budgeted'}
                           </Badge>
                         </TableCell>

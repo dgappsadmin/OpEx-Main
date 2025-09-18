@@ -2699,6 +2699,27 @@ export const monthlyMonitoringAPI = {
   areAllEntriesFinalized: async (initiativeId: number) => {
     const response = await api.get(`/monthly-monitoring/validation/${initiativeId}/all-finalized`);
     return response.data;
+  },
+
+  // Get monthly actual savings data for reporting
+  getMonthlyActualSavings: async (params?: { 
+    site?: string; 
+    year?: string; 
+    budgetType?: string; 
+  }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.site && params.site !== 'all') {
+      queryParams.append('site', params.site);
+    }
+    if (params?.year) {
+      queryParams.append('year', params.year);
+    }
+    if (params?.budgetType && params.budgetType !== 'all') {
+      queryParams.append('budgetType', params.budgetType);
+    }
+    
+    const response = await api.get(`/monthly-monitoring/monthly-actual-savings?${queryParams.toString()}`);
+    return response.data;
   }
 };
 

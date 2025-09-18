@@ -237,21 +237,24 @@ export default function Initiatives({ user }: InitiativesProps) {
   const paginatedData = paginateArray(filteredInitiatives, currentPage, itemsPerPage);
 
   const getStatusColor = (status: string) => {
-    // Exact matching with database STATUS column values
+    // Enhanced status colors with better visual distinction
     switch (status.trim()) {
-      case "Pending": return "bg-destructive text-destructive-foreground";
-      case "In Progress": return "bg-primary text-primary-foreground";
-      case "Completed": return "bg-success text-success-foreground";
-      default: return "bg-muted text-muted-foreground";
+      case "Pending": return "bg-orange-500 hover:bg-orange-600 text-white border-orange-500 shadow-sm";
+      case "In Progress": return "bg-blue-500 hover:bg-blue-600 text-white border-blue-500 shadow-sm";
+      case "Completed": return "bg-emerald-500 hover:bg-emerald-600 text-white border-emerald-500 shadow-sm";
+      case "Rejected": return "bg-red-500 hover:bg-red-600 text-white border-red-500 shadow-sm";
+      case "Draft": return "bg-amber-500 hover:bg-amber-600 text-white border-amber-500 shadow-sm";
+      case "Approved": return "bg-green-500 hover:bg-green-600 text-white border-green-500 shadow-sm";
+      default: return "bg-slate-500 hover:bg-slate-600 text-white border-slate-500 shadow-sm";
     }
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case "High": return "bg-destructive text-destructive-foreground";
-      case "Medium": return "bg-warning text-warning-foreground";
-      case "Low": return "bg-muted text-muted-foreground";
-      default: return "bg-muted text-muted-foreground";
+      case "High": return "bg-red-500 hover:bg-red-600 text-white border-red-500 shadow-sm";
+      case "Medium": return "bg-amber-500 hover:bg-amber-600 text-white border-amber-500 shadow-sm";
+      case "Low": return "bg-green-500 hover:bg-green-600 text-white border-green-500 shadow-sm";
+      default: return "bg-slate-500 hover:bg-slate-600 text-white border-slate-500 shadow-sm";
     }
   };
 
@@ -294,7 +297,7 @@ export default function Initiatives({ user }: InitiativesProps) {
             Track and manage all initiatives across different sites and stages
           </p>
         </div>
-        <Badge variant="outline" className="text-xs font-medium">
+        <Badge variant="outline" className="text-xs font-medium bg-gradient-to-r from-emerald-50 to-blue-50 border-emerald-200 text-emerald-700">
           <BarChart3 className="h-3 w-3 mr-1.5" />
           {paginatedData.totalItems} initiatives
         </Badge>
@@ -376,18 +379,18 @@ export default function Initiatives({ user }: InitiativesProps) {
                           <p className="font-medium text-xs leading-tight max-w-48">
                             {initiative.initiativeNumber || initiative.title}
                           </p>
-                          <Badge variant="outline" className="text-2xs">
+                          <Badge variant="outline" className="text-2xs font-medium bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200 text-blue-700">
                             {initiative.discipline}
                           </Badge>
                         </div>
                       </TableCell>
                       <TableCell className="p-4 text-center">
-                        <Badge variant="outline" className="text-xs font-medium">
+                        <Badge variant="outline" className="text-xs font-medium bg-gradient-to-r from-indigo-50 to-blue-50 border-indigo-200 text-indigo-700">
                           {initiative.site}
                         </Badge>
                       </TableCell>
                       <TableCell className="p-4 text-center">
-                        <Badge className={`${getStatusColor(initiative.status)} text-xs`}>
+                        <Badge className={`${getStatusColor(initiative.status)} text-xs font-medium`}>
                           {initiative.status}
                         </Badge>
                       </TableCell>
@@ -397,7 +400,7 @@ export default function Initiatives({ user }: InitiativesProps) {
                         </p>
                       </TableCell> */}
                       <TableCell className="p-4 text-center">
-                        <span className="font-semibold text-success text-xs">
+                        <span className="font-semibold text-emerald-600 text-xs">
                           {formatCurrency(initiative.expectedSavings)}
                         </span>
                       </TableCell>
@@ -470,7 +473,7 @@ export default function Initiatives({ user }: InitiativesProps) {
                       <h3 className="font-semibold text-xs">{initiative.initiativeNumber || initiative.title}</h3>
                       <p className="text-xs text-muted-foreground">{initiative.discipline} • {initiative.site}</p>
                     </div>
-                    <Badge variant="outline" className="font-mono text-xs">
+                    <Badge variant="outline" className="font-mono text-xs bg-slate-50 border-slate-200 text-slate-600">
                       {initiative.id}
                     </Badge>
                   </div>
@@ -479,13 +482,13 @@ export default function Initiatives({ user }: InitiativesProps) {
                     <div className="space-y-2">
                       <div>
                         <p className="text-xs text-muted-foreground mb-1">Status</p>
-                        <Badge className={`${getStatusColor(initiative.status)} text-xs`}>
+                        <Badge className={`${getStatusColor(initiative.status)} text-xs font-medium`}>
                           {initiative.status}
                         </Badge>
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground mb-1">Expected Savings</p>
-                        <p className="font-semibold text-success text-xs">
+                        <p className="font-semibold text-emerald-600 text-xs">
                           {formatCurrency(initiative.expectedSavings)}
                         </p>
                       </div>
