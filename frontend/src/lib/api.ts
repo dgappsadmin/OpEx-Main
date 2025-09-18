@@ -2720,6 +2720,27 @@ export const monthlyMonitoringAPI = {
     
     const response = await api.get(`/monthly-monitoring/monthly-actual-savings?${queryParams.toString()}`);
     return response.data;
+  },
+
+  // Get monthly target vs achieved data for reporting
+  getMonthlyTargetAchievedData: async (params?: { 
+    site?: string; 
+    year?: string; 
+    budgetType?: string; 
+  }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.site && params.site !== 'all') {
+      queryParams.append('site', params.site);
+    }
+    if (params?.year) {
+      queryParams.append('year', params.year);
+    }
+    if (params?.budgetType && params.budgetType !== 'all') {
+      queryParams.append('budgetType', params.budgetType);
+    }
+    
+    const response = await api.get(`/monthly-monitoring/monthly-target-achieved?${queryParams.toString()}`);
+    return response.data;
   }
 };
 

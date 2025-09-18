@@ -8,8 +8,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class MonthlyMonitoringService {
@@ -147,5 +151,138 @@ public class MonthlyMonitoringService {
         
         // Check if all entries are finalized
         return entries.stream().allMatch(entry -> "Y".equals(entry.getIsFinalized()));
+    }
+
+    // Get monthly actual savings data for reporting (backward compatibility)
+    public Map<String, Object> getMonthlyActualSavings(String site, String year, String budgetType) {
+        List<MonthlyMonitoringEntry> entries = monthlyMonitoringRepository.findAll();
+        
+        // Filter by criteria if provided
+        entries = filterEntriesByCriteria(entries, site, year, budgetType);
+        
+        // Group by month and calculate achieved values only
+        Map<String, Object> monthlyData = new HashMap<>();
+        String[] months = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+                          "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+        
+        // Initialize all months with 0
+        for (String month : months) {
+            monthlyData.put(month, 0.0);
+        }
+        
+        // Calculate achieved values by month
+        entries.stream()
+            .collect(Collectors.groupingBy(this::getMonthFromEntry))
+            .forEach((month, monthEntries) -> {
+                if (!month.equals("Unknown")) {
+                    double totalAchieved = monthEntries.stream()
+                        .mapToDouble(entry -> entry.getAchievedValue() != null ? 
+                            entry.getAchievedValue().doubleValue() : 0.0)
+                        .sum();
+                    monthlyData.put(month, totalAchieved);
+                }
+            });
+        
+        return monthlyData;
+    }
+
+    // Get monthly target vs achieved data for reporting
+    public Map<String, Object> getMonthlyTargetAchievedData(String site, String year, String budgetType) {
+        List<MonthlyMonitoringEntry> entries = monthlyMonitoringRepository.findAll();
+        
+        // Filter by criteria if provided
+        entries = filterEntriesByCriteria(entries, site, year, budgetType);
+        
+        // Group by month and calculate totals
+        Map<String, Object> monthlyData = new HashMap<>();
+        String[] months = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+                          "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+        
+        // Initialize all months with target and achieved values
+        for (String month : months) {
+            Map<String, Double> monthData = new HashMap<>();
+            monthData.put("target", 0.0);
+            monthData.put("achieved", 0.0);
+            monthlyData.put(month, monthData);
+        }
+        
+        // Calculate target and achieved values by month
+        entries.stream()
+            .collect(Collectors.groupingBy(this::getMonthFromEntry))
+            .forEach((month, monthEntries) -> {
+                if (!month.equals("Unknown")) {
+                    double totalTarget = monthEntries.stream()
+                        .mapToDouble(entry -> entry.getTargetValue() != null ? 
+                            entry.getTargetValue().doubleValue() : 0.0)
+                        .sum();
+                    
+                    double totalAchieved = monthEntries.stream()
+                        .mapToDouble(entry -> entry.getAchievedValue() != null ? 
+                            entry.getAchievedValue().doubleValue() : 0.0)
+                        .sum();
+                    
+                    Map<String, Double> monthData = new HashMap<>();
+                    monthData.put("target", totalTarget);
+                    monthData.put("achieved", totalAchieved);
+                    monthlyData.put(month, monthData);
+                }
+            });
+        
+        return monthlyData;
+    }
+
+    // Helper method to filter entries by criteria
+    private List<MonthlyMonitoringEntry> filterEntriesByCriteria(List<MonthlyMonitoringEntry> entries, 
+                                                                String site, String year, String budgetType) {
+        return entries.stream()
+            .filter(entry -> {
+                // Filter by site
+                if (site != null && !site.isEmpty()) {
+                    if (!site.equals(entry.getInitiative().getSite())) {
+                        return false;
+                    }
+                }
+                
+                // Filter by year
+                if (year != null && !year.isEmpty()) {
+                    if (entry.getMonitoringMonth() == null || 
+                        !entry.getMonitoringMonth().startsWith(year)) {
+                        return false;
+                    }
+                }
+                
+                // Filter by budget type
+                if (budgetType != null && !budgetType.isEmpty()) {
+                    String initiativeBudgetType = entry.getInitiative().getBudgetType();
+                    if (budgetType.equals("budgeted")) {
+                        return initiativeBudgetType == null || "budgeted".equalsIgnoreCase(initiativeBudgetType);
+                    } else if (budgetType.equals("non-budgeted")) {
+                        return "non-budgeted".equalsIgnoreCase(initiativeBudgetType);
+                    }
+                }
+                
+                return true;
+            })
+            .collect(Collectors.toList());
+    }
+
+    // Helper method to get month name from monitoring entry
+    private String getMonthFromEntry(MonthlyMonitoringEntry entry) {
+        if (entry.getMonitoringMonth() != null && entry.getMonitoringMonth().length() >= 7) {
+            String[] parts = entry.getMonitoringMonth().split("-");
+            if (parts.length >= 2) {
+                try {
+                    int month = Integer.parseInt(parts[1]);
+                    String[] months = {"", "Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+                                     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+                    if (month >= 1 && month <= 12) {
+                        return months[month];
+                    }
+                } catch (NumberFormatException e) {
+                    // Invalid month format
+                }
+            }
+        }
+        return "Unknown";
     }
 }

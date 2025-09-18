@@ -37,7 +37,9 @@ interface MonthlyData {
   initiatives: number;
   savings: number;
   completed: number;
-  actualSavings: number; // Add actual savings field
+  actualSavings: number; // Keep for backward compatibility
+  targetValue: number; // Add target value
+  achievedValue: number; // Add achieved value
 }
 
 interface DNLChartData {
@@ -63,11 +65,12 @@ export default function Reports({ user }: ReportsProps) {
   
   // New filter states
   const [selectedFinancialYear, setSelectedFinancialYear] = useState<string>('');
-  const [selectedBudgetType, setSelectedBudgetType] = useState<string>('all');
+  const [selectedBudgetType, setSelectedBudgetType] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
   const [monthlyActualSavingsData, setMonthlyActualSavingsData] = useState<any>(null);
+  const [monthlyTargetAchievedData, setMonthlyTargetAchievedData] = useState<any>(null);
   const [dnlChartData, setDnlChartData] = useState<DNLChartData | null>(null);
   const [financialYearData, setFinancialYearData] = useState<FinancialYearData[]>([]);
   const [availableFinancialYears, setAvailableFinancialYears] = useState<string[]>([]);
@@ -152,13 +155,28 @@ export default function Reports({ user }: ReportsProps) {
           const actualSavingsResponse = await monthlyMonitoringAPI.getMonthlyActualSavings({
             site: selectedSite !== 'all' ? selectedSite : undefined,
             year: selectedYear,
-            budgetType: selectedBudgetType !== 'all' ? selectedBudgetType : undefined,
+            budgetType: selectedBudgetType && selectedBudgetType !== '' ? selectedBudgetType : undefined,
           });
           actualSavingsData = actualSavingsResponse || {};
           setMonthlyActualSavingsData(actualSavingsResponse);
         } catch (error) {
           console.warn('Could not fetch actual savings data:', error);
           actualSavingsData = {};
+        }
+
+        // Fetch target vs achieved data with current filters
+        let targetAchievedData: any = {};
+        try {
+          const targetAchievedResponse = await monthlyMonitoringAPI.getMonthlyTargetAchievedData({
+            site: selectedSite !== 'all' ? selectedSite : undefined,
+            year: selectedYear,
+            budgetType: selectedBudgetType !== 'all' ? selectedBudgetType : undefined,
+          });
+          targetAchievedData = targetAchievedResponse || {};
+          setMonthlyTargetAchievedData(targetAchievedResponse);
+        } catch (error) {
+          console.warn('Could not fetch target vs achieved data:', error);
+          targetAchievedData = {};
         }
         
         for (let i = 0; i < months.length; i++) {
@@ -202,12 +220,27 @@ export default function Reports({ user }: ReportsProps) {
             const monthKey = months[i];
             const actualSavingsForMonth = actualSavingsData[monthKey] || 0;
             
+            // Get target and achieved values from the monthly monitoring data
+            const monthTargetData = targetAchievedData[monthKey];
+            const targetValue = monthTargetData?.target || 0;
+            const achievedValue = monthTargetData?.achieved || 0;
+            
+            // Debug logging
+            console.log(`Month ${monthKey}:`, {
+              monthTargetData,
+              targetValue,
+              achievedValue,
+              targetAchievedData
+            });
+            
             dynamicData.push({
               month: months[i],
               initiatives: monthInitiatives.length,
               savings: expectedSavings,
               completed: completedCount,
-              actualSavings: actualSavingsForMonth
+              actualSavings: actualSavingsForMonth,
+              targetValue: typeof targetValue === 'object' ? parseFloat(targetValue.toString()) || 0 : targetValue,
+              achievedValue: typeof achievedValue === 'object' ? parseFloat(achievedValue.toString()) || 0 : achievedValue
             });
           }
         }
@@ -662,7 +695,7 @@ export default function Reports({ user }: ReportsProps) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Overall</SelectItem>
+                  <SelectItem value="">All Types</SelectItem>
                   <SelectItem value="budgeted">Budgeted</SelectItem>
                   <SelectItem value="non-budgeted">Non-Budgeted</SelectItem>
                 </SelectContent>
@@ -778,10 +811,11 @@ export default function Reports({ user }: ReportsProps) {
                   Monthly Savings Trends (FY'{getCurrentFiscalYear()})
                 </CardTitle>
                 <CardDescription className="text-xs">
-                  Expected vs Actual savings distribution by month
+                  Target vs Achieved value
                 </CardDescription>
               </CardHeader>
               <CardContent>
+                {console.log('Chart data:', monthlyData)}
                 <ResponsiveContainer width="100%" height={280}>
                   <BarChart data={monthlyData}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -789,13 +823,13 @@ export default function Reports({ user }: ReportsProps) {
                     <YAxis />
                     <Tooltip formatter={(value, name) => {
                       const labels: { [key: string]: string } = {
-                        'savings': 'Expected Savings',
-                        'actualSavings': 'Actual Savings'
+                        'targetValue': 'Target Value',
+                        'achievedValue': 'Achieved Value'
                       };
                       return [formatCurrency(Number(value)), labels[name] || name];
                     }} />
-                    <Bar dataKey="savings" fill="#EA580C" name="Expected Savings" />
-                    <Bar dataKey="actualSavings" fill="#059669" name="Actual Savings" />
+                    <Bar dataKey="targetValue" fill="#2563EB" name="Target Value" />
+                    <Bar dataKey="achievedValue" fill="#059669" name="Achieved Value" />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>

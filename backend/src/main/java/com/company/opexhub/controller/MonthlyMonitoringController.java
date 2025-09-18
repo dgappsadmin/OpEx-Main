@@ -330,4 +330,38 @@ public class MonthlyMonitoringController {
                     .body(new ApiResponse<>(false, "Error validating entries: " + e.getMessage(), false));
         }
     }
+
+    /**
+     * Get monthly actual savings data for reporting
+     */
+    @GetMapping("/monthly-actual-savings")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getMonthlyActualSavings(
+            @RequestParam(required = false) String site,
+            @RequestParam(required = false) String year,
+            @RequestParam(required = false) String budgetType) {
+        try {
+            Map<String, Object> data = monthlyMonitoringService.getMonthlyActualSavings(site, year, budgetType);
+            return ResponseEntity.ok(new ApiResponse<>(true, "Monthly actual savings data retrieved successfully", data));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse<>(false, "Error retrieving monthly actual savings data: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Get monthly target vs achieved savings data for reporting
+     */
+    @GetMapping("/monthly-target-achieved")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getMonthlyTargetAchievedData(
+            @RequestParam(required = false) String site,
+            @RequestParam(required = false) String year,
+            @RequestParam(required = false) String budgetType) {
+        try {
+            Map<String, Object> data = monthlyMonitoringService.getMonthlyTargetAchievedData(site, year, budgetType);
+            return ResponseEntity.ok(new ApiResponse<>(true, "Monthly target vs achieved data retrieved successfully", data));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse<>(false, "Error retrieving monthly target vs achieved data: " + e.getMessage(), null));
+        }
+    }
 }
