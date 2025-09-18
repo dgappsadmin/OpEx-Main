@@ -86,6 +86,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [activeTab, setActiveTab] = useState<'all' | 'assigned'>('all');
+  const [viewTab, setViewTab] = useState<'overview' | 'monthly' | 'analytics' | 'summary'>('overview');
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -985,7 +986,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
           </div>
 
           {/* Tab Navigation - Match Dashboard style */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <Tabs value={viewTab} onValueChange={(value) => setViewTab(value as 'overview' | 'monthly' | 'analytics' | 'summary')} className="space-y-4">
             <TabsList className="grid w-full grid-cols-4 max-w-2xl mx-auto lg:mx-0 h-9" onClick={(e) => e.stopPropagation()}>
               <TabsTrigger 
                 value="overview" 
