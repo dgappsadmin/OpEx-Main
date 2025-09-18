@@ -65,7 +65,7 @@ export default function Reports({ user }: ReportsProps) {
   
   // New filter states
   const [selectedFinancialYear, setSelectedFinancialYear] = useState<string>('');
-  const [selectedBudgetType, setSelectedBudgetType] = useState<string>('');
+  const [selectedBudgetType, setSelectedBudgetType] = useState<string>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
@@ -135,12 +135,15 @@ export default function Reports({ user }: ReportsProps) {
   useEffect(() => {
     const generateDynamicMonthlyData = async () => {
       try {
+        // Use current financial year if selectedFinancialYear is not set
         const currentDate = new Date();
         const currentMonth = currentDate.getMonth();
         const currentYear = currentDate.getFullYear();
-        
-        // Fiscal year starts from April (month 3 in 0-indexed)
         const fiscalYearStart = currentMonth >= 3 ? currentYear : currentYear - 1;
+        
+        const yearToUse = selectedFinancialYear || fiscalYearStart.toString();
+        
+        console.log('Generating monthly data for FY:', yearToUse, 'selectedFinancialYear:', selectedFinancialYear);
         
         const months = [
           'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
@@ -154,10 +157,11 @@ export default function Reports({ user }: ReportsProps) {
         try {
           const actualSavingsResponse = await monthlyMonitoringAPI.getMonthlyActualSavings({
             site: selectedSite !== 'all' ? selectedSite : undefined,
-            year: selectedYear,
-            budgetType: selectedBudgetType && selectedBudgetType !== '' ? selectedBudgetType : undefined,
+            year: yearToUse,
+            budgetType: selectedBudgetType !== 'all' ? selectedBudgetType : undefined,
           });
           actualSavingsData = actualSavingsResponse || {};
+          console.log('Actual Savings Data Response:', actualSavingsData);
           setMonthlyActualSavingsData(actualSavingsResponse);
         } catch (error) {
           console.warn('Could not fetch actual savings data:', error);
@@ -169,13 +173,23 @@ export default function Reports({ user }: ReportsProps) {
         try {
           const targetAchievedResponse = await monthlyMonitoringAPI.getMonthlyTargetAchievedData({
             site: selectedSite !== 'all' ? selectedSite : undefined,
-            year: selectedYear,
+            year: yearToUse,
             budgetType: selectedBudgetType !== 'all' ? selectedBudgetType : undefined,
           });
           targetAchievedData = targetAchievedResponse || {};
+          console.log('Target Achieved Data Response:', targetAchievedData);
+          console.log('Target Achieved Data Keys:', Object.keys(targetAchievedData));
+          console.log('Target Achieved Data Values:', Object.values(targetAchievedData));
+          
+          // Debug each month's data structure
+          Object.entries(targetAchievedData).forEach(([key, value]) => {
+            console.log(`Month ${key}:`, value);
+          });
+          
           setMonthlyTargetAchievedData(targetAchievedResponse);
         } catch (error) {
           console.warn('Could not fetch target vs achieved data:', error);
+          console.error('Target Achieved API Error Details:', error);
           targetAchievedData = {};
         }
         
@@ -222,15 +236,32 @@ export default function Reports({ user }: ReportsProps) {
             
             // Get target and achieved values from the monthly monitoring data
             const monthTargetData = targetAchievedData[monthKey];
-            const targetValue = monthTargetData?.target || 0;
-            const achievedValue = monthTargetData?.achieved || 0;
+            let targetValue = 0;
+            let achievedValue = 0;
+            
+            if (monthTargetData) {
+              // Backend returns "target" and "achieved" fields based on MonthlyMonitoringService.java
+              targetValue = monthTargetData.target || monthTargetData.targetValue || 0;
+              achievedValue = monthTargetData.achieved || monthTargetData.achievedValue || 0;
+              
+              // Handle values that might come as strings or numbers
+              if (typeof targetValue === 'string') {
+                targetValue = parseFloat(targetValue) || 0;
+              }
+              if (typeof achievedValue === 'string') {
+                achievedValue = parseFloat(achievedValue) || 0;
+              }
+            }
             
             // Debug logging
             console.log(`Month ${monthKey}:`, {
               monthTargetData,
               targetValue,
               achievedValue,
-              targetAchievedData
+              targetAchievedData,
+              actualSavingsForMonth,
+              finalTargetValue: typeof targetValue === 'object' && targetValue !== null ? parseFloat(targetValue.toString()) || 0 : (targetValue || 0),
+              finalAchievedValue: typeof achievedValue === 'object' && achievedValue !== null ? parseFloat(achievedValue.toString()) || 0 : (achievedValue || 0)
             });
             
             dynamicData.push({
@@ -239,11 +270,15 @@ export default function Reports({ user }: ReportsProps) {
               savings: expectedSavings,
               completed: completedCount,
               actualSavings: actualSavingsForMonth,
-              targetValue: typeof targetValue === 'object' ? parseFloat(targetValue.toString()) || 0 : targetValue,
-              achievedValue: typeof achievedValue === 'object' ? parseFloat(achievedValue.toString()) || 0 : achievedValue
+              targetValue: typeof targetValue === 'object' && targetValue !== null ? parseFloat(targetValue.toString()) || 0 : (targetValue || 0),
+              achievedValue: typeof achievedValue === 'object' && achievedValue !== null ? parseFloat(achievedValue.toString()) || 0 : (achievedValue || 0)
             });
           }
         }
+        
+        console.log('Final Dynamic Data:', dynamicData);
+        console.log('Dynamic Data Length:', dynamicData.length);
+        console.log('Sample item:', dynamicData[0]);
         
         return dynamicData;
       } catch (error) {
@@ -253,7 +288,7 @@ export default function Reports({ user }: ReportsProps) {
     };
 
     generateDynamicMonthlyData().then(setMonthlyData);
-  }, [filteredInitiatives, selectedSite, selectedBudgetType, selectedYear]); // Added filter dependencies
+  }, [filteredInitiatives, selectedSite, selectedBudgetType, selectedFinancialYear]); // Updated to use Financial Year
 
   // Fetch available financial years on component mount
   useEffect(() => {
@@ -343,7 +378,7 @@ export default function Reports({ user }: ReportsProps) {
         const data = await reportsAPI.getDNLSavingsData({
           site: selectedSite !== 'all' ? selectedSite : undefined,
           period: selectedPeriod,
-          year: selectedYear
+          year: selectedFinancialYear
         });
         
         // Only update state if component is still mounted
@@ -377,7 +412,7 @@ export default function Reports({ user }: ReportsProps) {
     return () => {
       isMounted = false;
     };
-  }, [selectedSite, selectedPeriod, selectedYear]); // Only trigger on filter changes
+  }, [selectedSite, selectedPeriod, selectedFinancialYear]); // Only trigger on filter changes
 
   if (isLoading) {
     return (
@@ -414,13 +449,13 @@ export default function Reports({ user }: ReportsProps) {
         const filename = await reportsAPI.downloadDNLPlantInitiatives({
           site: selectedSite,
           period: selectedPeriod === 'yearly' ? 'yearly' : selectedPeriod,
-          year: selectedYear || currentYear.toString()
+          year: selectedFinancialYear || currentYear.toString()
         });
         
-        console.log(`Successfully downloaded DNL Plant Initiatives PDF report: ${filename} for ${selectedSite} site(s) - ${selectedPeriod} period (${selectedYear})`);
+        console.log(`Successfully downloaded DNL Plant Initiatives PDF report: ${filename} for ${selectedSite} site(s) - ${selectedPeriod} period (${selectedFinancialYear})`);
         toast({
           title: "Download Successful",
-          description: `DNL Plant Initiatives PDF report "${filename}" downloaded successfully for year ${selectedYear}!`,
+          description: `DNL Plant Initiatives PDF report "${filename}" downloaded successfully for year ${selectedFinancialYear}!`,
         });
       } catch (error: any) {
         console.error('Error downloading DNL Plant Initiatives PDF report:', error);
@@ -443,7 +478,7 @@ export default function Reports({ user }: ReportsProps) {
         const filename = await reportsAPI.downloadDNLChartPDF({
           site: selectedSite !== 'all' ? selectedSite : undefined,
           period: selectedPeriod,
-          year: selectedYear
+          year: selectedFinancialYear
         });
         
         console.log(`Successfully downloaded DNL Chart PDF: ${filename}`);
@@ -472,7 +507,7 @@ export default function Reports({ user }: ReportsProps) {
         const filename = await reportsAPI.downloadDNLChartExcel({
           site: selectedSite !== 'all' ? selectedSite : undefined,
           period: selectedPeriod,
-          year: selectedYear
+          year: selectedFinancialYear
         });
         
         console.log(`Successfully downloaded DNL Chart Excel: ${filename}`);
@@ -501,7 +536,7 @@ export default function Reports({ user }: ReportsProps) {
         // Use the centralized API with proper authentication
         const filename = await reportsAPI.downloadDetailedExcel({
           site: selectedSite,
-          year: selectedYear || new Date().getFullYear().toString()
+          year: selectedFinancialYear || new Date().getFullYear().toString()
         });
         
         console.log(`Successfully downloaded detailed Excel report: ${filename} for ${selectedSite} site(s)`);
@@ -657,7 +692,8 @@ export default function Reports({ user }: ReportsProps) {
               </Select>
             </div>
 
-            {/* Year Filter for Trends */}
+            {/* Year Filter for Trends - HIDDEN */}
+            {false && (
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">Year</label>
               <Select value={selectedYear} onValueChange={setSelectedYear}>
@@ -671,6 +707,7 @@ export default function Reports({ user }: ReportsProps) {
                 </SelectContent>
               </Select>
             </div>
+            )}
 
             {/* Financial Year Filter */}
             <div className="space-y-1.5">
@@ -695,14 +732,15 @@ export default function Reports({ user }: ReportsProps) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Types</SelectItem>
+                  <SelectItem value="all">All Types</SelectItem>
                   <SelectItem value="budgeted">Budgeted</SelectItem>
                   <SelectItem value="non-budgeted">Non-Budgeted</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            {/* Category Filter */}
+            {/* Category Filter - HIDDEN */}
+            {false && (
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">Category</label>
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
@@ -718,6 +756,7 @@ export default function Reports({ user }: ReportsProps) {
                 </SelectContent>
               </Select>
             </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -791,6 +830,11 @@ export default function Reports({ user }: ReportsProps) {
                 </CardDescription>
               </CardHeader>
               <CardContent>
+                {(() => {
+                  console.log('Monthly Data for Chart:', monthlyData);
+                  console.log('Sample month data:', monthlyData[0]);
+                  return null;
+                })()}
                 <ResponsiveContainer width="100%" height={280}>
                   <LineChart data={monthlyData}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -815,7 +859,15 @@ export default function Reports({ user }: ReportsProps) {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {console.log('Chart data:', monthlyData)}
+                {(() => {
+                  console.log('Target vs Achieved Monthly Data:', monthlyData);
+                  console.log('Sample data for bars:', monthlyData.map(m => ({
+                    month: m.month,
+                    targetValue: m.targetValue,
+                    achievedValue: m.achievedValue
+                  })));
+                  return null;
+                })()}
                 <ResponsiveContainer width="100%" height={280}>
                   <BarChart data={monthlyData}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -940,7 +992,7 @@ export default function Reports({ user }: ReportsProps) {
                   </CardTitle>
                   <CardDescription className="text-xs">
                     Initiative savings by category - {selectedSite !== 'all' ? selectedSite : 'All Sites'} 
-                    {selectedYear && ` - Year ${selectedYear}`}
+                    {selectedFinancialYear && ` - FY ${selectedFinancialYear}-${selectedFinancialYear ? (parseInt(selectedFinancialYear) + 1).toString().slice(-2) : ''}`}
                   </CardDescription>
                 </div>
                 <Button 
@@ -980,8 +1032,8 @@ export default function Reports({ user }: ReportsProps) {
               ) : dnlChartData ? (
                 <DNLBarChart 
                   data={dnlChartData} 
-                  title={`Initiative saving till ${getCurrentMonth()} ${selectedYear} (Rs. Lacs)`}
-                  year={selectedYear}
+                  title={`Initiative saving till ${getCurrentMonth()} ${selectedFinancialYear} (Rs. Lacs)`}
+                  year={selectedFinancialYear}
                 />
               ) : (
                 <div className="flex items-center justify-center h-80">
