@@ -358,12 +358,12 @@ export default function KPI({ user }: KPIProps) {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="flex justify-between items-center">
+                {/* <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Cost Savings:</span>
                   <span className="font-semibold text-green-600">
                     {formatCurrency(totalExpectedSavings * 0.8)}
                   </span>
-                </div>
+                </div> */}
                 {/* <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Productivity:</span>
                   <span className="font-semibold text-blue-600">+15%</span>
@@ -399,13 +399,13 @@ export default function KPI({ user }: KPIProps) {
                   </div>
                   <Progress value={completionRate} className="h-2" />
                 </div>
-                <div>
+                {/* <div>
                   <div className="flex justify-between text-xs mb-1">
                     <span className="font-medium">Savings Realization</span>
                     <span className="font-semibold">{savingsRealizationRate.toFixed(1)}%</span>
                   </div>
                   <Progress value={savingsRealizationRate} className="h-2" />
-                </div>
+                </div> */}
               </CardContent>
             </Card>
 

@@ -1,6 +1,7 @@
 package com.company.opexhub.service;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -863,7 +864,7 @@ public class WorkflowTransactionService {
         // Get user by email to find assigned initiatives
         Optional<User> user = userRepository.findByEmail(userEmail);
         if (!user.isPresent()) {
-            return List.of();
+            return Collections.emptyList();
         }
         
         // Find all workflow transactions where this user is assigned as IL
@@ -881,5 +882,18 @@ public class WorkflowTransactionService {
                 })
                 .map(this::convertToDetailDTO)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Get rejection information for an initiative if it was rejected
+     */
+    public Optional<WorkflowTransaction> getRejectionInfo(Long initiativeId) {
+        List<WorkflowTransaction> transactions = workflowTransactionRepository
+                .findByInitiativeIdOrderByStageNumber(initiativeId);
+        
+        // Find the first rejected transaction
+        return transactions.stream()
+                .filter(t -> "rejected".equals(t.getApproveStatus()))
+                .findFirst();
     }
 }

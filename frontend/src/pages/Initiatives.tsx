@@ -65,6 +65,13 @@ interface Initiative {
   confidenceLevel?: number; // NUMBER(3) - CONFIDENCE_LEVEL (percentage)
   estimatedCapex?: number; // NUMBER(15,2) - ESTIMATED_CAPEX
   budgetType?: string; // Budget type - BUDGETED or NON-BUDGETED
+  
+  // Rejection information fields
+  rejectedBy?: string;
+  rejectionReason?: string;
+  rejectionDate?: string;
+  rejectedStageName?: string;
+  rejectedStageNumber?: number;
 }
 
 interface InitiativesProps {

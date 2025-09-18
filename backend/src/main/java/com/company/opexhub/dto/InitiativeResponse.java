@@ -42,6 +42,13 @@ public class InitiativeResponse {
     private BigDecimal estimatedCapex;
     private String budgetType;
     private String initiatorName;
+    
+    // Rejection information fields
+    private String rejectedBy;
+    private String rejectionReason;
+    private LocalDateTime rejectionDate;
+    private String rejectedStageName;
+    private Integer rejectedStageNumber;
 
     // Constructors
     public InitiativeResponse() {}
@@ -173,4 +180,20 @@ public class InitiativeResponse {
 
     public String getInitiatorName() { return initiatorName; }
     public void setInitiatorName(String initiatorName) { this.initiatorName = initiatorName; }
+    
+    // Rejection information getters and setters
+    public String getRejectedBy() { return rejectedBy; }
+    public void setRejectedBy(String rejectedBy) { this.rejectedBy = rejectedBy; }
+    
+    public String getRejectionReason() { return rejectionReason; }
+    public void setRejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; }
+    
+    public LocalDateTime getRejectionDate() { return rejectionDate; }
+    public void setRejectionDate(LocalDateTime rejectionDate) { this.rejectionDate = rejectionDate; }
+    
+    public String getRejectedStageName() { return rejectedStageName; }
+    public void setRejectedStageName(String rejectedStageName) { this.rejectedStageName = rejectedStageName; }
+    
+    public Integer getRejectedStageNumber() { return rejectedStageNumber; }
+    public void setRejectedStageNumber(Integer rejectedStageNumber) { this.rejectedStageNumber = rejectedStageNumber; }
 }

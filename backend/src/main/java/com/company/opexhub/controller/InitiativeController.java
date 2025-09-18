@@ -23,8 +23,10 @@ import com.company.opexhub.dto.ApiResponse;
 import com.company.opexhub.dto.InitiativeRequest;
 import com.company.opexhub.dto.InitiativeResponse;
 import com.company.opexhub.entity.Initiative;
+import com.company.opexhub.entity.WorkflowTransaction;
 import com.company.opexhub.security.UserPrincipal;
 import com.company.opexhub.service.InitiativeService;
+import com.company.opexhub.service.WorkflowTransactionService;
 
 @RestController
 @RequestMapping("/api/initiatives")
@@ -32,6 +34,9 @@ public class InitiativeController {
 
     @Autowired
     private InitiativeService initiativeService;
+    
+    @Autowired
+    private WorkflowTransactionService workflowTransactionService;
 
     @GetMapping
     public Page<InitiativeResponse> getAllInitiatives(
@@ -151,6 +156,18 @@ public class InitiativeController {
         // Set MOC and CAPEX numbers - FIXED: These were missing!
         response.setMocNumber(initiative.getMocNumber());
         response.setCapexNumber(initiative.getCapexNumber());
+        
+        // Set rejection information if initiative is rejected
+        if ("Rejected".equals(initiative.getStatus())) {
+            workflowTransactionService.getRejectionInfo(initiative.getId())
+                .ifPresent(rejectedTransaction -> {
+                    response.setRejectedBy(rejectedTransaction.getActionBy());
+                    response.setRejectionReason(rejectedTransaction.getComment());
+                    response.setRejectionDate(rejectedTransaction.getActionDate());
+                    response.setRejectedStageName(rejectedTransaction.getStageName());
+                    response.setRejectedStageNumber(rejectedTransaction.getStageNumber());
+                });
+        }
         
         return response;
     }
