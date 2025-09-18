@@ -2687,6 +2687,18 @@ export const monthlyMonitoringAPI = {
     });
     // Extract data from ApiResponse wrapper
     return response.data?.data || [];
+  },
+
+  // Get initiatives assigned to user as Initiative Lead for Monthly Monitoring
+  getAssignedInitiatives: async (userEmail: string) => {
+    const response = await api.get(`/monthly-monitoring/assigned-initiatives/${encodeURIComponent(userEmail)}`);
+    return response.data;
+  },
+
+  // Check if all monthly monitoring entries for an initiative are finalized
+  areAllEntriesFinalized: async (initiativeId: number) => {
+    const response = await api.get(`/monthly-monitoring/validation/${initiativeId}/all-finalized`);
+    return response.data;
   }
 };
 

@@ -12,7 +12,7 @@ import { CheckCircle, XCircle, Users, AlertTriangle, MapPin, Loader2, DollarSign
 import { useUsers, useInitiativeLeadsBySite } from "@/hooks/useUsers";
 import { useFinalizedPendingFAEntries, useBatchFAApproval, MonthlyMonitoringEntry } from "@/hooks/useMonthlyMonitoring";
 import { useTimelineEntriesProgressMonitoring } from "@/hooks/useTimelineEntriesProgressMonitoring";
-import { timelineTrackerAPI } from "@/lib/api";
+import { timelineTrackerAPI, monthlyMonitoringAPI } from "@/lib/api";
 
 interface WorkflowStageModalProps {
   isOpen: boolean;
@@ -45,6 +45,10 @@ export default function WorkflowStageModal({
   // Stage 6 Timeline Validation states
   const [timelineValidationLoading, setTimelineValidationLoading] = useState(false);
   const [allTimelineEntriesCompleted, setAllTimelineEntriesCompleted] = useState<boolean>(true);
+  
+  // Stage 9 Monthly Monitoring Validation states
+  const [monthlyValidationLoading, setMonthlyValidationLoading] = useState(false);
+  const [allMonthlyEntriesFinalized, setAllMonthlyEntriesFinalized] = useState<boolean>(true);
   
   // Hooks for F&A functionality
   const { data: monthlyEntries = [], isLoading: entriesLoading, refetch: refetchEntries } = useFinalizedPendingFAEntries(
@@ -93,6 +97,24 @@ export default function WorkflowStageModal({
         })
         .finally(() => {
           setTimelineValidationLoading(false);
+        });
+    }
+  }, [isOpen, transaction?.stageNumber, transaction?.initiativeId]);
+
+  // Check if all monthly monitoring entries are finalized for Stage 9 validation
+  useEffect(() => {
+    if (isOpen && transaction?.stageNumber === 9 && transaction?.initiativeId) {
+      setMonthlyValidationLoading(true);
+      monthlyMonitoringAPI.areAllEntriesFinalized(transaction.initiativeId)
+        .then((response) => {
+          setAllMonthlyEntriesFinalized(response.data);
+        })
+        .catch((error) => {
+          console.error("Error checking monthly monitoring entries finalization:", error);
+          setAllMonthlyEntriesFinalized(false);
+        })
+        .finally(() => {
+          setMonthlyValidationLoading(false);
         });
     }
   }, [isOpen, transaction?.stageNumber, transaction?.initiativeId]);
@@ -205,6 +227,10 @@ export default function WorkflowStageModal({
     if (transaction.stageNumber === 6) {
       // Stage 6 Timeline Tracker validation - all timeline entries must be completed
       return allTimelineEntriesCompleted;
+    }
+    if (transaction.stageNumber === 9) {
+      // Stage 9 Monthly Monitoring validation - all monthly monitoring entries must be finalized
+      return allMonthlyEntriesFinalized;
     }
     if (transaction.stageNumber === 10) {
       // F&A approval - at least one entry should be selected or no entries to approve
@@ -519,12 +545,63 @@ export default function WorkflowStageModal({
 
       case 9: // Savings Monitoring (1 Month) - NOW IL instead of STLD
         return (
-          <div className="space-y-4 p-4 bg-blue-50 rounded-lg">
-            <div className="flex items-center gap-2.5">
-              <CheckCircle className="h-5 w-5 text-blue-600" />
-              <p className="text-blue-800 font-semibold text-sm">
-                Review savings monitoring data and provide your approval with comments.
+          <div className="space-y-4">
+            <div className="p-4 bg-blue-50 rounded-lg">
+              <div className="flex items-center gap-2.5">
+                <CheckCircle className="h-5 w-5 text-blue-600" />
+                <p className="text-blue-800 font-semibold text-sm">
+                  Monthly Monitoring Validation
+                </p>
+              </div>
+              <p className="text-xs text-blue-700 mt-2">
+                All monthly monitoring entries must be marked as "FINALIZED" before this stage can be approved.
               </p>
+            </div>
+
+            {/* Monthly Monitoring Completion Status */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-semibold">Monthly Monitoring Entries Status</Label>
+                {monthlyValidationLoading && (
+                  <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                )}
+              </div>
+
+              {monthlyValidationLoading ? (
+                <div className="flex items-center justify-center p-6 bg-muted rounded-lg">
+                  <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                  <span className="text-sm">Checking monthly monitoring entries...</span>
+                </div>
+              ) : (
+                <div className={`p-4 rounded-lg border ${
+                  allMonthlyEntriesFinalized 
+                    ? 'bg-green-50 border-green-200' 
+                    : 'bg-red-50 border-red-200'
+                }`}>
+                  <div className="flex items-center gap-2">
+                    {allMonthlyEntriesFinalized ? (
+                      <>
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                        <span className="text-sm font-medium text-green-800">
+                          All monthly monitoring entries are finalized
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="h-5 w-5 text-red-600" />
+                        <span className="text-sm font-medium text-red-800">
+                          Some monthly monitoring entries are not yet finalized
+                        </span>
+                      </>
+                    )}
+                  </div>
+                  {!allMonthlyEntriesFinalized && (
+                    <p className="text-xs text-red-600 mt-2">
+                      Please ensure all monthly monitoring entries are marked as "FINALIZED" before approving this stage.
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         );

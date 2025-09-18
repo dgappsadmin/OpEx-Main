@@ -85,7 +85,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
   const [formData, setFormData] = useState<Partial<MonthlyMonitoringEntry>>({});
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState<'all' | 'assigned'>('all');
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -121,8 +121,38 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
     },
   });
 
+  // Fetch assigned initiatives where user is the assigned IL
+  const { data: assignedInitiatives = [], isLoading: assignedLoading } = useQuery({
+    queryKey: ['assigned-monthly-monitoring-initiatives', user.email],
+    queryFn: async () => {
+      try {
+        const response = await monthlyMonitoringAPI.getAssignedInitiatives(user.email);
+        
+        // Map the response to the expected format
+        return response.data.map((item: any) => ({
+          id: item.initiativeId,
+          initiativeNumber: item.initiativeNumber,
+          initiativeTitle: item.initiativeTitle,
+          initiativeStatus: item.initiativeStatus,
+          site: item.site,
+          assignedUserEmail: item.assignedUserEmail || item.pendingWith,
+          expectedSavings: item.expectedSavings || 0,
+          description: item.description,
+          stageNumber: item.stageNumber
+        }));
+      } catch (error) {
+        console.error('Error fetching assigned monthly monitoring initiatives:', error);
+        return [];
+      }
+    },
+  });
+
+  // Get current initiatives based on active tab
+  const currentInitiatives = activeTab === 'all' ? approvedInitiatives : assignedInitiatives;
+  const isCurrentlyLoading = activeTab === 'all' ? initiativesLoading : assignedLoading;
+
   // Filter and search initiatives
-  const filteredInitiatives = approvedInitiatives.filter((initiative: Initiative) => {
+  const filteredInitiatives = currentInitiatives.filter((initiative: Initiative) => {
     // Enhanced search - include site and description in search
     const searchLower = searchTerm.toLowerCase().trim();
     const matchesSearch = !searchTerm || 
@@ -333,18 +363,51 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
   };
 
   const canEdit = (entry: MonthlyMonitoringEntry) => {
-    // Only IL (Initiative Lead) role can edit
-    return user.role === 'IL';
+    // Check if user is IL and is assigned to this initiative
+    if (user.role !== 'IL') return false;
+    
+    // For assigned initiatives tab, user can edit
+    if (activeTab === 'assigned') return true;
+    
+    // For all initiatives tab, check if user is assigned to this specific initiative
+    const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
+    return selectedInitiative && selectedInitiative.assignedUserEmail === user.email;
   };
 
   const canApprove = () => {
-    // Only IL (Initiative Lead) role can approve
-    return user.role === 'IL';
+    // Check if user is IL and is assigned to this initiative
+    if (user.role !== 'IL') return false;
+    
+    // For assigned initiatives tab, user can approve
+    if (activeTab === 'assigned') return true;
+    
+    // For all initiatives tab, check if user is assigned to this specific initiative
+    const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
+    return selectedInitiative && selectedInitiative.assignedUserEmail === user.email;
   };
 
   const canFinalize = (entry: MonthlyMonitoringEntry) => {
-    // Only IL (Initiative Lead) role can finalize
-    return user.role === 'IL';
+    // Check if user is IL and is assigned to this initiative
+    if (user.role !== 'IL') return false;
+    
+    // For assigned initiatives tab, user can finalize
+    if (activeTab === 'assigned') return true;
+    
+    // For all initiatives tab, check if user is assigned to this specific initiative
+    const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
+    return selectedInitiative && selectedInitiative.assignedUserEmail === user.email;
+  };
+
+  const canCreate = () => {
+    // Check if user is IL and is assigned to this initiative
+    if (user.role !== 'IL') return false;
+    
+    // For assigned initiatives tab, user can create
+    if (activeTab === 'assigned') return true;
+    
+    // For all initiatives tab, check if user is assigned to this specific initiative
+    const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
+    return selectedInitiative && selectedInitiative.assignedUserEmail === user.email;
   };
 
   const formatCurrency = (amount: number) => {
@@ -391,7 +454,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
     }
   ];
 
-  if (initiativesLoading) {
+  if (isCurrentlyLoading) {
     return (
       <div className="container mx-auto p-4 space-y-4 max-w-6xl">
         <div className="flex items-center justify-center h-64">
@@ -425,7 +488,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
             Monthly monitoring and validation of savings achievements
           </p>
         </div>
-        {selectedInitiativeId && user.role === 'IL' && (
+        {selectedInitiativeId && canCreate() && (
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button 
@@ -606,6 +669,25 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
 
       {!selectedInitiativeId ? (
         <div>
+          {/* Tabs for All vs Assigned Initiatives */}
+          <div className="mb-4">
+            <Tabs value={activeTab} onValueChange={(value: string) => {
+              setActiveTab(value as 'all' | 'assigned');
+              setCurrentPage(1); // Reset pagination when switching tabs
+            }} className="w-full">
+              <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto lg:mx-0 h-9">
+                <TabsTrigger value="all" className="flex items-center gap-1.5 text-xs">
+                  <FileText className="h-3.5 w-3.5" />
+                  All Initiatives
+                </TabsTrigger>
+                <TabsTrigger value="assigned" className="flex items-center gap-1.5 text-xs">
+                  <Target className="h-3.5 w-3.5" />
+                  Your Assigned Initiatives
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+
           {/* Filters - Enhanced style */}
           <Card className="shadow-sm mb-4">
             <CardHeader className="pb-3">
@@ -614,7 +696,9 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                 Initiative Filters
               </CardTitle>
               <CardDescription className="text-xs">
-                Search and filter your assigned initiatives
+                {activeTab === 'assigned' 
+                  ? 'Search and filter initiatives assigned to you' 
+                  : `Search and filter all initiatives${user.site === 'CORP' ? ' (all sites)' : ` for ${user.site} site`}`}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -662,10 +746,10 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
               {/* Results counter */}
               <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
                 <div className="text-sm text-muted-foreground">
-                  {filteredInitiatives.length === approvedInitiatives.length ? (
-                    `Showing all ${approvedInitiatives.length} initiatives`
+                  {filteredInitiatives.length === currentInitiatives.length ? (
+                    `Showing all ${currentInitiatives.length} initiatives`
                   ) : (
-                    `Showing ${filteredInitiatives.length} of ${approvedInitiatives.length} initiatives`
+                    `Showing ${filteredInitiatives.length} of ${currentInitiatives.length} initiatives`
                   )}
                   {searchTerm && (
                     <span className="ml-2 text-blue-600">
@@ -697,12 +781,16 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
           {filteredInitiatives.length === 0 ? (
             <Card className="shadow-sm">
               <CardContent className="text-center py-12">
-                {approvedInitiatives.length === 0 ? (
+                {currentInitiatives.length === 0 ? (
                   <>
                     <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No Initiatives Available</h3>
+                    <h3 className="text-lg font-semibold mb-2">
+                      {activeTab === 'assigned' ? 'No Assigned Initiatives' : 'No Initiatives Available'}
+                    </h3>
                     <p className="text-muted-foreground text-sm max-w-md mx-auto">
-                      You currently have no initiatives where Savings Monitoring has been approved and you are assigned as Site Lead.
+                      {activeTab === 'assigned' 
+                        ? 'You currently have no initiatives assigned to you as Initiative Lead where Monthly Monitoring is available.'
+                        : 'You currently have no initiatives where Stage 9 (Monthly Monitoring) has been approved and you have access.'}
                     </p>
                   </>
                 ) : (
@@ -846,10 +934,10 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-lg font-semibold">
-                Monitoring for: {approvedInitiatives.find((i: Initiative) => i.id === selectedInitiativeId)?.initiativeNumber}
+                Monitoring for: {currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId)?.initiativeNumber}
               </h2>
               <p className="text-sm text-muted-foreground">
-                {approvedInitiatives.find((i: Initiative) => i.id === selectedInitiativeId)?.initiativeTitle}
+                {currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId)?.initiativeTitle}
               </p>
             </div>
             <Button 

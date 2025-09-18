@@ -43,6 +43,22 @@ public class MonthlyMonitoringController {
         }
     }
 
+    /**
+     * Get initiatives assigned to a specific user as Initiative Lead where Stage 8 is approved
+     */
+    @GetMapping("/assigned-initiatives/{userEmail}")
+    public ResponseEntity<ApiResponse<List<WorkflowTransactionDetailDTO>>> getAssignedInitiatives(
+            @PathVariable String userEmail) {
+        try {
+            List<WorkflowTransactionDetailDTO> initiatives = workflowTransactionService
+                    .getAssignedInitiativesForMonthlyMonitoring(userEmail);
+            return ResponseEntity.ok(new ApiResponse<>(true, "Assigned initiatives retrieved successfully", initiatives));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse<>(false, "Error retrieving assigned initiatives: " + e.getMessage(), null));
+        }
+    }
+
     @GetMapping("/{initiativeId}")
     public ResponseEntity<ApiResponse<List<MonthlyMonitoringEntry>>> getMonitoringEntries(
             @PathVariable Long initiativeId,
@@ -298,6 +314,20 @@ public class MonthlyMonitoringController {
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body(new ApiResponse<>(false, "Error processing batch F&A approval: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Check if all monthly monitoring entries for an initiative are finalized
+     */
+    @GetMapping("/validation/{initiativeId}/all-finalized")
+    public ResponseEntity<ApiResponse<Boolean>> areAllEntriesFinalized(@PathVariable Long initiativeId) {
+        try {
+            boolean allFinalized = monthlyMonitoringService.areAllEntriesFinalized(initiativeId);
+            return ResponseEntity.ok(new ApiResponse<>(true, "Validation completed", allFinalized));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse<>(false, "Error validating entries: " + e.getMessage(), false));
         }
     }
 }

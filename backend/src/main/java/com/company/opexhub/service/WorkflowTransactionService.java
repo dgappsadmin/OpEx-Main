@@ -885,6 +885,34 @@ public class WorkflowTransactionService {
     }
 
     /**
+     * Get initiatives assigned to user as Initiative Lead for Monthly Monitoring (Stage 9)
+     * This includes initiatives where the user is assigned as IL and Stage 8 is approved
+     */
+    public List<WorkflowTransactionDetailDTO> getAssignedInitiativesForMonthlyMonitoring(String userEmail) {
+        // Get user by email to find assigned initiatives
+        Optional<User> user = userRepository.findByEmail(userEmail);
+        if (!user.isPresent()) {
+            return Collections.emptyList();
+        }
+        
+        // Find all workflow transactions where this user is assigned as IL
+        List<WorkflowTransaction> assignedTransactions = workflowTransactionRepository
+                .findByAssignedUserId(user.get().getId());
+        
+        // Convert to DTOs and filter to get Stage 9 initiatives (Monthly Monitoring stage)
+        return assignedTransactions.stream()
+                .filter(transaction -> transaction.getStageNumber() == 9) // Stage 9 = Monthly Monitoring
+                .filter(transaction -> {
+                    // Check if Stage 8 is approved (prerequisite for Monthly Monitoring access)
+                    Optional<WorkflowTransaction> stage8 = workflowTransactionRepository
+                            .findByInitiativeIdAndStageNumber(transaction.getInitiativeId(), 8);
+                    return stage8.isPresent() && "approved".equals(stage8.get().getApproveStatus());
+                })
+                .map(this::convertToDetailDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
      * Get rejection information for an initiative if it was rejected
      */
     public Optional<WorkflowTransaction> getRejectionInfo(Long initiativeId) {

@@ -135,4 +135,17 @@ public class MonthlyMonitoringService {
         
         return monthlyMonitoringRepository.saveAll(entries);
     }
+
+    // Check if all monthly monitoring entries for an initiative are finalized
+    public boolean areAllEntriesFinalized(Long initiativeId) {
+        List<MonthlyMonitoringEntry> entries = monthlyMonitoringRepository.findByInitiative_IdOrderByMonitoringMonth(initiativeId);
+        
+        // If no entries exist, consider as not finalized (entries must exist to be considered complete)
+        if (entries.isEmpty()) {
+            return false;
+        }
+        
+        // Check if all entries are finalized
+        return entries.stream().allMatch(entry -> "Y".equals(entry.getIsFinalized()));
+    }
 }
