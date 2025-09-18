@@ -87,6 +87,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
   const [formData, setFormData] = useState<Partial<TimelineEntry>>({});
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<'all' | 'assigned'>('all');
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -131,8 +132,38 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
     },
   });
 
+  // Fetch assigned initiatives where user is the assigned IL
+  const { data: assignedInitiatives = [], isLoading: assignedLoading } = useQuery({
+    queryKey: ['assigned-initiatives', user.email],
+    queryFn: async () => {
+      try {
+        const response = await timelineTrackerAPI.getAssignedInitiatives(user.email);
+        
+        // Map the response to the expected format
+        return response.data.map((item: any) => ({
+          id: item.initiativeId,
+          initiativeNumber: item.initiativeNumber,
+          initiativeTitle: item.initiativeTitle,
+          initiativeStatus: item.initiativeStatus,
+          site: item.site,
+          assignedUserEmail: item.assignedUserEmail || item.pendingWith,
+          expectedSavings: item.expectedSavings || 0,
+          description: item.description,
+          stageNumber: item.stageNumber
+        }));
+      } catch (error) {
+        console.error('Error fetching assigned initiatives:', error);
+        return [];
+      }
+    },
+  });
+
+  // Get current initiatives based on active tab
+  const currentInitiatives = activeTab === 'all' ? approvedInitiatives : assignedInitiatives;
+  const isCurrentlyLoading = activeTab === 'all' ? initiativesLoading : assignedLoading;
+
   // Filter and search initiatives - Enhanced search
-  const filteredInitiatives = approvedInitiatives.filter((initiative: Initiative) => {
+  const filteredInitiatives = currentInitiatives.filter((initiative: Initiative) => {
     // Enhanced search - include site and description in search
     const searchLower = searchTerm.toLowerCase().trim();
     const matchesSearch = !searchTerm || 
@@ -381,20 +412,41 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
     }
   };
 
-  // Role-based permission functions - matching MonthlyMonitoring pattern
+  // Role-based permission functions - Enhanced for assigned IL check
   const canEdit = (entry: TimelineEntry) => {
-    // Only IL (Initiative Lead) role can edit
-    return user.role === 'IL';
+    // Check if user is IL and is assigned to this initiative
+    if (user.role !== 'IL') return false;
+    
+    // For assigned initiatives tab, user can edit
+    if (activeTab === 'assigned') return true;
+    
+    // For all initiatives tab, check if user is assigned to this specific initiative
+    const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
+    return selectedInitiative && selectedInitiative.assignedUserEmail === user.email;
   };
 
   const canDelete = (entry: TimelineEntry) => {
-    // Only IL (Initiative Lead) role can delete
-    return user.role === 'IL';
+    // Check if user is IL and is assigned to this initiative
+    if (user.role !== 'IL') return false;
+    
+    // For assigned initiatives tab, user can delete
+    if (activeTab === 'assigned') return true;
+    
+    // For all initiatives tab, check if user is assigned to this specific initiative
+    const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
+    return selectedInitiative && selectedInitiative.assignedUserEmail === user.email;
   };
 
   const canCreate = () => {
-    // Only IL (Initiative Lead) role can create
-    return user.role === 'IL';
+    // Check if user is IL and is assigned to this initiative
+    if (user.role !== 'IL') return false;
+    
+    // For assigned initiatives tab, user can create
+    if (activeTab === 'assigned') return true;
+    
+    // For all initiatives tab, check if user is assigned to this specific initiative
+    const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
+    return selectedInitiative && selectedInitiative.assignedUserEmail === user.email;
   };
 
   const handleEdit = (entry: TimelineEntry) => {
@@ -476,7 +528,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
     }
   ];
 
-  if (initiativesLoading) {
+  if (isCurrentlyLoading) {
     return (
       <div className="container mx-auto p-4 space-y-4 max-w-6xl">
         <div className="flex items-center justify-center h-64">
@@ -648,6 +700,25 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
 
       {!selectedInitiativeId ? (
         <div>
+          {/* Tabs for All vs Assigned Initiatives */}
+          <div className="mb-4">
+            <Tabs value={activeTab} onValueChange={(value: string) => {
+              setActiveTab(value as 'all' | 'assigned');
+              setCurrentPage(1); // Reset pagination when switching tabs
+            }} className="w-full">
+              <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto lg:mx-0 h-9">
+                <TabsTrigger value="all" className="flex items-center gap-1.5 text-xs">
+                  <FileText className="h-3.5 w-3.5" />
+                  All Initiatives
+                </TabsTrigger>
+                <TabsTrigger value="assigned" className="flex items-center gap-1.5 text-xs">
+                  <Target className="h-3.5 w-3.5" />
+                  Your Assigned Initiatives
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+
           {/* Filters - Enhanced style */}
           <Card className="shadow-sm mb-4">
             <CardHeader className="pb-3">
@@ -656,7 +727,9 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                 Initiative Filters
               </CardTitle>
               <CardDescription className="text-xs">
-                Search and filter your assigned initiatives
+                {activeTab === 'assigned' 
+                  ? 'Search and filter initiatives assigned to you' 
+                  : `Search and filter all initiatives${user.site === 'CORP' ? ' (all sites)' : ` for ${user.site} site`}`}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -705,10 +778,10 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
               {/* Results counter */}
               <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
                 <div className="text-sm text-muted-foreground">
-                  {filteredInitiatives.length === approvedInitiatives.length ? (
-                    `Showing all ${approvedInitiatives.length} initiatives`
+                  {filteredInitiatives.length === currentInitiatives.length ? (
+                    `Showing all ${currentInitiatives.length} initiatives`
                   ) : (
-                    `Showing ${filteredInitiatives.length} of ${approvedInitiatives.length} initiatives`
+                    `Showing ${filteredInitiatives.length} of ${currentInitiatives.length} initiatives`
                   )}
                   {searchTerm && (
                     <span className="ml-2 text-blue-600">
@@ -740,12 +813,16 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
           {filteredInitiatives.length === 0 ? (
             <Card className="shadow-sm">
               <CardContent className="text-center py-12">
-                {approvedInitiatives.length === 0 ? (
+                {currentInitiatives.length === 0 ? (
                   <>
                     <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No Initiatives Available</h3>
+                    <h3 className="text-lg font-semibold mb-2">
+                      {activeTab === 'assigned' ? 'No Assigned Initiatives' : 'No Initiatives Available'}
+                    </h3>
                     <p className="text-muted-foreground text-sm max-w-md mx-auto">
-                      You currently have no initiatives where Stage 5 (Timeline Tracker) has been approved and you are assigned as Initiative Lead.
+                      {activeTab === 'assigned' 
+                        ? 'You currently have no initiatives assigned to you as Initiative Lead where Timeline Tracker is available.'
+                        : 'You currently have no initiatives where Stage 6 (Timeline Tracker) has been approved and you have access.'}
                     </p>
                   </>
                 ) : (
@@ -895,10 +972,10 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-3">
             <div>
               <h2 className="text-lg font-semibold">
-                Timeline for: {approvedInitiatives.find((i: Initiative) => i.id === selectedInitiativeId)?.initiativeNumber}
+                Timeline for: {currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId)?.initiativeNumber}
               </h2>
               <p className="text-sm text-muted-foreground">
-                {approvedInitiatives.find((i: Initiative) => i.id === selectedInitiativeId)?.initiativeTitle}
+                {currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId)?.initiativeTitle}
               </p>
             </div>
             <Button variant="outline" size="sm" onClick={() => setSelectedInitiativeId(null)}>
@@ -906,13 +983,15 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
             </Button>
           </div>
 
-          {/* Role-based access info - matching MonthlyMonitoring pattern */}
-          {user.role !== 'IL' && (
+          {/* Role-based access info - Enhanced for assigned IL check */}
+          {!canCreate() && (
             <Alert className="mb-6 border-blue-200 bg-blue-50">
               <Lock className="h-4 w-4 text-blue-600" />
               <AlertDescription className="text-blue-800">
                 <strong>Read-Only Access:</strong> You can view timeline entries but cannot create, edit, or delete entries. 
-                Only users with Initiative Lead (IL) role can modify timeline data.
+                {user.role !== 'IL' 
+                  ? 'Only users with Initiative Lead (IL) role can modify timeline data.'
+                  : 'Only the assigned Initiative Lead for this specific initiative can modify timeline data.'}
               </AlertDescription>
             </Alert>
           )}

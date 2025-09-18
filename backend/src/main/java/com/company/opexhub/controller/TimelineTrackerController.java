@@ -41,6 +41,22 @@ public class TimelineTrackerController {
         }
     }
 
+    /**
+     * Get initiatives where current user is assigned as Initiative Lead (IL)
+     */
+    @GetMapping("/assigned-initiatives/{userEmail}")
+    public ResponseEntity<ApiResponse<List<WorkflowTransactionDetailDTO>>> getAssignedInitiativesForUser(
+            @PathVariable String userEmail) {
+        try {
+            List<WorkflowTransactionDetailDTO> initiatives = workflowTransactionService
+                    .getAssignedInitiativesForUser(userEmail);
+            return ResponseEntity.ok(new ApiResponse<>(true, "Assigned initiatives retrieved successfully", initiatives));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse<>(false, "Error retrieving assigned initiatives: " + e.getMessage(), null));
+        }
+    }
+
     @GetMapping("/{initiativeId}")
     public ResponseEntity<ApiResponse<List<TimelineEntry>>> getTimelineEntries(
             @PathVariable Long initiativeId,
@@ -215,6 +231,21 @@ public class TimelineTrackerController {
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body(new ApiResponse<>(false, "Error updating status: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Check if all timeline entries for an initiative are completed
+     * This is used for Stage 6 workflow validation
+     */
+    @GetMapping("/validation/{initiativeId}/all-completed")
+    public ResponseEntity<ApiResponse<Boolean>> areAllTimelineEntriesCompleted(@PathVariable Long initiativeId) {
+        try {
+            boolean allCompleted = timelineEntryService.areAllTimelineEntriesCompleted(initiativeId);
+            return ResponseEntity.ok(new ApiResponse<>(true, "Timeline entries validation completed", allCompleted));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse<>(false, "Error validating timeline entries: " + e.getMessage(), null));
         }
     }
 }

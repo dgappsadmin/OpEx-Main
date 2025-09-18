@@ -12,6 +12,7 @@ import { CheckCircle, XCircle, Users, AlertTriangle, MapPin, Loader2, DollarSign
 import { useUsers, useInitiativeLeadsBySite } from "@/hooks/useUsers";
 import { useFinalizedPendingFAEntries, useBatchFAApproval, MonthlyMonitoringEntry } from "@/hooks/useMonthlyMonitoring";
 import { useTimelineEntriesProgressMonitoring } from "@/hooks/useTimelineEntriesProgressMonitoring";
+import { timelineTrackerAPI } from "@/lib/api";
 
 interface WorkflowStageModalProps {
   isOpen: boolean;
@@ -40,6 +41,10 @@ export default function WorkflowStageModal({
   // Stage 9 F&A Approval states
   const [selectedEntries, setSelectedEntries] = useState<Set<number>>(new Set());
   const [faComments, setFaComments] = useState("");
+  
+  // Stage 6 Timeline Validation states
+  const [timelineValidationLoading, setTimelineValidationLoading] = useState(false);
+  const [allTimelineEntriesCompleted, setAllTimelineEntriesCompleted] = useState<boolean>(true);
   
   // Hooks for F&A functionality
   const { data: monthlyEntries = [], isLoading: entriesLoading, refetch: refetchEntries } = useFinalizedPendingFAEntries(
@@ -73,6 +78,24 @@ export default function WorkflowStageModal({
       setSelectedEntries(new Set());
     }
   }, [monthlyEntries]);
+
+  // Check if all timeline entries are completed for Stage 6 validation
+  useEffect(() => {
+    if (isOpen && transaction?.stageNumber === 6 && transaction?.initiativeId) {
+      setTimelineValidationLoading(true);
+      timelineTrackerAPI.areAllTimelineEntriesCompleted(transaction.initiativeId)
+        .then((response) => {
+          setAllTimelineEntriesCompleted(response.data);
+        })
+        .catch((error) => {
+          console.error("Error checking timeline entries completion:", error);
+          setAllTimelineEntriesCompleted(false);
+        })
+        .finally(() => {
+          setTimelineValidationLoading(false);
+        });
+    }
+  }, [isOpen, transaction?.stageNumber, transaction?.initiativeId]);
 
   // Early return if transaction is null
   if (!transaction) {
@@ -178,6 +201,10 @@ export default function WorkflowStageModal({
       if (!mocRequired || !capexRequired) return false;
       if (mocRequired === "yes" && !mocNumber.trim()) return false;
       if (capexRequired === "yes" && !capexNumber.trim()) return false;
+    }
+    if (transaction.stageNumber === 6) {
+      // Stage 6 Timeline Tracker validation - all timeline entries must be completed
+      return allTimelineEntriesCompleted;
     }
     if (transaction.stageNumber === 10) {
       // F&A approval - at least one entry should be selected or no entries to approve
@@ -299,7 +326,79 @@ export default function WorkflowStageModal({
         );
 
       case 6: // Initiative Timeline Tracker (was stage 5)
+        return (
+          <div className="space-y-4">
+            <div className="p-4 bg-blue-50 rounded-lg">
+              <div className="flex items-center gap-2.5">
+                <CheckCircle className="h-5 w-5 text-blue-600" />
+                <p className="text-blue-800 font-semibold text-sm">
+                  Timeline Tracker Validation
+                </p>
+              </div>
+              <p className="text-xs text-blue-700 mt-2">
+                All timeline entries must be marked as "COMPLETED" before this stage can be approved.
+              </p>
+            </div>
+
+            {/* Timeline Completion Status */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-semibold">Timeline Entries Status</Label>
+                {timelineValidationLoading && (
+                  <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                )}
+              </div>
+
+              {timelineValidationLoading ? (
+                <div className="flex items-center justify-center p-6 bg-muted rounded-lg">
+                  <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                  <span className="text-sm">Checking timeline entries...</span>
+                </div>
+              ) : (
+                <div className={`p-4 rounded-lg border ${
+                  allTimelineEntriesCompleted 
+                    ? 'bg-green-50 border-green-200' 
+                    : 'bg-red-50 border-red-200'
+                }`}>
+                  <div className="flex items-center gap-2">
+                    {allTimelineEntriesCompleted ? (
+                      <>
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                        <span className="text-sm font-medium text-green-800">
+                          All timeline entries are completed
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="h-5 w-5 text-red-600" />
+                        <span className="text-sm font-medium text-red-800">
+                          Some timeline entries are not yet completed
+                        </span>
+                      </>
+                    )}
+                  </div>
+                  {!allTimelineEntriesCompleted && (
+                    <p className="text-xs text-red-600 mt-2">
+                      Please ensure all timeline activities are marked as "COMPLETED" before approving this stage.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+
       case 8: // Periodic Status Review with CMO (was stage 7)
+        return (
+          <div className="space-y-4 p-4 bg-blue-50 rounded-lg">
+            <div className="flex items-center gap-2.5">
+              <CheckCircle className="h-5 w-5 text-blue-600" />
+              <p className="text-blue-800 font-semibold text-sm">
+                Review and provide your decision with comments.
+              </p>
+            </div>
+          </div>
+        );
         return (
           <div className="space-y-4 p-4 bg-blue-50 rounded-lg">
             <div className="flex items-center gap-2.5">

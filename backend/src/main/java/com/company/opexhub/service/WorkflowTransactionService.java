@@ -38,6 +38,9 @@ public class WorkflowTransactionService {
     @Autowired
     private WfMasterRepository wfMasterRepository;
 
+    @Autowired
+    private TimelineEntryService timelineEntryService;
+
     /**
      * Create simple email template for workflow notifications (Outlook Classic friendly)
      */
@@ -472,7 +475,11 @@ public class WorkflowTransactionService {
                 // After Stage 5 (MOC-CAPEX), activate Stage 6 (Timeline)
                 activateNextILStage(initiative.getId(), 6);
             } else if (currentStageNumber == 6) {
-                // After Stage 6 (Timeline), create Stage 7 (Progress monitoring)
+                // After Stage 6 (Timeline), validate that all timeline entries are completed before proceeding
+                if (!timelineEntryService.areAllTimelineEntriesCompleted(initiative.getId())) {
+                    throw new RuntimeException("Cannot proceed to next stage: All timeline entries must be marked as COMPLETED before advancing from Stage 6 (Initiative Timeline Tracker)");
+                }
+                // Create Stage 7 (Progress monitoring)
                 createNextStage(initiative.getId(), 7);
             } else if (currentStageNumber == 7) {
                 // After Stage 7 (Progress monitoring), create Stage 8 (CMO Review)
@@ -715,7 +722,9 @@ public class WorkflowTransactionService {
      * Get initiatives where previous stage of Timeline Tracker (Stage 5) is approved and current stage is 6 - all users can view, IL can perform actions
      */
     public List<WorkflowTransactionDetailDTO> getInitiativesWithApprovedStage6ForUser(String userEmail, String site) {
-        return getInitiativesForCurrentStage(6, site);
+        // For CORP users, show all sites (pass empty string to ignore site filter)
+        String siteFilter = "CORP".equals(site) ? "" : site;
+        return getInitiativesForCurrentStage(6, siteFilter);
     }
 
     /**
@@ -760,15 +769,24 @@ public class WorkflowTransactionService {
     /**
      * Generic method to get initiatives where previous stage is approved and current stage exists
      * @param currentStageNumber The stage number to check for (e.g., 6 for Timeline Tracker, 9 for Savings Monitoring)
-     * @param site The site to filter by
+     * @param site The site to filter by (empty string means no site filtering)
      * @return List of initiatives where previous stage is approved and current stage exists
      */
     public List<WorkflowTransactionDetailDTO> getInitiativesForCurrentStage(Integer currentStageNumber, String site) {
         Integer previousStageNumber = currentStageNumber - 1;
         
         // Get initiatives where previous stage is approved
-        List<WorkflowTransaction> approvedPreviousStage = workflowTransactionRepository
-                .findByStageNumberAndApproveStatusAndSite(previousStageNumber, "approved", site);
+        List<WorkflowTransaction> approvedPreviousStage;
+        
+        if (site == null || site.isEmpty()) {
+            // No site filtering - get all approved previous stages
+            approvedPreviousStage = workflowTransactionRepository
+                    .findByStageNumberAndApproveStatus(previousStageNumber, "approved");
+        } else {
+            // Site-specific filtering
+            approvedPreviousStage = workflowTransactionRepository
+                    .findByStageNumberAndApproveStatusAndSite(previousStageNumber, "approved", site);
+        }
         
         // Filter to only include initiatives where current stage exists (meaning current stage is active)
         return approvedPreviousStage.stream()
@@ -835,5 +853,33 @@ public class WorkflowTransactionService {
             }
         }
         return false;
+    }
+
+    /**
+     * Get initiatives where current user is assigned as Initiative Lead (IL)
+     * This includes initiatives where the user is assigned in Stage 4 for IL stages (5, 6, 9, 11)
+     */
+    public List<WorkflowTransactionDetailDTO> getAssignedInitiativesForUser(String userEmail) {
+        // Get user by email to find assigned initiatives
+        Optional<User> user = userRepository.findByEmail(userEmail);
+        if (!user.isPresent()) {
+            return List.of();
+        }
+        
+        // Find all workflow transactions where this user is assigned as IL
+        List<WorkflowTransaction> assignedTransactions = workflowTransactionRepository
+                .findByAssignedUserId(user.get().getId());
+        
+        // Convert to DTOs and filter to get Stage 6 initiatives (Timeline Tracker stage)
+        return assignedTransactions.stream()
+                .filter(transaction -> transaction.getStageNumber() == 6) // Stage 6 = Timeline Tracker
+                .filter(transaction -> {
+                    // Check if Stage 5 is approved (prerequisite for Timeline Tracker access)
+                    Optional<WorkflowTransaction> stage5 = workflowTransactionRepository
+                            .findByInitiativeIdAndStageNumber(transaction.getInitiativeId(), 5);
+                    return stage5.isPresent() && "approved".equals(stage5.get().getApproveStatus());
+                })
+                .map(this::convertToDetailDTO)
+                .collect(Collectors.toList());
     }
 }

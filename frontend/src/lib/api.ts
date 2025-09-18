@@ -2557,6 +2557,18 @@ export const timelineTrackerAPI = {
   getTimelineEntriesForProgressMonitoring: async (initiativeId: number) => {
     const response = await api.get(`/timeline-tracker/progress-monitoring/${initiativeId}`);
     return response.data;
+  },
+
+  // Get assigned initiatives where user is the assigned IL
+  getAssignedInitiatives: async (userEmail: string) => {
+    const response = await api.get(`/timeline-tracker/assigned-initiatives/${encodeURIComponent(userEmail)}`);
+    return response.data;
+  },
+
+  // Check if all timeline entries are completed (for Stage 6 validation)
+  areAllTimelineEntriesCompleted: async (initiativeId: number) => {
+    const response = await api.get(`/timeline-tracker/validation/${initiativeId}/all-completed`);
+    return response.data;
   }
 };
 

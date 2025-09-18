@@ -48,6 +48,10 @@ public interface WorkflowTransactionRepository extends JpaRepository<WorkflowTra
                                                                       @Param("approveStatus") String approveStatus, 
                                                                       @Param("site") String site);
     
+    @Query("SELECT wt FROM WorkflowTransaction wt WHERE wt.stageNumber = :stageNumber AND wt.approveStatus = :approveStatus")
+    List<WorkflowTransaction> findByStageNumberAndApproveStatus(@Param("stageNumber") Integer stageNumber, 
+                                                               @Param("approveStatus") String approveStatus);
+    
     @Query("SELECT COUNT(wt) FROM WorkflowTransaction wt WHERE wt.approveStatus = :approveStatus AND wt.pendingWith IS NOT NULL")
     Long countByApproveStatusAndPendingWithIsNotNull(@Param("approveStatus") String approveStatus);
     
@@ -60,4 +64,7 @@ public interface WorkflowTransactionRepository extends JpaRepository<WorkflowTra
     
     @Query("SELECT COUNT(wt) FROM WorkflowTransaction wt WHERE wt.site = :site AND wt.approveStatus = :approveStatus AND wt.pendingWith IS NOT NULL AND wt.createdAt >= :startDate AND wt.createdAt <= :endDate")
     Long countBySiteAndApproveStatusAndPendingWithIsNotNullAndCreatedAtBetween(@Param("site") String site, @Param("approveStatus") String approveStatus, @Param("startDate") java.time.LocalDateTime startDate, @Param("endDate") java.time.LocalDateTime endDate);
+    
+    // Find workflow transactions by assigned user ID (for IL assignments)
+    List<WorkflowTransaction> findByAssignedUserId(Long assignedUserId);
 }

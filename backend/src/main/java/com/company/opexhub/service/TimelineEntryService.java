@@ -134,4 +134,21 @@ public class TimelineEntryService {
             }
         }
     }
+
+    /**
+     * Check if all timeline entries for an initiative are completed
+     * Used for Stage 6 workflow validation
+     */
+    public boolean areAllTimelineEntriesCompleted(Long initiativeId) {
+        List<TimelineEntry> entries = getTimelineEntriesByInitiative(initiativeId);
+        
+        // If no entries exist, consider as completed
+        if (entries.isEmpty()) {
+            return true;
+        }
+        
+        // Check if ALL entries have status COMPLETED
+        return entries.stream()
+                .allMatch(entry -> TimelineEntry.TimelineStatus.COMPLETED.equals(entry.getStatus()));
+    }
 }
