@@ -562,7 +562,7 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
                                     <span className="font-medium">Next Pending:</span>
                                     <span className="ml-2">
                                       Stage {nextPendingTransaction.stageNumber}: {nextPendingTransaction.stageName} 
-                                      (Pending with: {getRoleCodeDescription(nextPendingTransaction.requiredRole)})
+                                      {/* (Pending with: {getRoleCodeDescription(nextPendingTransaction.requiredRole)}) */}
                                     </span>
                                   </>
                                 );

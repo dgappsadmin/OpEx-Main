@@ -26,40 +26,12 @@ interface KPIProps {
 export default function KPI({ user }: KPIProps) {
   const { data: initiativesData, isLoading } = useInitiatives();
   
-  // Mock data fallback for KPI
-  const mockInitiatives = [
-    {
-      id: 1,
-      title: "Process Improvement Initiative",
-      status: "In Progress",
-      site: "Mumbai",
-      priority: "High",
-      expectedSavings: 150
-    },
-    {
-      id: 2,
-      title: "Cost Reduction Program",
-      status: "Completed",
-      site: "Delhi",
-      priority: "Medium",
-      expectedSavings: 200
-    },
-    {
-      id: 3,
-      title: "Quality Enhancement",
-      status: "Pending",
-      site: "Bangalore",
-      priority: "Low",
-      expectedSavings: 120
-    }
-  ];
-  
-  // Handle both API response format and mock data format
+  // Handle API response format - no fallback to mock data
   const initiatives = (Array.isArray(initiativesData?.content) && initiativesData.content.length > 0) 
     ? initiativesData.content 
     : (Array.isArray(initiativesData) && initiativesData.length > 0) 
     ? initiativesData 
-    : mockInitiatives;
+    : [];
 
   if (isLoading) {
     return (
@@ -68,6 +40,38 @@ export default function KPI({ user }: KPIProps) {
           <div className="text-center space-y-2">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
             <p className="text-sm text-muted-foreground">Loading KPI data...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show empty state when no initiatives are available
+  if (initiatives.length === 0) {
+    return (
+      <div className="container mx-auto p-4 space-y-4 max-w-6xl">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div>
+            <h1 className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              KPI Monitoring
+            </h1>
+            <p className="text-muted-foreground text-xs mt-0.5">
+              Monitor key performance indicators and initiative metrics
+            </p>
+          </div>
+        </div>
+        
+        {/* Empty State */}
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center space-y-4">
+            <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto" />
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold text-foreground">No KPI Data Available</h3>
+              <p className="text-sm text-muted-foreground max-w-md">
+                No initiatives found. KPI metrics will be displayed once initiatives are available in the system.
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -163,13 +167,11 @@ export default function KPI({ user }: KPIProps) {
     }
   };
 
-  // KPI Stats Array similar to Dashboard pattern
+  // KPI Stats Array - no hardcoded trends, using real data only
   const kpiStats = [
     {
       title: "Total Initiatives",
       value: totalInitiatives.toString(),
-      change: "+12%",
-      trend: "up",
       icon: Target,
       color: "text-blue-600",
       description: `${inProgressInitiatives} in progress`
@@ -177,8 +179,6 @@ export default function KPI({ user }: KPIProps) {
     {
       title: "Completion Rate",
       value: `${completionRate.toFixed(1)}%`,
-      change: "+8%",
-      trend: "up",
       icon: Award,
       color: "text-green-600",
       description: `${completedInitiatives} completed`
@@ -186,8 +186,6 @@ export default function KPI({ user }: KPIProps) {
     {
       title: "Expected Savings",
       value: formatCurrency(totalExpectedSavings),
-      change: "+28%",
-      trend: "up",
       icon: IndianRupee,
       color: "text-emerald-600",
       description: `${formatCurrency(completedSavings)} realized`
@@ -195,8 +193,6 @@ export default function KPI({ user }: KPIProps) {
     {
       title: "Under Approval",
       value: (underApprovalsInitiatives + pendingInitiatives).toString(),
-      change: "-5%",
-      trend: "down",
       icon: Clock,
       color: "text-orange-600",
       description: "Need attention"
@@ -234,14 +230,8 @@ export default function KPI({ user }: KPIProps) {
               <div className="text-xl font-bold break-words mb-1">
                 {stat.value}
               </div>
-              <p className="text-2xs text-muted-foreground mb-1">
+              <p className="text-2xs text-muted-foreground">
                 {stat.description}
-              </p>
-              <p className={`text-2xs flex items-center gap-1 ${
-                stat.trend === 'up' ? 'text-green-600' : 'text-red-600'
-              }`}>
-                <TrendingUp className="h-2.5 w-2.5" />
-                {stat.change} from last month
               </p>
             </CardContent>
           </Card>
