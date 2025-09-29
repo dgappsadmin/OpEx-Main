@@ -82,6 +82,8 @@ public class InitiativeService {
         System.out.println("Expected Savings: " + request.getExpectedSavings());
         System.out.println("Target Value: " + request.getTargetValue());
         System.out.println("Estimated CAPEX: " + request.getEstimatedCapex());
+        System.out.println("Selected HOD ID: " + request.getSelectedHodId());
+        System.out.println("Selected HOD Email: " + request.getSelectedHodEmail());
 
         Initiative initiative = new Initiative(
                 request.getTitle(),
@@ -116,9 +118,9 @@ public class InitiativeService {
 
         Initiative savedInitiative = initiativeRepository.save(initiative);
 
-        // Create initial workflow stages and transactions
+        // Create initial workflow stages and transactions with HOD assignment
         createInitialWorkflowStages(savedInitiative);
-        workflowTransactionService.createInitialWorkflowTransactions(savedInitiative);
+        workflowTransactionService.createInitialWorkflowTransactions(savedInitiative, request.getSelectedHodId(), request.getSelectedHodEmail());
 
         return savedInitiative;
     }

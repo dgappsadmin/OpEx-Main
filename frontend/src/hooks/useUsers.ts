@@ -102,3 +102,20 @@ export const useInitiativeLeadsBySite = (site: string) => {
     enabled: !!site,
   });
 };
+
+export const useHodBySite = (site: string) => {
+  return useQuery({
+    queryKey: ['users', 'hod', site],
+    queryFn: async () => {
+      try {
+        // Use dedicated endpoint for HOD users
+        return await userAPI.getHodBySite(site);
+      } catch (error) {
+        console.warn('Failed to fetch HOD users from API, using mock data:', error);
+        // Fallback to mock data
+        return mockUsers.filter(user => user.site === site && user.role === 'HOD');
+      }
+    },
+    enabled: !!site,
+  });
+};

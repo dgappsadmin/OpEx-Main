@@ -330,6 +330,61 @@ public class WorkflowTransactionService {
     }
 
     @Transactional
+    public void createInitialWorkflowTransactions(Initiative initiative, Long selectedHodId, String selectedHodEmail) {
+        // Get workflow configuration from wf_master table
+        List<WfMaster> workflowStages = wfMasterRepository.findBySiteAndIsActiveOrderByStageNumber(
+            initiative.getSite(), "Y");
+
+        if (workflowStages.isEmpty()) {
+            throw new RuntimeException("No workflow configuration found for site: " + initiative.getSite());
+        }
+
+        // Only create Stage 1 initially - other stages will be created sequentially
+        for (WfMaster wfStage : workflowStages) {
+            if (wfStage.getStageNumber() == 1) {
+                WorkflowTransaction transaction = new WorkflowTransaction(
+                    initiative.getId(),
+                    wfStage.getStageNumber(),
+                    wfStage.getStageName(),
+                    initiative.getSite(),
+                    wfStage.getRoleCode(),
+                    wfStage.getUserEmail()
+                );
+
+                // First stage is auto-approved and creates Stage 2
+                transaction.setApproveStatus("approved");
+                transaction.setActionBy(initiative.getCreatedBy().getFullName());
+                transaction.setActionDate(LocalDateTime.now());
+                transaction.setComment("Initiative created and registered");
+                transaction.setPendingWith(null);
+                
+                workflowTransactionRepository.save(transaction);
+                
+                // Create Stage 2 as pending with selected HOD (NEW DYNAMIC HOD ASSIGNMENT)
+                createNextStageWithHod(initiative.getId(), 2, selectedHodId, selectedHodEmail);
+                
+                // Send email notification to Stage 2 HOD approver
+                Optional<WorkflowTransaction> stage2Transaction = workflowTransactionRepository
+                        .findByInitiativeIdAndStageNumber(initiative.getId(), 2);
+                        
+                if (stage2Transaction.isPresent() && stage2Transaction.get().getPendingWith() != null) {
+                    sendWorkflowNotificationEmail(transaction, stage2Transaction.get(), initiative, 
+                        initiative.getCreatedBy().getFullName());
+                    
+                    Logger.getLogger(this.getClass().getName()).info(
+                        String.format("📧 Initial workflow email sent for new initiative %s to selected HOD %s", 
+                            initiative.getInitiativeNumber(), stage2Transaction.get().getPendingWith()));
+                } else {
+                    Logger.getLogger(this.getClass().getName()).warning(
+                        String.format("⚠️ Could not send initial workflow email for initiative %s - no Stage 2 HOD approver found", 
+                            initiative.getInitiativeNumber()));
+                }
+                break;
+            }
+        }
+    }
+
+    @Transactional
     public void createInitialWorkflowTransactions(Initiative initiative) {
         // Get workflow configuration from wf_master table
         List<WfMaster> workflowStages = wfMasterRepository.findBySiteAndIsActiveOrderByStageNumber(
@@ -923,5 +978,92 @@ public class WorkflowTransactionService {
         return transactions.stream()
                 .filter(t -> "rejected".equals(t.getApproveStatus()))
                 .findFirst();
+    }
+
+    /**
+     * Create next workflow stage using WfMaster configuration
+     */
+    @Transactional
+    private void createNextStage(Long initiativeId, Integer stageNumber) {
+        Initiative initiative = initiativeRepository.findById(initiativeId)
+                .orElseThrow(() -> new RuntimeException("Initiative not found"));
+
+        // Get workflow configuration from WfMaster for the specific stage
+        Optional<WfMaster> wfMasterConfig = wfMasterRepository
+                .findBySiteAndStageNumberAndIsActive(initiative.getSite(), stageNumber, "Y");
+
+        if (wfMasterConfig.isPresent()) {
+            WfMaster wfStage = wfMasterConfig.get();
+            
+            // Check if transaction already exists
+            Optional<WorkflowTransaction> existingTransaction = workflowTransactionRepository
+                    .findByInitiativeIdAndStageNumber(initiativeId, stageNumber);
+                    
+            if (!existingTransaction.isPresent()) {
+                WorkflowTransaction transaction = new WorkflowTransaction(
+                    initiativeId,
+                    stageNumber,
+                    wfStage.getStageName(),
+                    initiative.getSite(),
+                    wfStage.getRoleCode(),
+                    wfStage.getUserEmail()
+                );
+                
+                transaction.setApproveStatus("pending");
+                transaction.setPendingWith(wfStage.getUserEmail());
+                workflowTransactionRepository.save(transaction);
+                
+                Logger.getLogger(this.getClass().getName()).info(
+                    String.format("Created workflow stage %d for initiative %s, assigned to %s", 
+                        stageNumber, initiative.getInitiativeNumber(), wfStage.getUserEmail()));
+            }
+        } else {
+            throw new RuntimeException("No workflow configuration found for stage " + stageNumber + 
+                " at site " + initiative.getSite());
+        }
+    }
+
+    /**
+     * Create next workflow stage with HOD dynamic assignment for Stage 2
+     */
+    @Transactional
+    private void createNextStageWithHod(Long initiativeId, Integer stageNumber, Long selectedHodId, String selectedHodEmail) {
+        Initiative initiative = initiativeRepository.findById(initiativeId)
+                .orElseThrow(() -> new RuntimeException("Initiative not found"));
+
+        // Validate HOD selection
+        if (selectedHodId == null || selectedHodEmail == null || selectedHodEmail.trim().isEmpty()) {
+            throw new RuntimeException("HOD selection is required for Stage 2 approval");
+        }
+
+        // Validate that the selected HOD exists and has HOD role
+        Optional<User> selectedHod = userRepository.findById(selectedHodId);
+        if (!selectedHod.isPresent() || !"HOD".equals(selectedHod.get().getRole())) {
+            throw new RuntimeException("Invalid HOD selection. User must have HOD role.");
+        }
+
+        // Check if transaction already exists
+        Optional<WorkflowTransaction> existingTransaction = workflowTransactionRepository
+                .findByInitiativeIdAndStageNumber(initiativeId, stageNumber);
+                
+        if (!existingTransaction.isPresent()) {
+            WorkflowTransaction transaction = new WorkflowTransaction(
+                initiativeId,
+                stageNumber,
+                "Evaluation and Approval", // Stage 2 name for HOD
+                initiative.getSite(),
+                "HOD",
+                selectedHodEmail
+            );
+            
+            transaction.setApproveStatus("pending");
+            transaction.setPendingWith(selectedHodEmail);
+            transaction.setAssignedUserId(selectedHodId); // Store HOD assignment
+            workflowTransactionRepository.save(transaction);
+            
+            Logger.getLogger(this.getClass().getName()).info(
+                String.format("Created HOD workflow stage %d for initiative %s, assigned to %s (HOD: %s)", 
+                    stageNumber, initiative.getInitiativeNumber(), selectedHodEmail, selectedHod.get().getFullName()));
+        }
     }
 }
