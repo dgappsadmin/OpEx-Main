@@ -47,6 +47,10 @@ public class InitiativeRequest {
     @NotBlank
     @Size(max = 100)
     private String initiatorName;
+    
+    // HOD assignment fields for Stage 2 dynamic assignment
+    private Long selectedHodId;
+    private String selectedHodEmail;
 
     // Constructors
     public InitiativeRequest() {}
@@ -119,4 +123,11 @@ public class InitiativeRequest {
 
     public String getInitiatorName() { return initiatorName; }
     public void setInitiatorName(String initiatorName) { this.initiatorName = initiatorName; }
+    
+    // HOD assignment getters and setters
+    public Long getSelectedHodId() { return selectedHodId; }
+    public void setSelectedHodId(Long selectedHodId) { this.selectedHodId = selectedHodId; }
+    
+    public String getSelectedHodEmail() { return selectedHodEmail; }
+    public void setSelectedHodEmail(String selectedHodEmail) { this.selectedHodEmail = selectedHodEmail; }
 }

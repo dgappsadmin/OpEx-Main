@@ -56,6 +56,13 @@ public class UserController {
         return ResponseEntity.ok(users);
     }
 
+    @GetMapping("/hod/{site}")
+    public ResponseEntity<List<User>> getHodBySite(@PathVariable String site) {
+        // Get HOD users specifically for this site
+        List<User> users = userRepository.findBySiteAndRole(site, "HOD");
+        return ResponseEntity.ok(users);
+    }
+
     @GetMapping("/initiative-leads/{site}")
     public ResponseEntity<List<User>> getInitiativeLeadsBySite(@PathVariable String site) {
         // Get IL users specifically for this site
