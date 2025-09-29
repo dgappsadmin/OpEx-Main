@@ -49,7 +49,7 @@ public class WfMasterService {
         Map<Integer, String> dynamicStageNames = new HashMap<>();
         dynamicStageNames.put(5, "MOC-CAPEX Evaluation");
         dynamicStageNames.put(6, "Initiative Timeline Tracker");
-        dynamicStageNames.put(9, "Savings Monitoring (1 Month)");
+        dynamicStageNames.put(9, "Savings Monitoring (Monthly)");
         dynamicStageNames.put(11, "Initiative Closure");
         
         return dynamicStageNames.getOrDefault(stageNumber, "Stage " + stageNumber);
@@ -61,16 +61,16 @@ public class WfMasterService {
      */
     public Map<Integer, String> getAllWorkflowStageNames() {
         Map<Integer, String> allStages = new HashMap<>();
-        allStages.put(1, "Register Initiative");
-        allStages.put(2, "Initiative assessment and approval");
-        allStages.put(3, "Approval");
+        allStages.put(1, "Initiative Registered");
+        allStages.put(2, "Evaluation and Approval");
+        allStages.put(3, "Initiative assessment and approval");
         allStages.put(4, "Define Responsibilities");
         allStages.put(5, "MOC-CAPEX Evaluation");
         allStages.put(6, "Initiative Timeline Tracker");
         allStages.put(7, "Progress monitoring");
         allStages.put(8, "Periodic Status Review with CMO");
-        allStages.put(9, "Savings Monitoring (1 Month)");
-        allStages.put(10, "Saving Validation with F&A");
+        allStages.put(9, "Savings Monitoring (Monthly)");
+        allStages.put(10, "Saving Validation with F&A (Monthly)");
         allStages.put(11, "Initiative Closure");
         return allStages;
     }
@@ -81,11 +81,12 @@ public class WfMasterService {
      */
     public Map<String, String> getAllRoleDescriptions() {
         Map<String, String> roleDescriptions = new HashMap<>();
+        roleDescriptions.put("HOD", "Head of Department");
         roleDescriptions.put("STLD", "Site TSD Lead");
         roleDescriptions.put("CTSD", "Corporate TSD");
         roleDescriptions.put("SH", "Site Head");
-        roleDescriptions.put("EH", "Engineering Head");
         roleDescriptions.put("IL", "Initiative Lead");
+        roleDescriptions.put("F&A", "Site F&A");
         roleDescriptions.put("ANYONE", "Any User");
         return roleDescriptions;
     }

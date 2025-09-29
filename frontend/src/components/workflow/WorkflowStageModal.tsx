@@ -721,21 +721,22 @@ export default function WorkflowStageModal({
   };
 
   const getStageDescription = () => {
-    const descriptions: { [key: number]: string } = {
-      1: "Initiative has been registered and is ready for approval.",
-      2: "Initial assessment and approval of the initiative by Corporate TSD.",
-      3: "Review the initiative details and provide your approval decision.",
-      4: "Assign an Initiative Lead who will be responsible for driving this initiative forward.",
-      5: "Evaluate both Management of Change (MOC) and Capital Expenditure (CAPEX) requirements.",
-      6: "Prepare detailed timeline for initiative implementation.",
-      7: "Monitor progress of initiative implementation.",
-      8: "Periodic status review with Chief Marketing Officer.",
-      9: "Monitor savings achieved after implementation (1 month monitoring period).",
-      10: "Validate savings with Finance & Accounts department.",
-      11: "Final closure of the initiative."
-    };
-    return descriptions[transaction.stageNumber] || "Process this workflow stage.";
+  const descriptions: { [key: number]: string } = {
+    1: "Initiative registered and awaiting HOD approval.",
+    2: "HOD evaluation and approval of the initiative.",
+    3: "Site TSD Lead assessment and approval.",
+    4: "Site Head assigns Initiative Lead to drive forward.",
+    5: "Initiative Lead evaluates MOC and CAPEX needs.",
+    6: "Initiative Lead prepares implementation timeline.",
+    7: "Site TSD Lead monitors initiative progress.",
+    8: "Corporate TSD reviews status with CMO.",
+    9: "Initiative Lead monitors savings post-implementation (monthly).",
+    10: "Site F&A validates savings and financial accuracy.",
+    11: "Initiative Lead finalizes and closes the initiative."
   };
+  return descriptions[transaction.stageNumber] || "Process this workflow stage.";
+};
+
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

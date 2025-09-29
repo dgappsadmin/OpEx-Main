@@ -306,23 +306,23 @@ public class DataInitializer implements CommandLineRunner {
      * Stage 1: Register Initiative (Any User)
      * Stage 2: Evaluation and Approval (HOD - Dynamic Assignment)
      * Stage 3: Initiative assessment and approval (STLD)
-     * Stage 4: Define Responsibilities (SH)
+     * Stage 4: Define Responsibilities (Decide Initiative Lead) (SH)
      * Stage 5: MOC-CAPEX Evaluation (IL - Dynamic Assignment)
      * Stage 6: Initiative Timeline Tracker (IL - Dynamic Assignment)
      * Stage 7: Progress monitoring (STLD)
      * Stage 8: Periodic Status Review with CMO (CTSD)
-     * Stage 9: Savings Monitoring Monthly (IL - Dynamic Assignment)
-     * Stage 10: Saving Validation with F&A Monthly (F&A)
+     * Stage 9: Savings Monitoring (Monthly) (IL - Dynamic Assignment)
+     * Stage 10: Saving Validation with F&A (Monthly) (F&A)
      * Stage 11: Initiative Closure (IL - Dynamic Assignment)
      * 
      * Note: Stages 2, 5, 6, 9, and 11 are dynamically assigned during workflow execution
      */
     private void initializeWorkflowStages() {
         String[][] stageDefinitions = {
-            {"1", "Register Initiative", "ANYONE"},
+            {"1", "Initiative Registered", "ANYONE"},
             {"2", "Evaluation and Approval", "HOD"},  // NEW: HOD role for Stage 2
             {"3", "Initiative assessment and approval", "STLD"},
-            {"4", "Define Responsibilities (Decide Initiative Lead)", "SH"},
+            {"4", "Define Responsibilities", "SH"},
             {"5", "MOC-CAPEX Evaluation", "IL"},  // Dynamic - IL assigned at stage 4
             {"6", "Initiative Timeline Tracker", "IL"},  // Dynamic - same IL
             {"7", "Progress monitoring", "STLD"},
@@ -353,29 +353,29 @@ public class DataInitializer implements CommandLineRunner {
         if (wfMasterRepository.count() == 0) {
             // NDS site workflow master data - UPDATED FOR NEW WORKFLOW
             String[][] ndsWfMasterData = {
-                {"1", "Register Initiative", "STLD", "manoj.tiwari@godeepak.com"},
+                {"1", "Initiative Registered", "STLD", "manoj.tiwari@godeepak.com"},
                 // Stage 2: HOD - Dynamic, created during initiative creation
                 {"3", "Initiative assessment and approval", "STLD", "deepika.singh@godeepak.com"},
-                {"4", "Define Responsibilities (Decide Initiative Lead)", "SH", "ananya.verma@godeepak.com"},
+                {"4", "Define Responsibilities", "SH", "ananya.verma@godeepak.com"},
                 // Stages 5, 6: IL - Dynamic, created after Stage 4 approval
                 {"7", "Progress monitoring", "STLD", "rohit.jain@godeepak.com"},
                 {"8", "Periodic Status Review with CMO", "CTSD", "ravi.kumar@godeepak.com"},
                 // Stage 9: IL - Dynamic, created after Stage 4 approval
-                {"10", "Saving Validation with F&A (Monthly)", "F&A", "sonia.jain@godeepak.com"}
+                {"10", "Saving Validation with F&A (Monthly)", "F&A", "sonia.jain@godeepak.com"},
                 // Stage 11: IL - Dynamic, created after Stage 4 approval
             };
 
             // DHJ site workflow master data - UPDATED FOR NEW WORKFLOW
             String[][] dhjWfMasterData = {
-                {"1", "Register Initiative", "STLD", "sunil.kumar@godeepak.com"},
+                {"1", "Initiative Registered", "STLD", "sunil.kumar@godeepak.com"},
                 // Stage 2: HOD - Dynamic, created during initiative creation
                 {"3", "Initiative assessment and approval", "STLD", "priya.singh@godeepak.com"},
-                {"4", "Define Responsibilities (Decide Initiative Lead)", "SH", "rekha.gupta@godeepak.com"},
+                {"4", "Define Responsibilities", "SH", "rekha.gupta@godeepak.com"},
                 // Stages 5, 6: IL - Dynamic, created after Stage 4 approval
                 {"7", "Progress monitoring", "STLD", "ajay.sharma@godeepak.com"},
                 {"8", "Periodic Status Review with CMO", "CTSD", "anil.mishra@godeepak.com"},
                 // Stage 9: IL - Dynamic, created after Stage 4 approval
-                {"10", "Saving Validation with F&A (Monthly)", "F&A", "nisha.jain@godeepak.com"}
+                {"10", "Saving Validation with F&A (Monthly)", "F&A", "nisha.jain@godeepak.com"},
                 // Stage 11: IL - Dynamic, created after Stage 4 approval
             };
 

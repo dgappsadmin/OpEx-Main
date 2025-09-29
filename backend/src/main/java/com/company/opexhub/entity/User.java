@@ -39,7 +39,7 @@ public class User {
     private String site;
 
     @NotBlank
-    @Size(max = 10)
+    @Size(max = 40)
     private String discipline;
 
     @NotBlank
