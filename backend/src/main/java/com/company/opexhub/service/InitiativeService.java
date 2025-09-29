@@ -95,7 +95,8 @@ public class InitiativeService {
                 request.getStartDate(),
                 request.getEndDate(),
                 user,
-                request.getInitiatorName()
+                request.getInitiatorName(),
+                request.getSelectedHodId()
         );
 
         initiative.setRequiresMoc(request.getRequiresMoc());

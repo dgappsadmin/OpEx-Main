@@ -82,6 +82,9 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
   const createInitiativeMutation = useCreateInitiative();
   const isSubmitting = createInitiativeMutation.isPending;
   
+  // Get HODs for the user's site
+  const { data: hodUsers = [], isLoading: hodLoading } = useHodBySite(user.site || "");
+  
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -90,6 +93,7 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
       initiatorName: user.fullName || "",
       site: user.site || "",
       discipline: "",
+      selectedHodId: "",
       date: new Date(),
       baselineData: "",
       targetOutcome: "",
@@ -107,9 +111,26 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
     console.log("=== FORM SUBMISSION DEBUG ===");
     console.log("Form data:", data);
     console.log("Files selected:", files.length);
+    console.log("Selected HOD ID:", data.selectedHodId);
     console.log("Expected Value (data.expectedValue):", data.expectedValue);
     console.log("Target Value (data.targetValue):", data.targetValue);
     console.log("Estimated CAPEX (data.estimatedCapex):", data.estimatedCapex);
+
+    // Find selected HOD email
+    const selectedHod = hodUsers.find((hod: any) => hod.id.toString() === data.selectedHodId);
+    const selectedHodEmail = selectedHod ? selectedHod.email : null;
+    
+    if (!selectedHodEmail) {
+      toast({
+        title: "Error",
+        description: "Selected HOD not found. Please select a valid HOD.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    console.log("Selected HOD:", selectedHod);
+    console.log("Selected HOD Email:", selectedHodEmail);
 
     const initiativeData = {
       title: data.title,
@@ -119,6 +140,8 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
       expectedSavings: data.expectedValue,
       site: data.site,
       discipline: data.discipline,
+      selectedHodId: parseInt(data.selectedHodId),
+      selectedHodEmail: selectedHodEmail,
       startDate: data.date.toISOString().split("T")[0],
       endDate: new Date(data.date.getTime() + 365 * 24 * 60 * 60 * 1000)
         .toISOString()
@@ -479,6 +502,48 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                       )}
                     />
                   </div>
+                  
+                  {/* HOD Selection Field */}
+                  <FormField
+                    control={form.control}
+                    name="selectedHodId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs font-medium">Select HOD (Head of Department) *</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting || hodLoading}>
+                          <FormControl>
+                            <SelectTrigger className="h-9 text-xs" style={{ fontSize: '13px' }}>
+                              <SelectValue placeholder={
+                                hodLoading ? "Loading HODs..." : 
+                                hodUsers.length === 0 ? "No HODs available for your site" :
+                                "Select HOD for approval"
+                              } />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {hodUsers.map((hod: any) => (
+                              <SelectItem key={hod.id} value={hod.id.toString()} className="text-xs hover:bg-blue-50 focus:bg-blue-50">
+                                <div className="flex flex-col py-1">
+                                  <span className="font-medium">
+                                    {hod.fullName}
+                                  </span>
+                                  <span className="text-2xs text-muted-foreground">
+                                    {hod.discipline} - {hod.roleName}
+                                  </span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage className="text-xs" />
+                        {hodUsers.length === 0 && !hodLoading && (
+                          <p className="text-xs text-red-600 mt-1">
+                            No HODs found for site {user.site}. Please contact administrator.
+                          </p>
+                        )}
+                      </FormItem>
+                    )}
+                  />
                   
                   <FormField
                     control={form.control}

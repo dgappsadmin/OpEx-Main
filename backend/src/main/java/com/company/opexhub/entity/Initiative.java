@@ -136,6 +136,9 @@ public class Initiative {
     @Column(name = "initiator_name")
     private String initiatorName;
 
+    @Column(name = "selected_hod_id")
+    private Long selectedHodId;
+
     @OneToMany(mappedBy = "initiative", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference("initiative-timelineTasks")
     private Set<TimelineTask> timelineTasks = new HashSet<>();
@@ -153,7 +156,7 @@ public class Initiative {
 
     public Initiative(String title, String description, String priority, BigDecimal expectedSavings, 
                      String site, String discipline, LocalDate startDate, LocalDate endDate, 
-                     User createdBy, String initiatorName) {
+                     User createdBy, String initiatorName, Long selectedHodId) {
         this.title = title;
         this.description = description;
         this.status = "Pending";
@@ -165,6 +168,7 @@ public class Initiative {
         this.endDate = endDate;
         this.createdBy = createdBy;
         this.initiatorName = initiatorName;
+        this.selectedHodId = selectedHodId;
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
@@ -301,4 +305,7 @@ public class Initiative {
 
     public String getInitiatorName() { return initiatorName; }
     public void setInitiatorName(String initiatorName) { this.initiatorName = initiatorName; }
+
+    public Long getSelectedHodId() { return selectedHodId; }
+    public void setSelectedHodId(Long selectedHodId) { this.selectedHodId = selectedHodId; }
 }
