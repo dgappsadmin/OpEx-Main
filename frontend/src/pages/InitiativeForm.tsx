@@ -41,6 +41,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { sites, disciplines, User } from "@/lib/mockData";
 import { useCreateInitiative } from "@/hooks/useInitiatives";
+import { useHodBySite } from "@/hooks/useUsers";
 import GlassmorphLoader from "@/components/ui/GlassmorphLoader";
 import { fileAPI } from "@/lib/api";
 
@@ -53,6 +54,7 @@ const formSchema = z.object({
   initiatorName: z.string().min(1, "Initiator name is required"),
   site: z.string().min(1, "Site selection is required"),
   discipline: z.string().min(1, "Discipline selection is required"),
+  selectedHodId: z.string().min(1, "HOD selection is required"),
   date: z.date({ required_error: "Date is required" }),
   description: z.string().min(1, "Description is required").min(50, "Description must be at least 50 characters"),
   baselineData: z.string().min(1, "Baseline data is required"),

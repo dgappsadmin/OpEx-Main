@@ -2498,6 +2498,11 @@ export const userAPI = {
   getInitiativeLeadsBySite: async (site: string) => {
     const response = await api.get(`/users/initiative-leads/${site}`);
     return response.data;
+  },
+
+  getHodBySite: async (site: string) => {
+    const response = await api.get(`/users/hod/${site}`);
+    return response.data;
   }
 };
 

@@ -250,6 +250,8 @@ public class DataInitializer implements CommandLineRunner {
         printRoleCredentials("IL (Initiative Lead)", dhjInitiativeLeads);
         printRoleCredentials("F&A (Finance & Accounts)", dhjFaUsers);
         System.out.println("================================================");
+    }
+
     /**
      * Helper method to save an array of users to the database.
      * 
@@ -295,7 +297,6 @@ public class DataInitializer implements CommandLineRunner {
             wfMasterRepository.save(wfMaster);
         }
         System.out.println("Saved " + wfMasterData.length + " WfMaster entries for site: " + site);
-    }
     }
 
     /**

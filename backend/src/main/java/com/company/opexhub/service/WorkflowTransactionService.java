@@ -440,43 +440,7 @@ public class WorkflowTransactionService {
         }
     }
     
-    @Transactional
-    private void createNextStage(Long initiativeId, Integer stageNumber) {
-        // Skip IL stages (5, 6, 9, 11) as they are created dynamically by createStagesWithAssignedIL
-        if (stageNumber == 5 || stageNumber == 6 || stageNumber == 9 || stageNumber == 11) {
-            return; // IL stages are handled separately
-        }
-        
-        // Get the workflow configuration for the next stage
-        Initiative initiative = initiativeRepository.findById(initiativeId)
-                .orElseThrow(() -> new RuntimeException("Initiative not found"));
-                
-        Optional<WfMaster> nextStageConfig = wfMasterRepository
-                .findBySiteAndStageNumberAndIsActive(initiative.getSite(), stageNumber, "Y");
-                
-        if (nextStageConfig.isPresent()) {
-            WfMaster wfStage = nextStageConfig.get();
-            
-            // Check if transaction already exists
-            Optional<WorkflowTransaction> existingTransaction = workflowTransactionRepository
-                    .findByInitiativeIdAndStageNumber(initiativeId, stageNumber);
-                    
-            if (!existingTransaction.isPresent()) {
-                WorkflowTransaction transaction = new WorkflowTransaction(
-                    initiativeId,
-                    wfStage.getStageNumber(),
-                    wfStage.getStageName(),
-                    initiative.getSite(),
-                    wfStage.getRoleCode(),
-                    wfStage.getUserEmail()
-                );
-                
-                transaction.setApproveStatus("pending");
-                transaction.setPendingWith(wfStage.getUserEmail());
-                workflowTransactionRepository.save(transaction);
-            }
-        }
-    }
+    // First duplicate method removed - keeping the more complete second version
 
     @Transactional
     public WorkflowTransaction processStageAction(Long transactionId, String action, String comment, 
