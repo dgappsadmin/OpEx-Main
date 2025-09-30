@@ -80,7 +80,7 @@ interface InitiativeModalProps {
   initiative: Initiative | null;
   mode: 'view' | 'edit';
   onSave?: (data: any) => void;
-  user?: { role?: string; [key: string]: any }; // Add user prop
+  user?: { role?: string; site?: string; [key: string]: any }; // Add site prop
 }
 
 // Correct workflow stage names matching backend (10 stages total)
@@ -104,28 +104,31 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
   const [activeTab, setActiveTab] = useState('overview');
   const [isSaving, setIsSaving] = useState(false);
 
+  // Check if user can edit this initiative (role + site restrictions)
+  const canEdit = user?.role !== 'VIEWER' && user?.site === initiative?.site;
+
   // Update isEditing state when mode prop changes
   useEffect(() => {
-    // VIEWER role cannot edit - force view mode
-    if (user?.role === 'VIEWER') {
+    // Only allow editing if user has proper role and site access
+    if (!canEdit) {
       setIsEditing(false);
     } else {
       setIsEditing(mode === 'edit');
     }
-  }, [mode, user]);
+  }, [mode, user, canEdit]);
 
   // Reset state when modal opens/closes
   useEffect(() => {
     if (isOpen) {
-      // VIEWER role cannot edit - force view mode
-      if (user?.role === 'VIEWER') {
+      // Only allow editing if user has proper role and site access
+      if (!canEdit) {
         setIsEditing(false);
       } else {
         setIsEditing(mode === 'edit');
       }
       setActiveTab('overview');
     }
-  }, [isOpen, mode, user]);
+  }, [isOpen, mode, user, canEdit]);
 
   // Update formData when initiative changes
   useEffect(() => {
@@ -181,6 +184,13 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
 
   const handleSave = async () => {
     if (!initiative?.id) return;
+    
+    // Additional safety check: prevent saving if user doesn't have edit permissions
+    if (!canEdit) {
+      console.warn('Save blocked: User does not have edit permissions for this initiative');
+      alert('You do not have permission to edit initiatives from this site.');
+      return;
+    }
     
     try {
       setIsSaving(true);
@@ -288,19 +298,28 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                 </p>
                 <div className="flex items-center gap-2 mt-2">
                   <div className={`px-3 py-1 rounded text-sm font-medium ${
-                    user?.role === 'VIEWER'
-                      ? 'bg-blue-100 text-blue-800' 
+                    !canEdit
+                      ? user?.role === 'VIEWER'
+                        ? 'bg-blue-100 text-blue-800'
+                        : 'bg-red-100 text-red-800'
                       : isEditing 
                         ? 'bg-orange-100 text-orange-800' 
                         : 'bg-blue-100 text-blue-800'
                   }`}>
-                    {user?.role === 'VIEWER' ? 'Read-Only Mode' : (isEditing ? 'Edit Mode' : 'View Mode')}
+                    {!canEdit 
+                      ? user?.role === 'VIEWER' 
+                        ? 'Read-Only Mode' 
+                        : user?.site !== initiative?.site 
+                          ? `Site Restricted (${initiative?.site} only)` 
+                          : 'Read-Only Mode'
+                      : (isEditing ? 'Edit Mode' : 'View Mode')
+                    }
                   </div>
                 </div>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              {!isEditing && mode !== 'edit' && user?.role !== 'VIEWER' && (
+              {!isEditing && mode !== 'edit' && canEdit && (
                 <Button variant="outline" size="default" onClick={() => setIsEditing(true)} className="min-w-[90px] h-10 px-4">
                   <Edit className="h-4 w-4 mr-2" />
                   Edit
@@ -610,7 +629,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                           <Input
                             id="title"
                             value={formData.title || ''}
-                            disabled={!isEditing}
+                            disabled={!isEditing || !canEdit}
                             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                             className="mt-1 h-10"
                           />
@@ -619,7 +638,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                           <Label htmlFor="site" className="text-sm font-medium">
                             Site *
                           </Label>
-                          {isEditing ? (
+                          {isEditing && canEdit ? (
                             <Select value={formData.site} onValueChange={(value) => setFormData({ ...formData, site: value })}>
                               <SelectTrigger className="mt-1 h-10">
                                 <SelectValue />
@@ -642,7 +661,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                           <Label htmlFor="discipline" className="text-sm font-medium">
                             Discipline *
                           </Label>
-                          {isEditing ? (
+                          {isEditing && canEdit ? (
                             <Select value={formData.discipline} onValueChange={(value) => setFormData({ ...formData, discipline: value })}>
                               <SelectTrigger className="mt-1 h-10">
                                 <SelectValue />
@@ -665,7 +684,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                           <Label htmlFor="priority" className="text-sm font-medium">
                             Priority *
                           </Label>
-                          {isEditing ? (
+                          {isEditing && canEdit ? (
                             <Select value={formData.priority} onValueChange={(value) => setFormData({ ...formData, priority: value })}>
                               <SelectTrigger className="mt-1 h-10">
                                 <SelectValue />
@@ -688,7 +707,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                           <Input
                             id="expectedSavings"
                             value={formData.expectedSavings || ''}
-                            disabled={!isEditing}
+                            disabled={!isEditing || !canEdit}
                             onChange={(e) => setFormData({ ...formData, expectedSavings: e.target.value })}
                             className="mt-1 h-10"
                           />
@@ -702,7 +721,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                         <Textarea
                           id="description"
                           value={formData.description || ''}
-                          disabled={!isEditing}
+                          disabled={!isEditing || !canEdit}
                           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                           rows={4}
                           className="mt-1"
@@ -715,7 +734,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                           <Label htmlFor="budgetType" className="text-sm font-medium">
                             Budget Type *
                           </Label>
-                          {isEditing ? (
+                          {isEditing && canEdit ? (
                             <Select value={formData.budgetType || 'NON-BUDGETED'} onValueChange={(value) => setFormData({ ...formData, budgetType: value })}>
                               <SelectTrigger className="mt-1 h-10">
                                 <SelectValue />
@@ -744,7 +763,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                             id="startDate"
                             type="date"
                             value={formData.startDate || ''}
-                            disabled={!isEditing}
+                            disabled={!isEditing || !canEdit}
                             onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
                             className="mt-1 h-10"
                           />
@@ -757,7 +776,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                             id="endDate"
                             type="date"
                             value={formData.endDate || ''}
-                            disabled={!isEditing}
+                            disabled={!isEditing || !canEdit}
                             onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
                             className="mt-1 h-10"
                           />
@@ -773,7 +792,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                           <Input
                             id="actualSavings"
                             value={formData.actualSavings || ''}
-                            disabled={!isEditing}
+                            disabled={!isEditing || !canEdit}
                             onChange={(e) => setFormData({ ...formData, actualSavings: e.target.value })}
                             className="mt-1 h-10"
                             placeholder="Enter actual savings realized"
@@ -800,7 +819,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                           <Input
                             id="targetOutcome"
                             value={formData.targetOutcome || ''}
-                            disabled={!isEditing}
+                            disabled={!isEditing || !canEdit}
                             onChange={(e) => setFormData({ ...formData, targetOutcome: e.target.value })}
                             className="mt-1 h-10"
                             placeholder="Define the target outcome"
@@ -814,7 +833,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                             id="targetValue"
                             type="number"
                             value={formData.targetValue || ''}
-                            disabled={!isEditing}
+                            disabled={!isEditing || !canEdit}
                             onChange={(e) => setFormData({ ...formData, targetValue: parseFloat(e.target.value) || 0 })}
                             className="mt-1 h-10"
                             placeholder="Enter target value"
@@ -846,7 +865,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                             id="estimatedCapex"
                             type="number"
                             value={formData.estimatedCapex || ''}
-                            disabled={!isEditing}
+                            disabled={!isEditing || !canEdit}
                             onChange={(e) => setFormData({ ...formData, estimatedCapex: parseFloat(e.target.value) || 0 })}
                             className="mt-1 h-10"
                             placeholder="Enter estimated CAPEX"
@@ -872,7 +891,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                         <Textarea
                           id="baselineData"
                           value={formData.baselineData || ''}
-                          disabled={!isEditing}
+                          disabled={!isEditing || !canEdit}
                           onChange={(e) => setFormData({ ...formData, baselineData: e.target.value })}
                           rows={3}
                           className="mt-1"
@@ -887,7 +906,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                         <Textarea
                           id="assumption1"
                           value={formData.assumption1 || ''}
-                          disabled={!isEditing}
+                          disabled={!isEditing || !canEdit}
                           onChange={(e) => setFormData({ ...formData, assumption1: e.target.value })}
                           rows={2}
                           className="mt-1"
@@ -902,7 +921,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                         <Textarea
                           id="assumption2"
                           value={formData.assumption2 || ''}
-                          disabled={!isEditing}
+                          disabled={!isEditing || !canEdit}
                           onChange={(e) => setFormData({ ...formData, assumption2: e.target.value })}
                           rows={2}
                           className="mt-1"
@@ -917,7 +936,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                         <Textarea
                           id="assumption3"
                           value={formData.assumption3 || ''}
-                          disabled={!isEditing}
+                          disabled={!isEditing || !canEdit}
                           onChange={(e) => setFormData({ ...formData, assumption3: e.target.value })}
                           rows={2}
                           className="mt-1"
@@ -969,7 +988,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                             <div className="space-y-2">
                               <Label className="text-sm font-medium">MOC Required</Label>
-                              {isEditing ? (
+                              {isEditing && canEdit ? (
                                 <Select 
                                   value={formData.requiresMoc || 'N'} 
                                   onValueChange={(value) => setFormData({ ...formData, requiresMoc: value })}
@@ -1016,7 +1035,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                               <Label className="text-sm font-medium">MOC Number</Label>
                               <Input
                                 value={formData.mocNumber || ''}
-                                disabled={!isEditing}
+                                disabled={!isEditing || !canEdit}
                                 onChange={(e) => setFormData({ ...formData, mocNumber: e.target.value })}
                                 className="h-10"
                                 placeholder="Enter MOC Number"
@@ -1028,7 +1047,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             <div className="space-y-2">
                               <Label className="text-sm font-medium">CAPEX Required</Label>
-                              {isEditing ? (
+                              {isEditing && canEdit ? (
                                 <Select 
                                   value={formData.requiresCapex || 'N'} 
                                   onValueChange={(value) => setFormData({ ...formData, requiresCapex: value })}
@@ -1075,7 +1094,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                               <Label className="text-sm font-medium">CAPEX Number</Label>
                               <Input
                                 value={formData.capexNumber || ''}
-                                disabled={!isEditing}
+                                disabled={!isEditing || !canEdit}
                                 onChange={(e) => setFormData({ ...formData, capexNumber: e.target.value })}
                                 className="h-10"
                                 placeholder="Enter CAPEX Number"

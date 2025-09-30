@@ -63,19 +63,19 @@ export function AppLayout({ children, user, onLogout }: AppLayoutProps) {
                         {user.fullName}
                       </span>
                       <span className="font-normal text-muted-foreground text-xs">
-                        {user.email}
+                     {user.site}
                       </span>
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <div className="px-2 py-1.5">
+                  {/* <div className="px-2 py-1.5">
                     <Badge variant="outline" className="text-2xs">
                       {user.site}
                     </Badge>
                     <Badge variant="outline" className="text-2xs ml-1">
                       {user.roleName}
                     </Badge>
-                  </div>
+                  </div> */}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
                     onClick={onLogout} 
