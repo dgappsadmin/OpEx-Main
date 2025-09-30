@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CheckCircle, XCircle, Users, AlertTriangle, MapPin, Loader2, DollarSign, TrendingUp, Activity, FileText } from "lucide-react";
+import { CheckCircle, XCircle, Users, AlertTriangle, MapPin, Loader2, DollarSign, TrendingUp, Activity, FileText, RotateCcw } from "lucide-react";
 import { useUsers, useInitiativeLeadsBySite } from "@/hooks/useUsers";
 import { useFinalizedPendingFAEntries, useBatchFAApproval, MonthlyMonitoringEntry } from "@/hooks/useMonthlyMonitoring";
 import { useTimelineEntriesProgressMonitoring } from "@/hooks/useTimelineEntriesProgressMonitoring";
@@ -33,6 +33,7 @@ export default function WorkflowStageModal({
 }: WorkflowStageModalProps) {
   const [comment, setComment] = useState("");
   const [assignedUserId, setAssignedUserId] = useState<string>("");
+  const [processingAction, setProcessingAction] = useState<string | null>(null);
   const [mocRequired, setMocRequired] = useState<string>("");
   const [mocNumber, setMocNumber] = useState("");
   const [capexRequired, setCapexRequired] = useState<string>("");
@@ -125,6 +126,8 @@ export default function WorkflowStageModal({
   }
 
   const handleApprove = async () => {
+    setProcessingAction('approved');
+    
     // Handle F&A approval for stage 10
     if (transaction.stageNumber === 10) {
       await handleFAApproval();
@@ -183,9 +186,19 @@ export default function WorkflowStageModal({
   };
 
   const handleReject = () => {
+    setProcessingAction('rejected');
     onProcess({
       transactionId: transaction.id,
       action: 'rejected',
+      remarks: comment.trim()
+    });
+  };
+
+  const handleDrop = () => {
+    setProcessingAction('dropped');
+    onProcess({
+      transactionId: transaction.id,
+      action: 'dropped',
       remarks: comment.trim()
     });
   };
@@ -721,22 +734,21 @@ export default function WorkflowStageModal({
   };
 
   const getStageDescription = () => {
-  const descriptions: { [key: number]: string } = {
-    1: "Initiative registered and awaiting HOD approval.",
-    2: "HOD evaluation and approval of the initiative.",
-    3: "Site TSD Lead assessment and approval.",
-    4: "Site Head assigns Initiative Lead to drive forward.",
-    5: "Initiative Lead evaluates MOC and CAPEX needs.",
-    6: "Initiative Lead prepares implementation timeline.",
-    7: "Site TSD Lead monitors initiative progress.",
-    8: "Corporate TSD reviews status with CMO.",
-    9: "Initiative Lead monitors savings post-implementation (monthly).",
-    10: "Site F&A validates savings and financial accuracy.",
-    11: "Initiative Lead finalizes and closes the initiative."
+    const descriptions: { [key: number]: string } = {
+      1: "Initiative has been registered by any user and is ready for HOD approval.",
+      2: "Head of Department (HOD) evaluation and approval of the initiative.",
+      3: "Site TSD Lead assessment and approval of the initiative.",
+      4: "Site Head assigns an Initiative Lead who will be responsible for driving this initiative forward.",
+      5: "Initiative Lead evaluates both Management of Change (MOC) and Capital Expenditure (CAPEX) requirements.",
+      6: "Initiative Lead prepares detailed timeline for initiative implementation.",
+      7: "Site TSD Lead monitors progress of initiative implementation.",
+      8: "Corporate TSD periodic status review with Chief Marketing Officer. You can approve to continue or drop to move initiative to next FY.",
+      9: "Initiative Lead monitors savings achieved after implementation (monthly monitoring period).",
+      10: "Site F&A validates savings and financial accuracy.",
+      11: "Initiative Lead performs final closure of the initiative."
+    };
+    return descriptions[transaction.stageNumber] || "Process this workflow stage.";
   };
-  return descriptions[transaction.stageNumber] || "Process this workflow stage.";
-};
-
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -789,10 +801,10 @@ export default function WorkflowStageModal({
             <div className="flex gap-3 pt-3">
               <Button 
                 onClick={handleApprove}
-                disabled={!comment.trim() || isLoading}
+                disabled={!comment.trim() || (isLoading && processingAction === 'approved')}
                 className="bg-red-600 hover:bg-red-700 flex-1 h-9 text-xs font-medium"
               >
-                {isLoading ? (
+                {(isLoading && processingAction === 'approved') ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
                     Processing...
@@ -804,15 +816,36 @@ export default function WorkflowStageModal({
                   </>
                 )}
               </Button>
-              {/* Only show reject button for stages 2 and 3 */}
+            </div>
+          ) : (
+            <div className="flex gap-3 pt-3">
+              <Button 
+                onClick={handleApprove}
+                disabled={!isFormValid() || (isLoading && processingAction === 'approved') || batchFAApprovalMutation.isPending}
+                className="bg-green-600 hover:bg-green-700 flex-1 h-9 text-xs font-medium"
+              >
+                {((isLoading && processingAction === 'approved') || batchFAApprovalMutation.isPending) ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="h-4 w-4 mr-1.5" />
+                    Approve & Continue
+                  </>
+                )}
+              </Button>
+              
+              {/* Show reject button for stages 2 and 3 */}
               {(transaction.stageNumber === 2 || transaction.stageNumber === 3) && (
                 <Button 
                   variant="destructive"
                   onClick={handleReject}
-                  disabled={!comment.trim() || isLoading}
+                  disabled={!comment.trim() || (isLoading && processingAction === 'rejected')}
                   className="flex-1 h-9 text-xs font-medium"
                 >
-                  {isLoading ? (
+                  {(isLoading && processingAction === 'rejected') ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
                       Processing...
@@ -825,43 +858,24 @@ export default function WorkflowStageModal({
                   )}
                 </Button>
               )}
-            </div>
-          ) : (
-            <div className="flex gap-3 pt-3">
-              <Button 
-                onClick={handleApprove}
-                disabled={!isFormValid() || isLoading || batchFAApprovalMutation.isPending}
-                className="bg-green-600 hover:bg-green-700 flex-1 h-9 text-xs font-medium"
-              >
-                {(isLoading || batchFAApprovalMutation.isPending) ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="h-4 w-4 mr-1.5" />
-                    Approve & Continue
-                  </>
-                )}
-              </Button>
-              {/* Only show reject button for stages 2 and 3 */}
-              {(transaction.stageNumber === 2 || transaction.stageNumber === 3) && (
+              
+              {/* Show drop button for stage 8 */}
+              {transaction.stageNumber === 8 && (
                 <Button 
-                  variant="destructive"
-                  onClick={handleReject}
-                  disabled={!comment.trim() || isLoading}
-                  className="flex-1 h-9 text-xs font-medium"
+                  variant="outline"
+                  onClick={handleDrop}
+                  disabled={!comment.trim() || (isLoading && processingAction === 'dropped')}
+                  className="flex-1 h-9 text-xs font-medium border-orange-300 text-orange-600 hover:bg-orange-50"
                 >
-                  {isLoading ? (
+                  {(isLoading && processingAction === 'dropped') ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
                       Processing...
                     </>
                   ) : (
                     <>
-                      <XCircle className="h-4 w-4 mr-1.5" />
-                      Reject
+                      <RotateCcw className="h-4 w-4 mr-1.5" />
+                      Drop (Next FY)
                     </>
                   )}
                 </Button>
