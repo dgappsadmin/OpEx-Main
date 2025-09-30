@@ -243,8 +243,8 @@ export default function Initiatives({ user }: InitiativesProps) {
       case "In Progress": return "bg-blue-500 hover:bg-blue-600 text-white border-blue-500 shadow-sm";
       case "Completed": return "bg-emerald-500 hover:bg-emerald-600 text-white border-emerald-500 shadow-sm";
       case "Rejected": return "bg-red-500 hover:bg-red-600 text-white border-red-500 shadow-sm";
-      case "Draft": return "bg-amber-500 hover:bg-amber-600 text-white border-amber-500 shadow-sm";
-      case "Approved": return "bg-green-500 hover:bg-green-600 text-white border-green-500 shadow-sm";
+      case "Rejected": return "bg-red-500 hover:bg-red-600 text-white border-red-500 shadow-sm";
+      case "Dropped": return "bg-orange-500 hover:bg-orange-600 text-white border-orange-500 shadow-sm";
       default: return "bg-slate-500 hover:bg-slate-600 text-white border-slate-500 shadow-sm";
     }
   };
@@ -336,6 +336,8 @@ export default function Initiatives({ user }: InitiativesProps) {
                   <SelectItem value="Pending">Pending</SelectItem>
                   <SelectItem value="In Progress">In Progress</SelectItem>
                   <SelectItem value="Completed">Completed</SelectItem>
+                    <SelectItem value="Dropped">Dropped</SelectItem>
+                      <SelectItem value="Rejected">Rejected</SelectItem>
                 </SelectContent>
               </Select>
 
