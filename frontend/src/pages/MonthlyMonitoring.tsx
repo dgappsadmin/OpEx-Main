@@ -154,6 +154,11 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
 
   // Filter and search initiatives
   const filteredInitiatives = currentInitiatives.filter((initiative: Initiative) => {
+    // Filter out Rejected and Dropped initiatives
+    if (initiative.initiativeStatus === 'Rejected' || initiative.initiativeStatus === 'Dropped') {
+      return false;
+    }
+
     // Enhanced search - include site and description in search
     const searchLower = searchTerm.toLowerCase().trim();
     const matchesSearch = !searchTerm || 
@@ -403,11 +408,19 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
     // Check if user is IL and is assigned to this initiative
     if (user.role !== 'IL') return false;
     
+    // Get selected initiative to check stage status
+    const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
+    if (!selectedInitiative) return false;
+    
+    // Check if stage 9 (Monthly Monitoring) has been approved - if yes, no new entries allowed
+    if (selectedInitiative.stageNumber && selectedInitiative.stageNumber > 9) {
+      return false; // Stage 9 has been approved and moved to next stage
+    }
+    
     // For assigned initiatives tab, user can create
     if (activeTab === 'assigned') return true;
     
     // For all initiatives tab, check if user is assigned to this specific initiative
-    const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
     return selectedInitiative && selectedInitiative.assignedUserEmail === user.email;
   };
 
@@ -665,6 +678,14 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
               </form>
             </DialogContent>
           </Dialog>
+        )}
+        {selectedInitiativeId && !canCreate() && (
+          <Alert className="bg-amber-50 border-amber-200">
+            <Lock className="h-4 w-4 text-amber-600" />
+            <AlertDescription className="text-amber-800">
+              <strong>Stage Approved:</strong> Monthly Monitoring stage has been approved and moved to the next stage. No new entries can be added.
+            </AlertDescription>
+          </Alert>
         )}
       </div>
 

@@ -164,6 +164,11 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
 
   // Filter and search initiatives - Enhanced search
   const filteredInitiatives = currentInitiatives.filter((initiative: Initiative) => {
+    // Filter out Rejected and Dropped initiatives
+    if (initiative.initiativeStatus === 'Rejected' || initiative.initiativeStatus === 'Dropped') {
+      return false;
+    }
+
     // Enhanced search - include site and description in search
     const searchLower = searchTerm.toLowerCase().trim();
     const matchesSearch = !searchTerm || 
@@ -441,11 +446,19 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
     // Check if user is IL and is assigned to this initiative
     if (user.role !== 'IL') return false;
     
+    // Get selected initiative to check stage status
+    const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
+    if (!selectedInitiative) return false;
+    
+    // Check if stage 6 (Timeline Tracker) has been approved - if yes, no new entries allowed
+    if (selectedInitiative.stageNumber && selectedInitiative.stageNumber > 6) {
+      return false; // Stage 6 has been approved and moved to next stage
+    }
+    
     // For assigned initiatives tab, user can create
     if (activeTab === 'assigned') return true;
     
     // For all initiatives tab, check if user is assigned to this specific initiative
-    const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
     return selectedInitiative && selectedInitiative.assignedUserEmail === user.email;
   };
 
@@ -697,6 +710,16 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
           )}
         </div>
       </div>
+
+      {/* Alert message when stage 6 is approved */}
+      {selectedInitiativeId && user.role === 'IL' && !canCreate() && (
+        <Alert className="mb-4 bg-amber-50 border-amber-200">
+          <Lock className="h-4 w-4 text-amber-600" />
+          <AlertDescription className="text-amber-800">
+            <strong>Stage Approved:</strong> Timeline Tracker stage has been approved and moved to the next stage. No new timeline entries can be added.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {!selectedInitiativeId ? (
         <div>

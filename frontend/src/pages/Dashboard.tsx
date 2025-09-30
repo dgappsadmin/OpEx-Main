@@ -338,12 +338,12 @@ export default function Dashboard({ user }: DashboardProps) {
                     <div key={initiative.id} className="p-3 border border-border rounded-lg space-y-2 hover:shadow-md transition-all duration-200 hover:border-blue-200">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1.5">
-                          <Badge variant="outline" className="font-mono text-2xs">
+                          {/* <Badge variant="outline" className="font-mono text-2xs">
                             {initiative.id}
-                          </Badge>
-                          <Badge variant={getPriorityColor(initiative.priority)} className="text-2xs">
+                          </Badge> */}
+                          {/* <Badge variant={getPriorityColor(initiative.priority)} className="text-2xs">
                             {initiative.priority}
-                          </Badge>
+                          </Badge> */}
                         </div>
                         <Badge className={`${getStatusColor(initiative.status)} text-2xs`}>
                           {initiative.status}

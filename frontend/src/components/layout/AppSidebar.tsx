@@ -68,13 +68,13 @@ const navigationItems = [
     title: "KPI Monitoring",
     url: "/kpi",
     icon: Target,
-    group: "Tracking"
+    group: "Monitoring"  // Changed to Monitoring group
   },
   {
     title: "Reports",
     url: "/reports",
     icon: TrendingUp,
-    group: "Tracking"
+    group: "Monitoring"  // Changed to Monitoring group
   },
 ];
 
@@ -97,7 +97,7 @@ export function AppSidebar({ user }: AppSidebarProps = {}) {
   const { state } = useSidebar();
   const location = useLocation();
   const currentPath = location.pathname;
-  
+
   // All users can access all navigation items - no role restrictions
   const filteredNavigationItems = navigationItems;
   

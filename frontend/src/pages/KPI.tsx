@@ -333,7 +333,7 @@ export default function KPI({ user }: KPIProps) {
                       </div>
                       <h4 className="font-semibold text-foreground text-xs line-clamp-1">{initiative.title}</h4>
                       <div className="flex items-center justify-between text-2xs text-muted-foreground">
-                        <span>Priority: {initiative.priority}</span>
+                        {/* <span>Priority: {initiative.priority}</span> */}
                         <span className="font-semibold text-green-600">
                           {formatCurrency(initiative.expectedSavings || 0)}
                         </span>
