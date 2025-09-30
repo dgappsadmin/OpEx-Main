@@ -95,7 +95,9 @@ export default function KPI({ user }: KPIProps) {
   const completedStatusInitiatives = initiatives.filter((i: any) => i.status === 'Completed').length;
   const completedInitiatives = implementedInitiatives + validatedInitiatives + closedInitiatives + completedStatusInitiatives;
   
-  const totalExpectedSavings = initiatives.reduce((sum: number, i: any) => {
+  const totalExpectedSavings = initiatives
+    .filter((i: any) => i.status !== 'Rejected' && i.status !== 'Dropped') // Exclude rejected and dropped initiatives
+    .reduce((sum: number, i: any) => {
     // Handle both string format (₹8.5L) and number format
     const savings = typeof i.expectedSavings === 'string' 
       ? parseFloat(i.expectedSavings.replace(/[₹L,]/g, '')) || 0
