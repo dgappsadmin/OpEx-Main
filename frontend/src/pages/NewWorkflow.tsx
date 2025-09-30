@@ -13,7 +13,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CheckCircle, XCircle, Clock, ArrowLeft, User as UserIcon, Search, Filter, MapPin, GitBranch, Activity, Workflow, Eye } from "lucide-react";
+import { CheckCircle, XCircle, Clock, ArrowLeft, User as UserIcon, Search, Filter, MapPin, GitBranch, Activity, Workflow, Eye, RotateCcw } from "lucide-react";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { useToast } from "@/hooks/use-toast";
 import WorkflowStageModal from "@/components/workflow/WorkflowStageModal";
@@ -106,6 +106,10 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
   const filteredInitiatives = initiatives.filter((initiative: any) => {
     if (statusFilter === "completed") {
       return initiative.status?.trim() === "Completed";
+    } else if (statusFilter === "rejected") {
+      return initiative.status?.trim() === "Rejected";
+    } else if (statusFilter === "dropped") {
+      return initiative.status?.trim() === "Dropped";
     } else if (statusFilter === "default") {
       // Default shows only Pending and In Progress (excludes Completed)
       const status = initiative.status?.trim();
@@ -179,6 +183,7 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
     switch (status?.toLowerCase()) {
       case 'approved': return <CheckCircle className="h-3.5 w-3.5 text-green-500" />;
       case 'rejected': return <XCircle className="h-3.5 w-3.5 text-red-500" />;
+      case 'dropped': return <RotateCcw className="h-3.5 w-3.5 text-orange-500" />;
       case 'pending': return <Clock className="h-3.5 w-3.5 text-yellow-500" />;
       default: return <Clock className="h-3.5 w-3.5 text-gray-500" />;
     }
@@ -188,6 +193,7 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
     switch (status?.toLowerCase()) {
       case 'approved': return 'bg-success/10 text-success border-success/20';
       case 'rejected': return 'bg-destructive/10 text-destructive border-destructive/20';
+      case 'dropped': return 'bg-orange-50 text-orange-600 border-orange-200';
       case 'pending': return 'bg-warning/10 text-warning border-warning/20';
       case 'completed': return 'bg-success/10 text-success border-success/20';
       case 'in_progress': return 'bg-primary/10 text-primary border-primary/20';
@@ -299,6 +305,8 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
                         <SelectContent>
                           <SelectItem value="default">Default (Pending & In Progress)</SelectItem>
                           <SelectItem value="completed">Completed Only</SelectItem>
+                          <SelectItem value="rejected">Rejected Only</SelectItem>
+                          <SelectItem value="dropped">Dropped Only</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -310,7 +318,10 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
                       Showing {sortedInitiatives.length} initiative{sortedInitiatives.length !== 1 ? 's' : ''} 
                       {searchTerm && ` matching "${searchTerm}"`}
                       {siteFilter && siteFilter !== "all" && ` for site ${siteFilter}`}
-                      {statusFilter === "completed" ? " with Completed status" : " (Pending & In Progress only)"}
+                      {statusFilter === "completed" ? " with Completed status" : 
+                       statusFilter === "rejected" ? " with Rejected status" :
+                       statusFilter === "dropped" ? " with Dropped status" :
+                       " (Pending & In Progress only)"}
                     </span>
                     <span>Sorted by: Recently Created</span>
                   </div>
@@ -662,6 +673,8 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
                         <SelectContent>
                           <SelectItem value="default">Default (Pending & In Progress)</SelectItem>
                           <SelectItem value="completed">Completed Only</SelectItem>
+                          <SelectItem value="rejected">Rejected Only</SelectItem>
+                          <SelectItem value="dropped">Dropped Only</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -673,7 +686,10 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
                       Showing {sortedInitiatives.length} initiative{sortedInitiatives.length !== 1 ? 's' : ''} 
                       {searchTerm && ` matching "${searchTerm}"`}
                       {siteFilter && siteFilter !== "all" && ` for site ${siteFilter}`}
-                      {statusFilter === "completed" ? " with Completed status" : " (Pending & In Progress only)"}
+                      {statusFilter === "completed" ? " with Completed status" : 
+                       statusFilter === "rejected" ? " with Rejected status" :
+                       statusFilter === "dropped" ? " with Dropped status" :
+                       " (Pending & In Progress only)"}
                     </span>
                     <span>Sorted by: Recently Created</span>
                   </div>

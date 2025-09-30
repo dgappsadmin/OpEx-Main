@@ -133,6 +133,133 @@ public class WorkflowTransactionService {
     }
 
     /**
+     * Create email template for rejected/dropped initiative notifications
+     */
+    private String createRejectionDropEmailTemplate(String initiativeTitle, String initiativeNumber, 
+                                                   String actionType, String rejectionReason, String rejectedBy, 
+                                                   String site, String expectedSavings, String stageName) {
+        
+        StringBuilder template = new StringBuilder();
+        template.append("<!DOCTYPE html>\n");
+        template.append("<html>\n");
+        template.append("<head>\n");
+        template.append("    <meta charset=\"UTF-8\">\n");
+        template.append("    <title>Initiative %s Notification</title>\n");
+        template.append("</head>\n");
+        template.append("<body style=\"font-family: Arial, sans-serif; font-size: 14px; line-height: 1.4; color: #333;\">\n");
+        template.append("    \n");
+        template.append("    <h2 style=\"color: #dc3545; margin-bottom: 20px;\">Initiative %s Notification</h2>\n");
+        template.append("    \n");
+        template.append("    <p>Dear DN Sharma,</p>\n");
+        template.append("    \n");
+        template.append("    <p>An initiative has been <strong>%s</strong> in the OPEX system. Please review the details below:</p>\n");
+        template.append("    \n");
+        template.append("    <h3 style=\"color: #dc3545; margin-top: 25px; margin-bottom: 15px;\">Initiative Details</h3>\n");
+        template.append("    \n");
+        template.append("    <table border=\"1\" cellpadding=\"8\" cellspacing=\"0\" style=\"border-collapse: collapse; width: 100%%; max-width: 600px; border: 1px solid #ccc;\">\n");
+        template.append("        <tr style=\"background-color: #f8d7da;\">\n");
+        template.append("            <td style=\"font-weight: bold; width: 30%%;\">Initiative Title</td>\n");
+        template.append("            <td>%s</td>\n");
+        template.append("        </tr>\n");
+        template.append("        <tr>\n");
+        template.append("            <td style=\"font-weight: bold; background-color: #f8d7da;\">Initiative Number</td>\n");
+        template.append("            <td>%s</td>\n");
+        template.append("        </tr>\n");
+        template.append("        <tr style=\"background-color: #f8d7da;\">\n");
+        template.append("            <td style=\"font-weight: bold;\">Site</td>\n");
+        template.append("            <td>%s</td>\n");
+        template.append("        </tr>\n");
+        template.append("        <tr>\n");
+        template.append("            <td style=\"font-weight: bold; background-color: #f8d7da;\">Expected Savings</td>\n");
+        template.append("            <td>₹%s K</td>\n");
+        template.append("        </tr>\n");
+        template.append("        <tr style=\"background-color: #f8d7da;\">\n");
+        template.append("            <td style=\"font-weight: bold;\">Stage</td>\n");
+        template.append("            <td>%s</td>\n");
+        template.append("        </tr>\n");
+        template.append("        <tr>\n");
+        template.append("            <td style=\"font-weight: bold; background-color: #f8d7da;\">Action Taken By</td>\n");
+        template.append("            <td>%s</td>\n");
+        template.append("        </tr>\n");
+        template.append("    </table>\n");
+        template.append("    \n");
+        template.append("    <h3 style=\"color: #dc3545; margin-top: 25px; margin-bottom: 15px;\">%s Reason</h3>\n");
+        template.append("    \n");
+        template.append("    <div style=\"background-color: #f8d7da; padding: 15px; border-left: 4px solid #dc3545; margin: 20px 0;\">\n");
+        template.append("        <p style=\"margin: 0; font-weight: bold;\">Comments:</p>\n");
+        template.append("        <p style=\"margin: 5px 0 0 0;\">%s</p>\n");
+        template.append("    </div>\n");
+        template.append("    \n");
+        template.append("    <p style=\"margin-top: 20px;\">\n");
+        template.append("        <a href=\"https://dgpilotapps.godeepak.com:8444/opexhub/\" style=\"background-color: #dc3545; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;\">View Dashboard</a>\n");
+        template.append("    </p>\n");
+        template.append("    \n");
+        template.append("    <hr style=\"margin: 30px 0; border: none; border-top: 1px solid #ccc;\">\n");
+        template.append("    \n");
+        template.append("    <p style=\"font-size: 12px; color: #666;\">\n");
+        template.append("        <strong>OPEX Initiative Management System</strong><br>\n");
+        template.append("        This is an automated notification for %s initiatives.<br>\n");
+        template.append("        Generated on: %s\n");
+        template.append("    </p>\n");
+        template.append("    \n");
+        template.append("</body>\n");
+        template.append("</html>\n");
+        
+        String actionTitle = actionType.substring(0, 1).toUpperCase() + actionType.substring(1);
+        String currentTime = LocalDateTime.now().toString();
+        
+        return String.format(template.toString(), 
+            actionTitle, actionTitle, actionType, 
+            initiativeTitle, initiativeNumber, site, expectedSavings, stageName, rejectedBy,
+            actionTitle, rejectionReason, actionType, currentTime);
+    }
+
+    /**
+     * Send notification email to dnsharma@godeepak.com for rejected/dropped initiatives
+     */
+    private void sendRejectionDropNotificationEmail(WorkflowTransaction transaction, Initiative initiative, 
+                                                   String actionType, String actionBy, String comment) {
+        try {
+            String subject = String.format("Initiative %s - %s (%s)", 
+                actionType.substring(0, 1).toUpperCase() + actionType.substring(1),
+                initiative.getInitiativeNumber() != null ? initiative.getInitiativeNumber() : initiative.getTitle(),
+                transaction.getStageName());
+
+            String emailTemplate = createRejectionDropEmailTemplate(
+                initiative.getTitle(),
+                initiative.getInitiativeNumber() != null ? initiative.getInitiativeNumber() : "N/A",
+                actionType,
+                comment != null ? comment : "No comments provided",
+                actionBy,
+                initiative.getSite(),
+                initiative.getExpectedSavings() != null ? initiative.getExpectedSavings().toString() : "0",
+                transaction.getStageName()
+            );
+            
+            String toEmail = "dnsharma@godeepak.com,jjrana@godeepak.com";
+            String cc = null;
+            String bcc = "dnsharma@godeepak.com";
+            
+            // Send email
+            MailHelper.send(subject, emailTemplate, toEmail, cc, bcc);
+            
+            Logger.getLogger(this.getClass().getName()).info(
+                String.format("✅ %s notification email sent successfully to %s for initiative %s", 
+                    actionType.substring(0, 1).toUpperCase() + actionType.substring(1), 
+                    toEmail, initiative.getInitiativeNumber()));
+                    
+        } catch (IOException e) {
+            Logger.getLogger(this.getClass().getName()).log(Level.SEVERE, 
+                String.format("❌ Failed to send %s notification email for initiative %s: %s", 
+                    actionType, initiative.getInitiativeNumber(), e.getMessage()), e);
+        } catch (Exception e) {
+            Logger.getLogger(this.getClass().getName()).log(Level.WARNING, 
+                String.format("⚠️ Error in %s email notification process for initiative %s: %s", 
+                    actionType, initiative.getInitiativeNumber(), e.getMessage()), e);
+        }
+    }
+
+    /**
      * Send workflow notification email to next approver
      */
     private void sendWorkflowNotificationEmail(WorkflowTransaction approvedTransaction, WorkflowTransaction nextTransaction, 
@@ -458,7 +585,7 @@ public class WorkflowTransactionService {
                 transaction.getPendingWith() + " can approve this stage.");
         }
 
-        transaction.setApproveStatus(action); // "approved" or "rejected"
+        transaction.setApproveStatus(action); // "approved", "rejected", or "dropped"
         transaction.setActionBy(actionBy);
         transaction.setActionDate(LocalDateTime.now());
         transaction.setComment(comment);
@@ -539,9 +666,18 @@ public class WorkflowTransactionService {
                     String.format("🎉 Initiative %s has been completed successfully (Stage 11 approved)", 
                         initiative.getInitiativeNumber()));
             }
-        } else {
+        } else if ("rejected".equals(action)) {
             // Rejected
             initiative.setStatus("Rejected");
+            
+            // Send notification email to dnsharma@godeepak.com
+            sendRejectionDropNotificationEmail(savedTransaction, initiative, "rejected", actionBy, comment);
+        } else if ("dropped".equals(action)) {
+            // Dropped (moved to next FY)
+            initiative.setStatus("Dropped");
+            
+            // Send notification email to dnsharma@godeepak.com  
+            sendRejectionDropNotificationEmail(savedTransaction, initiative, "dropped", actionBy, comment);
         }
 
         initiativeRepository.save(initiative);

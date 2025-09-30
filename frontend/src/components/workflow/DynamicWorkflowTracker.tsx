@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, Clock, Circle, User, Calendar, MessageSquare, ArrowRight, Activity, Workflow } from 'lucide-react';
+import { CheckCircle, Clock, Circle, User, Calendar, MessageSquare, ArrowRight, Activity, Workflow, XCircle, RotateCcw } from 'lucide-react';
 import { useVisibleWorkflowTransactions, useProcessStageAction } from '@/hooks/useWorkflowTransactions';
 import WorkflowStageModal from './WorkflowStageModal';
 import { useAuth } from '@/contexts/AuthContext';
@@ -53,7 +53,9 @@ export const DynamicWorkflowTracker: React.FC<DynamicWorkflowTrackerProps> = ({ 
       case 'pending':
         return <Clock className="h-5 w-5 text-warning" />;
       case 'rejected':
-        return <Circle className="h-5 w-5 text-destructive" />;
+        return <XCircle className="h-5 w-5 text-destructive" />;
+      case 'dropped':
+        return <RotateCcw className="h-5 w-5 text-orange-500" />;
       default:
         return <Circle className="h-5 w-5 text-muted-foreground" />;
     }
@@ -67,6 +69,8 @@ export const DynamicWorkflowTracker: React.FC<DynamicWorkflowTrackerProps> = ({ 
         return 'bg-warning/10 text-warning border-warning/20';
       case 'rejected':
         return 'bg-destructive/10 text-destructive border-destructive/20';
+      case 'dropped':
+        return 'bg-orange-50 text-orange-600 border-orange-200';
       default:
         return 'bg-muted/10 text-muted-foreground border-muted/20';
     }
@@ -98,12 +102,16 @@ export const DynamicWorkflowTracker: React.FC<DynamicWorkflowTrackerProps> = ({ 
     try {
       await processStageAction.mutateAsync({
         transactionId: selectedTransaction.id,
-        action: data.action as 'approved' | 'rejected',
+        action: data.action as 'approved' | 'rejected' | 'dropped',
         remarks: data.comment,
         assignedUserId: data.assignedUserId,
       });
 
-      toast.success(`Stage ${selectedTransaction.stageNumber} ${data.action === 'approved' ? 'approved' : 'rejected'} successfully`);
+      const actionMessage = data.action === 'approved' ? 'approved' : 
+                           data.action === 'rejected' ? 'rejected' : 
+                           'dropped (moved to next FY)';
+      
+      toast.success(`Stage ${selectedTransaction.stageNumber} ${actionMessage} successfully`);
       setIsModalOpen(false);
       setSelectedTransaction(null);
       refetch();
