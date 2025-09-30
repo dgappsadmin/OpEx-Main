@@ -436,7 +436,7 @@ export default function Initiatives({ user }: InitiativesProps) {
                           >
                             <Eye className="h-3.5 w-3.5" />
                           </Button>
-                          {user.role !== 'VIEWER' && (
+                          {user.role !== 'VIEWER' && user.site === initiative.site && (
                             <Button 
                               size="sm" 
                               variant="outline" 
@@ -532,7 +532,7 @@ export default function Initiatives({ user }: InitiativesProps) {
                       >
                         <Eye className="h-3.5 w-3.5" />
                       </Button>
-                      {user.role !== 'VIEWER' && (
+                      {user.role !== 'VIEWER' && user.site === initiative.site && (
                         <Button 
                           size="sm" 
                           variant="outline" 
