@@ -105,6 +105,11 @@ export default function Reports({ user }: ReportsProps) {
     return filtered;
   }, [initiatives, selectedSite, selectedBudgetType]);
 
+  // Filter initiatives for amount-related calculations (exclude Rejected and Dropped) - Similar to KPI.tsx
+  const filteredInitiativesForAmounts = useMemo(() => {
+    return filteredInitiatives.filter((i: any) => i.status !== 'Rejected' && i.status !== 'Dropped');
+  }, [filteredInitiatives]);
+
   // Enhanced currency formatting for improved display
   const formatCurrency = (amount: number): string => {
     if (amount >= 10000000) { // 1 crore or more (1,00,00,000)
@@ -223,7 +228,7 @@ export default function Reports({ user }: ReportsProps) {
                              true;
           
           if (isPastMonth || monthIndex === currentMonth) {
-            // Calculate dynamic values based on filtered initiatives for the month
+            // Calculate dynamic values based on filtered initiatives for the month (exclude Rejected and Dropped)
             const monthInitiatives = filteredInitiatives.filter((initiative: any) => {
               try {
                 const startDate = new Date(initiative.submittedDate || initiative.startDate);
@@ -234,7 +239,12 @@ export default function Reports({ user }: ReportsProps) {
               }
             });
             
-            const expectedSavings = monthInitiatives.reduce((sum: number, initiative: any) => {
+            // Filter out Rejected and Dropped initiatives from amount calculations
+            const monthInitiativesForAmounts = monthInitiatives.filter((i: any) => 
+              i.status !== 'Rejected' && i.status !== 'Dropped'
+            );
+            
+            const expectedSavings = monthInitiativesForAmounts.reduce((sum: number, initiative: any) => {
               try {
                 const savingsValue = typeof initiative.expectedSavings === 'string' 
                   ? parseFloat(initiative.expectedSavings.replace(/[₹L,]/g, '')) || 0
@@ -316,7 +326,7 @@ export default function Reports({ user }: ReportsProps) {
     };
 
     generateDynamicMonthlyData().then(setMonthlyData);
-  }, [filteredInitiatives, selectedSite, selectedBudgetType, selectedFinancialYear]); // Updated to use Financial Year
+  }, [filteredInitiatives, filteredInitiativesForAmounts, selectedSite, selectedBudgetType, selectedFinancialYear]); // Updated to include filteredInitiativesForAmounts
 
   // Fetch available financial years on component mount
   useEffect(() => {
@@ -336,6 +346,8 @@ export default function Reports({ user }: ReportsProps) {
   }, []);
 
   // Fetch financial year data whenever filters change
+  // IMPORTANT: Backend API needs to be updated to exclude Rejected/Dropped initiatives 
+  // from potentialMonthlySavingsCumulative calculations to show ₹0 for these initiatives
   useEffect(() => {
     if (!selectedFinancialYear) return;
     
@@ -396,6 +408,8 @@ export default function Reports({ user }: ReportsProps) {
   }, [selectedFinancialYear, selectedSite, selectedBudgetType, selectedCategory]);
 
   // Fetch DNL chart data when filters change
+  // IMPORTANT: Backend API needs to be updated to exclude Rejected/Dropped initiatives
+  // from DNL savings calculations to show ₹0 for these initiatives
   useEffect(() => {
     let isMounted = true; // Flag to prevent state updates if component unmounts
     
@@ -458,8 +472,8 @@ export default function Reports({ user }: ReportsProps) {
   // Get unique sites for filter
   const sites = [...new Set(initiatives.map((i: any) => i.site))];
 
-  // Calculate summary statistics from filtered data
-  const totalSavings = filteredInitiatives.reduce((sum: number, i: any) => {
+  // Calculate summary statistics from filtered data (exclude Rejected and Dropped for amounts)
+  const totalSavings = filteredInitiativesForAmounts.reduce((sum: number, i: any) => {
     const savings = typeof i.expectedSavings === 'string' 
       ? parseFloat(i.expectedSavings.replace(/[₹L,]/g, '')) || 0
       : i.expectedSavings || 0;
@@ -467,7 +481,7 @@ export default function Reports({ user }: ReportsProps) {
   }, 0);
   const completedCount = filteredInitiatives.filter((i: any) => i.status === 'Completed').length;
   const inProgressCount = filteredInitiatives.filter((i: any) => i.status === 'In Progress').length;
-  const avgSavingsPerInitiative = filteredInitiatives.length > 0 ? totalSavings / filteredInitiatives.length : 0;
+  const avgSavingsPerInitiative = filteredInitiativesForAmounts.length > 0 ? totalSavings / filteredInitiativesForAmounts.length : 0;
 
   const handleDownloadReport = async (reportType: string) => {
     if (reportType === 'DNL Plant Initiatives PDF') {
@@ -603,6 +617,7 @@ export default function Reports({ user }: ReportsProps) {
       case 'completed': return 'bg-emerald-500 hover:bg-emerald-600 text-white border-emerald-500';
       case 'in progress': return 'bg-blue-500 hover:bg-blue-600 text-white border-blue-500';
       case 'rejected': return 'bg-red-500 hover:bg-red-600 text-white border-red-500';
+      case 'dropped': return 'bg-orange-500 hover:bg-orange-600 text-white border-orange-500';
       case 'draft': return 'bg-amber-500 hover:bg-amber-600 text-white border-amber-500';
       case 'approved': return 'bg-green-500 hover:bg-green-600 text-white border-green-500';
       case 'pending': return 'bg-orange-500 hover:bg-orange-600 text-white border-orange-500';
@@ -927,7 +942,7 @@ export default function Reports({ user }: ReportsProps) {
                     Financial Year Analysis (FY {selectedFinancialYear}-{selectedFinancialYear ? (parseInt(selectedFinancialYear) + 1).toString().slice(-2) : ''})
                   </CardTitle>
                   <CardDescription className="text-xs">
-                    Comprehensive savings analysis by category and budget type
+                    Comprehensive savings analysis by category and budget type. Note: Backend API needs to be updated to exclude Rejected/Dropped initiatives from Potential Monthly Savings Cumulative.
                   </CardDescription>
                 </div>
               </div>
@@ -1020,6 +1035,7 @@ export default function Reports({ user }: ReportsProps) {
                   <CardDescription className="text-xs">
                     Initiative savings by category - {selectedSite !== 'all' ? selectedSite : 'All Sites'} 
                     {selectedFinancialYear && ` - FY ${selectedFinancialYear}-${selectedFinancialYear ? (parseInt(selectedFinancialYear) + 1).toString().slice(-2) : ''}`}
+                    Note: Backend API needs to be updated to exclude Rejected/Dropped initiatives.
                   </CardDescription>
                 </div>
                 <Button 
@@ -1081,7 +1097,7 @@ export default function Reports({ user }: ReportsProps) {
                     Initiative Details
                   </CardTitle>
                   <CardDescription className="text-xs">
-                    Detailed view of filtered initiatives
+                    Detailed view of filtered initiatives. Note: Charts exclude amounts from Rejected and Dropped initiatives, but detailed table shows actual amounts.
                   </CardDescription>
                 </div>
                 <Button 

@@ -18,6 +18,7 @@ interface PerformanceAnalysisProps {
   metrics: PerformanceMetrics;
   variant: 'overall' | 'budget' | 'nonBudget';
   isLoading: boolean;
+  initiatives?: any[]; // Add initiatives data for filtering
 }
 
 export default function PerformanceAnalysis({ 
@@ -25,8 +26,41 @@ export default function PerformanceAnalysis({
   subtitle, 
   metrics, 
   variant, 
-  isLoading 
+  isLoading,
+  initiatives = [] // Add initiatives prop with default empty array
 }: PerformanceAnalysisProps) {
+  
+  // Filter out rejected and dropped initiatives (similar to KPI.tsx logic)
+  const filteredInitiatives = initiatives.filter((i: any) => 
+    i.status !== 'Rejected' && i.status !== 'Dropped'
+  );
+  
+  // Calculate filtered potential savings for Annualized and Current FY
+  const filteredPotentialSavingsAnnualized = filteredInitiatives.length > 0 
+    ? filteredInitiatives.reduce((sum: number, i: any) => {
+        const savings = typeof i.expectedSavings === 'string' 
+          ? parseFloat(i.expectedSavings.replace(/[₹L,]/g, '')) || 0
+          : i.expectedSavings || 0;
+        return sum + savings;
+      }, 0)
+    : 0;
+    
+  const filteredPotentialSavingsCurrentFY = filteredInitiatives.length > 0
+    ? filteredInitiatives.reduce((sum: number, i: any) => {
+        const savings = typeof i.expectedSavings === 'string' 
+          ? parseFloat(i.expectedSavings.replace(/[₹L,]/g, '')) || 0
+          : i.expectedSavings || 0;
+        return sum + savings;
+      }, 0)
+    : 0;
+  
+  // Use filtered values for Annualized Potential and Current FY Potential, 
+  // but keep original metrics for other values like Actual Savings
+  const adjustedMetrics = {
+    ...metrics,
+    potentialSavingsAnnualized: filteredPotentialSavingsAnnualized,
+    potentialSavingsCurrentFY: filteredPotentialSavingsCurrentFY,
+  };
   
   // Smart currency formatting that handles all amounts automatically and removes trailing zeros
   const formatCurrencyInLakhs = (amount: number): string => {
@@ -133,19 +167,19 @@ export default function PerformanceAnalysis({
     },
     {
       title: "Annualized Potential",
-      value: formatCurrencyInLakhs(metrics?.potentialSavingsAnnualized || 0),
+      value: formatCurrencyInLakhs(adjustedMetrics?.potentialSavingsAnnualized || 0),
       subtitle: "Total yearly potential",
       icon: TrendingUp,
-      trend: formatTrend(metrics?.potentialSavingsAnnualizedTrend) + " vs target",
-      trendDirection: getTrendDirection(metrics?.potentialSavingsAnnualizedTrend)
+      trend: formatTrend(adjustedMetrics?.potentialSavingsAnnualizedTrend || metrics?.potentialSavingsAnnualizedTrend) + " vs target",
+      trendDirection: getTrendDirection(adjustedMetrics?.potentialSavingsAnnualizedTrend || metrics?.potentialSavingsAnnualizedTrend)
     },
     {
       title: "Current FY Potential",
-      value: formatCurrencyInLakhs(metrics?.potentialSavingsCurrentFY || 0),
+      value: formatCurrencyInLakhs(adjustedMetrics?.potentialSavingsCurrentFY || 0),
       subtitle: "This financial year",
       icon: IndianRupee,
-      trend: formatTrend(metrics?.potentialSavingsCurrentFYTrend) + " vs last FY",
-      trendDirection: getTrendDirection(metrics?.potentialSavingsCurrentFYTrend)
+      trend: formatTrend(adjustedMetrics?.potentialSavingsCurrentFYTrend || metrics?.potentialSavingsCurrentFYTrend) + " vs last FY",
+      trendDirection: getTrendDirection(adjustedMetrics?.potentialSavingsCurrentFYTrend || metrics?.potentialSavingsCurrentFYTrend)
     },
     {
       title: "Actual Savings",
@@ -289,7 +323,7 @@ export default function PerformanceAnalysis({
               />
               <div className="flex justify-between text-2xs text-muted-foreground">
                 <span>Actual: {formatCurrencyInLakhs(metrics?.actualSavingsCurrentFY || 0)}</span>
-                <span>Target: {formatCurrencyInLakhs(metrics?.savingsProjectionCurrentFY || 0)}</span>
+                <span>Target: {formatCurrencyInLakhs(adjustedMetrics?.potentialSavingsCurrentFY || 0)}</span>
               </div>
             </div>
           </CardContent>

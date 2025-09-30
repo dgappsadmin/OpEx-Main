@@ -141,7 +141,7 @@ export default function KPI({ user }: KPIProps) {
     { name: 'Completed', value: completedStatusInitiatives, color: '#29df6cff' }, // Green-700
     { name: 'Closed', value: closedInitiatives, color: '#059669' }, // Emerald-600
     { name: 'Rejected', value: rejectedInitiatives, color: '#ff0404ff' }, // Red-500
-    { name: 'Dropped', value: droppedInitiatives, color: '#b91c1c' }, // Red-700
+    { name: 'Dropped', value: droppedInitiatives, color: '#ea580c' }, // Orange-600
   ].filter(item => item.value > 0); // Only show statuses with initiatives
 
   // Site distribution
@@ -323,7 +323,7 @@ export default function KPI({ user }: KPIProps) {
                           initiative.status === 'Approved' ? 'bg-emerald-500 hover:bg-emerald-600 text-white' :
                           initiative.status === 'Under Approvals' ? 'bg-violet-500 hover:bg-violet-600 text-white' :
                           initiative.status === 'Pending' ? 'bg-amber-500 hover:bg-amber-600 text-white' :
-                          initiative.status === 'Dropped' ? 'bg-red-700 hover:bg-red-800 text-white' :
+                          initiative.status === 'Dropped' ? 'bg-orange-500 hover:bg-orange-600 text-white' :
                           'bg-gray-500 hover:bg-gray-600 text-white'
                         }`}>
                           {initiative.status === 'In Progress' ? 'In Prog.' : 

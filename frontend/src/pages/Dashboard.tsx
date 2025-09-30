@@ -23,6 +23,7 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { User } from "@/lib/mockData";
 import { useDashboardStats, useRecentInitiatives, usePerformanceAnalysis, useDashboardSites } from "@/hooks/useDashboard";
+import { useInitiatives } from "@/hooks/useInitiatives";
 import { DashboardStats } from "@/lib/types";
 import PerformanceAnalysis from "@/components/PerformanceAnalysis";
 
@@ -46,6 +47,16 @@ export default function Dashboard({ user }: DashboardProps) {
   const { data: dashboardStats, isLoading: statsLoading, error: statsError } = useDashboardStats(apiSite);
   const { data: recentInitiativesData, isLoading: initiativesLoading, error: initiativesError } = useRecentInitiatives(apiSite);
   const { data: performanceAnalysisData, isLoading: performanceLoading, error: performanceError } = usePerformanceAnalysis(apiSite);
+  
+  // Fetch initiatives data for filtering in PerformanceAnalysis
+  const { data: initiativesData } = useInitiatives(apiSite ? { site: apiSite } : {});
+  
+  // Process initiatives data for PerformanceAnalysis
+  const initiatives = (Array.isArray(initiativesData?.content) && initiativesData.content.length > 0) 
+    ? initiativesData.content 
+    : (Array.isArray(initiativesData) && initiativesData.length > 0) 
+    ? initiativesData 
+    : [];
 
   // Enhanced currency formatting
   const formatCurrency = (amount: number): string => {
@@ -151,6 +162,8 @@ export default function Dashboard({ user }: DashboardProps) {
         return "bg-blue-500 hover:bg-blue-600 text-white";
       case "rejected": 
         return "bg-red-500 hover:bg-red-600 text-white";
+      case "dropped": 
+        return "bg-orange-500 hover:bg-orange-600 text-white";
       default: 
         return "bg-gray-500 hover:bg-gray-600 text-white";
     }
@@ -491,6 +504,7 @@ export default function Dashboard({ user }: DashboardProps) {
             }}
             variant="overall"
             isLoading={performanceLoading}
+            initiatives={initiatives}
           />
 
           {/* Performance Analysis - Budget */}
@@ -507,6 +521,7 @@ export default function Dashboard({ user }: DashboardProps) {
             }}
             variant="budget"
             isLoading={performanceLoading}
+            initiatives={initiatives.filter((i: any) => i.budgetStatus === 'Budgeted' || i.isBudgeted === true)}
           />
 
           {/* Performance Analysis - Non-Budget */}
@@ -523,6 +538,7 @@ export default function Dashboard({ user }: DashboardProps) {
             }}
             variant="nonBudget"
             isLoading={performanceLoading}
+            initiatives={initiatives.filter((i: any) => i.budgetStatus !== 'Budgeted' && i.isBudgeted !== true)}
           />
         </TabsContent>
       </Tabs>
