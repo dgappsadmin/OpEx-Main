@@ -417,43 +417,77 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
     }
   };
 
-  // Role-based permission functions - Enhanced for assigned IL check
+  // Role-based permission functions - Enhanced for assigned IL check with stage 6 restriction
   const canEdit = (entry: TimelineEntry) => {
-    // Check if user is IL and is assigned to this initiative
+    // Get selected initiative to check stage status FIRST
+    const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
+    if (!selectedInitiative) return false;
+    
+    // DEBUG: Log initiative data for troubleshooting
+    if (selectedInitiativeId) {
+      console.log('DEBUG - Selected Initiative Data:', {
+        id: selectedInitiative.id,
+        stageNumber: selectedInitiative.stageNumber,
+        initiativeStatus: selectedInitiative.initiativeStatus,
+        isStageOver6: selectedInitiative.stageNumber && selectedInitiative.stageNumber > 6,
+        isCompleted: selectedInitiative.initiativeStatus === 'Completed'
+      });
+    }
+    
+    // PRIMARY CHECK: If stage 6 has been approved - NO ONE can edit (applies to ALL users)
+    // Check both stageNumber and initiativeStatus for comprehensive validation
+    if ((selectedInitiative.stageNumber && selectedInitiative.stageNumber > 6) || 
+        selectedInitiative.initiativeStatus === 'Completed') {
+      console.log('DEBUG - CUD Operations BLOCKED - Stage > 6 or Status = Completed');
+      return false; // Stage 6 has been approved and moved to next stage - READ ONLY for ALL
+    }
+    
+    // SECONDARY CHECK: Role-based permissions (only after stage check passes)
     if (user.role !== 'IL') return false;
     
     // For assigned initiatives tab, user can edit
     if (activeTab === 'assigned') return true;
     
     // For all initiatives tab, check if user is assigned to this specific initiative
-    const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
     return selectedInitiative && selectedInitiative.assignedUserEmail === user.email;
   };
 
   const canDelete = (entry: TimelineEntry) => {
-    // Check if user is IL and is assigned to this initiative
+    // Get selected initiative to check stage status FIRST
+    const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
+    if (!selectedInitiative) return false;
+    
+    // PRIMARY CHECK: If stage 6 has been approved - NO ONE can delete (applies to ALL users)
+    // Check both stageNumber and initiativeStatus for comprehensive validation
+    if ((selectedInitiative.stageNumber && selectedInitiative.stageNumber > 6) || 
+        selectedInitiative.initiativeStatus === 'Completed') {
+      return false; // Stage 6 has been approved and moved to next stage - READ ONLY for ALL
+    }
+    
+    // SECONDARY CHECK: Role-based permissions (only after stage check passes)
     if (user.role !== 'IL') return false;
     
     // For assigned initiatives tab, user can delete
     if (activeTab === 'assigned') return true;
     
     // For all initiatives tab, check if user is assigned to this specific initiative
-    const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
     return selectedInitiative && selectedInitiative.assignedUserEmail === user.email;
   };
 
   const canCreate = () => {
-    // Check if user is IL and is assigned to this initiative
-    if (user.role !== 'IL') return false;
-    
-    // Get selected initiative to check stage status
+    // Get selected initiative to check stage status FIRST
     const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
     if (!selectedInitiative) return false;
     
-    // Check if stage 6 (Timeline Tracker) has been approved - if yes, no new entries allowed
-    if (selectedInitiative.stageNumber && selectedInitiative.stageNumber > 6) {
-      return false; // Stage 6 has been approved and moved to next stage
+    // PRIMARY CHECK: If stage 6 has been approved - NO ONE can create (applies to ALL users)
+    // Check both stageNumber and initiativeStatus for comprehensive validation
+    if ((selectedInitiative.stageNumber && selectedInitiative.stageNumber > 6) || 
+        selectedInitiative.initiativeStatus === 'Completed') {
+      return false; // Stage 6 has been approved and moved to next stage - READ ONLY for ALL
     }
+    
+    // SECONDARY CHECK: Role-based permissions (only after stage check passes)
+    if (user.role !== 'IL') return false;
     
     // For assigned initiatives tab, user can create
     if (activeTab === 'assigned') return true;
@@ -563,9 +597,18 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
             Initiative Timeline Tracker
           </h1>
           <p className="text-muted-foreground text-xs mt-0.5">
-            {user.role === 'IL' 
-              ? 'Manage and track initiative timelines and milestones' 
-              : 'View initiative timelines and milestones (Read-only)'}
+            {(() => {
+              if (selectedInitiativeId) {
+                const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
+                if (selectedInitiative && ((selectedInitiative.stageNumber && selectedInitiative.stageNumber > 6) || 
+                    selectedInitiative.initiativeStatus === 'Completed')) {
+                  return 'View initiative timelines and milestones (Read-only - Stage 6 completed or Initiative completed)';
+                }
+              }
+              return user.role === 'IL' 
+                ? 'Manage and track initiative timelines and milestones' 
+                : 'View initiative timelines and milestones (Read-only)';
+            })()}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -711,12 +754,16 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
         </div>
       </div>
 
-      {/* Alert message when stage 6 is approved */}
-      {selectedInitiativeId && user.role === 'IL' && !canCreate() && (
+      {/* Alert message when stage 6 is approved - Show for ALL users */}
+      {selectedInitiativeId && (() => {
+        const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
+        return selectedInitiative && ((selectedInitiative.stageNumber && selectedInitiative.stageNumber > 6) || 
+               selectedInitiative.initiativeStatus === 'Completed');
+      })() && (
         <Alert className="mb-4 bg-amber-50 border-amber-200">
           <Lock className="h-4 w-4 text-amber-600" />
           <AlertDescription className="text-amber-800">
-            <strong>Stage Approved:</strong> Timeline Tracker stage has been approved and moved to the next stage. No new timeline entries can be added.
+            <strong>Read-Only Access:</strong> This initiative has moved beyond stage 6 (Timeline Tracker) or has been completed. All timeline entries are now read-only and no modifications are allowed for any user.
           </AlertDescription>
         </Alert>
       )}
@@ -1006,15 +1053,22 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
             </Button>
           </div>
 
-          {/* Role-based access info - Enhanced for assigned IL check */}
+          {/* Role-based access info - Enhanced for assigned IL check and stage 6 restriction */}
           {!canCreate() && (
             <Alert className="mb-6 border-blue-200 bg-blue-50">
               <Lock className="h-4 w-4 text-blue-600" />
               <AlertDescription className="text-blue-800">
                 <strong>Read-Only Access:</strong> You can view timeline entries but cannot create, edit, or delete entries. 
-                {user.role !== 'IL' 
-                  ? 'Only users with Initiative Lead (IL) role can modify timeline data.'
-                  : 'Only the assigned Initiative Lead for this specific initiative can modify timeline data.'}
+                {(() => {
+                  const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
+                  if (selectedInitiative && ((selectedInitiative.stageNumber && selectedInitiative.stageNumber > 6) || 
+                      selectedInitiative.initiativeStatus === 'Completed')) {
+                    // return 'This initiative has moved beyond stage 6 (Timeline Tracker) or has been completed and is now read-only for all users.';
+                  }
+                  return user.role !== 'IL' 
+                    ? 'Only users with Initiative Lead (IL) role can modify timeline data.'
+                    : 'Only the assigned Initiative Lead for this specific initiative can modify timeline data.';
+                })()}
               </AlertDescription>
             </Alert>
           )}

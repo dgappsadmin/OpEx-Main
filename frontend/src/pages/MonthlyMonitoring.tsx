@@ -368,54 +368,99 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
     setIsDialogOpen(true);
   };
 
+  // Role-based permission functions with stage 9 restriction
   const canEdit = (entry: MonthlyMonitoringEntry) => {
-    // Check if user is IL and is assigned to this initiative
+    // Get selected initiative to check stage status FIRST
+    const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
+    if (!selectedInitiative) return false;
+    
+    // DEBUG: Log initiative data for troubleshooting
+    if (selectedInitiativeId) {
+      console.log('DEBUG - Monthly Monitoring Selected Initiative Data:', {
+        id: selectedInitiative.id,
+        stageNumber: selectedInitiative.stageNumber,
+        initiativeStatus: selectedInitiative.initiativeStatus,
+        isStageOver9: selectedInitiative.stageNumber && selectedInitiative.stageNumber > 9,
+        isCompleted: selectedInitiative.initiativeStatus === 'Completed'
+      });
+    }
+    
+    // PRIMARY CHECK: If stage 9 has been approved - NO ONE can edit (applies to ALL users)
+    // Check both stageNumber and initiativeStatus for comprehensive validation
+    if ((selectedInitiative.stageNumber && selectedInitiative.stageNumber > 9) || 
+        selectedInitiative.initiativeStatus === 'Completed') {
+      console.log('DEBUG - Monthly Monitoring CUD Operations BLOCKED - Stage > 9 or Status = Completed');
+      return false; // Stage 9 has been approved and moved to next stage - READ ONLY for ALL
+    }
+    
+    // SECONDARY CHECK: Role-based permissions (only after stage check passes)
     if (user.role !== 'IL') return false;
     
     // For assigned initiatives tab, user can edit
     if (activeTab === 'assigned') return true;
     
     // For all initiatives tab, check if user is assigned to this specific initiative
-    const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
     return selectedInitiative && selectedInitiative.assignedUserEmail === user.email;
   };
 
   const canApprove = () => {
-    // Check if user is IL and is assigned to this initiative
+    // Get selected initiative to check stage status FIRST
+    const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
+    if (!selectedInitiative) return false;
+    
+    // PRIMARY CHECK: If stage 9 has been approved - NO ONE can approve (applies to ALL users)
+    // Check both stageNumber and initiativeStatus for comprehensive validation
+    if ((selectedInitiative.stageNumber && selectedInitiative.stageNumber > 9) || 
+        selectedInitiative.initiativeStatus === 'Completed') {
+      return false; // Stage 9 has been approved and moved to next stage - READ ONLY for ALL
+    }
+    
+    // SECONDARY CHECK: Role-based permissions (only after stage check passes)
     if (user.role !== 'IL') return false;
     
     // For assigned initiatives tab, user can approve
     if (activeTab === 'assigned') return true;
     
     // For all initiatives tab, check if user is assigned to this specific initiative
-    const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
     return selectedInitiative && selectedInitiative.assignedUserEmail === user.email;
   };
 
   const canFinalize = (entry: MonthlyMonitoringEntry) => {
-    // Check if user is IL and is assigned to this initiative
+    // Get selected initiative to check stage status FIRST
+    const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
+    if (!selectedInitiative) return false;
+    
+    // PRIMARY CHECK: If stage 9 has been approved - NO ONE can finalize (applies to ALL users)
+    // Check both stageNumber and initiativeStatus for comprehensive validation
+    if ((selectedInitiative.stageNumber && selectedInitiative.stageNumber > 9) || 
+        selectedInitiative.initiativeStatus === 'Completed') {
+      return false; // Stage 9 has been approved and moved to next stage - READ ONLY for ALL
+    }
+    
+    // SECONDARY CHECK: Role-based permissions (only after stage check passes)
     if (user.role !== 'IL') return false;
     
     // For assigned initiatives tab, user can finalize
     if (activeTab === 'assigned') return true;
     
     // For all initiatives tab, check if user is assigned to this specific initiative
-    const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
     return selectedInitiative && selectedInitiative.assignedUserEmail === user.email;
   };
 
   const canCreate = () => {
-    // Check if user is IL and is assigned to this initiative
-    if (user.role !== 'IL') return false;
-    
-    // Get selected initiative to check stage status
+    // Get selected initiative to check stage status FIRST
     const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
     if (!selectedInitiative) return false;
     
-    // Check if stage 9 (Monthly Monitoring) has been approved - if yes, no new entries allowed
-    if (selectedInitiative.stageNumber && selectedInitiative.stageNumber > 9) {
-      return false; // Stage 9 has been approved and moved to next stage
+    // PRIMARY CHECK: If stage 9 has been approved - NO ONE can create (applies to ALL users)
+    // Check both stageNumber and initiativeStatus for comprehensive validation
+    if ((selectedInitiative.stageNumber && selectedInitiative.stageNumber > 9) || 
+        selectedInitiative.initiativeStatus === 'Completed') {
+      return false; // Stage 9 has been approved and moved to next stage - READ ONLY for ALL
     }
+    
+    // SECONDARY CHECK: Role-based permissions (only after stage check passes)
+    if (user.role !== 'IL') return false;
     
     // For assigned initiatives tab, user can create
     if (activeTab === 'assigned') return true;
@@ -499,7 +544,18 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
             Savings Monitoring Sheet
           </h1>
           <p className="text-muted-foreground text-xs mt-0.5">
-            Monthly monitoring and validation of savings achievements
+            {(() => {
+              if (selectedInitiativeId) {
+                const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
+                if (selectedInitiative && ((selectedInitiative.stageNumber && selectedInitiative.stageNumber > 9) || 
+                    selectedInitiative.initiativeStatus === 'Completed')) {
+                  return 'View monthly monitoring entries (Read-only - Stage 9 completed or Initiative completed)';
+                }
+              }
+              return user.role === 'IL' 
+                ? 'Monthly monitoring and validation of savings achievements' 
+                : 'View monthly monitoring entries (Read-only)';
+            })()}
           </p>
         </div>
         {selectedInitiativeId && canCreate() && (
@@ -679,11 +735,15 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
             </DialogContent>
           </Dialog>
         )}
-        {selectedInitiativeId && !canCreate() && (
+        {selectedInitiativeId && (() => {
+          const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
+          return selectedInitiative && ((selectedInitiative.stageNumber && selectedInitiative.stageNumber > 9) || 
+                 selectedInitiative.initiativeStatus === 'Completed');
+        })() && (
           <Alert className="bg-amber-50 border-amber-200">
             <Lock className="h-4 w-4 text-amber-600" />
             <AlertDescription className="text-amber-800">
-              <strong>Stage Approved:</strong> Monthly Monitoring stage has been approved and moved to the next stage. No new entries can be added.
+              <strong>Read-Only Access:</strong> This initiative has moved beyond stage 9 (Monthly Monitoring) or has been completed. All monitoring entries are now read-only and no modifications are allowed for any user.
             </AlertDescription>
           </Alert>
         )}
