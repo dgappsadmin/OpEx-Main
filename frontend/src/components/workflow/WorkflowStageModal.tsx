@@ -742,7 +742,7 @@ export default function WorkflowStageModal({
       5: "Initiative Lead evaluates both Management of Change (MOC) and Capital Expenditure (CAPEX) requirements.",
       6: "Initiative Lead prepares detailed timeline for initiative implementation.",
       7: "Site TSD Lead monitors progress of initiative implementation.",
-      8: "Corporate TSD periodic status review with Chief Marketing Officer. You can approve to continue or drop to move initiative to next FY.",
+      8: "You can approve to continue or drop to move initiative to next FY.",
       9: "Initiative Lead monitors savings achieved after implementation (monthly monitoring period).",
       10: "Site F&A validates savings and financial accuracy.",
       11: "Initiative Lead performs final closure of the initiative."

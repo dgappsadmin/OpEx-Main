@@ -1001,6 +1001,13 @@ public class WorkflowTransactionService {
             
             if (currentTransaction.isPresent()) {
                 WorkflowTransaction transaction = currentTransaction.get();
+                
+                // CRITICAL RESTRICTION: If current stage is already approved, deny access
+                // This prevents CRUD operations after stage completion (for stages 6 and 9)
+                if ("approved".equals(transaction.getApproveStatus())) {
+                    return false;
+                }
+                
                 if (transaction.getAssignedUserId() != null) {
                     Optional<User> assignedUser = userRepository.findById(transaction.getAssignedUserId());
                     return assignedUser.map(user -> userEmail.equals(user.getEmail())).orElse(false);

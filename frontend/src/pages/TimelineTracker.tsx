@@ -422,11 +422,24 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
     // Check if user is IL and is assigned to this initiative
     if (user.role !== 'IL') return false;
     
+    // Check if entry is already completed - cannot edit completed entries
+    if (entry.status === 'COMPLETED') return false;
+    
+    // Get selected initiative to check stage status
+    const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
+    if (!selectedInitiative) return false;
+    
+    // Check if stage 6 (Timeline Tracker) has been approved - if yes, no editing allowed
+    if (selectedInitiative.stageNumber && selectedInitiative.stageNumber > 6) {
+      return false; // Stage 6 has been approved and moved to next stage
+    }
+    
     // For assigned initiatives tab, user can edit
-    if (activeTab === 'assigned') return true;
+    if (activeTab === 'assigned') {
+      return selectedInitiative && selectedInitiative.assignedUserEmail === user.email;
+    }
     
     // For all initiatives tab, check if user is assigned to this specific initiative
-    const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
     return selectedInitiative && selectedInitiative.assignedUserEmail === user.email;
   };
 
@@ -434,11 +447,24 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
     // Check if user is IL and is assigned to this initiative
     if (user.role !== 'IL') return false;
     
+    // Check if entry is already completed - cannot delete completed entries
+    if (entry.status === 'COMPLETED') return false;
+    
+    // Get selected initiative to check stage status
+    const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
+    if (!selectedInitiative) return false;
+    
+    // Check if stage 6 (Timeline Tracker) has been approved - if yes, no deleting allowed
+    if (selectedInitiative.stageNumber && selectedInitiative.stageNumber > 6) {
+      return false; // Stage 6 has been approved and moved to next stage
+    }
+    
     // For assigned initiatives tab, user can delete
-    if (activeTab === 'assigned') return true;
+    if (activeTab === 'assigned') {
+      return selectedInitiative && selectedInitiative.assignedUserEmail === user.email;
+    }
     
     // For all initiatives tab, check if user is assigned to this specific initiative
-    const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
     return selectedInitiative && selectedInitiative.assignedUserEmail === user.email;
   };
 
@@ -716,7 +742,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
         <Alert className="mb-4 bg-amber-50 border-amber-200">
           <Lock className="h-4 w-4 text-amber-600" />
           <AlertDescription className="text-amber-800">
-            <strong>Stage Approved:</strong> Timeline Tracker stage has been approved and moved to the next stage. No new timeline entries can be added.
+            <strong>Stage Approved:</strong> Timeline Tracker stage (Stage 6) has been approved and moved to Progress Monitoring (Stage 7). All timeline entries are now read-only. No new entries can be added or existing entries modified.
           </AlertDescription>
         </Alert>
       )}
@@ -1014,6 +1040,9 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                 <strong>Read-Only Access:</strong> You can view timeline entries but cannot create, edit, or delete entries. 
                 {user.role !== 'IL' 
                   ? 'Only users with Initiative Lead (IL) role can modify timeline data.'
+                  : currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId)?.stageNumber && 
+                    currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId)?.stageNumber! > 6
+                  ? 'Timeline Tracker stage has been approved and moved to the next stage. All entries are now read-only.'
                   : 'Only the assigned Initiative Lead for this specific initiative can modify timeline data.'}
               </AlertDescription>
             </Alert>
@@ -1123,8 +1152,25 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                                 </Badge>
                                 <div className="flex space-x-1">
                                   {canEdit(entry) && (
-                                    <Button size="sm" variant="ghost" onClick={() => handleEdit(entry)} className="h-7 w-7 p-0">
+                                    <Button 
+                                      size="sm" 
+                                      variant="ghost" 
+                                      onClick={() => handleEdit(entry)} 
+                                      className="h-7 w-7 p-0"
+                                      title={entry.status === 'COMPLETED' ? 'Cannot edit completed entries' : 'Edit timeline entry'}
+                                    >
                                       <Edit className="h-3 w-3" />
+                                    </Button>
+                                  )}
+                                  {!canEdit(entry) && entry.status === 'COMPLETED' && user.role === 'IL' && (
+                                    <Button 
+                                      size="sm" 
+                                      variant="ghost" 
+                                      disabled 
+                                      className="h-7 w-7 p-0 opacity-50 cursor-not-allowed"
+                                      title="Cannot edit completed entries"
+                                    >
+                                      <Lock className="h-3 w-3" />
                                     </Button>
                                   )}
                                   {canDelete(entry) && (
@@ -1133,8 +1179,20 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                                       variant="ghost"
                                       onClick={() => deleteMutation.mutate(entry.id!)}
                                       className="h-7 w-7 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                      title={entry.status === 'COMPLETED' ? 'Cannot delete completed entries' : 'Delete timeline entry'}
                                     >
                                       <Trash2 className="h-3 w-3" />
+                                    </Button>
+                                  )}
+                                  {!canDelete(entry) && entry.status === 'COMPLETED' && user.role === 'IL' && (
+                                    <Button 
+                                      size="sm" 
+                                      variant="ghost" 
+                                      disabled 
+                                      className="h-7 w-7 p-0 opacity-50 cursor-not-allowed text-red-400"
+                                      title="Cannot delete completed entries"
+                                    >
+                                      <Lock className="h-3 w-3" />
                                     </Button>
                                   )}
                                 </div>
