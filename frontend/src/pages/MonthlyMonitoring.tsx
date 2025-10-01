@@ -372,24 +372,11 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
     // Check if user is IL and is assigned to this initiative
     if (user.role !== 'IL') return false;
     
-    // Check if entry is already finalized - cannot edit finalized entries
-    if (entry.isFinalized === 'Y') return false;
-    
-    // Get selected initiative to check stage status
-    const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
-    if (!selectedInitiative) return false;
-    
-    // Check if stage 9 (Monthly Monitoring) has been approved - if yes, no editing allowed
-    if (selectedInitiative.stageNumber && selectedInitiative.stageNumber > 9) {
-      return false; // Stage 9 has been approved and moved to next stage
-    }
-    
     // For assigned initiatives tab, user can edit
-    if (activeTab === 'assigned') {
-      return selectedInitiative && selectedInitiative.assignedUserEmail === user.email;
-    }
+    if (activeTab === 'assigned') return true;
     
     // For all initiatives tab, check if user is assigned to this specific initiative
+    const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
     return selectedInitiative && selectedInitiative.assignedUserEmail === user.email;
   };
 
@@ -409,24 +396,11 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
     // Check if user is IL and is assigned to this initiative
     if (user.role !== 'IL') return false;
     
-    // Check if entry is already finalized - cannot change finalized entries
-    if (entry.isFinalized === 'Y') return false;
-    
-    // Get selected initiative to check stage status
-    const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
-    if (!selectedInitiative) return false;
-    
-    // Check if stage 9 (Monthly Monitoring) has been approved - if yes, no finalizing allowed
-    if (selectedInitiative.stageNumber && selectedInitiative.stageNumber > 9) {
-      return false; // Stage 9 has been approved and moved to next stage
-    }
-    
     // For assigned initiatives tab, user can finalize
-    if (activeTab === 'assigned') {
-      return selectedInitiative && selectedInitiative.assignedUserEmail === user.email;
-    }
+    if (activeTab === 'assigned') return true;
     
     // For all initiatives tab, check if user is assigned to this specific initiative
+    const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
     return selectedInitiative && selectedInitiative.assignedUserEmail === user.email;
   };
 
@@ -705,11 +679,11 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
             </DialogContent>
           </Dialog>
         )}
-        {selectedInitiativeId && !canCreate() && user.role === 'IL' && (
+        {selectedInitiativeId && !canCreate() && (
           <Alert className="bg-amber-50 border-amber-200">
             <Lock className="h-4 w-4 text-amber-600" />
             <AlertDescription className="text-amber-800">
-              <strong>Stage Approved:</strong> Monthly Monitoring stage (Stage 9) has been approved and moved to F&A Validation (Stage 10). All monitoring entries are now read-only. No new entries can be added or existing entries modified.
+              <strong>Stage Approved:</strong> Monthly Monitoring stage has been approved and moved to the next stage. No new entries can be added.
             </AlertDescription>
           </Alert>
         )}
@@ -1001,20 +975,6 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
             </Button>
           </div>
 
-          {/* Role-based access info - Enhanced for stage restrictions */}
-          {!canCreate() && user.role === 'IL' && (
-            <Alert className="mb-6 border-blue-200 bg-blue-50">
-              <Lock className="h-4 w-4 text-blue-600" />
-              <AlertDescription className="text-blue-800">
-                <strong>Read-Only Access:</strong> You can view monitoring entries but cannot create, edit, or delete entries. 
-                {currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId)?.stageNumber && 
-                  currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId)?.stageNumber! > 9
-                ? 'Monthly Monitoring stage has been approved and moved to the next stage. All entries are now read-only.'
-                : 'Only the assigned Initiative Lead for this specific initiative can modify monitoring data.'}
-              </AlertDescription>
-            </Alert>
-          )}
-
           {/* Summary Stats Cards - Dashboard pattern */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
             {overviewStats.map((stat) => (
@@ -1188,20 +1148,8 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                                             e.stopPropagation();
                                             handleEdit(entry);
                                           }}
-                                          title={entry.isFinalized === 'Y' ? 'Cannot edit finalized entries' : 'Edit monitoring entry'}
                                         >
                                           <Edit className="h-3 w-3" />
-                                        </Button>
-                                      )}
-                                      {!canEdit(entry) && entry.isFinalized === 'Y' && user.role === 'IL' && (
-                                        <Button 
-                                          size="sm" 
-                                          variant="outline" 
-                                          disabled 
-                                          className="opacity-50 cursor-not-allowed"
-                                          title="Cannot edit finalized entries"
-                                        >
-                                          <Lock className="h-3 w-3" />
                                         </Button>
                                       )}
                                       {canFinalize(entry) && entry.isFinalized !== 'Y' && (
@@ -1213,20 +1161,8 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                                             e.stopPropagation();
                                             finalizeMutation.mutate({ id: entry.id!, isFinalized: 'Y' });
                                           }}
-                                          title="Finalize entry"
                                         >
                                           <FileText className="h-3 w-3" />
-                                        </Button>
-                                      )}
-                                      {!canFinalize(entry) && entry.isFinalized === 'Y' && user.role === 'IL' && (
-                                        <Button 
-                                          size="sm" 
-                                          variant="outline" 
-                                          disabled 
-                                          className="opacity-50 cursor-not-allowed"
-                                          title="Entry is already finalized"
-                                        >
-                                          <CheckCircle className="h-3 w-3" />
                                         </Button>
                                       )}
                                       {/* {canApprove() && (
@@ -1245,7 +1181,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                                           <Target className="h-3 w-3" />
                                         </Button>
                                       )} */}
-                                      {user.role === 'IL' && canEdit(entry) && (
+                                      {user.role === 'IL' && (
                                         <Button
                                           size="sm"
                                           variant="outline"
@@ -1255,20 +1191,8 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                                             deleteMutation.mutate(entry.id!);
                                           }}
                                           className="text-red-600 hover:text-red-700"
-                                          title={entry.isFinalized === 'Y' ? 'Cannot delete finalized entries' : 'Delete monitoring entry'}
                                         >
                                           <Trash2 className="h-3 w-3" />
-                                        </Button>
-                                      )}
-                                      {user.role === 'IL' && !canEdit(entry) && entry.isFinalized === 'Y' && (
-                                        <Button 
-                                          size="sm" 
-                                          variant="outline" 
-                                          disabled 
-                                          className="opacity-50 cursor-not-allowed text-red-400"
-                                          title="Cannot delete finalized entries"
-                                        >
-                                          <Lock className="h-3 w-3" />
                                         </Button>
                                       )}
                                     </div>

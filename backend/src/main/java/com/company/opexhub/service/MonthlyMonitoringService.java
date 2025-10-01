@@ -23,9 +23,6 @@ public class MonthlyMonitoringService {
     
     @Autowired
     private InitiativeRepository initiativeRepository;
-    
-    @Autowired
-    private WorkflowTransactionService workflowTransactionService;
 
     public List<MonthlyMonitoringEntry> getMonitoringEntriesByInitiative(Long initiativeId) {
         return monthlyMonitoringRepository.findByInitiative_IdOrderByMonitoringMonth(initiativeId);
@@ -61,18 +58,6 @@ public class MonthlyMonitoringService {
         MonthlyMonitoringEntry entry = monthlyMonitoringRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Monthly monitoring entry not found"));
 
-        // VALIDATION: Check if entry is already finalized
-        if ("Y".equals(entry.getIsFinalized())) {
-            throw new RuntimeException("Cannot update monitoring entry: Entry is already finalized and cannot be modified");
-        }
-        
-        // VALIDATION: Check if Stage 9 (Monthly Monitoring) has been approved
-        Long initiativeId = entry.getInitiative().getId();
-        if (entryDetails.getEnteredBy() != null && 
-            !workflowTransactionService.hasSavingsMonitoringAccess(initiativeId, entryDetails.getEnteredBy(), "IL")) {
-            throw new RuntimeException("Cannot update monitoring entry: Monthly Monitoring stage has been completed or you don't have access to this initiative");
-        }
-
         entry.setKpiDescription(entryDetails.getKpiDescription());
         entry.setTargetValue(entryDetails.getTargetValue());
         entry.setAchievedValue(entryDetails.getAchievedValue());
@@ -95,11 +80,6 @@ public class MonthlyMonitoringService {
     public MonthlyMonitoringEntry updateFinalizationStatus(Long id, String isFinalized) {
         MonthlyMonitoringEntry entry = monthlyMonitoringRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Monthly monitoring entry not found"));
-
-        // VALIDATION: Check if entry is already finalized and trying to change it
-        if ("Y".equals(entry.getIsFinalized()) && !"Y".equals(isFinalized)) {
-            throw new RuntimeException("Cannot change finalization status: Entry is already finalized and cannot be modified");
-        }
 
         // Validate Y/N format
         if (!"Y".equals(isFinalized) && !"N".equals(isFinalized)) {
@@ -126,19 +106,6 @@ public class MonthlyMonitoringService {
     }
 
     public void deleteMonitoringEntry(Long id) {
-        MonthlyMonitoringEntry entry = monthlyMonitoringRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Monthly monitoring entry not found"));
-        
-        // VALIDATION: Check if entry is already finalized
-        if ("Y".equals(entry.getIsFinalized())) {
-            throw new RuntimeException("Cannot delete monitoring entry: Entry is already finalized and cannot be modified");
-        }
-        
-        // VALIDATION: Check if Stage 9 (Monthly Monitoring) has been approved
-        Long initiativeId = entry.getInitiative().getId();
-        // Note: Additional validation can be added here similar to TimelineEntry
-        // For now, the controller should handle user authentication before calling this method
-        
         monthlyMonitoringRepository.deleteById(id);
     }
 
