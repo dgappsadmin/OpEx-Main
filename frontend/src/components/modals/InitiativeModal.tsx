@@ -1527,12 +1527,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                           </div>
                         </div>
                         <Separator />
-                        <div>
-                          <p className="text-xs text-muted-foreground">Priority Level</p>
-                          <Badge className={`${getPriorityColor(initiative?.priority || '')} text-xs mt-0.5`}>
-                            {initiative?.priority}
-                          </Badge>
-                        </div>
+
                       </CardContent>
                     </Card>
                   </div>

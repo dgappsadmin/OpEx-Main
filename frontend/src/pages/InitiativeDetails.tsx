@@ -1602,12 +1602,6 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                     
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">Priority</span>
-                        <Badge className={getPriorityColor(initiative?.priority || '')}>
-                          {initiative?.priority}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center justify-between">
                         <span className="text-sm font-medium">Discipline</span>
                         <Badge variant="outline" className="text-xs">
                           {initiative?.discipline}
@@ -1699,26 +1693,7 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                       )}
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="priority">Priority</Label>
-                      {isEditing ? (
-                        <Select value={formData.priority || ''} onValueChange={(value) => setFormData({ ...formData, priority: value })}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select priority" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="High">High</SelectItem>
-                            <SelectItem value="Medium">Medium</SelectItem>
-                            <SelectItem value="Low">Low</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <Badge className={getPriorityColor(initiative?.priority || '')}>
-                          {initiative?.priority}
-                        </Badge>
-                      )}
-                    </div>
-
+                    
                     <div className="space-y-2">
                       <Label htmlFor="expectedSavings">Expected Savings (₹)</Label>
                       {isEditing ? (
@@ -1882,21 +1857,7 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                         )}
                       </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="confidenceLevel">Confidence Level (%)</Label>
-                        {isEditing ? (
-                          <Input
-                            id="confidenceLevel"
-                            type="number"
-                            min="0"
-                            max="100"
-                            value={formData.confidenceLevel || ''}
-                            onChange={(e) => setFormData({ ...formData, confidenceLevel: parseInt(e.target.value) || 0 })}
-                          />
-                        ) : (
-                          <p className="text-sm">{initiative?.confidenceLevel || '0'}%</p>
-                        )}
-                      </div>
+                
 
                       <div className="space-y-2">
                         <Label htmlFor="estimatedCapex">Estimated CAPEX (₹)</Label>
