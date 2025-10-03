@@ -665,7 +665,7 @@ export default function WorkflowStageModal({
                     <div className="grid grid-cols-12 gap-2 text-xs font-semibold">
                       <div className="col-span-1">Select</div>
                       <div className="col-span-3">Monitoring Month</div>
-                      <div className="col-span-4">KPI Description</div>
+                      <div className="col-span-4">Saving Description</div>
                       <div className="col-span-2">Target Value</div>
                       <div className="col-span-2">Achieved Value</div>
                     </div>

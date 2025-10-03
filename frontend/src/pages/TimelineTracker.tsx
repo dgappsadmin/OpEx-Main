@@ -387,14 +387,21 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.stageName || !formData.plannedStartDate || !formData.plannedEndDate) {
+    if (!formData.stageName || !formData.plannedStartDate || !formData.plannedEndDate || 
+        !formData.actualStartDate || !formData.actualEndDate || !formData.remarks) {
       toast({ title: "Error", description: "Please fill in all required fields", variant: "destructive" });
       return;
     }
 
     // Validate dates
     if (new Date(formData.plannedEndDate!) < new Date(formData.plannedStartDate!)) {
-      toast({ title: "Error", description: "End date must be after start date", variant: "destructive" });
+      toast({ title: "Error", description: "Planned end date must be after planned start date", variant: "destructive" });
+      return;
+    }
+
+    // Validate actual dates
+    if (new Date(formData.actualEndDate!) < new Date(formData.actualStartDate!)) {
+      toast({ title: "Error", description: "Actual end date must be after actual start date", variant: "destructive" });
       return;
     }
 
@@ -666,7 +673,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                   </div>
 
                   <div>
-                    <Label htmlFor="status">Status</Label>
+                    <Label htmlFor="status">Status (Default: In Progress)</Label>
                     <Select 
                       value={formData.status || 'IN_PROGRESS'} 
                       onValueChange={(value) => setFormData({ ...formData, status: value as any })}
@@ -705,7 +712,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Actual Start Date</Label>
+                    <Label>Actual Start Date *</Label>
                     <DatePicker
                       date={formData.actualStartDate}
                       onDateChange={(date) => setFormData({ ...formData, actualStartDate: date })}
@@ -713,7 +720,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                     />
                   </div>
                   <div>
-                    <Label>Actual End Date</Label>
+                    <Label>Actual End Date *</Label>
                     <DatePicker
                       date={formData.actualEndDate}
                       onDateChange={(date) => setFormData({ ...formData, actualEndDate: date })}
@@ -723,13 +730,14 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                 </div>
 
                 <div>
-                  <Label htmlFor="remarks">Remarks & Notes</Label>
+                  <Label htmlFor="remarks">Remarks & Notes *</Label>
                   <Textarea
                     id="remarks"
                     value={formData.remarks || ''}
                     onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
                     placeholder="Enter any remarks, notes, or additional information"
                     className="min-h-[80px] focus:ring-2 focus:ring-gray-500"
+                    required
                   />
                 </div>
 

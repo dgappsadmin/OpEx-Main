@@ -306,15 +306,48 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
     }
   });
 
-  // Prepare chart data
-  const chartData = monitoringEntries.map((entry: MonthlyMonitoringEntry) => ({
-    month: entry.monitoringMonth,
-    target: entry.targetValue,
-    achieved: entry.achievedValue || 0,
-    deviation: entry.deviation || 0,
-    deviationPercentage: entry.deviationPercentage || 0,
-    kpi: entry.kpiDescription
-  })).sort((a, b) => a.month.localeCompare(b.month));
+  // Prepare chart data - Consolidate entries by month
+  const chartData = (() => {
+    const monthlyData = new Map<string, {
+      month: string;
+      target: number;
+      achieved: number;
+      entries: number;
+      kpiList: string[];
+    }>();
+
+    // Aggregate entries by month
+    monitoringEntries.forEach((entry: MonthlyMonitoringEntry) => {
+      const month = entry.monitoringMonth;
+      const existing = monthlyData.get(month);
+
+      if (existing) {
+        existing.target += entry.targetValue;
+        existing.achieved += (entry.achievedValue || 0);
+        existing.entries += 1;
+        existing.kpiList.push(entry.kpiDescription);
+      } else {
+        monthlyData.set(month, {
+          month,
+          target: entry.targetValue,
+          achieved: entry.achievedValue || 0,
+          entries: 1,
+          kpiList: [entry.kpiDescription]
+        });
+      }
+    });
+
+    // Convert to array and calculate deviation
+    return Array.from(monthlyData.values()).map(data => ({
+      month: data.month,
+      target: data.target,
+      achieved: data.achieved,
+      deviation: data.achieved - data.target,
+      deviationPercentage: data.target > 0 ? ((data.achieved - data.target) / data.target) * 100 : 0,
+      entries: data.entries,
+      kpi: data.entries > 1 ? `${data.entries} entries` : data.kpiList[0]
+    })).sort((a, b) => a.month.localeCompare(b.month));
+  })();
 
   // Calculate summary statistics
   const summaryStats = {
@@ -336,7 +369,8 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.kpiDescription || !formData.targetValue || !formData.monitoringMonth) {
+    if (!formData.kpiDescription || !formData.targetValue || !formData.monitoringMonth || 
+        !formData.category || !formData.achievedValue || !formData.remarks) {
       toast({ title: "Error", description: "Please fill in all required fields", variant: "destructive" });
       return;
     }
@@ -352,7 +386,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
       ...formData,
       isFinalized: 'N', // Changed to 'N' string
       faApproval: 'N',  // Changed to 'N' string
-      category: formData.category || 'RMC'
+      category: formData.category
     } as MonthlyMonitoringEntry;
 
     if (editingEntry) {
@@ -469,8 +503,42 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
     return selectedInitiative && selectedInitiative.assignedUserEmail === user.email;
   };
 
-  const formatCurrency = (amount: number) => {
-    return `₹${amount.toLocaleString('en-IN')} Lakhs`;
+  // Smart currency formatting that handles all amounts automatically and removes trailing zeros
+  const formatCurrency = (amount: number): string => {
+    if (amount === 0) return "₹0";
+    
+    // Helper function to remove trailing zeros and unnecessary decimal points
+    const cleanNumber = (num: number, decimals: number): string => {
+      return parseFloat(num.toFixed(decimals)).toString();
+    };
+    
+    if (amount >= 1000000000000) {
+      // >= 1 Trillion: show in Trillion
+      const trillions = amount / 1000000000000;
+      return `₹${cleanNumber(trillions, 2)}T`;
+    } else if (amount >= 10000000000) {
+      // >= 1000 Crores: show in Thousand Crores
+      const thousandCrores = amount / 10000000000;
+      return `₹${cleanNumber(thousandCrores, 2)}TCr`;
+    } else if (amount >= 10000000) {
+      // >= 1 Crore: show in Crores
+      const crores = amount / 10000000;
+      return `₹${cleanNumber(crores, 2)}Cr`;
+    } else if (amount >= 100000) {
+      // >= 1 Lakh: show in Lakhs
+      const lakhs = amount / 100000;
+      return `₹${cleanNumber(lakhs, 2)}L`;
+    } else if (amount >= 1000) {
+      // >= 1 Thousand: show in Thousands
+      const thousands = amount / 1000;
+      return `₹${cleanNumber(thousands, 2)}K`;
+    } else if (amount >= 1) {
+      // >= 1 Rupee: show in Rupees without decimals for whole numbers
+      return amount % 1 === 0 ? `₹${amount}` : `₹${cleanNumber(amount, 2)}`;
+    } else {
+      // < 1 Rupee: show in paisa with appropriate decimals
+      return `₹${cleanNumber(amount, 2)}`;
+    }
   };
 
   // Summary stats for consistent design
@@ -495,7 +563,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
     },
     {
       title: "Total Savings",
-      value: `₹${summaryStats.totalSavings.toFixed(1)}L`,
+      value: formatCurrency(summaryStats.totalSavings),
       change: "+25%",
       trend: "up",
       icon: IndianRupee,
@@ -504,7 +572,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
     },
     {
       title: "Avg Achievement",
-      value: `₹${summaryStats.averageAchievement.toFixed(1)}L`,
+      value: formatCurrency(summaryStats.averageAchievement),
       change: "+15%",
       trend: "up",
       icon: Target,
@@ -630,11 +698,12 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
 
                   <div>
                     <Label htmlFor="category" className="text-sm font-medium text-gray-700 mb-1.5 block">
-                      Category
+                      Category *
                     </Label>
                     <Select 
-                      value={formData.category || 'RMC'} 
+                      value={formData.category || ''} 
                       onValueChange={(value) => setFormData({ ...formData, category: value })}
+                      required
                     >
                       <SelectTrigger className="h-9 border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                         <SelectValue placeholder="Select category" />
@@ -652,7 +721,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="targetValue" className="text-sm font-medium text-gray-700 mb-1.5 block">
-                      Target Value
+                      Target Value *
                     </Label>
                     <Input
                       id="targetValue"
@@ -668,7 +737,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                   </div>
                   <div>
                     <Label htmlFor="achievedValue" className="text-sm font-medium text-gray-700 mb-1.5 block">
-                      Achieved Value
+                      Achieved Value *
                     </Label>
                     <Input
                       id="achievedValue"
@@ -679,6 +748,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                       onChange={(e) => setFormData({ ...formData, achievedValue: parseFloat(e.target.value) })}
                       placeholder="Enter achieved value"
                       className="h-9 border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                      required
                     />
                   </div>
                 </div>
@@ -687,7 +757,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                   <Alert className="border-blue-200 bg-blue-50">
                     <TrendingUp className="h-4 w-4 text-blue-600" />
                     <AlertDescription className="text-blue-800">
-                      <strong>Deviation:</strong> ₹{((formData.achievedValue - formData.targetValue)).toFixed(2)}
+                      <strong>Deviation:</strong> {formatCurrency((formData.achievedValue - formData.targetValue))}
                       ({(((formData.achievedValue - formData.targetValue) / formData.targetValue) * 100).toFixed(1)}%)
                     </AlertDescription>
                   </Alert>
@@ -695,7 +765,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
 
                 <div>
                   <Label htmlFor="remarks" className="text-sm font-medium text-gray-700 mb-1.5 block">
-                    Remarks & Analysis
+                    Remarks & Analysis *
                   </Label>
                   <Textarea
                     id="remarks"
@@ -703,6 +773,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                     onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
                     placeholder="Enter detailed remarks, analysis, and observations"
                     className="min-h-[80px] border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors resize-none"
+                    required
                   />
                 </div>
 
@@ -968,7 +1039,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-muted-foreground">Savings:</span>
-                          <span className="font-medium text-green-600">₹{initiative.expectedSavings}</span>
+                          <span className="font-medium text-green-600">{formatCurrency(initiative.expectedSavings)}</span>
                         </div>
                       </div>
                     </CardContent>
@@ -1165,15 +1236,15 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                                       {entry.category || 'General'}
                                     </Badge>
                                   </TableCell>
-                                  <TableCell className="text-xs">₹{entry.targetValue}</TableCell>
+                                  <TableCell className="text-xs">{formatCurrency(entry.targetValue)}</TableCell>
                                   <TableCell className="text-xs">
-                                    {entry.achievedValue ? `₹${entry.achievedValue}` : '-'}
+                                    {entry.achievedValue ? formatCurrency(entry.achievedValue) : '-'}
                                   </TableCell>
                                   <TableCell className="text-xs">
                                     {entry.deviation ? (
                                       <div className="flex items-center space-x-1">
                                         <span className={`font-medium ${entry.deviation < 0 ? 'text-red-500' : 'text-green-500'}`}>
-                                          ₹{entry.deviation.toFixed(2)}
+                                          {entry.deviation >= 0 ? '+' : ''}{formatCurrency(Math.abs(entry.deviation))}
                                         </span>
                                         <span className="text-xs text-muted-foreground">
                                           ({entry.deviationPercentage?.toFixed(1)}%)
@@ -1338,18 +1409,16 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                               <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
                                 <div className="text-center p-3 bg-blue-50 rounded-lg">
                                   <Label className="text-xs font-medium text-blue-600">Target Value</Label>
-                                  <p className="text-lg font-bold text-blue-700">₹{entry.targetValue}</p>
-                                  <p className="text-xs text-blue-500">Lakhs</p>
+                                  <p className="text-lg font-bold text-blue-700">{formatCurrency(entry.targetValue)}</p>
                                 </div>
                                 <div className="text-center p-3 bg-green-50 rounded-lg">
                                   <Label className="text-xs font-medium text-green-600">Achieved Value</Label>
-                                  <p className="text-lg font-bold text-green-700">₹{entry.achievedValue || '-'}</p>
-                                  <p className="text-xs text-green-500">Lakhs</p>
+                                  <p className="text-lg font-bold text-green-700">{entry.achievedValue ? formatCurrency(entry.achievedValue) : '-'}</p>
                                 </div>
                                 <div className="text-center p-3 bg-purple-50 rounded-lg">
                                   <Label className="text-xs font-medium text-purple-600">Deviation</Label>
                                   <p className={`text-lg font-bold ${entry.deviation && entry.deviation < 0 ? 'text-red-600' : 'text-green-600'}`}>
-                                    {entry.deviation ? `₹${entry.deviation.toFixed(2)}` : '-'}
+                                    {entry.deviation ? `${entry.deviation >= 0 ? '+' : ''}${formatCurrency(Math.abs(entry.deviation))}` : '-'}
                                   </p>
                                   <p className="text-xs text-purple-500">
                                     {entry.deviationPercentage ? `${entry.deviationPercentage.toFixed(1)}%` : ''}
@@ -1384,54 +1453,169 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
             </TabsContent>
 
             <TabsContent value="analytics" className="mt-4">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {chartData.length === 0 ? (
                 <Card className="shadow-sm">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <Activity className="h-4 w-4 text-blue-600" />
-                      Target vs Achievement Trends
-                    </CardTitle>
-                    <CardDescription className="text-xs">
-                      Monthly comparison of targets and achievements
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={280}>
-                      <LineChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="month" />
-                        <YAxis />
-                        <Tooltip />
-                        <Line type="monotone" dataKey="target" stroke="#3b82f6" strokeWidth={2} name="Target" />
-                        <Line type="monotone" dataKey="achieved" stroke="#22c55e" strokeWidth={2} name="Achieved" />
-                      </LineChart>
-                    </ResponsiveContainer>
+                  <CardContent className="text-center py-12">
+                    <BarChart3 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No Data for Analytics</h3>
+                    <p className="text-muted-foreground text-sm">Add monitoring entries to see analytics and trends.</p>
                   </CardContent>
                 </Card>
+              ) : (
+                <div className="space-y-4">
+                  {/* Summary Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <Card className="shadow-sm">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-xs font-medium text-muted-foreground">Total Months</p>
+                            <p className="text-2xl font-bold text-blue-600">{chartData.length}</p>
+                          </div>
+                          <Calendar className="h-8 w-8 text-blue-600" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card className="shadow-sm">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-xs font-medium text-muted-foreground">Total Entries</p>
+                            <p className="text-2xl font-bold text-green-600">
+                              {chartData.reduce((sum, data) => sum + data.entries, 0)}
+                            </p>
+                          </div>
+                          <FileText className="h-8 w-8 text-green-600" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card className="shadow-sm">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-xs font-medium text-muted-foreground">Avg Monthly Achievement</p>
+                            <p className="text-2xl font-bold text-purple-600">
+                              {formatCurrency(chartData.length > 0 ? (chartData.reduce((sum, data) => sum + data.achieved, 0) / chartData.length) : 0)}
+                            </p>
+                          </div>
+                          <Target className="h-8 w-8 text-purple-600" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
 
-                <Card className="shadow-sm">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <BarChart3 className="h-4 w-4 text-green-600" />
-                      Monthly Achievements
-                    </CardTitle>
-                    <CardDescription className="text-xs">
-                      Bar chart showing monthly achievement values
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={280}>
-                      <BarChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="month" />
-                        <YAxis />
-                        <Tooltip formatter={(value) => [`₹${value} Lakhs`, 'Achievement']} />
-                        <Bar dataKey="achieved" fill="#22c55e" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
-              </div>
+                  {/* Charts */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <Card className="shadow-sm">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="flex items-center gap-2 text-base">
+                          <Activity className="h-4 w-4 text-blue-600" />
+                          Target vs Achievement Trends
+                        </CardTitle>
+                        <CardDescription className="text-xs">
+                          Monthly targets and achievements
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <ResponsiveContainer width="100%" height={280}>
+                          <LineChart data={chartData}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="month" />
+                            <YAxis />
+                            <Tooltip 
+                              formatter={(value, name) => [
+                                formatCurrency(Number(value)), 
+                                name === 'target' ? 'Target Total' : 'Achieved Total'
+                              ]}
+                              labelFormatter={(month) => {
+                                const monthData = chartData.find(d => d.month === month);
+                                return `${month} (${monthData?.entries || 1} ${monthData?.entries === 1 ? 'entry' : 'entries'})`;
+                              }}
+                            />
+                            <Line type="monotone" dataKey="target" stroke="#3b82f6" strokeWidth={2} name="target" />
+                            <Line type="monotone" dataKey="achieved" stroke="#22c55e" strokeWidth={2} name="achieved" />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="shadow-sm">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="flex items-center gap-2 text-base">
+                          <BarChart3 className="h-4 w-4 text-green-600" />
+                          Monthly Total Achievements
+                        </CardTitle>
+                        <CardDescription className="text-xs">
+                         Monthly achievement values
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <ResponsiveContainer width="100%" height={280}>
+                          <BarChart data={chartData}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="month" />
+                            <YAxis />
+                            <Tooltip 
+                              formatter={(value) => [formatCurrency(Number(value)), 'Total Achievement']}
+                              labelFormatter={(month) => {
+                                const monthData = chartData.find(d => d.month === month);
+                                return `${month} (${monthData?.entries || 1} ${monthData?.entries === 1 ? 'entry' : 'entries'})`;
+                              }}
+                            />
+                            <Bar dataKey="achieved" fill="#22c55e" />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Detailed Month Breakdown */}
+                  <Card className="shadow-sm">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <Calendar className="h-4 w-4 text-purple-600" />
+                        Monthly Breakdown
+                      </CardTitle>
+                      <CardDescription className="text-xs">
+                        Detailed view of monthly data
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {chartData.map((data) => (
+                          <div key={data.month} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div className="flex-1">
+                              <h4 className="font-medium text-sm">{data.month}</h4>
+                              <p className="text-xs text-muted-foreground">
+                                {data.entries} {data.entries === 1 ? 'entry' : 'entries'} Total
+                              </p>
+                            </div>
+                            <div className="grid grid-cols-3 gap-4 text-center">
+                              <div>
+                                <p className="text-xs font-medium text-blue-600">Target</p>
+                                <p className="text-sm font-semibold">{formatCurrency(data.target)}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs font-medium text-green-600">Achieved</p>
+                                <p className="text-sm font-semibold">{formatCurrency(data.achieved)}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs font-medium text-purple-600">Deviation</p>
+                                <p className={`text-sm font-semibold ${data.deviation >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                  {data.deviation >= 0 ? '+' : ''}{formatCurrency(Math.abs(data.deviation))}
+                                </p>
+                                <p className={`text-xs ${data.deviationPercentage >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                  ({data.deviationPercentage >= 0 ? '+' : ''}{data.deviationPercentage.toFixed(1)}%)
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="summary" className="mt-4">
@@ -1494,7 +1678,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-muted-foreground">Total Savings</span>
                         <span className="font-medium text-sm text-green-600">
-                          ₹{summaryStats.totalSavings.toFixed(2)} Lakhs
+                          {formatCurrency(summaryStats.totalSavings)}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
@@ -1507,7 +1691,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-muted-foreground">Average Achievement</span>
-                        <span className="font-medium text-sm">₹{summaryStats.averageAchievement.toFixed(2)} Lakhs</span>
+                        <span className="font-medium text-sm">{formatCurrency(summaryStats.averageAchievement)}</span>
                       </div>
                     </div>
                   </CardContent>
