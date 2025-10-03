@@ -50,6 +50,60 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { useInitiatives } from '@/hooks/useInitiatives';
 
+// Smart currency formatting function (copied from PerformanceAnalysis.tsx)
+const formatCurrencyInLakhs = (amount: number): string => {
+  if (amount === 0) return "₹0";
+  
+  // Helper function to remove trailing zeros and unnecessary decimal points
+  const cleanNumber = (num: number, decimals: number): string => {
+    return parseFloat(num.toFixed(decimals)).toString();
+  };
+  
+  if (amount >= 1000000000000) {
+    // >= 1 Trillion: show in Trillion
+    const trillions = amount / 1000000000000;
+    return `₹${cleanNumber(trillions, 2)}T`;
+  } else if (amount >= 10000000000) {
+    // >= 1000 Crores: show in Thousand Crores
+    const thousandCrores = amount / 10000000000;
+    return `₹${cleanNumber(thousandCrores, 2)}TCr`;
+  } else if (amount >= 10000000) {
+    // >= 1 Crore: show in Crores
+    const crores = amount / 10000000;
+    return `₹${cleanNumber(crores, 2)}Cr`;
+  } else if (amount >= 100000) {
+    // >= 1 Lakh: show in Lakhs
+    const lakhs = amount / 100000;
+    return `₹${cleanNumber(lakhs, 2)}L`;
+  } else if (amount >= 1000) {
+    // >= 1 Thousand: show in Thousands
+    const thousands = amount / 1000;
+    return `₹${cleanNumber(thousands, 2)}K`;
+  } else if (amount >= 1) {
+    // >= 1 Rupee: show in Rupees without decimals for whole numbers
+    return amount % 1 === 0 ? `₹${amount}` : `₹${cleanNumber(amount, 2)}`;
+  } else {
+    // < 1 Rupee: show in paisa with appropriate decimals
+    return `₹${cleanNumber(amount, 2)}`;
+  }
+};
+
+// Helper function to parse formatted currency back to number for editing
+const parseCurrency = (value: string): number => {
+  if (!value) return 0;
+  // Remove currency symbol and suffixes, then parse
+  const cleanValue = value.replace(/[₹,TCrLK]/g, '').trim();
+  const numericValue = parseFloat(cleanValue);
+  
+  if (value.includes('TCr')) return numericValue * 10000000000; // Thousand Crores
+  if (value.includes('Cr')) return numericValue * 10000000;     // Crores
+  if (value.includes('L')) return numericValue * 100000;        // Lakhs
+  if (value.includes('K')) return numericValue * 1000;          // Thousands
+  if (value.includes('T')) return numericValue * 1000000000000; // Trillions
+  
+  return numericValue || 0;
+};
+
 interface Initiative {
   id: string | number;
   title: string;
@@ -167,7 +221,7 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
           status: foundInitiative.status || '',
           priority: foundInitiative.priority || '',
           expectedSavings: typeof foundInitiative.expectedSavings === 'number' 
-            ? `₹${foundInitiative.expectedSavings.toLocaleString()}` 
+            ? formatCurrencyInLakhs(foundInitiative.expectedSavings)
             : foundInitiative.expectedSavings || '₹0',
           progress: foundInitiative.progressPercentage || foundInitiative.progress || 0,
           lastUpdated: foundInitiative.updatedAt 
@@ -210,7 +264,7 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
           baselineData: foundInitiative.baselineData,
           // Add actualSavings field if needed
           actualSavings: typeof foundInitiative.actualSavings === 'number' 
-            ? `₹${foundInitiative.actualSavings.toLocaleString()}` 
+            ? formatCurrencyInLakhs(foundInitiative.actualSavings)
             : foundInitiative.actualSavings,
         };
       }
@@ -505,10 +559,10 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
         description: formData.description,
         priority: formData.priority,
         expectedSavings: typeof formData.expectedSavings === 'string' 
-          ? parseFloat(formData.expectedSavings.replace(/[₹,]/g, '')) 
+          ? parseCurrency(formData.expectedSavings)
           : formData.expectedSavings,
         actualSavings: typeof formData.actualSavings === 'string' 
-          ? parseFloat(formData.actualSavings.replace(/[₹,]/g, '')) 
+          ? parseCurrency(formData.actualSavings)
           : formData.actualSavings,
         site: formData.site,
         discipline: formData.discipline,
@@ -522,9 +576,13 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
         initiatorName: formData.initiatorName || formData.initiator,
         // New fields for target & financial information
         targetOutcome: formData.targetOutcome || '',
-        targetValue: formData.targetValue || 0,
+        targetValue: typeof formData.targetValue === 'string' 
+          ? parseCurrency(formData.targetValue)
+          : formData.targetValue || 0,
         confidenceLevel: formData.confidenceLevel || 0,
-        estimatedCapex: formData.estimatedCapex || 0,
+        estimatedCapex: typeof formData.estimatedCapex === 'string' 
+          ? parseCurrency(formData.estimatedCapex)
+          : formData.estimatedCapex || 0,
         // New fields for assumptions & baseline data
         baselineData: formData.baselineData || '',
         assumption1: formData.assumption1 || '',
@@ -1289,8 +1347,12 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                           </div>
                           <div className="col-span-3 font-medium">{entry.monitoringMonth}</div>
                           <div className="col-span-4 text-muted-foreground">{entry.kpiDescription}</div>
-                          <div className="col-span-2 font-mono">{entry.targetValue?.toLocaleString()}</div>
-                          <div className="col-span-2 font-mono">{entry.achievedValue?.toLocaleString()}</div>
+                          <div className="col-span-2 font-mono font-bold text-blue-600">
+                            {entry.targetValue ? formatCurrencyInLakhs(entry.targetValue) : '₹0'}
+                          </div>
+                          <div className="col-span-2 font-mono font-bold text-green-600">
+                            {entry.achievedValue ? formatCurrencyInLakhs(entry.achievedValue) : '₹0'}
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -1515,9 +1577,9 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground">Expected</p>
-                        <p className="font-semibold text-green-600 text-xs">
+                        <p className="font-semibold text-green-600 text-sm">
                           {typeof initiative?.expectedSavings === 'number' 
-                            ? `₹${initiative.expectedSavings.toLocaleString()}` 
+                            ? formatCurrencyInLakhs(initiative.expectedSavings)
                             : initiative?.expectedSavings}
                         </p>
                       </div>
@@ -1533,9 +1595,9 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground">Actual</p>
-                        <p className="font-semibold text-orange-600 text-xs">
+                        <p className="font-semibold text-orange-600 text-sm">
                           {typeof initiative?.actualSavings === 'number' 
-                            ? `₹${initiative.actualSavings.toLocaleString()}` 
+                            ? formatCurrencyInLakhs(initiative.actualSavings)
                             : initiative?.actualSavings || '₹0'}
                         </p>
                       </div>
@@ -1653,16 +1715,17 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="title">Initiative Title *</Label>
+                      <Label htmlFor="title" className="text-sm font-semibold text-gray-700">Initiative Title *</Label>
                       {isEditing ? (
                         <Input
                           id="title"
                           value={formData.title || ''}
                           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                          className="text-sm"
+                          className="text-sm border-gray-200 focus:border-blue-400 focus:ring-blue-400"
+                          placeholder="Enter initiative title"
                         />
                       ) : (
-                        <p className="text-sm font-medium">{initiative?.title}</p>
+                        <p className="text-sm font-semibold text-gray-800 bg-gray-50 p-2 rounded border">{initiative?.title}</p>
                       )}
                     </div>
 
@@ -1701,15 +1764,16 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                           id="expectedSavings"
                           type="number"
                           value={typeof formData.expectedSavings === 'string' 
-                            ? formData.expectedSavings.replace(/[₹,]/g, '') 
+                            ? parseCurrency(formData.expectedSavings)
                             : formData.expectedSavings || ''}
-                          onChange={(e) => setFormData({ ...formData, expectedSavings: e.target.value })}
+                          onChange={(e) => setFormData({ ...formData, expectedSavings: parseFloat(e.target.value) || 0 })}
                           className="text-sm"
+                          placeholder="Enter expected savings in rupees"
                         />
                       ) : (
-                        <p className="text-sm font-semibold text-green-600">
+                        <p className="text-sm font-bold text-green-600">
                           {typeof initiative?.expectedSavings === 'number' 
-                            ? `₹${initiative.expectedSavings.toLocaleString()}` 
+                            ? formatCurrencyInLakhs(initiative.expectedSavings)
                             : initiative?.expectedSavings}
                         </p>
                       )}
@@ -1830,14 +1894,15 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                             id="actualSavings"
                             type="number"
                             value={typeof formData.actualSavings === 'string' 
-                              ? formData.actualSavings.replace(/[₹,]/g, '') 
+                              ? parseCurrency(formData.actualSavings)
                               : formData.actualSavings || ''}
-                            onChange={(e) => setFormData({ ...formData, actualSavings: e.target.value })}
+                            onChange={(e) => setFormData({ ...formData, actualSavings: parseFloat(e.target.value) || 0 })}
+                            placeholder="Enter amount in rupees"
                           />
                         ) : (
-                          <p className="text-sm font-semibold text-orange-600">
+                          <p className="text-sm font-bold text-orange-600">
                             {typeof initiative?.actualSavings === 'number' 
-                              ? `₹${initiative.actualSavings.toLocaleString()}` 
+                              ? formatCurrencyInLakhs(initiative.actualSavings)
                               : initiative?.actualSavings || '₹0'}
                           </p>
                         )}
@@ -1851,9 +1916,12 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                             type="number"
                             value={formData.targetValue || ''}
                             onChange={(e) => setFormData({ ...formData, targetValue: parseFloat(e.target.value) || 0 })}
+                            placeholder="Enter target value"
                           />
                         ) : (
-                          <p className="text-sm">{initiative?.targetValue || '0'}</p>
+                          <p className="text-sm font-bold">
+                            {initiative?.targetValue ? formatCurrencyInLakhs(initiative.targetValue) : '₹0'}
+                          </p>
                         )}
                       </div>
 
@@ -1867,9 +1935,12 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                             type="number"
                             value={formData.estimatedCapex || ''}
                             onChange={(e) => setFormData({ ...formData, estimatedCapex: parseFloat(e.target.value) || 0 })}
+                            placeholder="Enter estimated CAPEX"
                           />
                         ) : (
-                          <p className="text-sm">₹{initiative?.estimatedCapex?.toLocaleString() || '0'}</p>
+                          <p className="text-sm font-bold">
+                            {initiative?.estimatedCapex ? formatCurrencyInLakhs(initiative.estimatedCapex) : '₹0'}
+                          </p>
                         )}
                       </div>
 
@@ -1899,7 +1970,7 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                 <CardContent className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
-                      <h3 className="text-lg font-semibold">MOC Information</h3>
+                      <h3 className="text-base font-semibold">MOC Information</h3>
                       <div className="space-y-2">
                         <Label>MOC Required</Label>
                         <p className="text-sm">{initiative?.requiresMoc === 'Y' ? 'Yes' : 'No'}</p>
@@ -1913,7 +1984,7 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                     </div>
 
                     <div className="space-y-4">
-                      <h3 className="text-lg font-semibold">CAPEX Information</h3>
+                      <h3 className="text-base font-semibold">CAPEX Information</h3>
                       <div className="space-y-2">
                         <Label>CAPEX Required</Label>
                         <p className="text-sm">{initiative?.requiresCapex === 'Y' ? 'Yes' : 'No'}</p>
@@ -1930,7 +2001,7 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                   <Separator />
 
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Assumptions & Baseline Data</h3>
+                    <h3 className="text-base font-semibold">Assumptions & Baseline Data</h3>
                     
                     <div className="space-y-4">
                       <div className="space-y-2">
