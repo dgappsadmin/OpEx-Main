@@ -607,7 +607,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
               }
               return user.role === 'IL' 
                 ? 'Manage and track initiative timelines and milestones' 
-                : 'View initiative timelines and milestones (Read-only)';
+                : 'View initiative timelines and milestones';
             })()}
           </p>
         </div>
@@ -1054,7 +1054,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
           </div>
 
           {/* Role-based access info - Enhanced for assigned IL check and stage 6 restriction */}
-          {!canCreate() && (
+          {/* {!canCreate() && (
             <Alert className="mb-6 border-blue-200 bg-blue-50">
               <Lock className="h-4 w-4 text-blue-600" />
               <AlertDescription className="text-blue-800">
@@ -1071,7 +1071,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                 })()}
               </AlertDescription>
             </Alert>
-          )}
+          )} */}
 
           {/* Summary Stats Cards - Dashboard pattern */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">

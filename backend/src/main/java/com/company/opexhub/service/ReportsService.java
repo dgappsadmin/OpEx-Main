@@ -1726,9 +1726,8 @@ public class ReportsService {
         // Expected Value
         String expectedValue = "";
         if (initiative.getExpectedSavings() != null) {
-            expectedValue = "₹" + initiative.getExpectedSavings().toString() + " - Expected value is multiple of Annual financial benefit and percent confidence level of achieving that benefit";
-        } else {
-            expectedValue = "Expected value is multiple of Annual financial benefit and percent confidence level of achieving that benefit";
+            expectedValue = "₹" + initiative.getExpectedSavings().toString();
+            // expectedValue = "Expected value is multiple of Annual financial benefit and percent confidence level of achieving that benefit";
         }
         createFormRow(formTable, "Expected Value:", expectedValue);
         
