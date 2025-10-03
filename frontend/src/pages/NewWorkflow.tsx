@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { User } from "@/lib/mockData";
 import { useInitiatives } from "@/hooks/useInitiatives";
 import { 
   useWorkflowTransactions, 
-  useProcessStageAction 
+  useProcessStageAction
 } from "@/hooks/useWorkflowTransactions";
+import { workflowTransactionAPI } from "@/lib/api";
 import { useAllStageNames, useAllRoleDescriptions } from "@/hooks/useWorkflowMaster";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +14,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CheckCircle, XCircle, Clock, ArrowLeft, User as UserIcon, Search, Filter, MapPin, GitBranch, Activity, Workflow, Eye, RotateCcw } from "lucide-react";
+import { CheckCircle, XCircle, Clock, ArrowLeft, User as UserIcon, Search, Filter, MapPin, GitBranch, Activity, Workflow, Eye, RotateCcw, Bell } from "lucide-react";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { useToast } from "@/hooks/use-toast";
 import WorkflowStageModal from "@/components/workflow/WorkflowStageModal";
@@ -38,6 +39,10 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
   // Initiative Modal state
   const [isInitiativeModalOpen, setIsInitiativeModalOpen] = useState(false);
   const [selectedInitiativeForModal, setSelectedInitiativeForModal] = useState<any>(null);
+  
+  // State for pending approvals filtering
+  const [initiativesWithPendingActions, setInitiativesWithPendingActions] = useState<Set<number>>(new Set());
+  const [loadingPendingActions, setLoadingPendingActions] = useState(true);
   
   const { toast } = useToast();
   
@@ -101,6 +106,58 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
     : (Array.isArray(initiativesData) && initiativesData.length > 0) 
     ? initiativesData 
     : []; // Empty array if no real data
+
+  // Check for pending actions for current user across all visible initiatives
+  useEffect(() => {
+    const checkPendingActions = async () => {
+      if (!user?.email) {
+        setInitiativesWithPendingActions(new Set());
+        setLoadingPendingActions(false);
+        return;
+      }
+
+      if (!initiatives.length) {
+        setInitiativesWithPendingActions(new Set());
+        setLoadingPendingActions(false);
+        return;
+      }
+
+      setLoadingPendingActions(true);
+      console.log('🔍 Checking pending actions for user:', user.email);
+      console.log('🔍 Total initiatives to check:', initiatives.length);
+      
+      const pendingSet = new Set<number>();
+      
+      // Check each initiative for pending actions using existing API
+      for (const initiative of initiatives) {
+        try {
+          const transactions = await workflowTransactionAPI.getTransactions(initiative.id);
+          const hasPendingAction = transactions.some((transaction: any) => 
+            transaction.approveStatus === 'pending' && 
+            transaction.pendingWith === user.email
+          );
+          
+          if (hasPendingAction) {
+            console.log('🔍 Found pending action for initiative:', initiative.id, initiative.initiativeNumber);
+            pendingSet.add(initiative.id);
+          }
+        } catch (error) {
+          console.error(`Error checking pending actions for initiative ${initiative.id}:`, error);
+        }
+      }
+      
+      console.log('🔍 Setting pending initiatives:', Array.from(pendingSet));
+      setInitiativesWithPendingActions(pendingSet);
+      setLoadingPendingActions(false);
+    };
+    
+    // Add a small delay to ensure all data is loaded
+    const timeoutId = setTimeout(() => {
+      checkPendingActions();
+    }, 300);
+    
+    return () => clearTimeout(timeoutId);
+  }, [user?.email, initiatives]);
 
   // Filter initiatives by status based on STATUS column values
   const filteredInitiatives = initiatives.filter((initiative: any) => {
@@ -231,8 +288,12 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
         </Badge>
       </div>
 
-      <Tabs defaultValue="stages" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 h-10 p-0.5 bg-muted/50">
+      <Tabs defaultValue="pending-approvals" className="w-full">
+        <TabsList className="grid w-full grid-cols-3 h-10 p-0.5 bg-muted/50">
+          <TabsTrigger value="pending-approvals" className="font-medium text-xs flex items-center gap-1.5">
+            <Bell className="h-3.5 w-3.5" />
+            Pending Approvals
+          </TabsTrigger>
           <TabsTrigger value="stages" className="font-medium text-xs flex items-center gap-1.5">
             <GitBranch className="h-3.5 w-3.5" />
             Initiative Workflow
@@ -242,6 +303,418 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
             View Workflow
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="pending-approvals" className="space-y-4 mt-4">
+          {!selectedInitiative ? (
+            <div className="space-y-4">
+              {/* Search and Filter Controls - Same as other tabs */}
+              <Card className="shadow-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Search className="h-4 w-4 text-blue-600" />
+                    Search & Filter Pending Approvals
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {/* Search by Initiative Number */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-muted-foreground">Search by Initiative Number</label>
+                      <div className="relative">
+                        <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                        <Input
+                          type="text"
+                          placeholder="Enter initiative number..."
+                          value={searchTerm}
+                          onChange={(e) => handleSearchChange(e.target.value)}
+                          className="pl-8 h-9 text-xs"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Site Filter */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-muted-foreground">Site Filter</label>
+                      <Select value={siteFilter} onValueChange={handleSiteFilterChange}>
+                        <SelectTrigger className="h-9 text-xs">
+                          <div className="flex items-center gap-1.5">
+                            <MapPin className="h-3.5 w-3.5" />
+                            <SelectValue placeholder="Select site" />
+                          </div>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Sites</SelectItem>
+                          {sites.map((site) => (
+                            <SelectItem key={site.code} value={site.code}>
+                              {site.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Status Filter */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-muted-foreground">Status Filter</label>
+                      <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
+                        <SelectTrigger className="h-9 text-xs">
+                          <div className="flex items-center gap-1.5">
+                            <Filter className="h-3.5 w-3.5" />
+                            <SelectValue placeholder="Select status filter" />
+                          </div>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="default">Default (Pending & In Progress)</SelectItem>
+                          <SelectItem value="completed">Completed Only</SelectItem>
+                          <SelectItem value="rejected">Rejected Only</SelectItem>
+                          <SelectItem value="dropped">Dropped Only</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {/* Results summary */}
+                  <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border">
+                    <span>
+                      {loadingPendingActions ? (
+                        "Loading pending approvals..."
+                      ) : (
+                        <>
+                          Showing {(() => {
+                            const pendingInitiatives = sortedInitiatives.filter((initiative: any) => 
+                              initiativesWithPendingActions.has(initiative.id)
+                            );
+                            return pendingInitiatives.length;
+                          })()} pending approval{(() => {
+                            const pendingInitiatives = sortedInitiatives.filter((initiative: any) => 
+                              initiativesWithPendingActions.has(initiative.id)
+                            );
+                            return pendingInitiatives.length !== 1 ? 's' : '';
+                          })()} for you
+                          {searchTerm && ` matching "${searchTerm}"`}
+                          {siteFilter && siteFilter !== "all" && ` for site ${siteFilter}`}
+                        </>
+                      )}
+                    </span>
+                    <span>Sorted by: Recently Created</span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className="text-center py-6">
+                <div className="flex items-center justify-center w-12 h-12 mx-auto mb-3 rounded-full bg-orange-100">
+                  <Bell className="w-6 h-6 text-orange-600" />
+                </div>
+                <h2 className="text-lg font-bold text-foreground mb-1.5">Your Pending Approvals</h2>
+                <p className="text-muted-foreground text-xs">Initiatives requiring your action</p>
+              </div>
+              
+              <div className="space-y-3">
+                {(() => {
+                  // Show loading state
+                  if (loadingPendingActions) {
+                    return (
+                      <Card className="shadow-sm">
+                        <CardContent className="p-8 text-center">
+                          <div className="flex items-center justify-center w-12 h-12 mx-auto mb-3 rounded-full bg-orange-100">
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-600"></div>
+                          </div>
+                          <h3 className="text-base font-semibold text-foreground mb-1.5">Loading Pending Approvals</h3>
+                          <p className="text-muted-foreground text-xs">Checking for initiatives requiring your action...</p>
+                        </CardContent>
+                      </Card>
+                    );
+                  }
+
+                  const pendingInitiatives = paginatedInitiatives.filter((initiative: any) => 
+                    initiativesWithPendingActions.has(initiative.id)
+                  );
+                  
+                  if (pendingInitiatives.length === 0) {
+                    return (
+                      <Card className="border-dashed shadow-sm">
+                        <CardContent className="p-8 text-center">
+                          <div className="flex items-center justify-center w-12 h-12 mx-auto mb-3 rounded-full bg-muted">
+                            <Bell className="w-6 h-6 text-muted-foreground" />
+                          </div>
+                          <h3 className="text-base font-semibold text-foreground mb-1.5">No Pending Approvals</h3>
+                          <p className="text-muted-foreground text-xs">You have no initiatives waiting for your approval at the moment.</p>
+                        </CardContent>
+                      </Card>
+                    );
+                  }
+
+                  return pendingInitiatives.map((initiative: any) => (
+                    <Card
+                      key={initiative.id}
+                      className="cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 border hover:border-orange-300 bg-gradient-to-r from-orange-50 to-card/50 border-orange-200"
+                      onClick={() => setSelectedInitiative(initiative.id)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1 space-y-3">
+                            <div className="flex items-center justify-between">
+                              <h3 className="text-sm font-bold text-foreground">{initiative.initiativeNumber || initiative.title}</h3>
+                              <div className="flex items-center gap-2">
+                                <Badge className="bg-orange-100 text-orange-800 border-orange-200 font-semibold text-xs">
+                                  PENDING ACTION
+                                </Badge>
+                                <Badge className={`${getStatusColor(initiative.status)} font-semibold text-xs`}>
+                                  {initiative.status}
+                                </Badge>
+                              </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                              <div>
+                                <span className="text-muted-foreground">Site:</span>
+                                <p className="font-medium">{initiative.site}</p>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Initiative Lead:</span>
+                                <p className="font-medium">{initiative.initiativeLead || 'Not Assigned'}</p>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Current Stage:</span>
+                                <p className="font-medium">{getStageName(initiative.currentStage || 1, initiative.id)}</p>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Expected Savings:</span>
+                                <p className="font-medium">₹{initiative.expectedSavings || 0}</p>
+                              </div>
+                            </div>
+                            
+                            <div className="space-y-1.5">
+                              <div className="flex justify-between text-xs">
+                                <span>Progress</span>
+                                <span>{(() => {
+                                  const currentStage = initiative.currentStage || 1;
+                                  const status = initiative.status?.trim();
+                                  
+                                  if (status === 'Completed') {
+                                    return 100;
+                                  } else {
+                                    const approvedStages = Math.max(0, currentStage - 1);
+                                    return Math.min(100, Math.round((approvedStages * 100) / 11));
+                                  }
+                                })()}%</span>
+                              </div>
+                              <Progress value={(() => {
+                                const currentStage = initiative.currentStage || 1;
+                                const status = initiative.status?.trim();
+                                
+                                if (status === 'Completed') {
+                                  return 100;
+                                } else {
+                                  const approvedStages = Math.max(0, currentStage - 1);
+                                  return Math.min(100, Math.round((approvedStages * 100) / 11));
+                                }
+                              })()} className="h-1.5" />
+                            </div>
+                          </div>
+                          
+                          <div className="ml-4 flex gap-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleViewInitiativeDetails(initiative);
+                              }}
+                              className="h-9 w-9 p-0 border-orange-300 hover:bg-orange-100 hover:border-orange-400 transition-all duration-200"
+                            >
+                              <Eye className="h-4 w-4 text-orange-600" />
+                            </Button>
+                            <Button 
+                              variant="default" 
+                              size="sm" 
+                              className="bg-orange-600 hover:bg-orange-700 text-white font-medium px-4 py-2 rounded-lg shadow-md transition-all duration-200 text-xs"
+                            >
+                              Take Action
+                              <ArrowLeft className="ml-1.5 h-3.5 w-3.5 rotate-180" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ));
+                })()}
+              </div>
+
+              {(() => {
+                const pendingInitiatives = sortedInitiatives.filter((initiative: any) => 
+                  initiativesWithPendingActions.has(initiative.id)
+                );
+                const pendingTotalPages = Math.ceil(pendingInitiatives.length / itemsPerPage);
+                
+                return pendingTotalPages > 1 ? (
+                  <div className="flex justify-center">
+                    <Pagination>
+                      <PaginationContent>
+                        <PaginationItem>
+                          <PaginationPrevious 
+                            href="#" 
+                            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                            className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                          />
+                        </PaginationItem>
+                        {Array.from({ length: pendingTotalPages }, (_, i) => (
+                          <PaginationItem key={i + 1}>
+                            <PaginationLink 
+                              href="#" 
+                              isActive={currentPage === i + 1}
+                              onClick={() => setCurrentPage(i + 1)}
+                            >
+                              {i + 1}
+                            </PaginationLink>
+                          </PaginationItem>
+                        ))}
+                        <PaginationItem>
+                          <PaginationNext 
+                            href="#" 
+                            onClick={() => setCurrentPage(Math.min(pendingTotalPages, currentPage + 1))}
+                            className={currentPage === pendingTotalPages ? "pointer-events-none opacity-50" : ""}
+                          />
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                  </div>
+                ) : null;
+              })()}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => setSelectedInitiative(null)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border hover:bg-accent hover:text-accent-foreground transition-colors text-xs"
+                >
+                  <ArrowLeft className="h-3.5 w-3.5" />
+                  <span className="font-medium">Back to Pending Approvals</span>
+                </Button>
+                <div className="flex items-center gap-2.5">
+                  <div className="h-6 w-0.5 bg-gradient-to-b from-orange-600 to-orange-600/60 rounded-full"></div>
+                  <div>
+                    <h2 className="text-base font-bold text-foreground">
+                      {selectedInitiativeData?.initiativeNumber || selectedInitiativeData?.title || 'Initiative'}
+                    </h2>
+                    <p className="text-xs text-muted-foreground font-medium">Take Required Action</p>
+                  </div>
+                </div>
+              </div>
+              
+              {workflowTransactions.length === 0 ? (
+                <Card className="border-dashed shadow-sm">
+                  <CardContent className="p-8 text-center">
+                    <div className="flex items-center justify-center w-12 h-12 mx-auto mb-3 rounded-full bg-muted">
+                      <GitBranch className="w-6 h-6 text-muted-foreground" />
+                    </div>
+                    <h3 className="text-base font-semibold text-foreground mb-1.5">No Workflow Stages</h3>
+                    <p className="text-muted-foreground text-xs">No workflow stages found for this initiative.</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid gap-4">
+                  {workflowTransactions.map((transaction: any) => (
+                    <Card key={transaction.id} className="relative overflow-hidden border-l-3 border-l-orange-600/30 hover:shadow-md transition-all duration-200 shadow-sm">
+                      <CardHeader className="bg-gradient-to-r from-background to-orange-600/5 pb-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-orange-600 to-orange-600/80 text-white font-bold text-sm shadow-lg">
+                              {transaction.stageNumber}
+                            </div>
+                            <div>
+                              <CardTitle className="text-base text-foreground">
+                                {transaction.stageName}
+                              </CardTitle>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {getStatusIcon(transaction.approveStatus)}
+                            <Badge className={`${getStatusColor(transaction.approveStatus)} font-semibold text-xs`}>
+                              {transaction.approveStatus?.toUpperCase()}
+                            </Badge>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-3 pt-3">
+                        {transaction.actionBy && (
+                          <div className="flex items-center gap-2 text-xs bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
+                            <UserIcon className="h-3.5 w-3.5" />
+                            <span>
+                              {transaction.approveStatus === 'approved' ? 'Approved' : 'Rejected'} by: 
+                              <span className="font-medium ml-1">{transaction.actionBy}</span>
+                            </span>
+                            {transaction.actionDate && (
+                              <span className="text-muted-foreground">
+                                on {new Date(transaction.actionDate).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        
+                        {transaction.comment && (
+                          <div className="bg-muted p-3 rounded-lg">
+                            <p className="text-xs font-medium mb-1.5">Comments:</p>
+                            <p className="text-xs">{transaction.comment}</p>
+                          </div>
+                        )}
+
+                        {transaction.assignedUserId && (
+                          <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg text-xs">
+                            <span className="font-medium">Assigned Initiative Lead ID:</span>
+                            <span className="ml-2">{transaction.assignedUserId}</span>
+                          </div>
+                        )}
+
+                        {workflowTransactions.length > 0 && (
+                          <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg text-xs">
+                            {(() => {
+                              const nextPendingTransaction = workflowTransactions.find((t: any) => t.approveStatus === 'pending');
+                              if (nextPendingTransaction) {
+                                return (
+                                  <>
+                                    <span className="font-medium">Next Pending:</span>
+                                    <span className="ml-2">
+                                      Stage {nextPendingTransaction.stageNumber}: {nextPendingTransaction.stageName}
+                                    </span>
+                                  </>
+                                );
+                              }
+                              return (
+                                <>
+                                  <span className="font-medium">Status:</span>
+                                   <span className="ml-2 text-green-600">Initiative has been marked as closed</span>
+                                </>
+                              );
+                            })()}
+                          </div>
+                        )}
+
+                        {transaction.approveStatus === 'pending' && transaction.pendingWith === user.email && (
+                          <div className="border-t pt-3">
+                            <Button 
+                              onClick={() => {
+                                setSelectedTransaction(transaction);
+                                setIsModalOpen(true);
+                              }}
+                              className="w-full bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 rounded-lg shadow-md transition-all duration-200 text-xs"
+                            >
+                              <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
+                              Process This Stage
+                            </Button>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </TabsContent>
 
         <TabsContent value="stages" className="space-y-4 mt-4">
           {!selectedInitiative ? (

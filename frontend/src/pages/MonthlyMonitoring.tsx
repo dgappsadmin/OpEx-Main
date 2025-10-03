@@ -404,7 +404,12 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
 
   // Role-based permission functions with stage 9 restriction
   const canEdit = (entry: MonthlyMonitoringEntry) => {
-    // Get selected initiative to check stage status FIRST
+    // PRIMARY CHECK: If entry is finalized - NO ONE can edit
+    if (entry.isFinalized === 'Y') {
+      return false; // Entry is finalized - cannot be edited
+    }
+
+    // Get selected initiative to check stage status SECOND
     const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
     if (!selectedInitiative) return false;
     
@@ -419,7 +424,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
       });
     }
     
-    // PRIMARY CHECK: If stage 9 has been approved - NO ONE can edit (applies to ALL users)
+    // SECONDARY CHECK: If stage 9 has been approved - NO ONE can edit (applies to ALL users)
     // Check both stageNumber and initiativeStatus for comprehensive validation
     if ((selectedInitiative.stageNumber && selectedInitiative.stageNumber > 9) || 
         selectedInitiative.initiativeStatus === 'Completed') {
@@ -427,7 +432,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
       return false; // Stage 9 has been approved and moved to next stage - READ ONLY for ALL
     }
     
-    // SECONDARY CHECK: Role-based permissions (only after stage check passes)
+    // TERTIARY CHECK: Role-based permissions (only after stage and finalization checks pass)
     if (user.role !== 'IL') return false;
     
     // For assigned initiatives tab, user can edit
