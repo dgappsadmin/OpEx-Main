@@ -1,0 +1,2149 @@
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Checkbox } from '@/components/ui/checkbox';
+import { 
+  ArrowLeft,
+  Eye, 
+  Edit, 
+  Save, 
+  X, 
+  Calendar, 
+  MapPin, 
+  Target, 
+  DollarSign, 
+  FileText, 
+  Clock,
+  User,
+  CheckCircle2,
+  Files,
+  FolderOpen,
+  CheckCircle,
+  XCircle,
+  Workflow,
+  AlertTriangle,
+  Loader2,
+  Users,
+  Activity,
+  TrendingUp,
+  RotateCcw
+} from 'lucide-react';
+import { useProgressPercentage, useCurrentPendingStage, useProcessStageAction, useWorkflowTransactions } from '@/hooks/useWorkflowTransactions';
+import { useUser, useInitiativeLeadsBySite, useUsers } from '@/hooks/useUsers';
+import { useFinalizedPendingFAEntries, useBatchFAApproval, MonthlyMonitoringEntry } from '@/hooks/useMonthlyMonitoring';
+import { useTimelineEntriesProgressMonitoring } from '@/hooks/useTimelineEntriesProgressMonitoring';
+import UploadedDocuments from '@/components/UploadedDocuments';
+import { initiativeAPI, timelineTrackerAPI, monthlyMonitoringAPI } from '@/lib/api';
+import { useQueryClient } from '@tanstack/react-query';
+import { useToast } from '@/hooks/use-toast';
+import { useInitiatives } from '@/hooks/useInitiatives';
+
+interface Initiative {
+  id: string | number;
+  title: string;
+  initiativeNumber?: string;
+  site: string;
+  status: string;
+  priority: string;
+  expectedSavings: string | number;
+  actualSavings?: string | number;
+  progressPercentage?: number;
+  progress: number;
+  lastUpdated: string;
+  updatedAt?: string;
+  discipline: string;
+  submittedDate: string;
+  createdAt?: string;
+  description?: string;
+  budgetType?: string; // BUDGETED or NON-BUDGETED
+  startDate?: string;
+  endDate?: string;
+  currentStage?: number;
+  requiresMoc?: boolean | string; // Legacy field (boolean) for backward compatibility
+  requiresCapex?: boolean | string; // Legacy field (boolean) for backward compatibility
+  mocNumber?: string; // New field - MOC Number from OPEX_INITIATIVES table
+  capexNumber?: string; // New field - CAPEX Number from OPEX_INITIATIVES table
+  // Missing fields from database schema
+  assumption1?: string; // CLOB - ASSUMPTION_1
+  assumption2?: string; // CLOB - ASSUMPTION_2  
+  assumption3?: string; // CLOB - ASSUMPTION_3
+  baselineData?: string; // CLOB - BASELINE_DATA
+  targetOutcome?: string; // VARCHAR2(255) - TARGET_OUTCOME
+  targetValue?: number; // NUMBER(15,2) - TARGET_VALUE
+  confidenceLevel?: number; // NUMBER(3) - CONFIDENCE_LEVEL (percentage)
+  estimatedCapex?: number; // NUMBER(15,2) - ESTIMATED_CAPEX
+  createdByName?: string;
+  createdByEmail?: string;
+  createdBy?: number | string; // User ID who created the initiative
+  initiatorName?: string; // Name of the person who initiated the initiative
+  initiator?: string; // Fallback initiator name from mock data
+}
+
+interface InitiativeDetailsProps {
+  user?: { role?: string; site?: string; email?: string; [key: string]: any };
+}
+
+// Correct workflow stage names matching backend (11 stages total)
+const WORKFLOW_STAGE_NAMES: { [key: number]: string } = {
+  1: 'Register Initiative',
+  2: 'Evaluation and Approval',
+  3: 'Initiative assessment and approval',
+  4: 'Define Responsibilities',
+  5: 'MOC-CAPEX Evaluation',
+  6: 'Initiative Timeline Tracker',
+  7: 'Progress monitoring',
+  8: 'Periodic Status Review with CMO',
+  9: 'Savings Monitoring (Monthly)',
+  10: 'F&A validation',
+  11: 'Initiative Closure'
+};
+
+export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  
+  const [initiative, setInitiative] = useState<Initiative | null>(null);
+  const [isEditing, setIsEditing] = useState(searchParams.get('edit') === 'true');
+  const [formData, setFormData] = useState<any>({});
+  const [activeTab, setActiveTab] = useState('overview');
+  const [isSaving, setIsSaving] = useState(false);
+  
+  // Workflow approval states
+  const [workflowComment, setWorkflowComment] = useState("");
+  const [processingAction, setProcessingAction] = useState<string | null>(null);
+  const [assignedUserId, setAssignedUserId] = useState<string>("");
+  
+  // Additional workflow states for stage-specific functionality
+  const [mocRequired, setMocRequired] = useState<string>("");
+  const [mocNumber, setMocNumber] = useState("");
+  const [capexRequired, setCapexRequired] = useState<string>("");
+  const [capexNumber, setCapexNumber] = useState("");
+  
+  // Stage 9 F&A Approval states
+  const [selectedEntries, setSelectedEntries] = useState<Set<number>>(new Set());
+  const [faComments, setFaComments] = useState("");
+  
+  // Stage 6 Timeline Validation states
+  const [timelineValidationLoading, setTimelineValidationLoading] = useState(false);
+  const [allTimelineEntriesCompleted, setAllTimelineEntriesCompleted] = useState<boolean>(true);
+  
+  // Stage 9 Monthly Monitoring Validation states
+  const [monthlyValidationLoading, setMonthlyValidationLoading] = useState(false);
+  const [allMonthlyEntriesFinalized, setAllMonthlyEntriesFinalized] = useState<boolean>(true);
+
+  // Fetch initiatives to find the specific one
+  const { data: initiativesData, isLoading, error } = useInitiatives();
+
+  // Get initiative data
+  useEffect(() => {
+    if (!id || !initiativesData) return;
+    
+    let foundInitiative = null;
+    
+    if (initiativesData?.content) {
+      foundInitiative = initiativesData.content.find((item: any) => item.id?.toString() === id);
+      if (foundInitiative) {
+        // Transform API data to match interface
+        foundInitiative = {
+          id: foundInitiative.id?.toString() || foundInitiative.id,
+          title: foundInitiative.title || '',
+          initiativeNumber: foundInitiative.initiativeNumber || '',
+          site: foundInitiative.site || '',
+          status: foundInitiative.status || '',
+          priority: foundInitiative.priority || '',
+          expectedSavings: typeof foundInitiative.expectedSavings === 'number' 
+            ? `₹${foundInitiative.expectedSavings.toLocaleString()}` 
+            : foundInitiative.expectedSavings || '₹0',
+          progress: foundInitiative.progressPercentage || foundInitiative.progress || 0,
+          lastUpdated: foundInitiative.updatedAt 
+            ? new Date(foundInitiative.updatedAt).toLocaleDateString() 
+            : foundInitiative.lastUpdated || new Date().toLocaleDateString(),
+          discipline: foundInitiative.discipline || '',
+          submittedDate: foundInitiative.createdAt 
+            ? new Date(foundInitiative.createdAt).toLocaleDateString() 
+            : foundInitiative.submittedDate || new Date().toLocaleDateString(),
+          description: foundInitiative.description,
+          budgetType: foundInitiative.budgetType,
+          startDate: foundInitiative.startDate,
+          endDate: foundInitiative.endDate,
+          currentStage: Math.min(foundInitiative.currentStage || 1, 11),
+          // Prioritize currentStageName from API for instant display
+          currentStageName: foundInitiative.status?.toLowerCase() === 'completed' 
+            ? 'Initiative Closure' 
+            : (foundInitiative.currentStageName || WORKFLOW_STAGE_NAMES[Math.min(foundInitiative.currentStage || 1, 11)] || `Stage ${Math.min(foundInitiative.currentStage || 1, 11)}`),
+          requiresMoc: foundInitiative.requiresMoc,
+          requiresCapex: foundInitiative.requiresCapex,
+          mocNumber: foundInitiative.mocNumber,
+          capexNumber: foundInitiative.capexNumber,
+          createdByName: foundInitiative.createdBy?.fullName || foundInitiative.createdByName,
+          createdByEmail: foundInitiative.createdBy?.email || foundInitiative.createdByEmail,
+          initiatorName: foundInitiative.initiatorName,
+          createdBy: foundInitiative.createdBy?.id || foundInitiative.createdBy,
+          // Keep original date fields for sorting
+          createdAt: foundInitiative.createdAt,
+          createdDate: foundInitiative.createdDate,
+          // Add missing fields for Target & Financial Information
+          targetOutcome: foundInitiative.targetOutcome,
+          targetValue: foundInitiative.targetValue,
+          confidenceLevel: foundInitiative.confidenceLevel,
+          estimatedCapex: foundInitiative.estimatedCapex,
+          budgetType: foundInitiative.budgetType,
+          // Add missing fields for Assumptions & Baseline Data
+          assumption1: foundInitiative.assumption1,
+          assumption2: foundInitiative.assumption2,
+          assumption3: foundInitiative.assumption3,
+          baselineData: foundInitiative.baselineData,
+          // Add actualSavings field if needed
+          actualSavings: typeof foundInitiative.actualSavings === 'number' 
+            ? `₹${foundInitiative.actualSavings.toLocaleString()}` 
+            : foundInitiative.actualSavings,
+        };
+      }
+    }
+
+    if (foundInitiative) {
+      setInitiative(foundInitiative);
+      setFormData(foundInitiative);
+    }
+  }, [id, initiativesData]);
+
+  // Check if user can edit this initiative (role + site restrictions + status check)
+  const isCompleted = initiative?.status?.toLowerCase() === 'completed';
+  const canEdit = user?.role !== 'VIEWER' && user?.site === initiative?.site && !isCompleted;
+  
+  // Check if user can approve workflows (non-viewers and workflow roles)
+  const canApproveWorkflow = user?.role !== 'VIEWER' && user?.role !== undefined;
+  
+  // Helper function to check if user can act on the pending transaction (matching WorkflowStageModal logic)
+  const canUserActOnPendingTransaction = (transaction: any) => {
+    if (!user || !transaction || transaction.approveStatus !== 'pending') return false;
+    
+    // Primary check: user email matches pendingWith field
+    if (transaction.pendingWith && user.email) {
+      return transaction.pendingWith === user.email;
+    }
+    
+    // Fallback check: role-based validation for backward compatibility
+    if (user.role === 'HOD' && transaction.stageNumber === 2) return true;
+    if (user.role === 'STLD' && (transaction.stageNumber === 3 || transaction.stageNumber === 7)) return true;
+    if (user.role === 'SH' && transaction.stageNumber === 4) return true;
+    if (user.role === 'CTSD' && transaction.stageNumber === 8) return true;
+    if (user.role === 'IL' && [5, 6, 9, 11].includes(transaction.stageNumber)) return true;
+    if (user.role === 'F&A' && transaction.stageNumber === 10) return true;
+    
+    return false;
+  };
+
+  // Update isEditing state when mode prop changes
+  useEffect(() => {
+    // Only allow editing if user has proper role and site access
+    if (!canEdit) {
+      setIsEditing(false);
+    } else {
+      setIsEditing(searchParams.get('edit') === 'true');
+    }
+  }, [searchParams, user, canEdit]);
+
+  // Reset state when page loads
+  useEffect(() => {
+    // Only allow editing if user has proper role and site access
+    if (!canEdit) {
+      setIsEditing(false);
+    } else {
+      setIsEditing(searchParams.get('edit') === 'true');
+    }
+    setActiveTab('overview');
+    setWorkflowComment("");
+    setAssignedUserId("");
+    // Reset additional workflow states
+    setMocRequired("");
+    setMocNumber("");
+    setCapexRequired("");
+    setCapexNumber("");
+    setSelectedEntries(new Set());
+    setFaComments("");
+  }, [canEdit, searchParams]);
+
+  // Update formData when initiative changes
+  useEffect(() => {
+    if (initiative) {
+      setFormData(initiative);
+    }
+  }, [initiative]);
+
+  // Get real progress and current stage data
+  const { data: progressData } = useProgressPercentage(Number(initiative?.id));
+  const { data: currentStageData } = useCurrentPendingStage(Number(initiative?.id));
+  
+  // Get workflow transactions for current initiative
+  const { data: workflowTransactions = [], refetch: refetchTransactions } = useWorkflowTransactions(Number(initiative?.id) || 0);
+  
+  // Workflow processing action
+  const processStageAction = useProcessStageAction();
+
+  // Fetch user data for "Created By" information
+  // Basic implementation: only check for createdBy user ID
+  const { data: createdByUser } = useUser(initiative?.createdBy);
+
+  // Get Initiative Leads for stage 4 (Site Head assigns Initiative Lead)
+  const { data: initiativeLeads = [], isLoading: ilLoading, error: ilError } = useInitiativeLeadsBySite(initiative?.site || '');
+  
+  // Additional hooks for stage-specific functionality
+  const { data: users = [], isLoading: usersLoading, error: usersError } = useUsers();
+
+  // Calculate Progress Percentage - being at stage X means X/11 * 100% progress
+  const progressPercentage = Math.round((initiative?.currentStage || 1) * 100 / 11);
+
+  const actualProgress = progressData?.progressPercentage ?? progressPercentage;
+  const currentStageName = currentStageData?.stageName || 
+    WORKFLOW_STAGE_NAMES[initiative?.currentStage || 1] || 
+    'Register Initiative';
+    
+  // Get pending transaction for workflow approval - match the same logic as WorkflowStageModal
+  let pendingTransaction = null;
+  
+  // First priority: Find transaction with approveStatus 'pending' that matches user email
+  if (user?.email) {
+    pendingTransaction = workflowTransactions.find((t: any) => 
+      t.approveStatus === 'pending' && t.pendingWith === user.email
+    );
+  }
+  
+  // Second priority: Find pending transaction by role (for backward compatibility)
+  if (!pendingTransaction && workflowTransactions.length > 0) {
+    // Role-specific stage mapping based on workflow definition
+    if (user?.role === 'HOD') {
+      // HOD approves stage 2 (Evaluation and Approval)
+      pendingTransaction = workflowTransactions.find((t: any) => 
+        t.stageNumber === 2 && t.approveStatus === 'pending'
+      );
+    }
+    else if (user?.role === 'STLD') {
+      // STLD can approve stage 3 (Initiative assessment) or stage 7 (Progress monitoring)
+      pendingTransaction = workflowTransactions.find((t: any) => 
+        (t.stageNumber === 3 || t.stageNumber === 7) && t.approveStatus === 'pending'
+      );
+    }
+    else if (user?.role === 'SH') {
+      // Site Head approves stage 4 (Define Responsibilities)
+      pendingTransaction = workflowTransactions.find((t: any) => 
+        t.stageNumber === 4 && t.approveStatus === 'pending'
+      );
+    }
+    else if (user?.role === 'CTSD') {
+      // Corporate TSD approves stage 8 (Periodic Status Review with CMO)
+      pendingTransaction = workflowTransactions.find((t: any) => 
+        t.stageNumber === 8 && t.approveStatus === 'pending'
+      );
+    }
+    else if (user?.role === 'IL') {
+      // Initiative Lead can approve stages 5, 6, 9, 11 (dynamic assignment)
+      pendingTransaction = workflowTransactions.find((t: any) => 
+        (t.stageNumber === 5 || t.stageNumber === 6 || t.stageNumber === 9 || t.stageNumber === 11) && 
+        t.approveStatus === 'pending'
+      );
+    }
+    else if (user?.role === 'F&A') {
+      // Finance & Accounts approves stage 10 (F&A validation)
+      pendingTransaction = workflowTransactions.find((t: any) => 
+        t.stageNumber === 10 && t.approveStatus === 'pending'
+      );
+    }
+    // For other roles, find any pending transaction
+    else {
+      pendingTransaction = workflowTransactions.find((t: any) => t.approveStatus === 'pending');
+    }
+  }
+  
+  // Hooks for F&A functionality (Stage 10) - now pendingTransaction is available
+  const { data: monthlyEntries = [], isLoading: entriesLoading, refetch: refetchEntries } = useFinalizedPendingFAEntries(
+    (pendingTransaction?.stageNumber === 10 && user?.role === 'F&A') ? Number(initiative?.id) : 0
+  );
+  const batchFAApprovalMutation = useBatchFAApproval();
+
+  // Hook for Stage 7 Timeline Entries Progress Monitoring - now pendingTransaction is available
+  const { data: timelineEntries = [], isLoading: timelineEntriesLoading } = useTimelineEntriesProgressMonitoring(
+    (pendingTransaction?.stageNumber === 7 && user?.role === 'STLD') ? Number(initiative?.id) : 0
+  );
+
+  // Reset F&A selection when entries change
+  useEffect(() => {
+    if (pendingTransaction?.stageNumber === 10) {
+      setSelectedEntries(new Set());
+      setFaComments("");
+    }
+  }, [pendingTransaction?.stageNumber]);
+
+  useEffect(() => {
+    if (Array.isArray(monthlyEntries) && monthlyEntries.length > 0) {
+      setSelectedEntries(new Set());
+    }
+  }, [monthlyEntries]);
+
+  // Check if all timeline entries are completed for Stage 6 validation
+  useEffect(() => {
+    if (pendingTransaction?.stageNumber === 6 && initiative?.id) {
+      setTimelineValidationLoading(true);
+      timelineTrackerAPI.areAllTimelineEntriesCompleted(Number(initiative.id))
+        .then((response) => {
+          setAllTimelineEntriesCompleted(response.data);
+        })
+        .catch((error) => {
+          console.error("Error checking timeline entries completion:", error);
+          setAllTimelineEntriesCompleted(false);
+        })
+        .finally(() => {
+          setTimelineValidationLoading(false);
+        });
+    }
+  }, [pendingTransaction?.stageNumber, initiative?.id]);
+
+  // Check if all monthly monitoring entries are finalized for Stage 9 validation
+  useEffect(() => {
+    if (pendingTransaction?.stageNumber === 9 && initiative?.id) {
+      setMonthlyValidationLoading(true);
+      monthlyMonitoringAPI.areAllEntriesFinalized(Number(initiative.id))
+        .then((response) => {
+          setAllMonthlyEntriesFinalized(response.data);
+        })
+        .catch((error) => {
+          console.error("Error checking monthly monitoring entries finalization:", error);
+          setAllMonthlyEntriesFinalized(false);
+        })
+        .finally(() => {
+          setMonthlyValidationLoading(false);
+        });
+    }
+  }, [pendingTransaction?.stageNumber, initiative?.id]);
+  
+  // Show workflow tab if user can view it (for debugging/visibility) or has pending actions
+  const canShowWorkflowActions = user?.role !== 'VIEWER' && user?.site === initiative?.site;
+  const hasWorkflowActions = pendingTransaction && canUserActOnPendingTransaction(pendingTransaction);
+  
+  // Debug logging
+  console.log('Debug Workflow Approval Enhanced:', {
+    canApproveWorkflow,
+    pendingTransaction,
+    workflowTransactions: workflowTransactions.map(t => ({
+      id: t.id,
+      stageNumber: t.stageNumber,
+      stageName: t.stageName,
+      status: t.status,
+      requiredRole: t.requiredRole,
+      processedDate: t.processedDate
+    })),
+    userSite: user?.site,
+    initiativeSite: initiative?.site,
+    canShowWorkflowActions,
+    userRole: user?.role,
+    initiativeId: initiative?.id
+  });
+
+  // Get the creator name - priority: initiatorName (new field), then initiator (mock data), then createdByName, then fetched user data, then fallback
+  const creatorName = initiative?.initiatorName || 
+                      initiative?.initiator || 
+                      initiative?.createdByName || 
+                      createdByUser?.fullName || 
+                      createdByUser?.name || 
+                      'Unknown User';
+  const creatorEmail = initiative?.createdByEmail || createdByUser?.email;
+
+  // Debug logging to help identify the issue
+  console.log('Page Debug:', { 
+    isEditing, 
+    initiativeId: initiative?.id,
+    pageTitle: isEditing ? 'Edit Initiative' : 'Initiative Details',
+    mocCapexData: {
+      requiresMoc: initiative?.requiresMoc,
+      mocNumber: initiative?.mocNumber,
+      requiresCapex: initiative?.requiresCapex,
+      capexNumber: initiative?.capexNumber
+    },
+    initiativeData: {
+      initiatorName: initiative?.initiatorName,
+      createdByName: initiative?.createdByName,
+      createdBy: initiative?.createdBy,
+      fetchedUser: createdByUser
+    }
+  });
+
+  const handleSave = async () => {
+    if (!initiative?.id) return;
+    
+    // Additional safety check: prevent saving if user doesn't have edit permissions
+    if (!canEdit) {
+      console.warn('Save blocked: User does not have edit permissions for this initiative');
+      toast({
+        title: "Permission denied",
+        description: "You do not have permission to edit initiatives from this site.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      setIsSaving(true);
+      
+      // Convert form data to API format
+      const updateData = {
+        title: formData.title,
+        description: formData.description,
+        priority: formData.priority,
+        expectedSavings: typeof formData.expectedSavings === 'string' 
+          ? parseFloat(formData.expectedSavings.replace(/[₹,]/g, '')) 
+          : formData.expectedSavings,
+        actualSavings: typeof formData.actualSavings === 'string' 
+          ? parseFloat(formData.actualSavings.replace(/[₹,]/g, '')) 
+          : formData.actualSavings,
+        site: formData.site,
+        discipline: formData.discipline,
+        budgetType: formData.budgetType || 'NON-BUDGETED',
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        requiresMoc: formData.requiresMoc || 'N',
+        requiresCapex: formData.requiresCapex || 'N',
+        mocNumber: formData.mocNumber || '',
+        capexNumber: formData.capexNumber || '',
+        initiatorName: formData.initiatorName || formData.initiator,
+        // New fields for target & financial information
+        targetOutcome: formData.targetOutcome || '',
+        targetValue: formData.targetValue || 0,
+        confidenceLevel: formData.confidenceLevel || 0,
+        estimatedCapex: formData.estimatedCapex || 0,
+        // New fields for assumptions & baseline data
+        baselineData: formData.baselineData || '',
+        assumption1: formData.assumption1 || '',
+        assumption2: formData.assumption2 || '',
+        assumption3: formData.assumption3 || ''
+      };
+
+      console.log('Updating initiative with data:', updateData);
+      
+      // Call API to update initiative
+      await initiativeAPI.update(Number(initiative.id), updateData);
+      
+      // Invalidate and refetch initiatives data instead of full page reload
+      await queryClient.invalidateQueries({ queryKey: ['initiatives'] });
+      await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      
+      toast({
+        title: "Initiative updated successfully",
+        description: "Changes have been saved.",
+      });
+      
+      setIsEditing(false);
+      
+      // Update URL to remove edit parameter
+      navigate(`/initiatives/${initiative.id}`, { replace: true });
+    } catch (error) {
+      console.error('Error updating initiative:', error);
+      toast({
+        title: "Error updating initiative",
+        description: "Failed to update initiative. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setFormData(initiative || {});
+    setIsEditing(false);
+    // Remove edit parameter from URL
+    navigate(`/initiatives/${initiative?.id}`, { replace: true });
+  };
+
+  // Helper functions for F&A approval
+  const handleEntrySelection = (entryId: number, checked: boolean) => {
+    const newSelected = new Set(selectedEntries);
+    if (checked) {
+      newSelected.add(entryId);
+    } else {
+      newSelected.delete(entryId);
+    }
+    setSelectedEntries(newSelected);
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked && Array.isArray(monthlyEntries)) {
+      const allIds = new Set<number>();
+      monthlyEntries.forEach((entry: MonthlyMonitoringEntry) => {
+        if (entry.id) {
+          allIds.add(entry.id);
+        }
+      });
+      setSelectedEntries(allIds);
+    } else {
+      setSelectedEntries(new Set<number>());
+    }
+  };
+
+  // F&A approval handler for stage 10
+  const handleFAApproval = async () => {
+    try {
+      // First, approve selected monthly monitoring entries
+      if (selectedEntries.size > 0) {
+        const entryIds = Array.from(selectedEntries);
+        await batchFAApprovalMutation.mutateAsync({
+          entryIds,
+          faComments: faComments || workflowComment.trim()
+        });
+      }
+
+      // Then proceed with workflow approval
+      const data = {
+        transactionId: pendingTransaction.id,
+        action: 'approved',
+        remarks: workflowComment.trim()
+      };
+
+      await processStageAction.mutateAsync(data);
+      
+      toast({ 
+        title: "F&A validation completed successfully", 
+        description: "The workflow has been updated." 
+      });
+      
+      setWorkflowComment("");
+      setSelectedEntries(new Set());
+      setFaComments("");
+      refetchTransactions();
+    } catch (error: any) {
+      toast({ 
+        title: "Error in F&A approval", 
+        description: error.response?.data?.message || "Something went wrong",
+        variant: "destructive" 
+      });
+    }
+  };
+
+  // Check if workflow form is valid for approval
+  const isWorkflowFormValid = () => {
+    if (!workflowComment.trim()) return false;
+    
+    if (pendingTransaction?.stageNumber === 4 && !assignedUserId) return false;
+    if (pendingTransaction?.stageNumber === 5) {
+      // Combined MOC-CAPEX validation
+      if (!mocRequired || !capexRequired) return false;
+      if (mocRequired === "yes" && !mocNumber.trim()) return false;
+      if (capexRequired === "yes" && !capexNumber.trim()) return false;
+    }
+    if (pendingTransaction?.stageNumber === 6) {
+      // Stage 6 Timeline Tracker validation - all timeline entries must be completed
+      return allTimelineEntriesCompleted;
+    }
+    if (pendingTransaction?.stageNumber === 9) {
+      // Stage 9 Monthly Monitoring validation - all monthly monitoring entries must be finalized
+      return allMonthlyEntriesFinalized;
+    }
+    if (pendingTransaction?.stageNumber === 10) {
+      // F&A approval - at least one entry should be selected or no entries to approve
+      return !Array.isArray(monthlyEntries) || monthlyEntries.length === 0 || selectedEntries.size > 0;
+    }
+    if (pendingTransaction?.stageNumber === 11) {
+      // Stage 11 Initiative Closure - only comment required
+      return true;
+    }
+    
+    return true;
+  };
+
+  // Workflow approval handlers
+  const handleWorkflowApprove = async () => {
+    if (!pendingTransaction || !workflowComment.trim()) {
+      toast({ 
+        title: "Cannot process approval", 
+        description: "Missing transaction ID or comments.",
+        variant: "destructive" 
+      });
+      return;
+    }
+    
+    setProcessingAction('approved');
+    
+    try {
+      // Handle F&A approval for stage 10
+      if (pendingTransaction.stageNumber === 10) {
+        await handleFAApproval();
+        return;
+      }
+
+      const data: any = {
+        transactionId: pendingTransaction.id,
+        action: 'approved',
+        remarks: workflowComment.trim()
+      };
+
+      // Add stage-specific data
+      if (pendingTransaction.stageNumber === 4 && assignedUserId) {
+        data.assignedUserId = parseInt(assignedUserId);
+      }
+      
+      if (pendingTransaction.stageNumber === 5) {
+        // Combined MOC-CAPEX stage
+        data.requiresMoc = mocRequired === "yes" ? "Y" : "N";
+        if (mocRequired === "yes" && mocNumber) {
+          data.mocNumber = mocNumber;
+        }
+        data.requiresCapex = capexRequired === "yes" ? "Y" : "N";
+        if (capexRequired === "yes" && capexNumber) {
+          data.capexNumber = capexNumber;
+        }
+      }
+
+      await processStageAction.mutateAsync(data);
+      
+      toast({ 
+        title: "Stage approved successfully", 
+        description: "The workflow has been updated." 
+      });
+      
+      setWorkflowComment("");
+      setAssignedUserId("");
+      setMocRequired("");
+      setMocNumber("");
+      setCapexRequired("");
+      setCapexNumber("");
+      refetchTransactions();
+    } catch (error: any) {
+      toast({ 
+        title: "Error processing stage", 
+        description: error.response?.data?.message || "Something went wrong",
+        variant: "destructive" 
+      });
+    } finally {
+      setProcessingAction(null);
+    }
+  };
+
+  const handleWorkflowReject = async () => {
+    if (!pendingTransaction || !workflowComment.trim()) {
+      toast({ 
+        title: "Cannot process rejection", 
+        description: "Missing transaction ID or comments.",
+        variant: "destructive" 
+      });
+      return;
+    }
+    
+    setProcessingAction('rejected');
+    
+    try {
+      const data = {
+        transactionId: pendingTransaction.id,
+        action: 'rejected',
+        remarks: workflowComment.trim()
+      };
+
+      await processStageAction.mutateAsync(data);
+      
+      toast({ 
+        title: "Stage rejected", 
+        description: "The workflow has been updated." 
+      });
+      
+      setWorkflowComment("");
+      setAssignedUserId("");
+      refetchTransactions();
+    } catch (error: any) {
+      toast({ 
+        title: "Error processing stage", 
+        description: error.response?.data?.message || "Something went wrong",
+        variant: "destructive" 
+      });
+    } finally {
+      setProcessingAction(null);
+    }
+  };
+
+  const handleWorkflowDrop = async () => {
+    if (!pendingTransaction || !workflowComment.trim()) {
+      toast({ 
+        title: "Cannot process drop", 
+        description: "Missing transaction ID or comments.",
+        variant: "destructive" 
+      });
+      return;
+    }
+    
+    setProcessingAction('dropped');
+    
+    try {
+      const data = {
+        transactionId: pendingTransaction.id,
+        action: 'dropped',
+        remarks: workflowComment.trim()
+      };
+
+      await processStageAction.mutateAsync(data);
+      
+      toast({ 
+        title: "Initiative dropped to next FY", 
+        description: "The workflow has been updated." 
+      });
+      
+      setWorkflowComment("");
+      refetchTransactions();
+    } catch (error: any) {
+      toast({ 
+        title: "Error processing drop", 
+        description: error.response?.data?.message || "Something went wrong",
+        variant: "destructive" 
+      });
+    } finally {
+      setProcessingAction(null);
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case "completed": return "bg-success text-success-foreground";
+      case "in progress": return "bg-primary text-primary-foreground";
+      case "under review": return "bg-warning text-warning-foreground";
+      case "pending decision": return "bg-warning text-warning-foreground";
+      case "registered": return "bg-muted text-muted-foreground";
+      case "implementation": return "bg-primary text-primary-foreground";
+      case "moc review": return "bg-warning text-warning-foreground";
+      case "cmo review": return "bg-primary text-primary-foreground";
+      case "decision pending": return "bg-warning text-warning-foreground";
+      default: return "bg-muted text-muted-foreground";
+    }
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case "High": return "bg-destructive text-destructive-foreground";
+      case "Medium": return "bg-warning text-warning-foreground";
+      case "Low": return "bg-muted text-muted-foreground";
+      default: return "bg-muted text-muted-foreground";
+    }
+  };
+
+  // Get stage description matching WorkflowStageModal.tsx
+  const getStageDescription = (stageNumber: number) => {
+    const descriptions: { [key: number]: string } = {
+      1: "Initiative has been registered by any user and is ready for HOD approval.",
+      2: "Head of Department (HOD) evaluation and approval of the initiative.",
+      3: "Site TSD Lead assessment and approval of the initiative.",
+      4: "Site Head assigns an Initiative Lead who will be responsible for driving this initiative forward.",
+      5: "Initiative Lead evaluates both Management of Change (MOC) and Capital Expenditure (CAPEX) requirements.",
+      6: "Initiative Lead prepares detailed timeline for initiative implementation.",
+      7: "Site TSD Lead monitors progress of initiative implementation.",
+      8: "Corporate TSD reviews initiative status - you can approve to continue or drop to move initiative to next FY.",
+      9: "Initiative Lead monitors savings achieved after implementation (monthly monitoring period).",
+      10: "Site F&A validates savings and financial accuracy.",
+      11: "Initiative Lead performs final closure of the initiative."
+    };
+    return descriptions[stageNumber] || "Process this workflow stage.";
+  };
+
+  // Get stage-specific content for workflow approval
+  const getStageSpecificWorkflowContent = () => {
+    if (!pendingTransaction?.stageNumber) {
+      return (
+        <div className="p-4 bg-muted rounded-lg text-center">
+          <AlertTriangle className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">No pending approval found for you on this initiative</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            The initiative may have already been processed or you may not have permission to approve the current stage.
+          </p>
+        </div>
+      );
+    }
+    
+    switch (pendingTransaction.stageNumber) {
+      case 4: // Define Responsibilities - Site Head assigns Initiative Lead
+        return (
+          <div className="space-y-4">
+            <div className="p-4 bg-blue-50 rounded-lg">
+              <div className="flex items-center gap-2.5 text-sm text-blue-800 mb-1.5">
+                <MapPin className="h-4 w-4" />
+                <span className="font-semibold">Site: {initiative?.site}</span>
+              </div>
+              <p className="text-xs text-blue-700">
+                Select an Initiative Lead from users with IL role for this site
+              </p>
+            </div>
+            <div>
+              <Label htmlFor="assignedUser" className="text-xs font-semibold">Select Initiative Lead *</Label>
+              <Select value={assignedUserId} onValueChange={setAssignedUserId}>
+                <SelectTrigger className="h-9 text-xs mt-1.5">
+                  <SelectValue placeholder={
+                    ilLoading ? "Loading Initiative Leads..." : 
+                    initiativeLeads.length === 0 ? "No Initiative Leads available for this site" :
+                    "Select an Initiative Lead"
+                  } />
+                </SelectTrigger>
+                <SelectContent>
+                  {initiativeLeads.map((user) => (
+                    <SelectItem key={user.id} value={user.id.toString()} className="text-sm focus:bg-accent hover:bg-accent">
+                      {user.fullName} - {user.discipline}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {initiativeLeads.length === 0 && !ilLoading && (
+                <p className="text-xs text-red-600 mt-1.5">
+                  No Initiative Leads found for site {initiative?.site}
+                </p>
+              )}
+            </div>
+          </div>
+        );
+
+      case 5: // MOC-CAPEX Evaluation
+        return (
+          <div className="space-y-6">
+            {/* MOC Section */}
+            <div className="space-y-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-200">Management of Change (MOC) Evaluation</h4>
+              <div>
+                <Label className="text-xs font-semibold">Is MOC Required? *</Label>
+                <RadioGroup value={mocRequired} onValueChange={setMocRequired} className="mt-2">
+                  <div className="flex items-center space-x-2.5 p-2.5 border rounded-lg hover:bg-muted/50">
+                    <RadioGroupItem value="yes" id="moc-yes" />
+                    <Label htmlFor="moc-yes" className="text-xs font-medium">Yes, MOC is required</Label>
+                  </div>
+                  <div className="flex items-center space-x-2.5 p-2.5 border rounded-lg hover:bg-muted/50">
+                    <RadioGroupItem value="no" id="moc-no" />
+                    <Label htmlFor="moc-no" className="text-xs font-medium">No, MOC is not required</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+              
+              {mocRequired === "yes" && (
+                <div>
+                  <Label htmlFor="mocNumber" className="text-xs font-semibold">MOC Number *</Label>
+                  <Input
+                    id="mocNumber"
+                    value={mocNumber}
+                    onChange={(e) => setMocNumber(e.target.value)}
+                    placeholder="Enter MOC Number"
+                    className="h-9 text-xs mt-1.5"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* CAPEX Section */}
+            <div className="space-y-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+              <h4 className="text-sm font-semibold text-green-800 dark:text-green-200">Capital Expenditure (CAPEX) Evaluation</h4>
+              <div>
+                <Label className="text-xs font-semibold">Is CAPEX Required? *</Label>
+                <RadioGroup value={capexRequired} onValueChange={setCapexRequired} className="mt-2">
+                  <div className="flex items-center space-x-2.5 p-2.5 border rounded-lg hover:bg-muted/50">
+                    <RadioGroupItem value="yes" id="capex-yes" />
+                    <Label htmlFor="capex-yes" className="text-xs font-medium">Yes, CAPEX is required</Label>
+                  </div>
+                  <div className="flex items-center space-x-2.5 p-2.5 border rounded-lg hover:bg-muted/50">
+                    <RadioGroupItem value="no" id="capex-no" />
+                    <Label htmlFor="capex-no" className="text-xs font-medium">No, CAPEX is not required</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+              
+              {capexRequired === "yes" && (
+                <div>
+                  <Label htmlFor="capexNumber" className="text-xs font-semibold">CAPEX Number *</Label>
+                  <Input
+                    id="capexNumber"
+                    value={capexNumber}
+                    onChange={(e) => setCapexNumber(e.target.value)}
+                    placeholder="Enter CAPEX Number"
+                    className="h-9 text-xs mt-1.5"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        );
+
+      case 6: // Initiative Timeline Tracker - validates timeline completion
+        return (
+          <div className="space-y-4">
+            <div className="p-4 bg-blue-50 rounded-lg">
+              <div className="flex items-center gap-2.5">
+                <CheckCircle className="h-5 w-5 text-blue-600" />
+                <p className="text-blue-800 font-semibold text-sm">
+                  Timeline Tracker Validation
+                </p>
+              </div>
+              <p className="text-xs text-blue-700 mt-2">
+                All timeline entries must be marked as "COMPLETED" before this stage can be approved.
+              </p>
+            </div>
+
+            {/* Timeline Completion Status */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-semibold">Timeline Entries Status</Label>
+                {timelineValidationLoading && (
+                  <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                )}
+              </div>
+
+              {timelineValidationLoading ? (
+                <div className="flex items-center justify-center p-6 bg-muted rounded-lg">
+                  <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                  <span className="text-sm">Checking timeline entries...</span>
+                </div>
+              ) : (
+                <div className={`p-4 rounded-lg border ${
+                  allTimelineEntriesCompleted 
+                    ? 'bg-green-50 border-green-200' 
+                    : 'bg-red-50 border-red-200'
+                }`}>
+                  <div className="flex items-center gap-2">
+                    {allTimelineEntriesCompleted ? (
+                      <>
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                        <span className="text-sm font-medium text-green-800">
+                          All timeline entries are completed
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="h-5 w-5 text-red-600" />
+                        <span className="text-sm font-medium text-red-800">
+                          Some timeline entries are not yet completed
+                        </span>
+                      </>
+                    )}
+                  </div>
+                  {!allTimelineEntriesCompleted && (
+                    <p className="text-xs text-red-600 mt-2">
+                      Please ensure all timeline activities are marked as "COMPLETED" before approving this stage.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+
+      case 7: // Progress monitoring - Show timeline entries
+        return (
+          <div className="space-y-6">
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <div className="flex items-center gap-2.5 mb-3">
+                <Activity className="h-5 w-5 text-blue-600" />
+                <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-200">
+                  Progress Monitoring - Timeline Review
+                </h4>
+              </div>
+              <p className="text-xs text-blue-700 dark:text-blue-300">
+                Review timeline entries and monitor progress of initiative implementation.
+              </p>
+            </div>
+
+            {/* Timeline Entries Display */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-semibold">Timeline Entries Overview</Label>
+              </div>
+
+              {timelineEntriesLoading ? (
+                <div className="flex items-center justify-center p-8 bg-muted rounded-lg">
+                  <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                  <span className="text-sm">Loading timeline entries...</span>
+                </div>
+              ) : !Array.isArray(timelineEntries) || timelineEntries.length === 0 ? (
+                <div className="p-6 bg-muted rounded-lg text-center">
+                  <FileText className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">No timeline entries found for this initiative</p>
+                </div>
+              ) : (
+              <div className="border rounded-lg overflow-hidden">
+                <div className="bg-muted px-4 py-2 border-b">
+                  <div className="grid grid-cols-10 gap-3 text-xs font-semibold">
+                    <div className="col-span-3">Activity Name</div>
+                    <div className="col-span-2">Status</div>
+                    <div className="col-span-3">Planned Duration</div>
+                    <div className="col-span-2">Responsible Person</div>
+                  </div>
+                </div>
+                <div className="max-h-64 overflow-y-auto">
+                  {Array.isArray(timelineEntries) && timelineEntries.map((entry: any) => (
+                    <div key={entry.id} className="px-4 py-3 border-b last:border-b-0 hover:bg-muted/50">
+                      <div className="grid grid-cols-10 gap-3 items-center text-xs">
+                        <div className="col-span-3 font-medium">
+                          <div 
+                            className="truncate cursor-help" 
+                            title={entry.stageName}
+                            style={{ maxWidth: '100%' }}
+                          >
+                            {entry.stageName}
+                          </div>
+                        </div>
+                        <div className="col-span-2">
+                          <Badge 
+                            variant="outline"
+                            className={`text-xs px-2 py-1 text-center font-medium whitespace-nowrap ${
+                              entry.status === 'COMPLETED' ? 'bg-green-100 text-green-800 border-green-300' :
+                              entry.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-800 border-blue-300' :
+                              entry.status === 'DELAYED' ? 'bg-red-100 text-red-800 border-red-300' :
+                              'bg-yellow-100 text-yellow-800 border-yellow-300'
+                            }`}
+                          >
+                            {entry.status === 'COMPLETED' ? 'Completed' :
+                             entry.status === 'IN_PROGRESS' ? 'In Progress' :
+                             entry.status === 'DELAYED' ? 'Delayed' :
+                             'Pending'}
+                          </Badge>
+                        </div>
+                        <div className="col-span-3 text-muted-foreground">
+                          <div className="text-xs whitespace-nowrap">{new Date(entry.plannedStartDate).toLocaleDateString()}</div>
+                          <div className="text-xs text-muted-foreground/80 whitespace-nowrap">to {new Date(entry.plannedEndDate).toLocaleDateString()}</div>
+                        </div>
+                        <div className="col-span-2">
+                          <div 
+                            className="text-xs text-muted-foreground truncate cursor-help" 
+                            title={entry.responsiblePerson}
+                            style={{ maxWidth: '100%' }}
+                          >
+                            {entry.responsiblePerson}
+                          </div>
+                        </div>
+                      </div>
+                      {entry.remarks && (
+                        <div className="mt-2 text-xs text-muted-foreground bg-muted p-2 rounded">
+                          <strong>Remarks:</strong> 
+                          <span className="ml-1 break-words">{entry.remarks}</span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {Array.isArray(timelineEntries) && timelineEntries.length > 0 && (
+              <div className="text-xs text-muted-foreground">
+                Total {timelineEntries.length} timeline entries found for progress monitoring review
+              </div>
+            )}
+          </div>
+        );
+
+      case 8: // Periodic Status Review with CMO
+        return (
+          <div className="space-y-4 p-4 bg-blue-50 rounded-lg">
+            <div className="flex items-center gap-2.5">
+              <CheckCircle className="h-5 w-5 text-blue-600" />
+              <p className="text-blue-800 font-semibold text-sm">
+                Periodic Status Review with CMO
+              </p>
+            </div>
+            <p className="text-xs text-blue-700 mt-2">
+              You can approve to continue or drop to move initiative to next FY.
+            </p>
+          </div>
+        );
+
+      case 9: // Savings Monitoring (Monthly)
+        return (
+          <div className="space-y-4">
+            <div className="p-4 bg-blue-50 rounded-lg">
+              <div className="flex items-center gap-2.5">
+                <CheckCircle className="h-5 w-5 text-blue-600" />
+                <p className="text-blue-800 font-semibold text-sm">
+                  Monthly Monitoring Validation
+                </p>
+              </div>
+              <p className="text-xs text-blue-700 mt-2">
+                All monthly monitoring entries must be marked as "FINALIZED" before this stage can be approved.
+              </p>
+            </div>
+
+            {/* Monthly Monitoring Completion Status */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-semibold">Monthly Monitoring Entries Status</Label>
+                {monthlyValidationLoading && (
+                  <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                )}
+              </div>
+
+              {monthlyValidationLoading ? (
+                <div className="flex items-center justify-center p-6 bg-muted rounded-lg">
+                  <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                  <span className="text-sm">Checking monthly monitoring entries...</span>
+                </div>
+              ) : (
+                <div className={`p-4 rounded-lg border ${
+                  allMonthlyEntriesFinalized 
+                    ? 'bg-green-50 border-green-200' 
+                    : 'bg-red-50 border-red-200'
+                }`}>
+                  <div className="flex items-center gap-2">
+                    {allMonthlyEntriesFinalized ? (
+                      <>
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                        <span className="text-sm font-medium text-green-800">
+                          All monthly monitoring entries are finalized
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="h-5 w-5 text-red-600" />
+                        <span className="text-sm font-medium text-red-800">
+                          Some monthly monitoring entries are not yet finalized
+                        </span>
+                      </>
+                    )}
+                  </div>
+                  {!allMonthlyEntriesFinalized && (
+                    <p className="text-xs text-red-600 mt-2">
+                      Please ensure all monthly monitoring entries are marked as "FINALIZED" before approving this stage.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+
+      case 10: // F&A Validation with entries
+        return (
+          <div className="space-y-6">
+            <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+              <div className="flex items-center gap-2.5 mb-3">
+                <DollarSign className="h-5 w-5 text-green-600" />
+                <h4 className="text-sm font-semibold text-green-800 dark:text-green-200">
+                  Finance & Accounts Validation
+                </h4>
+              </div>
+              <p className="text-xs text-green-700 dark:text-green-300">
+                Review and approve finalized monthly monitoring entries below. Select entries to approve and provide validation comments.
+              </p>
+            </div>
+
+            {/* Monthly Monitoring Entries */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-semibold">Finalized Monitoring Entries</Label>
+                {Array.isArray(monthlyEntries) && monthlyEntries.length > 0 && (
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      checked={selectedEntries.size === monthlyEntries.length && monthlyEntries.length > 0}
+                      onCheckedChange={(checked) => handleSelectAll(!!checked)}
+                    />
+                    <Label className="text-xs">Select All</Label>
+                  </div>
+                )}
+              </div>
+
+              {entriesLoading ? (
+                <div className="flex items-center justify-center p-8 bg-muted rounded-lg">
+                  <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                  <span className="text-sm">Loading monitoring entries...</span>
+                </div>
+              ) : !Array.isArray(monthlyEntries) || monthlyEntries.length === 0 ? (
+                <div className="p-6 bg-muted rounded-lg text-center">
+                  <TrendingUp className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">No finalized entries pending F&A approval</p>
+                </div>
+              ) : (
+                <div className="border rounded-lg overflow-hidden">
+                  <div className="bg-muted px-4 py-2 border-b">
+                    <div className="grid grid-cols-12 gap-2 text-xs font-semibold">
+                      <div className="col-span-1">Select</div>
+                      <div className="col-span-3">Monitoring Month</div>
+                      <div className="col-span-4">Saving Description</div>
+                      <div className="col-span-2">Target Value</div>
+                      <div className="col-span-2">Achieved Value</div>
+                    </div>
+                  </div>
+                  <div className="max-h-64 overflow-y-auto">
+                    {Array.isArray(monthlyEntries) && monthlyEntries.map((entry: MonthlyMonitoringEntry) => (
+                      <div key={entry.id} className="px-4 py-3 border-b last:border-b-0 hover:bg-muted/50">
+                        <div className="grid grid-cols-12 gap-2 items-center text-xs">
+                          <div className="col-span-1">
+                            <Checkbox
+                              checked={entry.id ? selectedEntries.has(entry.id) : false}
+                              onCheckedChange={(checked) => entry.id && handleEntrySelection(entry.id, !!checked)}
+                            />
+                          </div>
+                          <div className="col-span-3 font-medium">{entry.monitoringMonth}</div>
+                          <div className="col-span-4 text-muted-foreground">{entry.kpiDescription}</div>
+                          <div className="col-span-2 font-mono">{entry.targetValue?.toLocaleString()}</div>
+                          <div className="col-span-2 font-mono">{entry.achievedValue?.toLocaleString()}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {Array.isArray(monthlyEntries) && monthlyEntries.length > 0 && (
+                <div className="text-xs text-muted-foreground">
+                  {selectedEntries.size} of {monthlyEntries.length} entries selected for approval
+                </div>
+              )}
+            </div>
+
+            {/* F&A Comments */}
+            {Array.isArray(monthlyEntries) && monthlyEntries.length > 0 && (
+              <div>
+                <Label htmlFor="faComments" className="text-xs font-semibold">
+                  F&A Validation Comments (Optional)
+                </Label>
+                <Textarea
+                  id="faComments"
+                  value={faComments}
+                  onChange={(e) => setFaComments(e.target.value)}
+                  placeholder="Provide specific validation comments for selected entries..."
+                  className="min-h-[60px] mt-2 text-xs"
+                />
+              </div>
+            )}
+          </div>
+        );
+
+      case 11: // Initiative Closure
+        return (
+          <div className="space-y-4 p-4 bg-red-50 rounded-lg">
+            <div className="flex items-center gap-2.5">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+              <p className="text-red-800 font-semibold text-sm">
+                Initiative Closure
+              </p>
+            </div>
+            <p className="text-xs text-red-700 mt-2">
+              Final closure of initiative - This will move the initiative to the Closure Module.
+            </p>
+          </div>
+        );
+
+      default:
+        // For other stages, show generic message
+        return (
+          <div className="p-4 bg-blue-50 rounded-lg">
+            <div className="flex items-center gap-2.5">
+              <CheckCircle className="h-5 w-5 text-blue-600" />
+              <p className="text-blue-800 font-semibold text-sm">
+                {WORKFLOW_STAGE_NAMES[pendingTransaction?.stageNumber] || pendingTransaction?.stageName}
+              </p>
+            </div>
+            <p className="text-xs text-blue-700 mt-2">
+              Review and provide your decision with appropriate comments.
+            </p>
+          </div>
+        );
+    }
+  };
+
+  // Loading state
+  if (isLoading || !initiative) {
+    return (
+      <div className="container mx-auto p-4 space-y-4 max-w-6xl">
+        <div className="animate-pulse space-y-6">
+          <div className="h-8 bg-muted rounded w-1/3"></div>
+          <div className="h-32 bg-muted rounded"></div>
+          <div className="h-64 bg-muted rounded"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error || !initiative) {
+    return (
+      <div className="container mx-auto p-4 max-w-6xl">
+        <div className="text-center py-12">
+          <p className="text-destructive text-lg">Initiative not found or error loading data</p>
+          <Button onClick={() => navigate('/initiatives')} className="mt-4">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Initiatives
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto p-4 space-y-4 max-w-6xl">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/initiatives')}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
+          <div>
+            <h1 className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              {isEditing ? 'Edit Initiative' : 'Initiative Details'}
+            </h1>
+            <p className="text-muted-foreground text-xs mt-0.5">
+              {initiative?.initiativeNumber || `ID: ${initiative?.id}`}
+            </p>
+            <div className="flex items-center gap-2 mt-2">
+              <div className={`px-3 py-1 rounded text-sm font-medium ${
+                !canEdit
+                  ? isCompleted
+                    ? 'bg-green-100 text-green-800'
+                    : user?.role === 'VIEWER'
+                    ? 'bg-blue-100 text-blue-800'
+                    : 'bg-red-100 text-red-800'
+                  : isEditing 
+                    ? 'bg-orange-100 text-orange-800' 
+                    : 'bg-blue-100 text-blue-800'
+              }`}>
+                {!canEdit 
+                  ? isCompleted
+                    ? 'Completed'
+                    : user?.role === 'VIEWER' 
+                    ? 'Read-Only Mode' 
+                    : user?.site !== initiative?.site 
+                      ? `Site Restricted (${initiative?.site} only)` 
+                      : 'Read-Only Mode'
+                  : (isEditing ? 'Edit Mode' : 'View Mode')
+                }
+              </div>
+              {hasWorkflowActions && (
+                <div className="px-3 py-1 rounded text-sm font-medium bg-green-100 text-green-800 flex items-center gap-1">
+                  <Workflow className="h-3 w-3" />
+                  Approval Available
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          {!isEditing && canEdit && (
+            <Button variant="outline" size="default" onClick={() => setIsEditing(true)} className="min-w-[90px] h-10 px-4">
+              <Edit className="h-4 w-4 mr-2" />
+              Edit
+            </Button>
+          )}
+          {isEditing && (
+            <>
+              <Button variant="outline" size="default" onClick={handleCancel} className="min-w-[100px] h-10 px-4" disabled={isSaving}>
+                <X className="h-4 w-4 mr-2" />
+                Cancel
+              </Button>
+              <Button size="default" onClick={handleSave} className="min-w-[120px] h-10 px-4" disabled={isSaving}>
+                <Save className="h-4 w-4 mr-2" />
+                {isSaving ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Content - Using ScrollArea for consistent page layout */}
+      <div className="space-y-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className={`grid w-full h-12 gap-1 ${(canShowWorkflowActions || hasWorkflowActions) ? 'grid-cols-5' : 'grid-cols-4'}`}>
+            <TabsTrigger value="overview" className="flex items-center gap-2 text-sm py-2 px-3">
+              <Target className="h-4 w-4" />
+              <span className="hidden sm:inline">Overview</span>
+            </TabsTrigger>
+            <TabsTrigger value="details" className="flex items-center gap-2 text-sm py-2 px-3">
+              <FileText className="h-4 w-4" />
+              <span className="hidden sm:inline">Details</span>
+            </TabsTrigger>
+            <TabsTrigger value="references" className="flex items-center gap-2 text-sm py-2 px-3">
+              <Files className="h-4 w-4" />
+              <span className="hidden sm:inline">References</span>
+            </TabsTrigger>
+            <TabsTrigger value="documents" className="flex items-center gap-2 text-sm py-2 px-3">
+              <FolderOpen className="h-4 w-4" />
+              <span className="hidden sm:inline">Documents</span>
+            </TabsTrigger>
+            {(canShowWorkflowActions || hasWorkflowActions) && (
+              <TabsTrigger value="workflow" className="flex items-center gap-2 text-sm py-2 px-3">
+                <Workflow className="h-4 w-4" />
+                <span className="hidden sm:inline">Approval</span>
+              </TabsTrigger>
+            )}
+          </TabsList>
+
+          <div className="mt-6">
+            <TabsContent value="overview" className="space-y-6">
+              {/* Quick Stats */}
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
+                <Card className="border-l-4 border-l-primary">
+                  <CardContent className="p-3">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 bg-primary/10 rounded-lg">
+                        <Target className="h-3 w-3 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Status</p>
+                        <Badge className={`${getStatusColor(initiative?.status || '')} text-xs mt-0.5`}>
+                          {initiative?.status}
+                        </Badge>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-l-4 border-l-green-500">
+                  <CardContent className="p-3">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 bg-green-100 rounded-lg">
+                        <DollarSign className="h-3 w-3 text-green-600" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Expected</p>
+                        <p className="font-semibold text-green-600 text-sm">
+                          {typeof initiative?.expectedSavings === 'number' 
+                            ? `₹${initiative.expectedSavings.toLocaleString()}` 
+                            : initiative?.expectedSavings}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-l-4 border-l-orange-500">
+                  <CardContent className="p-3">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 bg-orange-100 rounded-lg">
+                        <DollarSign className="h-3 w-3 text-orange-600" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Actual</p>
+                        <p className="font-semibold text-orange-600 text-sm">
+                          {typeof initiative?.actualSavings === 'number' 
+                            ? `₹${initiative.actualSavings.toLocaleString()}` 
+                            : initiative?.actualSavings || '₹0'}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-l-4 border-l-purple-500">
+                  <CardContent className="p-3">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 bg-purple-100 rounded-lg">
+                        <MapPin className="h-3 w-3 text-purple-600" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Site</p>
+                        <p className="font-semibold text-sm">{initiative?.site}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-l-4 border-l-cyan-500">
+                  <CardContent className="p-3">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 bg-cyan-100 rounded-lg">
+                        <FileText className="h-3 w-3 text-cyan-600" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Budget Type</p>
+                        <Badge 
+                          variant={initiative?.budgetType === 'BUDGETED' ? 'default' : 'secondary'}
+                          className="text-xs mt-0.5"
+                        >
+                          {initiative?.budgetType || 'NON-BUDGETED'}
+                        </Badge>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Progress and Stage Information */}
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base font-semibold flex items-center gap-2">
+                      <Activity className="h-4 w-4 text-blue-600" />
+                      Workflow Progress
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Current Stage</span>
+                        <span className="font-medium">{initiative?.currentStage}/11</span>
+                      </div>
+                      <Progress value={actualProgress} className="h-2" />
+                      <p className="text-xs text-muted-foreground">
+                        {currentStageName}
+                      </p>
+                    </div>
+                    
+                    <Separator />
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">Priority</span>
+                        <Badge className={getPriorityColor(initiative?.priority || '')}>
+                          {initiative?.priority}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">Discipline</span>
+                        <Badge variant="outline" className="text-xs">
+                          {initiative?.discipline}
+                        </Badge>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base font-semibold flex items-center gap-2">
+                      <User className="h-4 w-4 text-green-600" />
+                      Initiative Information
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="space-y-2">
+                      <div className="flex items-start justify-between">
+                        <span className="text-sm text-muted-foreground">Created by</span>
+                        <div className="text-right">
+                          <p className="text-sm font-medium">{creatorName}</p>
+                          {creatorEmail && (
+                            <p className="text-xs text-muted-foreground">{creatorEmail}</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Submitted</span>
+                        <span className="text-sm">{initiative?.submittedDate}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Last Updated</span>
+                        <span className="text-sm">{initiative?.lastUpdated}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Main Content */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-blue-600" />
+                    {isEditing ? 'Edit Initiative Details' : 'Initiative Summary'}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="title">Initiative Title *</Label>
+                      {isEditing ? (
+                        <Input
+                          id="title"
+                          value={formData.title || ''}
+                          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                          className="text-sm"
+                        />
+                      ) : (
+                        <p className="text-sm font-medium">{initiative?.title}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="initiativeNumber">Initiative Number</Label>
+                      <p className="text-sm text-muted-foreground">
+                        {initiative?.initiativeNumber || 'Auto-generated'}
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="site">Site</Label>
+                      {isEditing ? (
+                        <Select value={formData.site || ''} onValueChange={(value) => setFormData({ ...formData, site: value })}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select site" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="NDS">NDS</SelectItem>
+                            <SelectItem value="DHJ">DHJ</SelectItem>
+                            <SelectItem value="HSD">HSD</SelectItem>
+                            <SelectItem value="APL">APL</SelectItem>
+                            <SelectItem value="TCD">TCD</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <p className="text-sm">{initiative?.site}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="priority">Priority</Label>
+                      {isEditing ? (
+                        <Select value={formData.priority || ''} onValueChange={(value) => setFormData({ ...formData, priority: value })}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select priority" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="High">High</SelectItem>
+                            <SelectItem value="Medium">Medium</SelectItem>
+                            <SelectItem value="Low">Low</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Badge className={getPriorityColor(initiative?.priority || '')}>
+                          {initiative?.priority}
+                        </Badge>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="expectedSavings">Expected Savings (₹)</Label>
+                      {isEditing ? (
+                        <Input
+                          id="expectedSavings"
+                          type="number"
+                          value={typeof formData.expectedSavings === 'string' 
+                            ? formData.expectedSavings.replace(/[₹,]/g, '') 
+                            : formData.expectedSavings || ''}
+                          onChange={(e) => setFormData({ ...formData, expectedSavings: e.target.value })}
+                          className="text-sm"
+                        />
+                      ) : (
+                        <p className="text-sm font-semibold text-green-600">
+                          {typeof initiative?.expectedSavings === 'number' 
+                            ? `₹${initiative.expectedSavings.toLocaleString()}` 
+                            : initiative?.expectedSavings}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="discipline">Discipline</Label>
+                      {isEditing ? (
+                        <Input
+                          id="discipline"
+                          value={formData.discipline || ''}
+                          onChange={(e) => setFormData({ ...formData, discipline: e.target.value })}
+                          className="text-sm"
+                        />
+                      ) : (
+                        <p className="text-sm">{initiative?.discipline}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="description">Description</Label>
+                    {isEditing ? (
+                      <Textarea
+                        id="description"
+                        value={formData.description || ''}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        rows={4}
+                        className="text-sm"
+                      />
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        {initiative?.description || 'No description provided'}
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="details" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Detailed Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Timeline Information */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                      <Calendar className="h-5 w-5 text-blue-600" />
+                      Timeline Information
+                    </h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="startDate">Start Date</Label>
+                        {isEditing ? (
+                          <Input
+                            id="startDate"
+                            type="date"
+                            value={formData.startDate || ''}
+                            onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                          />
+                        ) : (
+                          <p className="text-sm">{initiative?.startDate || 'Not set'}</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="endDate">End Date</Label>
+                        {isEditing ? (
+                          <Input
+                            id="endDate"
+                            type="date"
+                            value={formData.endDate || ''}
+                            onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                          />
+                        ) : (
+                          <p className="text-sm">{initiative?.endDate || 'Not set'}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Financial Information */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                      <DollarSign className="h-5 w-5 text-green-600" />
+                      Financial Information
+                    </h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="budgetType">Budget Type</Label>
+                        {isEditing ? (
+                          <Select value={formData.budgetType || 'NON-BUDGETED'} onValueChange={(value) => setFormData({ ...formData, budgetType: value })}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="BUDGETED">Budgeted</SelectItem>
+                              <SelectItem value="NON-BUDGETED">Non-Budgeted</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Badge variant={initiative?.budgetType === 'BUDGETED' ? 'default' : 'secondary'}>
+                            {initiative?.budgetType || 'NON-BUDGETED'}
+                          </Badge>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="actualSavings">Actual Savings (₹)</Label>
+                        {isEditing ? (
+                          <Input
+                            id="actualSavings"
+                            type="number"
+                            value={typeof formData.actualSavings === 'string' 
+                              ? formData.actualSavings.replace(/[₹,]/g, '') 
+                              : formData.actualSavings || ''}
+                            onChange={(e) => setFormData({ ...formData, actualSavings: e.target.value })}
+                          />
+                        ) : (
+                          <p className="text-sm font-semibold text-orange-600">
+                            {typeof initiative?.actualSavings === 'number' 
+                              ? `₹${initiative.actualSavings.toLocaleString()}` 
+                              : initiative?.actualSavings || '₹0'}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="targetValue">Target Value</Label>
+                        {isEditing ? (
+                          <Input
+                            id="targetValue"
+                            type="number"
+                            value={formData.targetValue || ''}
+                            onChange={(e) => setFormData({ ...formData, targetValue: parseFloat(e.target.value) || 0 })}
+                          />
+                        ) : (
+                          <p className="text-sm">{initiative?.targetValue || '0'}</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="confidenceLevel">Confidence Level (%)</Label>
+                        {isEditing ? (
+                          <Input
+                            id="confidenceLevel"
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={formData.confidenceLevel || ''}
+                            onChange={(e) => setFormData({ ...formData, confidenceLevel: parseInt(e.target.value) || 0 })}
+                          />
+                        ) : (
+                          <p className="text-sm">{initiative?.confidenceLevel || '0'}%</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="estimatedCapex">Estimated CAPEX (₹)</Label>
+                        {isEditing ? (
+                          <Input
+                            id="estimatedCapex"
+                            type="number"
+                            value={formData.estimatedCapex || ''}
+                            onChange={(e) => setFormData({ ...formData, estimatedCapex: parseFloat(e.target.value) || 0 })}
+                          />
+                        ) : (
+                          <p className="text-sm">₹{initiative?.estimatedCapex?.toLocaleString() || '0'}</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="targetOutcome">Target Outcome</Label>
+                        {isEditing ? (
+                          <Input
+                            id="targetOutcome"
+                            value={formData.targetOutcome || ''}
+                            onChange={(e) => setFormData({ ...formData, targetOutcome: e.target.value })}
+                          />
+                        ) : (
+                          <p className="text-sm">{initiative?.targetOutcome || 'Not specified'}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="references" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>MOC & CAPEX References</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">MOC Information</h3>
+                      <div className="space-y-2">
+                        <Label>MOC Required</Label>
+                        <p className="text-sm">{initiative?.requiresMoc === 'Y' ? 'Yes' : 'No'}</p>
+                      </div>
+                      {initiative?.requiresMoc === 'Y' && (
+                        <div className="space-y-2">
+                          <Label>MOC Number</Label>
+                          <p className="text-sm font-mono">{initiative?.mocNumber || 'Not provided'}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">CAPEX Information</h3>
+                      <div className="space-y-2">
+                        <Label>CAPEX Required</Label>
+                        <p className="text-sm">{initiative?.requiresCapex === 'Y' ? 'Yes' : 'No'}</p>
+                      </div>
+                      {initiative?.requiresCapex === 'Y' && (
+                        <div className="space-y-2">
+                          <Label>CAPEX Number</Label>
+                          <p className="text-sm font-mono">{initiative?.capexNumber || 'Not provided'}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">Assumptions & Baseline Data</h3>
+                    
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="baselineData">Baseline Data</Label>
+                        {isEditing ? (
+                          <Textarea
+                            id="baselineData"
+                            value={formData.baselineData || ''}
+                            onChange={(e) => setFormData({ ...formData, baselineData: e.target.value })}
+                            rows={3}
+                          />
+                        ) : (
+                          <p className="text-sm text-muted-foreground">
+                            {initiative?.baselineData || 'No baseline data provided'}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="assumption1">Assumption 1</Label>
+                        {isEditing ? (
+                          <Textarea
+                            id="assumption1"
+                            value={formData.assumption1 || ''}
+                            onChange={(e) => setFormData({ ...formData, assumption1: e.target.value })}
+                            rows={2}
+                          />
+                        ) : (
+                          <p className="text-sm text-muted-foreground">
+                            {initiative?.assumption1 || 'No assumption provided'}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="assumption2">Assumption 2</Label>
+                        {isEditing ? (
+                          <Textarea
+                            id="assumption2"
+                            value={formData.assumption2 || ''}
+                            onChange={(e) => setFormData({ ...formData, assumption2: e.target.value })}
+                            rows={2}
+                          />
+                        ) : (
+                          <p className="text-sm text-muted-foreground">
+                            {initiative?.assumption2 || 'No assumption provided'}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="assumption3">Assumption 3</Label>
+                        {isEditing ? (
+                          <Textarea
+                            id="assumption3"
+                            value={formData.assumption3 || ''}
+                            onChange={(e) => setFormData({ ...formData, assumption3: e.target.value })}
+                            rows={2}
+                          />
+                        ) : (
+                          <p className="text-sm text-muted-foreground">
+                            {initiative?.assumption3 || 'No assumption provided'}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="documents" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FolderOpen className="h-5 w-5" />
+                    Uploaded Documents
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {initiative?.id && (
+                    <UploadedDocuments
+                      initiativeId={Number(initiative.id)}
+                      canUpload={canEdit}
+                    />
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {(canShowWorkflowActions || hasWorkflowActions) && (
+              <TabsContent value="workflow" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Workflow className="h-5 w-5" />
+                      Workflow Approval
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {!pendingTransaction ? (
+                      <div className="p-4 bg-muted rounded-lg text-center">
+                        <AlertTriangle className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                        <p className="text-sm text-muted-foreground">No pending approval found for you on this initiative</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          The initiative may have already been processed or you may not have permission to approve the current stage.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-6">
+                        <Alert>
+                          <CheckCircle2 className="h-4 w-4" />
+                          <AlertDescription>
+                            <strong>{WORKFLOW_STAGE_NAMES[pendingTransaction.stageNumber] || pendingTransaction.stageName}</strong>
+                            <br />
+                            {getStageDescription(pendingTransaction.stageNumber)}
+                          </AlertDescription>
+                        </Alert>
+
+                        {/* Stage-specific content */}
+                        <div className="space-y-4">
+                          {getStageSpecificWorkflowContent()}
+                        </div>
+
+                        {/* General workflow comment section */}
+                        <div className="space-y-4">
+                          <div>
+                            <Label htmlFor="workflowComment">Comments *</Label>
+                            <Textarea
+                              id="workflowComment"
+                              value={workflowComment}
+                              onChange={(e) => setWorkflowComment(e.target.value)}
+                              placeholder="Provide your comments for this approval..."
+                              rows={3}
+                            />
+                          </div>
+
+                          <div className="flex gap-3">
+                            <Button
+                              onClick={handleWorkflowApprove}
+                              disabled={!isWorkflowFormValid() || !!processingAction}
+                              className="bg-green-600 hover:bg-green-700"
+                            >
+                              {processingAction === 'approved' && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                              <CheckCircle className="h-4 w-4 mr-2" />
+                              Approve
+                            </Button>
+                            
+                            <Button
+                              variant="destructive"
+                              onClick={handleWorkflowReject}
+                              disabled={!workflowComment.trim() || !!processingAction}
+                            >
+                              {processingAction === 'rejected' && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                              <XCircle className="h-4 w-4 mr-2" />
+                              Reject
+                            </Button>
+
+                            {pendingTransaction.stageNumber === 8 && (
+                              <Button
+                                variant="outline"
+                                onClick={handleWorkflowDrop}
+                                disabled={!workflowComment.trim() || !!processingAction}
+                                className="border-orange-500 text-orange-600 hover:bg-orange-50"
+                              >
+                                {processingAction === 'dropped' && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                                <RotateCcw className="h-4 w-4 mr-2" />
+                                Drop to Next FY
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            )}
+          </div>
+        </Tabs>
+      </div>
+    </div>
+  );
+}

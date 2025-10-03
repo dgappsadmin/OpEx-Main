@@ -242,6 +242,7 @@ import AuthPage from "./components/auth/AuthPage";
 import Dashboard from "./pages/Dashboard";
 import InitiativeForm from "./pages/InitiativeForm";
 import Initiatives from "./pages/Initiatives";
+import InitiativeDetails from "./pages/InitiativeDetails";
 import NewWorkflow from "./pages/NewWorkflow";
 // import Timeline from "./pages/Timeline";
 import KPI from "./pages/KPI";
@@ -353,6 +354,16 @@ const AppRoutes = () => {
           <AppLayout user={user!} onLogout={logout}>
             <ErrorBoundary>
               <Initiatives user={user!} />
+            </ErrorBoundary>
+          </AppLayout>
+        </ProtectedRoute>
+      } />
+
+      <Route path="/initiatives/:id" element={
+        <ProtectedRoute>
+          <AppLayout user={user!} onLogout={logout}>
+            <ErrorBoundary>
+              <InitiativeDetails user={user!} />
             </ErrorBoundary>
           </AppLayout>
         </ProtectedRoute>
