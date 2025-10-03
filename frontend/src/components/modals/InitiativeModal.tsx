@@ -101,10 +101,10 @@ interface InitiativeModalProps {
 // Correct workflow stage names matching backend (11 stages total)
 const WORKFLOW_STAGE_NAMES: { [key: number]: string } = {
   1: 'Register Initiative',
-  2: 'Approval',
-  3: 'Define Responsibilities',
-  4: 'MOC-CAPEX Evaluation',
-  5: 'Initiative Timeline Tracker',
+  2: 'Evaluation and Approval',
+  3: 'Initiative assessment and approval',
+  4: 'Define Responsibilities',
+  5: 'MOC-CAPEX Evaluation',
   6: 'Initiative Timeline Tracker',
   7: 'Progress monitoring',
   8: 'Periodic Status Review with CMO',
@@ -144,11 +144,32 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
   const [monthlyValidationLoading, setMonthlyValidationLoading] = useState(false);
   const [allMonthlyEntriesFinalized, setAllMonthlyEntriesFinalized] = useState<boolean>(true);
 
-  // Check if user can edit this initiative (role + site restrictions)
-  const canEdit = user?.role !== 'VIEWER' && user?.site === initiative?.site;
+  // Check if user can edit this initiative (role + site restrictions + status check)
+  const isCompleted = initiative?.status?.toLowerCase() === 'completed';
+  const canEdit = user?.role !== 'VIEWER' && user?.site === initiative?.site && !isCompleted;
   
   // Check if user can approve workflows (non-viewers and workflow roles)
   const canApproveWorkflow = user?.role !== 'VIEWER' && user?.role !== undefined;
+  
+  // Helper function to check if user can act on the pending transaction (matching WorkflowStageModal logic)
+  const canUserActOnPendingTransaction = (transaction: any) => {
+    if (!user || !transaction || transaction.approveStatus !== 'pending') return false;
+    
+    // Primary check: user email matches pendingWith field
+    if (transaction.pendingWith && user.email) {
+      return transaction.pendingWith === user.email;
+    }
+    
+    // Fallback check: role-based validation for backward compatibility
+    if (user.role === 'HOD' && transaction.stageNumber === 2) return true;
+    if (user.role === 'STLD' && (transaction.stageNumber === 3 || transaction.stageNumber === 7)) return true;
+    if (user.role === 'SH' && transaction.stageNumber === 4) return true;
+    if (user.role === 'CTSD' && transaction.stageNumber === 8) return true;
+    if (user.role === 'IL' && [5, 6, 9, 11].includes(transaction.stageNumber)) return true;
+    if (user.role === 'F&A' && transaction.stageNumber === 10) return true;
+    
+    return false;
+  };
 
   // Update isEditing state when mode prop changes
   useEffect(() => {
@@ -217,50 +238,59 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
     WORKFLOW_STAGE_NAMES[initiative?.currentStage || 1] || 
     'Register Initiative';
     
-  // Get pending transaction for workflow approval - try different status values
-  let pendingTransaction = workflowTransactions.find((t: any) => t.status === 'PENDING');
+  // Get pending transaction for workflow approval - match the same logic as WorkflowStageModal
+  let pendingTransaction = null;
   
-  // If no PENDING status, look for other possible status values
-  if (!pendingTransaction) {
+  // First priority: Find transaction with approveStatus 'pending' that matches user email
+  if (user?.email) {
     pendingTransaction = workflowTransactions.find((t: any) => 
-      t.status === 'ACTIVE' || t.status === 'IN_PROGRESS' || t.status === 'WAITING'
+      t.approveStatus === 'pending' && t.pendingWith === user.email
     );
   }
   
-  // If still no pending transaction, get the transaction that matches user's role and current stage
+  // Second priority: Find pending transaction by role (for backward compatibility)
   if (!pendingTransaction && workflowTransactions.length > 0) {
     // Role-specific stage mapping based on workflow definition
     if (user?.role === 'HOD') {
       // HOD approves stage 2 (Evaluation and Approval)
-      pendingTransaction = workflowTransactions.find((t: any) => t.stageNumber === 2);
+      pendingTransaction = workflowTransactions.find((t: any) => 
+        t.stageNumber === 2 && t.approveStatus === 'pending'
+      );
     }
     else if (user?.role === 'STLD') {
       // STLD can approve stage 3 (Initiative assessment) or stage 7 (Progress monitoring)
       pendingTransaction = workflowTransactions.find((t: any) => 
-        (t.stageNumber === 3 || t.stageNumber === 7) && !t.processedDate
-      ) || workflowTransactions.find((t: any) => t.stageNumber === 3);
+        (t.stageNumber === 3 || t.stageNumber === 7) && t.approveStatus === 'pending'
+      );
     }
     else if (user?.role === 'SH') {
       // Site Head approves stage 4 (Define Responsibilities)
-      pendingTransaction = workflowTransactions.find((t: any) => t.stageNumber === 4);
+      pendingTransaction = workflowTransactions.find((t: any) => 
+        t.stageNumber === 4 && t.approveStatus === 'pending'
+      );
     }
     else if (user?.role === 'CTSD') {
       // Corporate TSD approves stage 8 (Periodic Status Review with CMO)
-      pendingTransaction = workflowTransactions.find((t: any) => t.stageNumber === 8);
+      pendingTransaction = workflowTransactions.find((t: any) => 
+        t.stageNumber === 8 && t.approveStatus === 'pending'
+      );
     }
     else if (user?.role === 'IL') {
       // Initiative Lead can approve stages 5, 6, 9, 11 (dynamic assignment)
       pendingTransaction = workflowTransactions.find((t: any) => 
-        (t.stageNumber === 5 || t.stageNumber === 6 || t.stageNumber === 9 || t.stageNumber === 11) && !t.processedDate
+        (t.stageNumber === 5 || t.stageNumber === 6 || t.stageNumber === 9 || t.stageNumber === 11) && 
+        t.approveStatus === 'pending'
       );
     }
     else if (user?.role === 'F&A') {
-      // Finance & Accounts approves stage 10 (Saving Validation)
-      pendingTransaction = workflowTransactions.find((t: any) => t.stageNumber === 10);
+      // Finance & Accounts approves stage 10 (F&A validation)
+      pendingTransaction = workflowTransactions.find((t: any) => 
+        t.stageNumber === 10 && t.approveStatus === 'pending'
+      );
     }
-    // For other roles, find the next stage that needs approval
+    // For other roles, find any pending transaction
     else {
-      pendingTransaction = workflowTransactions.find((t: any) => !t.processedDate);
+      pendingTransaction = workflowTransactions.find((t: any) => t.approveStatus === 'pending');
     }
   }
   
@@ -325,8 +355,9 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
     }
   }, [isOpen, pendingTransaction?.stageNumber, initiative?.id]);
   
-  // For debugging: show workflow tab for all non-viewer users
+  // Show workflow tab if user can view it (for debugging/visibility) or has pending actions
   const canShowWorkflowActions = user?.role !== 'VIEWER' && user?.site === initiative?.site;
+  const hasWorkflowActions = pendingTransaction && canUserActOnPendingTransaction(pendingTransaction);
   
   // Debug logging
   console.log('Debug Workflow Approval Enhanced:', {
@@ -736,7 +767,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
       5: "Initiative Lead evaluates both Management of Change (MOC) and Capital Expenditure (CAPEX) requirements.",
       6: "Initiative Lead prepares detailed timeline for initiative implementation.",
       7: "Site TSD Lead monitors progress of initiative implementation.",
-      8: "You can approve to continue or drop to move initiative to next FY.",
+      8: "Corporate TSD reviews initiative status - you can approve to continue or drop to move initiative to next FY.",
       9: "Initiative Lead monitors savings achieved after implementation (monthly monitoring period).",
       10: "Site F&A validates savings and financial accuracy.",
       11: "Initiative Lead performs final closure of the initiative."
@@ -1262,7 +1293,9 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                 <div className="flex items-center gap-2 mt-2">
                   <div className={`px-3 py-1 rounded text-sm font-medium ${
                     !canEdit
-                      ? user?.role === 'VIEWER'
+                      ? isCompleted
+                        ? 'bg-green-100 text-green-800'
+                        : user?.role === 'VIEWER'
                         ? 'bg-blue-100 text-blue-800'
                         : 'bg-red-100 text-red-800'
                       : isEditing 
@@ -1270,7 +1303,9 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                         : 'bg-blue-100 text-blue-800'
                   }`}>
                     {!canEdit 
-                      ? user?.role === 'VIEWER' 
+                      ? isCompleted
+                        ? 'Completed'
+                        : user?.role === 'VIEWER' 
                         ? 'Read-Only Mode' 
                         : user?.site !== initiative?.site 
                           ? `Site Restricted (${initiative?.site} only)` 
@@ -1278,7 +1313,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                       : (isEditing ? 'Edit Mode' : 'View Mode')
                     }
                   </div>
-                  {canShowWorkflowActions && pendingTransaction && (
+                  {hasWorkflowActions && (
                     <div className="px-3 py-1 rounded text-sm font-medium bg-green-100 text-green-800 flex items-center gap-1">
                       <Workflow className="h-3 w-3" />
                       Approval Available
@@ -1312,7 +1347,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
 
         <div className="flex-1 overflow-hidden px-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full h-full flex flex-col">
-            <TabsList className={`grid w-full h-12 flex-shrink-0 mt-6 gap-1 ${canShowWorkflowActions ? 'grid-cols-5' : 'grid-cols-4'}`}>
+            <TabsList className={`grid w-full h-12 flex-shrink-0 mt-6 gap-1 ${(canShowWorkflowActions || hasWorkflowActions) ? 'grid-cols-5' : 'grid-cols-4'}`}>
               <TabsTrigger value="overview" className="flex items-center gap-2 text-sm py-2 px-3">
                 <Target className="h-4 w-4" />
                 <span className="hidden sm:inline">Overview</span>
@@ -1329,7 +1364,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                 <FolderOpen className="h-4 w-4" />
                 <span className="hidden sm:inline">Documents</span>
               </TabsTrigger>
-              {canShowWorkflowActions && (
+              {(canShowWorkflowActions || hasWorkflowActions) && (
                 <TabsTrigger value="workflow" className="flex items-center gap-2 text-sm py-2 px-3">
                   <Workflow className="h-4 w-4" />
                   <span className="hidden sm:inline">Approval</span>
@@ -2161,8 +2196,8 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                           </div>
                         )}
 
-                        {/* Action Buttons - only show if there's a pending transaction */}
-                        {pendingTransaction && canApproveWorkflow && (
+                        {/* Action Buttons - only show if there's a pending transaction and user can act */}
+                        {pendingTransaction && canApproveWorkflow && canUserActOnPendingTransaction(pendingTransaction) && (
                           <div className="pt-4 border-t">
                             {pendingTransaction.stageNumber === 11 ? (
                               <div className="flex gap-3">

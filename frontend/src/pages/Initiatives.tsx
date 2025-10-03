@@ -436,17 +436,28 @@ export default function Initiatives({ user }: InitiativesProps) {
                           >
                             <Eye className="h-3.5 w-3.5" />
                           </Button>
-                          {user.role !== 'VIEWER' && user.site === initiative.site && (
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
-                              className="h-7 w-7 p-0 hover:bg-secondary hover:text-secondary-foreground transition-colors"
-                              onClick={() => handleEditInitiative(initiative)}
-                              title="Edit Initiative"
-                            >
-                              <Edit className="h-3.5 w-3.5" />
-                            </Button>
-                          )}
+                          {user.role !== 'VIEWER' && user.site === initiative.site ? (
+                            initiative.status?.toLowerCase() === 'completed' ? (
+                              <div 
+                                className="h-7 w-7 p-0 flex items-center justify-center text-green-600"
+                                title="Initiative Completed - Read Only"
+                              >
+                                <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                                </svg>
+                              </div>
+                            ) : (
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="h-7 w-7 p-0 hover:bg-secondary hover:text-secondary-foreground transition-colors"
+                                onClick={() => handleEditInitiative(initiative)}
+                                title="Edit Initiative"
+                              >
+                                <Edit className="h-3.5 w-3.5" />
+                              </Button>
+                            )
+                          ) : null}
                           <Button 
                             size="sm" 
                             variant="outline" 
@@ -532,17 +543,28 @@ export default function Initiatives({ user }: InitiativesProps) {
                       >
                         <Eye className="h-3.5 w-3.5" />
                       </Button>
-                      {user.role !== 'VIEWER' && user.site === initiative.site && (
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="h-7 w-7 p-0 hover:bg-secondary hover:text-secondary-foreground"
-                          onClick={() => handleEditInitiative(initiative)}
-                          title="Edit"
-                        >
-                          <Edit className="h-3.5 w-3.5" />
-                        </Button>
-                      )}
+                      {user.role !== 'VIEWER' && user.site === initiative.site ? (
+                        initiative.status?.toLowerCase() === 'completed' ? (
+                          <div 
+                            className="h-7 w-7 p-0 flex items-center justify-center text-green-600"
+                            title="Initiative Completed - Read Only"
+                          >
+                            <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                        ) : (
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="h-7 w-7 p-0 hover:bg-secondary hover:text-secondary-foreground"
+                            onClick={() => handleEditInitiative(initiative)}
+                            title="Edit"
+                          >
+                            <Edit className="h-3.5 w-3.5" />
+                          </Button>
+                        )
+                      ) : null}
                       <Button 
                         size="sm" 
                         variant="outline" 
