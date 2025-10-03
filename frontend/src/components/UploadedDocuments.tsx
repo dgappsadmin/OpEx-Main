@@ -17,9 +17,10 @@ interface UploadedFile {
 
 interface UploadedDocumentsProps {
   initiativeId: string | number | undefined;
+  canUpload?: boolean;
 }
 
-export default function UploadedDocuments({ initiativeId }: UploadedDocumentsProps) {
+export default function UploadedDocuments({ initiativeId, canUpload = true }: UploadedDocumentsProps) {
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -189,15 +190,15 @@ export default function UploadedDocuments({ initiativeId }: UploadedDocumentsPro
 
   const getFileIcon = (fileType: string) => {
     if (fileType.startsWith('image/')) {
-      return <Image className="h-4 w-4 text-blue-600" />;
+      return <Image className="h-3 w-3 text-blue-600" />;
     } else if (fileType === 'application/pdf') {
-      return <FileText className="h-4 w-4 text-red-600" />;
+      return <FileText className="h-3 w-3 text-red-600" />;
     } else if (fileType.includes('word') || fileType.includes('document')) {
-      return <FileText className="h-4 w-4 text-blue-600" />;
+      return <FileText className="h-3 w-3 text-blue-600" />;
     } else if (fileType.includes('sheet') || fileType.includes('excel')) {
-      return <Archive className="h-4 w-4 text-green-600" />;
+      return <Archive className="h-3 w-3 text-green-600" />;
     } else {
-      return <File className="h-4 w-4 text-gray-600" />;
+      return <File className="h-3 w-3 text-gray-600" />;
     }
   };
 
@@ -222,104 +223,108 @@ export default function UploadedDocuments({ initiativeId }: UploadedDocumentsPro
   if (!initiativeId) {
     return (
       <Card>
-        <CardContent className="p-6 text-center">
-          <p className="text-muted-foreground">Initiative ID not available</p>
+        <CardContent className="p-4 text-center">
+          <p className="text-muted-foreground text-sm">Initiative ID not available</p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Upload Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Upload className="h-5 w-5" />
-            Upload Documents
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div>
-              <input
-                type="file"
-                multiple
-                accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.gif,.bmp"
-                onChange={handleFileUpload}
-                className="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 file:cursor-pointer"
-                disabled={uploading}
-              />
-              <p className="text-xs text-muted-foreground mt-2">
-                Supported: Documents (PDF, DOC, DOCX, XLS, XLSX, TXT) and Images (JPG, PNG, GIF, BMP). Max 5MB per file.
-              </p>
-            </div>
-            {uploading && (
-              <div className="flex items-center gap-2 text-sm text-blue-600">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                Uploading files...
+    <div className="space-y-4">
+      {/* Upload Section - only show if canUpload is true */}
+      {canUpload && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Upload className="h-4 w-4" />
+              Upload Documents
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="space-y-3">
+              <div>
+                <input
+                  type="file"
+                  multiple
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.gif,.bmp"
+                  onChange={handleFileUpload}
+                  className="w-full text-xs file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 file:cursor-pointer"
+                  disabled={uploading}
+                />
+                <p className="text-xs text-muted-foreground mt-1.5">
+                  Supported: Documents (PDF, DOC, DOCX, XLS, XLSX, TXT) and Images (JPG, PNG, GIF, BMP). Max 5MB per file.
+                </p>
               </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+              {uploading && (
+                <div className="flex items-center gap-2 text-xs text-blue-600">
+                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600"></div>
+                  Uploading files...
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Files List */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <FileText className="h-5 w-5" />
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <FileText className="h-4 w-4" />
             Uploaded Files ({files.length})
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-0">
           {loading ? (
-            <div className="flex items-center justify-center p-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <div className="flex items-center justify-center p-6">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
             </div>
           ) : files.length === 0 ? (
-            <div className="text-center p-8">
-              <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">No files uploaded yet</p>
-              <p className="text-sm text-muted-foreground">Upload your first document using the form above</p>
+            <div className="text-center p-6">
+              <FileText className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+              <p className="text-muted-foreground text-sm">No files uploaded yet</p>
+              <p className="text-xs text-muted-foreground mt-1">Upload your first document using the form above</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {files.map((file) => (
-                <div key={file.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
-                  <div className="flex items-center gap-3 flex-1">
+                <div key={file.id} className="flex items-center justify-between p-2.5 border rounded hover:bg-gray-50">
+                  <div className="flex items-center gap-2.5 flex-1">
                     {getFileIcon(file.fileType)}
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{file.fileName}</p>
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      <p className="font-medium text-xs truncate">{file.fileName}</p>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <span>{formatFileSize(file.fileSize)}</span>
                         <span>•</span>
                         <span>{formatDate(file.uploadedAt)}</span>
                       </div>
                     </div>
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="outline" className="text-xs px-2 py-0.5">
                       {file.fileType.split('/')[1]?.toUpperCase() || 'FILE'}
                     </Badge>
                   </div>
-                  <div className="flex items-center gap-1 ml-4">
+                  <div className="flex items-center gap-1 ml-3">
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDownload(file.id, file.fileName)}
-                      className="h-8 w-8 p-0"
+                      className="h-6 w-6 p-0"
                       title="Download"
                     >
-                      <Download className="h-4 w-4" />
+                      <Download className="h-3 w-3" />
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(file.id, file.fileName)}
-                      className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                      title="Delete"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    {canUpload && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(file.id, file.fileName)}
+                        className="h-6 w-6 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                        title="Delete"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))}

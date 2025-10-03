@@ -202,7 +202,7 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
           targetValue: foundInitiative.targetValue,
           confidenceLevel: foundInitiative.confidenceLevel,
           estimatedCapex: foundInitiative.estimatedCapex,
-          budgetType: foundInitiative.budgetType,
+        //   budgetType: foundInitiative.budgetType,
           // Add missing fields for Assumptions & Baseline Data
           assumption1: foundInitiative.assumption1,
           assumption2: foundInitiative.assumption2,
@@ -1069,67 +1069,74 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                   <p className="text-sm text-muted-foreground">No timeline entries found for this initiative</p>
                 </div>
               ) : (
-              <div className="border rounded-lg overflow-hidden">
-                <div className="bg-muted px-4 py-2 border-b">
-                  <div className="grid grid-cols-10 gap-3 text-xs font-semibold">
-                    <div className="col-span-3">Activity Name</div>
-                    <div className="col-span-2">Status</div>
-                    <div className="col-span-3">Planned Duration</div>
-                    <div className="col-span-2">Responsible Person</div>
+                <div className="border rounded-lg overflow-hidden">
+                  <div className="bg-muted px-3 py-2 border-b">
+                    <div className="grid grid-cols-10 gap-2 text-xs font-semibold">
+                      <div className="col-span-3">Activity Name</div>
+                      <div className="col-span-2">Status</div>
+                      <div className="col-span-3">Planned Duration</div>
+                      <div className="col-span-2">Responsible Person</div>
+                    </div>
+                  </div>
+                  <div className="max-h-48 overflow-y-auto">
+                    {Array.isArray(timelineEntries) && timelineEntries.map((entry: any) => (
+                      <div key={entry.id} className="px-3 py-2.5 border-b last:border-b-0 hover:bg-muted/50">
+                        <div className="grid grid-cols-10 gap-2 items-center text-xs">
+                          <div className="col-span-3 font-medium">
+                            <div 
+                              className="truncate cursor-help" 
+                              title={entry.stageName}
+                              style={{ maxWidth: '100%' }}
+                            >
+                              {entry.stageName}
+                            </div>
+                          </div>
+                          <div className="col-span-2">
+                            <Badge 
+                              variant="outline"
+                              className={`text-xs px-1.5 py-0.5 text-center font-medium whitespace-nowrap ${
+                                entry.status === 'COMPLETED' ? 'bg-green-100 text-green-800 border-green-300' :
+                                entry.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-800 border-blue-300' :
+                                entry.status === 'DELAYED' ? 'bg-red-100 text-red-800 border-red-300' :
+                                'bg-yellow-100 text-yellow-800 border-yellow-300'
+                              }`}
+                            >
+                              {entry.status === 'COMPLETED' ? 'Completed' :
+                               entry.status === 'IN_PROGRESS' ? 'In Progress' :
+                               entry.status === 'DELAYED' ? 'Delayed' :
+                               'Pending'}
+                            </Badge>
+                          </div>
+                          <div className="col-span-3 text-muted-foreground">
+                            <div className="text-xs whitespace-nowrap">{new Date(entry.plannedStartDate).toLocaleDateString()}</div>
+                            <div className="text-xs text-muted-foreground/80 whitespace-nowrap">to {new Date(entry.plannedEndDate).toLocaleDateString()}</div>
+                          </div>
+                          <div className="col-span-2">
+                            <div 
+                              className="text-xs text-muted-foreground truncate cursor-help" 
+                              title={entry.responsiblePerson}
+                              style={{ maxWidth: '100%' }}
+                            >
+                              {entry.responsiblePerson}
+                            </div>
+                          </div>
+                        </div>
+                        {entry.remarks && (
+                          <div className="mt-1.5 text-xs text-muted-foreground bg-muted p-1.5 rounded">
+                            <strong>Remarks:</strong> 
+                            <span className="ml-1 break-words">{entry.remarks}</span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 </div>
-                <div className="max-h-64 overflow-y-auto">
-                  {Array.isArray(timelineEntries) && timelineEntries.map((entry: any) => (
-                    <div key={entry.id} className="px-4 py-3 border-b last:border-b-0 hover:bg-muted/50">
-                      <div className="grid grid-cols-10 gap-3 items-center text-xs">
-                        <div className="col-span-3 font-medium">
-                          <div 
-                            className="truncate cursor-help" 
-                            title={entry.stageName}
-                            style={{ maxWidth: '100%' }}
-                          >
-                            {entry.stageName}
-                          </div>
-                        </div>
-                        <div className="col-span-2">
-                          <Badge 
-                            variant="outline"
-                            className={`text-xs px-2 py-1 text-center font-medium whitespace-nowrap ${
-                              entry.status === 'COMPLETED' ? 'bg-green-100 text-green-800 border-green-300' :
-                              entry.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-800 border-blue-300' :
-                              entry.status === 'DELAYED' ? 'bg-red-100 text-red-800 border-red-300' :
-                              'bg-yellow-100 text-yellow-800 border-yellow-300'
-                            }`}
-                          >
-                            {entry.status === 'COMPLETED' ? 'Completed' :
-                             entry.status === 'IN_PROGRESS' ? 'In Progress' :
-                             entry.status === 'DELAYED' ? 'Delayed' :
-                             'Pending'}
-                          </Badge>
-                        </div>
-                        <div className="col-span-3 text-muted-foreground">
-                          <div className="text-xs whitespace-nowrap">{new Date(entry.plannedStartDate).toLocaleDateString()}</div>
-                          <div className="text-xs text-muted-foreground/80 whitespace-nowrap">to {new Date(entry.plannedEndDate).toLocaleDateString()}</div>
-                        </div>
-                        <div className="col-span-2">
-                          <div 
-                            className="text-xs text-muted-foreground truncate cursor-help" 
-                            title={entry.responsiblePerson}
-                            style={{ maxWidth: '100%' }}
-                          >
-                            {entry.responsiblePerson}
-                          </div>
-                        </div>
-                      </div>
-                      {entry.remarks && (
-                        <div className="mt-2 text-xs text-muted-foreground bg-muted p-2 rounded">
-                          <strong>Remarks:</strong> 
-                          <span className="ml-1 break-words">{entry.remarks}</span>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+              )}
+            </div>
+
+            {Array.isArray(timelineEntries) && timelineEntries.length > 0 && (
+              <div className="text-xs text-muted-foreground">
+                Total {timelineEntries.length} timeline entries found for progress monitoring review
               </div>
             )}
 
@@ -1378,28 +1385,28 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
   }
 
   return (
-    <div className="container mx-auto p-4 space-y-4 max-w-6xl">
+    <div className="container mx-auto p-3 space-y-3 max-w-6xl">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+        <div className="flex items-center gap-2.5">
           <Button
             variant="outline"
             size="sm"
             onClick={() => navigate('/initiatives')}
-            className="flex items-center gap-2"
+            className="flex items-center gap-1.5 h-8 px-3"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-3 w-3" />
             Back
           </Button>
           <div>
-            <h1 className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <h1 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
               {isEditing ? 'Edit Initiative' : 'Initiative Details'}
             </h1>
             <p className="text-muted-foreground text-xs mt-0.5">
               {initiative?.initiativeNumber || `ID: ${initiative?.id}`}
             </p>
-            <div className="flex items-center gap-2 mt-2">
-              <div className={`px-3 py-1 rounded text-sm font-medium ${
+            <div className="flex items-center gap-2 mt-1.5">
+              <div className={`px-2 py-1 rounded text-xs font-medium ${
                 !canEdit
                   ? isCompleted
                     ? 'bg-green-100 text-green-800'
@@ -1422,7 +1429,7 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                 }
               </div>
               {hasWorkflowActions && (
-                <div className="px-3 py-1 rounded text-sm font-medium bg-green-100 text-green-800 flex items-center gap-1">
+                <div className="px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800 flex items-center gap-1">
                   <Workflow className="h-3 w-3" />
                   Approval Available
                 </div>
@@ -1430,64 +1437,64 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {!isEditing && canEdit && (
-            <Button variant="outline" size="default" onClick={() => setIsEditing(true)} className="min-w-[90px] h-10 px-4">
-              <Edit className="h-4 w-4 mr-2" />
+            <Button variant="outline" size="sm" onClick={() => setIsEditing(true)} className="min-w-[70px] h-8 px-3">
+              <Edit className="h-3 w-3 mr-1.5" />
               Edit
             </Button>
           )}
           {isEditing && (
             <>
-              <Button variant="outline" size="default" onClick={handleCancel} className="min-w-[100px] h-10 px-4" disabled={isSaving}>
-                <X className="h-4 w-4 mr-2" />
+              <Button variant="outline" size="sm" onClick={handleCancel} className="min-w-[80px] h-8 px-3" disabled={isSaving}>
+                <X className="h-3 w-3 mr-1.5" />
                 Cancel
               </Button>
-              <Button size="default" onClick={handleSave} className="min-w-[120px] h-10 px-4" disabled={isSaving}>
-                <Save className="h-4 w-4 mr-2" />
-                {isSaving ? 'Saving...' : 'Save Changes'}
+              <Button size="sm" onClick={handleSave} className="min-w-[90px] h-8 px-3" disabled={isSaving}>
+                <Save className="h-3 w-3 mr-1.5" />
+                {isSaving ? 'Saving...' : 'Save'}
               </Button>
             </>
           )}
         </div>
       </div>
 
-      {/* Content - Using ScrollArea for consistent page layout */}
-      <div className="space-y-4">
+      {/* Content */}
+      <div className="space-y-3">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className={`grid w-full h-12 gap-1 ${(canShowWorkflowActions || hasWorkflowActions) ? 'grid-cols-5' : 'grid-cols-4'}`}>
-            <TabsTrigger value="overview" className="flex items-center gap-2 text-sm py-2 px-3">
-              <Target className="h-4 w-4" />
+          <TabsList className={`grid w-full h-10 gap-1 ${(canShowWorkflowActions || hasWorkflowActions) ? 'grid-cols-5' : 'grid-cols-4'}`}>
+            <TabsTrigger value="overview" className="flex items-center gap-1.5 text-xs py-1.5 px-2">
+              <Target className="h-3 w-3" />
               <span className="hidden sm:inline">Overview</span>
             </TabsTrigger>
-            <TabsTrigger value="details" className="flex items-center gap-2 text-sm py-2 px-3">
-              <FileText className="h-4 w-4" />
+            <TabsTrigger value="details" className="flex items-center gap-1.5 text-xs py-1.5 px-2">
+              <FileText className="h-3 w-3" />
               <span className="hidden sm:inline">Details</span>
             </TabsTrigger>
-            <TabsTrigger value="references" className="flex items-center gap-2 text-sm py-2 px-3">
-              <Files className="h-4 w-4" />
+            <TabsTrigger value="references" className="flex items-center gap-1.5 text-xs py-1.5 px-2">
+              <Files className="h-3 w-3" />
               <span className="hidden sm:inline">References</span>
             </TabsTrigger>
-            <TabsTrigger value="documents" className="flex items-center gap-2 text-sm py-2 px-3">
-              <FolderOpen className="h-4 w-4" />
+            <TabsTrigger value="documents" className="flex items-center gap-1.5 text-xs py-1.5 px-2">
+              <FolderOpen className="h-3 w-3" />
               <span className="hidden sm:inline">Documents</span>
             </TabsTrigger>
             {(canShowWorkflowActions || hasWorkflowActions) && (
-              <TabsTrigger value="workflow" className="flex items-center gap-2 text-sm py-2 px-3">
-                <Workflow className="h-4 w-4" />
+              <TabsTrigger value="workflow" className="flex items-center gap-1.5 text-xs py-1.5 px-2">
+                <Workflow className="h-3 w-3" />
                 <span className="hidden sm:inline">Approval</span>
               </TabsTrigger>
             )}
           </TabsList>
 
-          <div className="mt-6">
-            <TabsContent value="overview" className="space-y-6">
+          <div className="mt-4">
+            <TabsContent value="overview" className="space-y-4">
               {/* Quick Stats */}
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-2">
                 <Card className="border-l-4 border-l-primary">
-                  <CardContent className="p-3">
-                    <div className="flex items-center gap-2">
-                      <div className="p-1.5 bg-primary/10 rounded-lg">
+                  <CardContent className="p-2.5">
+                    <div className="flex items-center gap-1.5">
+                      <div className="p-1 bg-primary/10 rounded">
                         <Target className="h-3 w-3 text-primary" />
                       </div>
                       <div>
@@ -1501,14 +1508,14 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                 </Card>
 
                 <Card className="border-l-4 border-l-green-500">
-                  <CardContent className="p-3">
-                    <div className="flex items-center gap-2">
-                      <div className="p-1.5 bg-green-100 rounded-lg">
+                  <CardContent className="p-2.5">
+                    <div className="flex items-center gap-1.5">
+                      <div className="p-1 bg-green-100 rounded">
                         <DollarSign className="h-3 w-3 text-green-600" />
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground">Expected</p>
-                        <p className="font-semibold text-green-600 text-sm">
+                        <p className="font-semibold text-green-600 text-xs">
                           {typeof initiative?.expectedSavings === 'number' 
                             ? `₹${initiative.expectedSavings.toLocaleString()}` 
                             : initiative?.expectedSavings}
@@ -1519,14 +1526,14 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                 </Card>
 
                 <Card className="border-l-4 border-l-orange-500">
-                  <CardContent className="p-3">
-                    <div className="flex items-center gap-2">
-                      <div className="p-1.5 bg-orange-100 rounded-lg">
+                  <CardContent className="p-2.5">
+                    <div className="flex items-center gap-1.5">
+                      <div className="p-1 bg-orange-100 rounded">
                         <DollarSign className="h-3 w-3 text-orange-600" />
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground">Actual</p>
-                        <p className="font-semibold text-orange-600 text-sm">
+                        <p className="font-semibold text-orange-600 text-xs">
                           {typeof initiative?.actualSavings === 'number' 
                             ? `₹${initiative.actualSavings.toLocaleString()}` 
                             : initiative?.actualSavings || '₹0'}
@@ -1537,23 +1544,23 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                 </Card>
 
                 <Card className="border-l-4 border-l-purple-500">
-                  <CardContent className="p-3">
-                    <div className="flex items-center gap-2">
-                      <div className="p-1.5 bg-purple-100 rounded-lg">
+                  <CardContent className="p-2.5">
+                    <div className="flex items-center gap-1.5">
+                      <div className="p-1 bg-purple-100 rounded">
                         <MapPin className="h-3 w-3 text-purple-600" />
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground">Site</p>
-                        <p className="font-semibold text-sm">{initiative?.site}</p>
+                        <p className="font-semibold text-xs">{initiative?.site}</p>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
 
                 <Card className="border-l-4 border-l-cyan-500">
-                  <CardContent className="p-3">
-                    <div className="flex items-center gap-2">
-                      <div className="p-1.5 bg-cyan-100 rounded-lg">
+                  <CardContent className="p-2.5">
+                    <div className="flex items-center gap-1.5">
+                      <div className="p-1 bg-cyan-100 rounded">
                         <FileText className="h-3 w-3 text-cyan-600" />
                       </div>
                       <div>
@@ -2034,15 +2041,15 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
               </Card>
             </TabsContent>
 
-            <TabsContent value="documents" className="space-y-6">
+            <TabsContent value="documents" className="space-y-4">
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FolderOpen className="h-5 w-5" />
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <FolderOpen className="h-4 w-4" />
                     Uploaded Documents
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-0">
                   {initiative?.id && (
                     <UploadedDocuments
                       initiativeId={Number(initiative.id)}
@@ -2054,19 +2061,19 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
             </TabsContent>
 
             {(canShowWorkflowActions || hasWorkflowActions) && (
-              <TabsContent value="workflow" className="space-y-6">
+              <TabsContent value="workflow" className="space-y-4">
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Workflow className="h-5 w-5" />
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <Workflow className="h-4 w-4" />
                       Workflow Approval
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4">
+                  <CardContent className="space-y-3 pt-0">
                     {!pendingTransaction ? (
-                      <div className="p-4 bg-muted rounded-lg text-center">
-                        <AlertTriangle className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                        <p className="text-sm text-muted-foreground">No pending approval found for you on this initiative</p>
+                      <div className="p-3 bg-muted rounded-lg text-center">
+                        <AlertTriangle className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
+                        <p className="text-xs text-muted-foreground">No pending approval found for you on this initiative</p>
                         <p className="text-xs text-muted-foreground mt-1">
                           The initiative may have already been processed or you may not have permission to approve the current stage.
                         </p>
