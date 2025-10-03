@@ -735,7 +735,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
             </DialogContent>
           </Dialog>
         )}
-        {selectedInitiativeId && (() => {
+        {/* {selectedInitiativeId && (() => {
           const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
           return selectedInitiative && ((selectedInitiative.stageNumber && selectedInitiative.stageNumber > 9) || 
                  selectedInitiative.initiativeStatus === 'Completed');
@@ -746,7 +746,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
               <strong>Read-Only Access:</strong> This initiative has moved beyond stage 9 (Monthly Monitoring) or has been completed. All monitoring entries are now read-only and no modifications are allowed for any user.
             </AlertDescription>
           </Alert>
-        )}
+        )} */}
       </div>
 
       {!selectedInitiativeId ? (

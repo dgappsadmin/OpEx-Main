@@ -755,7 +755,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
       </div>
 
       {/* Alert message when stage 6 is approved - Show for ALL users */}
-      {selectedInitiativeId && (() => {
+      {/* {selectedInitiativeId && (() => {
         const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
         return selectedInitiative && ((selectedInitiative.stageNumber && selectedInitiative.stageNumber > 6) || 
                selectedInitiative.initiativeStatus === 'Completed');
@@ -766,7 +766,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
             <strong>Read-Only Access:</strong> This initiative has moved beyond stage 6 (Timeline Tracker) or has been completed. All timeline entries are now read-only and no modifications are allowed for any user.
           </AlertDescription>
         </Alert>
-      )}
+      )} */}
 
       {!selectedInitiativeId ? (
         <div>
