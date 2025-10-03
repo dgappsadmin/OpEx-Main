@@ -34,7 +34,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { useProgressPercentage, useCurrentPendingStage, useProcessStageAction, useWorkflowTransactions } from '@/hooks/useWorkflowTransactions';
-import { useUser } from '@/hooks/useUsers';
+import { useUser, useInitiativeLeadsBySite } from '@/hooks/useUsers';
 import UploadedDocuments from '@/components/UploadedDocuments';
 import { initiativeAPI } from '@/lib/api';
 import { useQueryClient } from '@tanstack/react-query';
@@ -115,6 +115,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
   // Workflow approval states
   const [workflowComment, setWorkflowComment] = useState("");
   const [processingAction, setProcessingAction] = useState<string | null>(null);
+  const [assignedUserId, setAssignedUserId] = useState<string>("");
 
   // Check if user can edit this initiative (role + site restrictions)
   const canEdit = user?.role !== 'VIEWER' && user?.site === initiative?.site;
@@ -142,6 +143,8 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
         setIsEditing(mode === 'edit');
       }
       setActiveTab('overview');
+      setWorkflowComment("");
+      setAssignedUserId("");
     }
   }, [isOpen, mode, user, canEdit]);
 
@@ -166,6 +169,9 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
   // Basic implementation: only check for createdBy user ID
   const { data: createdByUser } = useUser(initiative?.createdBy);
 
+  // Get Initiative Leads for stage 4 (Site Head assigns Initiative Lead)
+  const { data: initiativeLeads = [], isLoading: ilLoading, error: ilError } = useInitiativeLeadsBySite(initiative?.site || '');
+
   // Calculate Progress Percentage - being at stage X means X/10 * 100% progress
   const progressPercentage = Math.round((initiative?.currentStage || 1) * 100 / 10);
 
@@ -186,13 +192,34 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
   
   // If still no pending transaction, get the transaction that matches user's role and current stage
   if (!pendingTransaction && workflowTransactions.length > 0) {
-    // For HOD role, look for stage 2 (HOD approval stage)
+    // Role-specific stage mapping based on workflow definition
     if (user?.role === 'HOD') {
+      // HOD approves stage 2 (Evaluation and Approval)
       pendingTransaction = workflowTransactions.find((t: any) => t.stageNumber === 2);
     }
-    // For STLD role, look for stage 3
     else if (user?.role === 'STLD') {
-      pendingTransaction = workflowTransactions.find((t: any) => t.stageNumber === 3);
+      // STLD can approve stage 3 (Initiative assessment) or stage 7 (Progress monitoring)
+      pendingTransaction = workflowTransactions.find((t: any) => 
+        (t.stageNumber === 3 || t.stageNumber === 7) && !t.processedDate
+      ) || workflowTransactions.find((t: any) => t.stageNumber === 3);
+    }
+    else if (user?.role === 'SH') {
+      // Site Head approves stage 4 (Define Responsibilities)
+      pendingTransaction = workflowTransactions.find((t: any) => t.stageNumber === 4);
+    }
+    else if (user?.role === 'CTSD') {
+      // Corporate TSD approves stage 8 (Periodic Status Review with CMO)
+      pendingTransaction = workflowTransactions.find((t: any) => t.stageNumber === 8);
+    }
+    else if (user?.role === 'IL') {
+      // Initiative Lead can approve stages 5, 6, 9, 11 (dynamic assignment)
+      pendingTransaction = workflowTransactions.find((t: any) => 
+        (t.stageNumber === 5 || t.stageNumber === 6 || t.stageNumber === 9 || t.stageNumber === 11) && !t.processedDate
+      );
+    }
+    else if (user?.role === 'F&A') {
+      // Finance & Accounts approves stage 10 (Saving Validation)
+      pendingTransaction = workflowTransactions.find((t: any) => t.stageNumber === 10);
     }
     // For other roles, find the next stage that needs approval
     else {
@@ -337,11 +364,16 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
     setProcessingAction('approved');
     
     try {
-      const data = {
+      const data: any = {
         transactionId: pendingTransaction.id,
         action: 'approved',
         remarks: workflowComment.trim()
       };
+
+      // Add stage-specific data
+      if (pendingTransaction.stageNumber === 4 && assignedUserId) {
+        data.assignedUserId = parseInt(assignedUserId);
+      }
 
       await processStageAction.mutateAsync(data);
       
@@ -351,7 +383,11 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
       });
       
       setWorkflowComment("");
+      setAssignedUserId("");
       refetchTransactions();
+      
+      // Auto-close modal after successful approval
+      onClose();
     } catch (error: any) {
       toast({ 
         title: "Error processing stage", 
@@ -390,7 +426,11 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
       });
       
       setWorkflowComment("");
+      setAssignedUserId("");
       refetchTransactions();
+      
+      // Auto-close modal after successful rejection
+      onClose();
     } catch (error: any) {
       toast({ 
         title: "Error processing stage", 
@@ -1379,6 +1419,60 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                           </div>
                         )}
 
+                        {/* Stage 4 - Initiative Lead Selection */}
+                        {pendingTransaction?.stageNumber === 4 && (
+                          <div className="space-y-3 p-4 border border-purple-200 rounded-lg bg-purple-50">
+                            <div className="flex items-center gap-2">
+                              <MapPin className="h-4 w-4 text-purple-600" />
+                              <span className="text-sm font-semibold text-purple-800">Site: {initiative?.site}</span>
+                            </div>
+                            <p className="text-xs text-purple-700 mb-3">
+                              Select an Initiative Lead from users with IL role for this site
+                            </p>
+                            <div>
+                              <Label htmlFor="assignedUser" className="text-sm font-semibold text-purple-800">
+                                Select Initiative Lead *
+                              </Label>
+                              {ilLoading ? (
+                                <div className="flex items-center justify-center p-4 bg-white rounded-lg mt-2">
+                                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                  <span className="text-sm">Loading Initiative Leads...</span>
+                                </div>
+                              ) : ilError ? (
+                                <div className="p-4 bg-red-50 border border-red-200 rounded-lg mt-2">
+                                  <p className="text-xs text-red-600">
+                                    Error loading Initiative Leads: {ilError.message}
+                                  </p>
+                                </div>
+                              ) : (
+                                <Select value={assignedUserId} onValueChange={setAssignedUserId}>
+                                  <SelectTrigger className="h-10 mt-2 bg-white">
+                                    <SelectValue placeholder={
+                                      initiativeLeads.length === 0 ? 
+                                        `No Initiative Leads available for site ${initiative?.site}` :
+                                        "Select an Initiative Lead"
+                                    } />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {initiativeLeads.map((user) => (
+                                      <SelectItem key={user.id} value={user.id.toString()} className="text-sm focus:bg-accent hover:bg-accent">
+                                        {user.fullName} - {user.discipline}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              )}
+                              {initiativeLeads.length === 0 && !ilLoading && !ilError && (
+                                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg mt-2">
+                                  <p className="text-xs text-yellow-800">
+                                    No Initiative Leads found for site {initiative?.site}. Please contact admin to assign Initiative Lead users for this site.
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
                         {/* Comments Section */}
                         <div className="space-y-2">
                           <Label htmlFor="workflowComment" className="text-sm font-medium text-red-600">
@@ -1394,12 +1488,17 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                           />
                         </div>
 
-                        {/* Action Buttons - show for HOD and STLD roles */}
-                        {(user?.role === 'HOD' || user?.role === 'STLD') && (
+                        {/* Action Buttons - show for all workflow roles that can approve */}
+                        {pendingTransaction && canApproveWorkflow && (
                           <div className="flex gap-3 pt-4 border-t">
                             <Button 
                               onClick={handleWorkflowApprove}
-                              disabled={!workflowComment.trim() || !pendingTransaction || (processStageAction.isPending && processingAction === 'approved')}
+                              disabled={
+                                !workflowComment.trim() || 
+                                !pendingTransaction || 
+                                (pendingTransaction?.stageNumber === 4 && !assignedUserId) ||
+                                (processStageAction.isPending && processingAction === 'approved')
+                              }
                               className="bg-green-600 hover:bg-green-700 flex-1"
                             >
                               {(processStageAction.isPending && processingAction === 'approved') ? (
@@ -1416,7 +1515,8 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                             </Button>
                             
                             {/* Show reject button for stages 2 and 3 (HOD and STLD) */}
-                            {(user?.role === 'HOD' || user?.role === 'STLD') && (
+                            {((user?.role === 'HOD' && pendingTransaction?.stageNumber === 2) || 
+                              (user?.role === 'STLD' && pendingTransaction?.stageNumber === 3)) && (
                               <Button 
                                 variant="destructive"
                                 onClick={handleWorkflowReject}
