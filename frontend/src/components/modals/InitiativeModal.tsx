@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Eye, 
   Edit, 
@@ -25,13 +26,19 @@ import {
   User,
   CheckCircle2,
   Files,
-  FolderOpen
+  FolderOpen,
+  CheckCircle,
+  XCircle,
+  Workflow,
+  AlertTriangle,
+  Loader2
 } from 'lucide-react';
-import { useProgressPercentage, useCurrentPendingStage } from '@/hooks/useWorkflowTransactions';
+import { useProgressPercentage, useCurrentPendingStage, useProcessStageAction, useWorkflowTransactions } from '@/hooks/useWorkflowTransactions';
 import { useUser } from '@/hooks/useUsers';
 import UploadedDocuments from '@/components/UploadedDocuments';
 import { initiativeAPI } from '@/lib/api';
 import { useQueryClient } from '@tanstack/react-query';
+import { useToast } from '@/hooks/use-toast';
 
 interface Initiative {
   id: string | number;
@@ -99,13 +106,21 @@ const WORKFLOW_STAGE_NAMES: { [key: number]: string } = {
 
 export default function InitiativeModal({ isOpen, onClose, initiative, mode, onSave, user }: InitiativeModalProps) {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(mode === 'edit');
   const [formData, setFormData] = useState<any>(initiative || {});
   const [activeTab, setActiveTab] = useState('overview');
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Workflow approval states
+  const [workflowComment, setWorkflowComment] = useState("");
+  const [processingAction, setProcessingAction] = useState<string | null>(null);
 
   // Check if user can edit this initiative (role + site restrictions)
   const canEdit = user?.role !== 'VIEWER' && user?.site === initiative?.site;
+  
+  // Check if user can approve workflows (non-viewers and workflow roles)
+  const canApproveWorkflow = user?.role !== 'VIEWER' && user?.role !== undefined;
 
   // Update isEditing state when mode prop changes
   useEffect(() => {
@@ -140,6 +155,12 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
   // Get real progress and current stage data
   const { data: progressData } = useProgressPercentage(Number(initiative?.id));
   const { data: currentStageData } = useCurrentPendingStage(Number(initiative?.id));
+  
+  // Get workflow transactions for current initiative
+  const { data: workflowTransactions = [], refetch: refetchTransactions } = useWorkflowTransactions(Number(initiative?.id) || 0);
+  
+  // Workflow processing action
+  const processStageAction = useProcessStageAction();
 
   // Fetch user data for "Created By" information
   // Basic implementation: only check for createdBy user ID
@@ -152,6 +173,54 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
   const currentStageName = currentStageData?.stageName || 
     WORKFLOW_STAGE_NAMES[initiative?.currentStage || 1] || 
     'Register Initiative';
+    
+  // Get pending transaction for workflow approval - try different status values
+  let pendingTransaction = workflowTransactions.find((t: any) => t.status === 'PENDING');
+  
+  // If no PENDING status, look for other possible status values
+  if (!pendingTransaction) {
+    pendingTransaction = workflowTransactions.find((t: any) => 
+      t.status === 'ACTIVE' || t.status === 'IN_PROGRESS' || t.status === 'WAITING'
+    );
+  }
+  
+  // If still no pending transaction, get the transaction that matches user's role and current stage
+  if (!pendingTransaction && workflowTransactions.length > 0) {
+    // For HOD role, look for stage 2 (HOD approval stage)
+    if (user?.role === 'HOD') {
+      pendingTransaction = workflowTransactions.find((t: any) => t.stageNumber === 2);
+    }
+    // For STLD role, look for stage 3
+    else if (user?.role === 'STLD') {
+      pendingTransaction = workflowTransactions.find((t: any) => t.stageNumber === 3);
+    }
+    // For other roles, find the next stage that needs approval
+    else {
+      pendingTransaction = workflowTransactions.find((t: any) => !t.processedDate);
+    }
+  }
+  
+  // For debugging: show workflow tab for all non-viewer users
+  const canShowWorkflowActions = user?.role !== 'VIEWER' && user?.site === initiative?.site;
+  
+  // Debug logging
+  console.log('Debug Workflow Approval Enhanced:', {
+    canApproveWorkflow,
+    pendingTransaction,
+    workflowTransactions: workflowTransactions.map(t => ({
+      id: t.id,
+      stageNumber: t.stageNumber,
+      stageName: t.stageName,
+      status: t.status,
+      requiredRole: t.requiredRole,
+      processedDate: t.processedDate
+    })),
+    userSite: user?.site,
+    initiativeSite: initiative?.site,
+    canShowWorkflowActions,
+    userRole: user?.role,
+    initiativeId: initiative?.id
+  });
 
   // Get the creator name - priority: initiatorName (new field), then initiator (mock data), then createdByName, then fetched user data, then fallback
   const creatorName = initiative?.initiatorName || 
@@ -254,6 +323,85 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
     setIsEditing(false);
   };
 
+  // Workflow approval handlers
+  const handleWorkflowApprove = async () => {
+    if (!pendingTransaction || !workflowComment.trim()) {
+      toast({ 
+        title: "Cannot process approval", 
+        description: "Missing transaction ID or comments.",
+        variant: "destructive" 
+      });
+      return;
+    }
+    
+    setProcessingAction('approved');
+    
+    try {
+      const data = {
+        transactionId: pendingTransaction.id,
+        action: 'approved',
+        remarks: workflowComment.trim()
+      };
+
+      await processStageAction.mutateAsync(data);
+      
+      toast({ 
+        title: "Stage approved successfully", 
+        description: "The workflow has been updated." 
+      });
+      
+      setWorkflowComment("");
+      refetchTransactions();
+    } catch (error: any) {
+      toast({ 
+        title: "Error processing stage", 
+        description: error.response?.data?.message || "Something went wrong",
+        variant: "destructive" 
+      });
+    } finally {
+      setProcessingAction(null);
+    }
+  };
+
+  const handleWorkflowReject = async () => {
+    if (!pendingTransaction || !workflowComment.trim()) {
+      toast({ 
+        title: "Cannot process rejection", 
+        description: "Missing transaction ID or comments.",
+        variant: "destructive" 
+      });
+      return;
+    }
+    
+    setProcessingAction('rejected');
+    
+    try {
+      const data = {
+        transactionId: pendingTransaction.id,
+        action: 'rejected',
+        remarks: workflowComment.trim()
+      };
+
+      await processStageAction.mutateAsync(data);
+      
+      toast({ 
+        title: "Stage rejected", 
+        description: "The workflow has been updated." 
+      });
+      
+      setWorkflowComment("");
+      refetchTransactions();
+    } catch (error: any) {
+      toast({ 
+        title: "Error processing stage", 
+        description: error.response?.data?.message || "Something went wrong",
+        variant: "destructive" 
+      });
+    } finally {
+      setProcessingAction(null);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
       case "completed": return "bg-success text-success-foreground";
@@ -315,6 +463,12 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                       : (isEditing ? 'Edit Mode' : 'View Mode')
                     }
                   </div>
+                  {canShowWorkflowActions && pendingTransaction && (
+                    <div className="px-3 py-1 rounded text-sm font-medium bg-green-100 text-green-800 flex items-center gap-1">
+                      <Workflow className="h-3 w-3" />
+                      Approval Available
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -343,7 +497,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
 
         <div className="flex-1 overflow-hidden px-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full h-full flex flex-col">
-            <TabsList className="grid w-full grid-cols-4 h-12 flex-shrink-0 mt-6 gap-1">
+            <TabsList className={`grid w-full h-12 flex-shrink-0 mt-6 gap-1 ${canShowWorkflowActions ? 'grid-cols-5' : 'grid-cols-4'}`}>
               <TabsTrigger value="overview" className="flex items-center gap-2 text-sm py-2 px-3">
                 <Target className="h-4 w-4" />
                 <span className="hidden sm:inline">Overview</span>
@@ -360,6 +514,12 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                 <FolderOpen className="h-4 w-4" />
                 <span className="hidden sm:inline">Documents</span>
               </TabsTrigger>
+              {canShowWorkflowActions && (
+                <TabsTrigger value="workflow" className="flex items-center gap-2 text-sm py-2 px-3">
+                  <Workflow className="h-4 w-4" />
+                  <span className="hidden sm:inline">Approval</span>
+                </TabsTrigger>
+              )}
             </TabsList>
 
             <div className="flex-1 overflow-hidden">
@@ -1132,6 +1292,191 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                 <TabsContent value="documents" className="mt-6 space-y-6">
                   <UploadedDocuments initiativeId={initiative?.id} />
                 </TabsContent>
+
+                {canShowWorkflowActions && (
+                  <TabsContent value="workflow" className="mt-6 space-y-6">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-lg">
+                          <Workflow className="h-5 w-5" />
+                          Workflow Approval
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {/* Show pending transaction info or current status */}
+                        {pendingTransaction ? (
+                          <Alert>
+                            <CheckCircle className="h-4 w-4" />
+                            <AlertDescription>
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="outline" className="font-medium">
+                                    Stage {pendingTransaction.stageNumber}
+                                  </Badge>
+                                  <span className="text-sm font-medium">{pendingTransaction.stageName}</span>
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                  This initiative is pending approval at the current stage. You can approve or reject this stage directly from here.
+                                </p>
+                              </div>
+                            </AlertDescription>
+                          </Alert>
+                        ) : (
+                          <Alert>
+                            <AlertTriangle className="h-4 w-4" />
+                            <AlertDescription>
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="outline" className="font-medium">
+                                    Stage {initiative?.currentStage || 1}
+                                  </Badge>
+                                  <span className="text-sm font-medium">{currentStageName}</span>
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                  No pending approval found for this initiative. It may have already been processed or you may not have permission to approve the current stage.
+                                </p>
+                              </div>
+                            </AlertDescription>
+                          </Alert>
+                        )}
+
+                        {/* Stage-specific information */}
+                        {pendingTransaction?.stageNumber === 2 && (
+                          <div className="p-3 bg-blue-50 rounded-lg">
+                            <p className="text-sm font-medium text-blue-800">Head of Department (HOD) Approval</p>
+                            <p className="text-xs text-blue-600 mt-1">
+                              Review the initiative details and provide your approval decision.
+                            </p>
+                          </div>
+                        )}
+
+                        {pendingTransaction?.stageNumber === 3 && (
+                          <div className="p-3 bg-green-50 rounded-lg">
+                            <p className="text-sm font-medium text-green-800">Site TSD Lead Assessment</p>
+                            <p className="text-xs text-green-600 mt-1">
+                              Assess the technical feasibility and provide approval decision.
+                            </p>
+                          </div>
+                        )}
+
+                        {pendingTransaction?.stageNumber === 4 && (
+                          <div className="p-3 bg-purple-50 rounded-lg">
+                            <p className="text-sm font-medium text-purple-800">Define Responsibilities</p>
+                            <p className="text-xs text-purple-600 mt-1">
+                              Assign an Initiative Lead who will be responsible for driving this initiative forward.
+                            </p>
+                          </div>
+                        )}
+
+                        {(pendingTransaction?.stageNumber >= 5) && (
+                          <div className="p-3 bg-orange-50 rounded-lg">
+                            <p className="text-sm font-medium text-orange-800">
+                              {pendingTransaction?.stageName}
+                            </p>
+                            <p className="text-xs text-orange-600 mt-1">
+                              Review and provide your decision with appropriate comments.
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Comments Section */}
+                        <div className="space-y-2">
+                          <Label htmlFor="workflowComment" className="text-sm font-medium text-red-600">
+                            Comments (Required) *
+                          </Label>
+                          <Textarea
+                            id="workflowComment"
+                            value={workflowComment}
+                            onChange={(e) => setWorkflowComment(e.target.value)}
+                            placeholder="Please provide your comments for this stage..."
+                            className="min-h-[100px] text-sm"
+                            required
+                          />
+                        </div>
+
+                        {/* Action Buttons - show for HOD and STLD roles */}
+                        {(user?.role === 'HOD' || user?.role === 'STLD') && (
+                          <div className="flex gap-3 pt-4 border-t">
+                            <Button 
+                              onClick={handleWorkflowApprove}
+                              disabled={!workflowComment.trim() || !pendingTransaction || (processStageAction.isPending && processingAction === 'approved')}
+                              className="bg-green-600 hover:bg-green-700 flex-1"
+                            >
+                              {(processStageAction.isPending && processingAction === 'approved') ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                  Processing...
+                                </>
+                              ) : (
+                                <>
+                                  <CheckCircle className="h-4 w-4 mr-2" />
+                                  {pendingTransaction ? 'Approve & Continue' : 'No Transaction to Approve'}
+                                </>
+                              )}
+                            </Button>
+                            
+                            {/* Show reject button for stages 2 and 3 (HOD and STLD) */}
+                            {(user?.role === 'HOD' || user?.role === 'STLD') && (
+                              <Button 
+                                variant="destructive"
+                                onClick={handleWorkflowReject}
+                                disabled={!workflowComment.trim() || !pendingTransaction || (processStageAction.isPending && processingAction === 'rejected')}
+                                className="flex-1"
+                              >
+                                {(processStageAction.isPending && processingAction === 'rejected') ? (
+                                  <>
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    Processing...
+                                  </>
+                                ) : (
+                                  <>
+                                    <XCircle className="h-4 w-4 mr-2" />
+                                    {pendingTransaction ? 'Reject' : 'No Transaction to Reject'}
+                                  </>
+                                )}
+                              </Button>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Debug information */}
+                        <div className="text-xs bg-gray-50 p-3 rounded border">
+                          <p className="font-medium mb-2">Debug Information:</p>
+                          <div className="space-y-1">
+                            <p>User Role: {user?.role}</p>
+                            <p>User Site: {user?.site}</p>
+                            <p>Initiative Site: {initiative?.site}</p>
+                            <p>Can Approve: {canApproveWorkflow ? 'Yes' : 'No'}</p>
+                            <p>Workflow Transactions: {workflowTransactions?.length || 0}</p>
+                            <p>Pending Transaction: {pendingTransaction ? `Stage ${pendingTransaction.stageNumber} (${pendingTransaction.status})` : 'None'}</p>
+                            <p>Show Actions: {canShowWorkflowActions ? 'Yes' : 'No'}</p>
+                          </div>
+                          
+                          {workflowTransactions?.length > 0 && (
+                            <div className="mt-3 pt-2 border-t">
+                              <p className="font-medium mb-2">All Transactions:</p>
+                              {workflowTransactions.map((t: any, index: number) => (
+                                <div key={index} className="mb-1 pl-2 border-l-2 border-gray-300">
+                                  <p>Stage {t.stageNumber}: {t.stageName}</p>
+                                  <p>Status: {t.status} | Role: {t.requiredRole}</p>
+                                  <p>Processed: {t.processedDate || 'Not processed'}</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Help text */}
+                        {pendingTransaction && (
+                          <div className="text-xs text-muted-foreground bg-muted p-3 rounded">
+                            <AlertTriangle className="h-3 w-3 inline mr-1" />
+                            After processing this stage, the initiative will automatically move to the next stage in the workflow.
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                )}
                 </div>
               </ScrollArea>
             </div>

@@ -503,6 +503,33 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
     return selectedInitiative && selectedInitiative.assignedUserEmail === user.email;
   };
 
+  const canDelete = (entry: MonthlyMonitoringEntry) => {
+    // PRIMARY CHECK: If entry is finalized - NO ONE can delete
+    if (entry.isFinalized === 'Y') {
+      return false; // Entry is finalized - cannot be deleted
+    }
+
+    // Get selected initiative to check stage status
+    const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
+    if (!selectedInitiative) return false;
+    
+    // SECONDARY CHECK: If stage 9 has been approved - NO ONE can delete (applies to ALL users)
+    // Check both stageNumber and initiativeStatus for comprehensive validation
+    if ((selectedInitiative.stageNumber && selectedInitiative.stageNumber > 9) || 
+        selectedInitiative.initiativeStatus === 'Completed') {
+      return false; // Stage 9 has been approved and moved to next stage - READ ONLY for ALL
+    }
+    
+    // TERTIARY CHECK: Role-based permissions (only after stage and finalization checks pass)
+    if (user.role !== 'IL') return false;
+    
+    // For assigned initiatives tab, user can delete
+    if (activeTab === 'assigned') return true;
+    
+    // For all initiatives tab, check if user is assigned to this specific initiative
+    return selectedInitiative && selectedInitiative.assignedUserEmail === user.email;
+  };
+
   // Smart currency formatting that handles all amounts automatically and removes trailing zeros
   const formatCurrency = (amount: number): string => {
     if (amount === 0) return "₹0";
@@ -1312,7 +1339,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                                           <Target className="h-3 w-3" />
                                         </Button>
                                       )} */}
-                                      {user.role === 'IL' && (
+                                      {canDelete(entry) && (
                                         <Button
                                           size="sm"
                                           variant="outline"
