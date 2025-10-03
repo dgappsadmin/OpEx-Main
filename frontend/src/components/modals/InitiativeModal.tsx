@@ -98,18 +98,19 @@ interface InitiativeModalProps {
   user?: { role?: string; site?: string; [key: string]: any }; // Add site prop
 }
 
-// Correct workflow stage names matching backend (10 stages total)
+// Correct workflow stage names matching backend (11 stages total)
 const WORKFLOW_STAGE_NAMES: { [key: number]: string } = {
   1: 'Register Initiative',
   2: 'Approval',
   3: 'Define Responsibilities',
   4: 'MOC-CAPEX Evaluation',
   5: 'Initiative Timeline Tracker',
-  6: 'Trial Implementation & Performance Check',
-  7: 'Periodic Status Review with CMO',
-  8: 'Savings Monitoring (1 Month)',
-  9: 'Saving Validation with F&A',
-  10: 'Initiative Closure'
+  6: 'Initiative Timeline Tracker',
+  7: 'Progress monitoring',
+  8: 'Periodic Status Review with CMO',
+  9: 'Savings Monitoring (Monthly)',
+  10: 'F&A validation',
+  11: 'Initiative Closure'
 };
 
 export default function InitiativeModal({ isOpen, onClose, initiative, mode, onSave, user }: InitiativeModalProps) {
@@ -208,8 +209,8 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
   // Additional hooks for stage-specific functionality
   const { data: users = [], isLoading: usersLoading, error: usersError } = useUsers();
 
-  // Calculate Progress Percentage - being at stage X means X/10 * 100% progress
-  const progressPercentage = Math.round((initiative?.currentStage || 1) * 100 / 10);
+  // Calculate Progress Percentage - being at stage X means X/11 * 100% progress
+  const progressPercentage = Math.round((initiative?.currentStage || 1) * 100 / 11);
 
   const actualProgress = progressData?.progressPercentage ?? progressPercentage;
   const currentStageName = currentStageData?.stageName || 
@@ -537,6 +538,10 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
       // F&A approval - at least one entry should be selected or no entries to approve
       return !Array.isArray(monthlyEntries) || monthlyEntries.length === 0 || selectedEntries.size > 0;
     }
+    if (pendingTransaction?.stageNumber === 11) {
+      // Stage 11 Initiative Closure - only comment required
+      return true;
+    }
     
     return true;
   };
@@ -719,6 +724,24 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
       case "Low": return "bg-muted text-muted-foreground";
       default: return "bg-muted text-muted-foreground";
     }
+  };
+
+  // Get stage description matching WorkflowStageModal.tsx
+  const getStageDescription = (stageNumber: number) => {
+    const descriptions: { [key: number]: string } = {
+      1: "Initiative has been registered by any user and is ready for HOD approval.",
+      2: "Head of Department (HOD) evaluation and approval of the initiative.",
+      3: "Site TSD Lead assessment and approval of the initiative.",
+      4: "Site Head assigns an Initiative Lead who will be responsible for driving this initiative forward.",
+      5: "Initiative Lead evaluates both Management of Change (MOC) and Capital Expenditure (CAPEX) requirements.",
+      6: "Initiative Lead prepares detailed timeline for initiative implementation.",
+      7: "Site TSD Lead monitors progress of initiative implementation.",
+      8: "You can approve to continue or drop to move initiative to next FY.",
+      9: "Initiative Lead monitors savings achieved after implementation (monthly monitoring period).",
+      10: "Site F&A validates savings and financial accuracy.",
+      11: "Initiative Lead performs final closure of the initiative."
+    };
+    return descriptions[stageNumber] || "Process this workflow stage.";
   };
 
   // Get stage-specific content for workflow approval
@@ -1185,6 +1208,21 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
           </div>
         );
 
+      case 11: // Initiative Closure
+        return (
+          <div className="space-y-4 p-4 bg-red-50 rounded-lg">
+            <div className="flex items-center gap-2.5">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+              <p className="text-red-800 font-semibold text-sm">
+                Initiative Closure
+              </p>
+            </div>
+            <p className="text-xs text-red-700 mt-2">
+              Final closure of initiative - This will move the initiative to the Closure Module.
+            </p>
+          </div>
+        );
+
       default:
         // For other stages, show generic message
         return (
@@ -1192,7 +1230,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
             <div className="flex items-center gap-2.5">
               <CheckCircle className="h-5 w-5 text-blue-600" />
               <p className="text-blue-800 font-semibold text-sm">
-                {pendingTransaction?.stageName}
+                {WORKFLOW_STAGE_NAMES[pendingTransaction?.stageNumber] || pendingTransaction?.stageName}
               </p>
             </div>
             <p className="text-xs text-blue-700 mt-2">
@@ -2090,12 +2128,12 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                                   Stage {pendingTransaction?.stageNumber || initiative?.currentStage || 1}
                                 </Badge>
                                 <span className="text-sm font-medium">
-                                  {pendingTransaction?.stageName || currentStageName}
+                                  {WORKFLOW_STAGE_NAMES[pendingTransaction?.stageNumber] || pendingTransaction?.stageName || currentStageName}
                                 </span>
                               </div>
                               <p className="text-xs text-muted-foreground">
                                 {pendingTransaction 
-                                  ? "This initiative is pending approval at the current stage. You can approve or reject this stage directly from here."
+                                  ? getStageDescription(pendingTransaction.stageNumber)
                                   : "No pending approval found for you on this initiative. You may not have permission to approve the current stage."
                                 }
                               </p>
