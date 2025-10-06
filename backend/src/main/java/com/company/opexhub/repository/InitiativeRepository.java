@@ -75,19 +75,19 @@ public interface InitiativeRepository extends JpaRepository<Initiative, Long> {
     @Query("SELECT COUNT(i) FROM Initiative i WHERE LOWER(COALESCE(i.budgetType, 'budgeted')) = :budgetType")
     Long countByBudgetType(@Param("budgetType") String budgetType);
     
-    @Query("SELECT SUM(i.expectedSavings) FROM Initiative i WHERE i.createdAt >= :startDate AND i.createdAt <= :endDate")
+    @Query("SELECT SUM(i.expectedSavings) FROM Initiative i WHERE i.createdAt >= :startDate AND i.createdAt <= :endDate AND i.status NOT IN ('Rejected', 'Dropped')")
     java.math.BigDecimal sumExpectedSavingsByCreatedAtBetween(@Param("startDate") LocalDateTime startDate, 
                                                              @Param("endDate") LocalDateTime endDate);
     
-    @Query("SELECT SUM(i.expectedSavings) FROM Initiative i WHERE i.createdAt >= :startDate AND i.createdAt <= :endDate AND LOWER(COALESCE(i.budgetType, 'budgeted')) = :budgetType")
+    @Query("SELECT SUM(i.expectedSavings) FROM Initiative i WHERE i.createdAt >= :startDate AND i.createdAt <= :endDate AND LOWER(COALESCE(i.budgetType, 'budgeted')) = :budgetType AND i.status NOT IN ('Rejected', 'Dropped')")
     java.math.BigDecimal sumExpectedSavingsByCreatedAtBetweenAndBudgetType(@Param("startDate") LocalDateTime startDate, 
                                                                           @Param("endDate") LocalDateTime endDate,
                                                                           @Param("budgetType") String budgetType);
     
-    @Query("SELECT SUM(i.expectedSavings) FROM Initiative i")
+    @Query("SELECT SUM(i.expectedSavings) FROM Initiative i WHERE i.status NOT IN ('Rejected', 'Dropped')")
     java.math.BigDecimal sumAllExpectedSavings();
     
-    @Query("SELECT SUM(i.expectedSavings) FROM Initiative i WHERE LOWER(COALESCE(i.budgetType, 'budgeted')) = :budgetType")
+    @Query("SELECT SUM(i.expectedSavings) FROM Initiative i WHERE LOWER(COALESCE(i.budgetType, 'budgeted')) = :budgetType AND i.status NOT IN ('Rejected', 'Dropped')")
     java.math.BigDecimal sumExpectedSavingsByBudgetType(@Param("budgetType") String budgetType);
     
     // Site-specific performance analysis queries
@@ -97,16 +97,16 @@ public interface InitiativeRepository extends JpaRepository<Initiative, Long> {
     @Query("SELECT COUNT(i) FROM Initiative i WHERE i.site = :site AND LOWER(COALESCE(i.budgetType, 'budgeted')) = :budgetType")
     Long countBySiteAndBudgetType(@Param("site") String site, @Param("budgetType") String budgetType);
     
-    @Query("SELECT SUM(i.expectedSavings) FROM Initiative i WHERE i.site = :site")
+    @Query("SELECT SUM(i.expectedSavings) FROM Initiative i WHERE i.site = :site AND i.status NOT IN ('Rejected', 'Dropped')")
     java.math.BigDecimal sumAllExpectedSavingsBySite(@Param("site") String site);
     
-    @Query("SELECT SUM(i.expectedSavings) FROM Initiative i WHERE i.site = :site AND LOWER(COALESCE(i.budgetType, 'budgeted')) = :budgetType")
+    @Query("SELECT SUM(i.expectedSavings) FROM Initiative i WHERE i.site = :site AND LOWER(COALESCE(i.budgetType, 'budgeted')) = :budgetType AND i.status NOT IN ('Rejected', 'Dropped')")
     java.math.BigDecimal sumExpectedSavingsBySiteAndBudgetType(@Param("site") String site, @Param("budgetType") String budgetType);
     
-    @Query("SELECT SUM(i.expectedSavings) FROM Initiative i WHERE i.site = :site AND i.createdAt >= :startDate AND i.createdAt <= :endDate")
+    @Query("SELECT SUM(i.expectedSavings) FROM Initiative i WHERE i.site = :site AND i.createdAt >= :startDate AND i.createdAt <= :endDate AND i.status NOT IN ('Rejected', 'Dropped')")
     java.math.BigDecimal sumExpectedSavingsBySiteAndCreatedAtBetween(@Param("site") String site, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
     
-    @Query("SELECT SUM(i.expectedSavings) FROM Initiative i WHERE i.site = :site AND i.createdAt >= :startDate AND i.createdAt <= :endDate AND LOWER(COALESCE(i.budgetType, 'budgeted')) = :budgetType")
+    @Query("SELECT SUM(i.expectedSavings) FROM Initiative i WHERE i.site = :site AND i.createdAt >= :startDate AND i.createdAt <= :endDate AND LOWER(COALESCE(i.budgetType, 'budgeted')) = :budgetType AND i.status NOT IN ('Rejected', 'Dropped')")
     java.math.BigDecimal sumExpectedSavingsBySiteAndCreatedAtBetweenAndBudgetType(@Param("site") String site, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate, @Param("budgetType") String budgetType);
     
     // Trend calculation queries - for previous month comparison
