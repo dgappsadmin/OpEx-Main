@@ -735,7 +735,7 @@ export default function WorkflowStageModal({
 
   const getStageDescription = () => {
     const descriptions: { [key: number]: string } = {
-      1: "Initiative has been registered by any user and is ready for HOD approval.",
+      1: "Initiative has been registered.",
       2: "Head of Department (HOD) evaluation and approval of the initiative.",
       3: "Site TSD Lead assessment and approval of the initiative.",
       4: "Site Head assigns an Initiative Lead who will be responsible for driving this initiative forward.",
@@ -744,7 +744,7 @@ export default function WorkflowStageModal({
       7: "Site TSD Lead monitors progress of initiative implementation.",
       8: "You can approve to continue or drop to move initiative to next FY.",
       9: "Initiative Lead monitors savings achieved after implementation (monthly monitoring period).",
-      10: "Site F&A validates savings and financial accuracy.",
+      10: "Site F&A validates savings.",
       11: "Initiative Lead performs final closure of the initiative."
     };
     return descriptions[transaction.stageNumber] || "Process this workflow stage.";

@@ -803,7 +803,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
   // Get stage description matching WorkflowStageModal.tsx
   const getStageDescription = (stageNumber: number) => {
     const descriptions: { [key: number]: string } = {
-      1: "Initiative has been registered by any user and is ready for HOD approval.",
+      1: "Initiative has been registered.",
       2: "Head of Department (HOD) evaluation and approval of the initiative.",
       3: "Site TSD Lead assessment and approval of the initiative.",
       4: "Site Head assigns an Initiative Lead who will be responsible for driving this initiative forward.",
@@ -812,7 +812,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
       7: "Site TSD Lead monitors progress of initiative implementation.",
       8: "Corporate TSD reviews initiative status - you can approve to continue or drop to move initiative to next FY.",
       9: "Initiative Lead monitors savings achieved after implementation (monthly monitoring period).",
-      10: "Site F&A validates savings and financial accuracy.",
+      10: "Site F&A validates savings.",
       11: "Initiative Lead performs final closure of the initiative."
     };
     return descriptions[stageNumber] || "Process this workflow stage.";
@@ -826,7 +826,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
           <AlertTriangle className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
           <p className="text-sm text-muted-foreground">No pending approval found for you on this initiative</p>
           <p className="text-xs text-muted-foreground mt-1">
-            The initiative may have already been processed or you may not have permission to approve the current stage.
+            The initiative may have already been processed.
           </p>
         </div>
       );
@@ -2194,7 +2194,7 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                               <p className="text-xs text-muted-foreground">
                                 {pendingTransaction 
                                   ? getStageDescription(pendingTransaction.stageNumber)
-                                  : "No pending approval found for you on this initiative. You may not have permission to approve the current stage."
+                                  : "No pending approval found for you on this initiative."
                                 }
                               </p>
                             </div>
