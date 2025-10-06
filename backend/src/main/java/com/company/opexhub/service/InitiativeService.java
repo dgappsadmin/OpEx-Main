@@ -170,6 +170,7 @@ public class InitiativeService {
         initiative.setDescription(request.getDescription());
         initiative.setPriority(request.getPriority());
         initiative.setExpectedSavings(request.getExpectedSavings());
+        initiative.setActualSavings(request.getActualSavings());
         initiative.setSite(request.getSite());
         initiative.setDiscipline(request.getDiscipline());
         initiative.setStartDate(request.getStartDate());

@@ -942,7 +942,7 @@ export default function Reports({ user }: ReportsProps) {
                     Financial Year Analysis (FY {selectedFinancialYear}-{selectedFinancialYear ? (parseInt(selectedFinancialYear) + 1).toString().slice(-2) : ''})
                   </CardTitle>
                   <CardDescription className="text-xs">
-                    Comprehensive savings analysis by category and budget type. Note: Backend API needs to be updated to exclude Rejected/Dropped initiatives from Potential Monthly Savings Cumulative.
+                    Comprehensive savings analysis by category and budget type.
                   </CardDescription>
                 </div>
               </div>
@@ -1035,7 +1035,7 @@ export default function Reports({ user }: ReportsProps) {
                   <CardDescription className="text-xs">
                     Initiative savings by category - {selectedSite !== 'all' ? selectedSite : 'All Sites'} 
                     {selectedFinancialYear && ` - FY ${selectedFinancialYear}-${selectedFinancialYear ? (parseInt(selectedFinancialYear) + 1).toString().slice(-2) : ''}`}
-                    Note: Backend API needs to be updated to exclude Rejected/Dropped initiatives.
+                    {/* Note: Backend API needs to be updated to exclude Rejected/Dropped initiatives. */}
                   </CardDescription>
                 </div>
                 <Button 
@@ -1097,7 +1097,7 @@ export default function Reports({ user }: ReportsProps) {
                     Initiative Details
                   </CardTitle>
                   <CardDescription className="text-xs">
-                    Detailed view of filtered initiatives. Note: Charts exclude amounts from Rejected and Dropped initiatives, but detailed table shows actual amounts.
+                    Detailed view of initiatives.
                   </CardDescription>
                 </div>
                 <Button 

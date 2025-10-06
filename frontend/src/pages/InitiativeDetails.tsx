@@ -1618,21 +1618,29 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                   </CardContent>
                 </Card>
 
-                <Card className="border-l-4 border-l-cyan-500">
-                  <CardContent className="p-2.5">
-                    <div className="flex items-center gap-1.5">
-                      <div className="p-1 bg-cyan-100 rounded">
-                        <FileText className="h-3 w-3 text-cyan-600" />
+                <Card className={`border-l-4 ${initiative?.budgetType === 'BUDGETED' ? 'border-l-green-500' : 'border-l-orange-500'}`}>
+                  <CardContent className="p-3">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <div className={`p-1.5 rounded ${initiative?.budgetType === 'BUDGETED' ? 'bg-green-100' : 'bg-orange-100'}`}>
+                          <DollarSign className={`h-4 w-4 ${initiative?.budgetType === 'BUDGETED' ? 'text-green-600' : 'text-orange-600'}`} />
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground">Budget Type</p>
+                          <div className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
+                            initiative?.budgetType === 'BUDGETED' 
+                              ? 'bg-green-100 text-green-800 border border-green-200' 
+                              : 'bg-orange-100 text-orange-800 border border-orange-200'
+                          }`}>
+                            {initiative?.budgetType === 'BUDGETED' ? 'BUDGETED' : 'NON-BUDGETED'}
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Budget Type</p>
-                        <Badge 
-                          variant={initiative?.budgetType === 'BUDGETED' ? 'default' : 'secondary'}
-                          className="text-xs mt-0.5"
-                        >
-                          {initiative?.budgetType || 'NON-BUDGETED'}
-                        </Badge>
-                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {initiative?.budgetType === 'BUDGETED' 
+                          ? 'Allocated in annual budget' 
+                          : 'Additional investment required'}
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
@@ -1724,30 +1732,45 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                           placeholder="Enter initiative title"
                         />
                       ) : (
-                        <p className="text-sm font-semibold text-gray-800 bg-gray-50 p-2 rounded border">{initiative?.title}</p>
+                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3">
+                          <p className="text-sm font-semibold text-gray-800 leading-relaxed">
+                            {initiative?.title && initiative.title.length > 100 
+                              ? `${initiative.title.substring(0, 100)}...` 
+                              : initiative?.title || 'Untitled Initiative'}
+                          </p>
+                        </div>
                       )}
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="initiativeNumber">Initiative Number</Label>
-                      <p className="text-sm text-muted-foreground">
-                        {initiative?.initiativeNumber || 'Auto-generated'}
-                      </p>
+                      <Label htmlFor="initiativeNumber" className="text-sm font-semibold text-gray-700">Initiative Number</Label>
+                      <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-lg p-3">
+                        <div className="flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-emerald-600" />
+                          <span className="text-sm font-mono font-bold text-emerald-800 tracking-wider">
+                            {initiative?.initiativeNumber || 'AUTO-GENERATED'}
+                          </span>
+                        </div>
+                        <p className="text-xs text-emerald-600 mt-1">Initiative Reference Number</p>
+                      </div>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="site">Site</Label>
-                      <Input
-                        id="site"
-                        value={initiative?.site || ''}
-                        disabled={true}
-                        className="text-sm bg-muted"
-                      />
+                      <Label htmlFor="site" className="text-sm font-semibold text-gray-700">Site</Label>
+                      <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-lg p-3">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-4 w-4 text-blue-600" />
+                          <span className="text-sm font-semibold text-blue-800">
+                            {initiative?.site || 'Not Specified'}
+                          </span>
+                        </div>
+                        <p className="text-xs text-blue-600 mt-1">Location/Plant</p>
+                      </div>
                     </div>
 
                     
                     <div className="space-y-2">
-                      <Label htmlFor="expectedSavings">Expected Savings (₹)</Label>
+                      <Label htmlFor="expectedSavings" className="text-sm font-semibold text-gray-700">Expected Savings (₹)</Label>
                       {isEditing ? (
                         <Input
                           id="expectedSavings"
@@ -1760,39 +1783,57 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                           placeholder="Enter expected savings in rupees"
                         />
                       ) : (
-                        <p className="text-sm font-bold text-green-600">
-                          {typeof initiative?.expectedSavings === 'number' 
-                            ? formatCurrencyInLakhs(initiative.expectedSavings)
-                            : initiative?.expectedSavings}
-                        </p>
+                        <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-3">
+                          <div className="flex items-center gap-2">
+                            <TrendingUp className="h-4 w-4 text-green-600" />
+                            <span className="text-lg font-bold text-green-700">
+                              {typeof initiative?.expectedSavings === 'number' 
+                                ? formatCurrencyInLakhs(initiative.expectedSavings)
+                                : initiative?.expectedSavings || '₹0'}
+                            </span>
+                          </div>
+                          <p className="text-xs text-green-600 mt-1">Projected Financial Impact</p>
+                        </div>
                       )}
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="discipline">Discipline</Label>
-                      <Input
-                        id="discipline"
-                        value={initiative?.discipline || ''}
-                        disabled={true}
-                        className="text-sm bg-muted"
-                      />
+                      <Label htmlFor="discipline" className="text-sm font-semibold text-gray-700">Discipline</Label>
+                      <div className="bg-gradient-to-r from-purple-50 to-violet-50 border border-purple-200 rounded-lg p-3">
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-purple-600" />
+                          <span className="text-sm font-semibold text-purple-800">
+                            {initiative?.discipline || 'Not Specified'}
+                          </span>
+                        </div>
+                        <p className="text-xs text-purple-600 mt-1">Department/Function</p>
+                      </div>
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="description">Description</Label>
+                    <Label htmlFor="description" className="text-sm font-semibold text-gray-700">Description</Label>
                     {isEditing ? (
                       <Textarea
                         id="description"
                         value={formData.description || ''}
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        rows={4}
-                        className="text-sm"
+                        className="min-h-[120px] text-sm"
+                        placeholder="Provide a detailed description of the initiative"
                       />
                     ) : (
-                      <p className="text-sm text-muted-foreground">
-                        {initiative?.description || 'No description provided'}
-                      </p>
+                      <div className="bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-200 rounded-lg p-4 min-h-[120px]">
+                        <p className="text-sm text-gray-700 leading-relaxed">
+                          {initiative?.description && initiative.description.length > 500 
+                            ? `${initiative.description.substring(0, 500)}...` 
+                            : initiative?.description || 'No description provided'}
+                        </p>
+                        {initiative?.description && initiative.description.length > 500 && (
+                          <p className="text-xs text-blue-600 mt-2 cursor-pointer hover:underline">
+                            Click to view full description
+                          </p>
+                        )}
+                      </div>
                     )}
                   </div>
                 </CardContent>
@@ -1854,26 +1895,60 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="budgetType">Budget Type</Label>
+                        <Label htmlFor="budgetType" className="text-sm font-semibold text-gray-700">Budget Type</Label>
                         {isEditing ? (
                           <Select value={formData.budgetType || 'NON-BUDGETED'} onValueChange={(value) => setFormData({ ...formData, budgetType: value })}>
-                            <SelectTrigger>
+                            <SelectTrigger className="h-10">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="BUDGETED">Budgeted</SelectItem>
-                              <SelectItem value="NON-BUDGETED">Non-Budgeted</SelectItem>
+                              <SelectItem value="BUDGETED">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                  <span>Budgeted</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="NON-BUDGETED">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                                  <span>Non-Budgeted</span>
+                                </div>
+                              </SelectItem>
                             </SelectContent>
                           </Select>
                         ) : (
-                          <Badge variant={initiative?.budgetType === 'BUDGETED' ? 'default' : 'secondary'}>
-                            {initiative?.budgetType || 'NON-BUDGETED'}
-                          </Badge>
+                          <div className={`bg-gradient-to-r ${
+                            initiative?.budgetType === 'BUDGETED'
+                              ? 'from-green-50 to-emerald-50 border-green-200'
+                              : 'from-orange-50 to-amber-50 border-orange-200'
+                          } border rounded-lg p-3`}>
+                            <div className="flex items-center gap-2">
+                              <div className={`p-1 rounded-full ${
+                                initiative?.budgetType === 'BUDGETED' ? 'bg-green-100' : 'bg-orange-100'
+                              }`}>
+                                <DollarSign className={`h-3 w-3 ${
+                                  initiative?.budgetType === 'BUDGETED' ? 'text-green-600' : 'text-orange-600'
+                                }`} />
+                              </div>
+                              <span className={`text-sm font-semibold ${
+                                initiative?.budgetType === 'BUDGETED' ? 'text-green-800' : 'text-orange-800'
+                              }`}>
+                                {initiative?.budgetType === 'BUDGETED' ? 'BUDGETED' : 'NON-BUDGETED'}
+                              </span>
+                            </div>
+                            <p className={`text-xs mt-1 ${
+                              initiative?.budgetType === 'BUDGETED' ? 'text-green-600' : 'text-orange-600'
+                            }`}>
+                              {initiative?.budgetType === 'BUDGETED' 
+                                ? 'Allocated in annual budget' 
+                                : 'Additional investment required'}
+                            </p>
+                          </div>
                         )}
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="actualSavings">Actual Savings (₹)</Label>
+                        <Label htmlFor="actualSavings" className="text-sm font-semibold text-gray-700">Actual Savings (₹)</Label>
                         {isEditing ? (
                           <Input
                             id="actualSavings"
@@ -1885,16 +1960,22 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                             placeholder="Enter amount in rupees"
                           />
                         ) : (
-                          <p className="text-sm font-bold text-orange-600">
-                            {typeof initiative?.actualSavings === 'number' 
-                              ? formatCurrencyInLakhs(initiative.actualSavings)
-                              : initiative?.actualSavings || '₹0'}
-                          </p>
+                          <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-lg p-3">
+                            <div className="flex items-center gap-2">
+                              <CheckCircle className="h-4 w-4 text-emerald-600" />
+                              <span className="text-sm font-bold text-emerald-800">
+                                {typeof initiative?.actualSavings === 'number' 
+                                  ? formatCurrencyInLakhs(initiative.actualSavings)
+                                  : initiative?.actualSavings || '₹0'}
+                              </span>
+                            </div>
+                            <p className="text-xs text-emerald-600 mt-1">Realized Savings</p>
+                          </div>
                         )}
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="targetValue">Target Value</Label>
+                        <Label htmlFor="targetValue" className="text-sm font-semibold text-gray-700">Target Value (₹)</Label>
                         {isEditing ? (
                           <Input
                             id="targetValue"
@@ -1904,16 +1985,20 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                             placeholder="Enter target value"
                           />
                         ) : (
-                          <p className="text-sm font-bold">
-                            {initiative?.targetValue ? formatCurrencyInLakhs(initiative.targetValue) : '₹0'}
-                          </p>
+                          <div className="bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200 rounded-lg p-3">
+                            <div className="flex items-center gap-2">
+                              <Target className="h-4 w-4 text-indigo-600" />
+                              <span className="text-sm font-bold text-indigo-800">
+                                {initiative?.targetValue ? formatCurrencyInLakhs(initiative.targetValue) : '₹0'}
+                              </span>
+                            </div>
+                            <p className="text-xs text-indigo-600 mt-1">Expected Achievement</p>
+                          </div>
                         )}
                       </div>
 
-                
-
                       <div className="space-y-2">
-                        <Label htmlFor="estimatedCapex">Estimated CAPEX (₹)</Label>
+                        <Label htmlFor="estimatedCapex" className="text-sm font-semibold text-gray-700">Estimated CAPEX (₹)</Label>
                         {isEditing ? (
                           <Input
                             id="estimatedCapex"
@@ -1923,22 +2008,37 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                             placeholder="Enter estimated CAPEX"
                           />
                         ) : (
-                          <p className="text-sm font-bold">
-                            {initiative?.estimatedCapex ? formatCurrencyInLakhs(initiative.estimatedCapex) : '₹0'}
-                          </p>
+                          <div className="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-lg p-3">
+                            <div className="flex items-center gap-2">
+                              <DollarSign className="h-4 w-4 text-red-600" />
+                              <span className="text-sm font-bold text-red-800">
+                                {initiative?.estimatedCapex ? formatCurrencyInLakhs(initiative.estimatedCapex) : '₹0'}
+                              </span>
+                            </div>
+                            <p className="text-xs text-red-600 mt-1">Capital Investment</p>
+                          </div>
                         )}
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="targetOutcome">Target Outcome</Label>
+                        <Label htmlFor="targetOutcome" className="text-sm font-semibold text-gray-700">Target Outcome</Label>
                         {isEditing ? (
                           <Input
                             id="targetOutcome"
                             value={formData.targetOutcome || ''}
                             onChange={(e) => setFormData({ ...formData, targetOutcome: e.target.value })}
+                            placeholder="Describe the expected outcome"
                           />
                         ) : (
-                          <p className="text-sm">{initiative?.targetOutcome || 'Not specified'}</p>
+                          <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-lg p-3">
+                            <div className="flex items-center gap-2">
+                              <Target className="h-4 w-4 text-amber-600" />
+                              <span className="text-sm font-medium text-amber-800">
+                                {initiative?.targetOutcome || 'Not specified'}
+                              </span>
+                            </div>
+                            <p className="text-xs text-amber-600 mt-1">Expected Result</p>
+                          </div>
                         )}
                       </div>
                     </div>

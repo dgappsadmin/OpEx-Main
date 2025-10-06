@@ -20,6 +20,8 @@ public class InitiativeRequest {
     @NotNull
     private BigDecimal expectedSavings;
 
+    private BigDecimal actualSavings;
+
     @NotBlank
     private String site;
 
@@ -67,6 +69,9 @@ public class InitiativeRequest {
 
     public BigDecimal getExpectedSavings() { return expectedSavings; }
     public void setExpectedSavings(BigDecimal expectedSavings) { this.expectedSavings = expectedSavings; }
+
+    public BigDecimal getActualSavings() { return actualSavings; }
+    public void setActualSavings(BigDecimal actualSavings) { this.actualSavings = actualSavings; }
 
     public String getSite() { return site; }
     public void setSite(String site) { this.site = site; }

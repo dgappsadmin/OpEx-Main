@@ -30,7 +30,7 @@ public interface WorkflowTransactionRepository extends JpaRepository<WorkflowTra
     @Query("SELECT wt FROM WorkflowTransaction wt WHERE wt.approveStatus = 'pending' AND wt.site = :site AND wt.pendingWith = :roleCode")
     List<WorkflowTransaction> findPendingTransactionsBySiteAndRole(@Param("site") String site, @Param("roleCode") String roleCode);
     
-    @Query(value = "SELECT * FROM workflow_transactions wt WHERE wt.initiative_id = :initiativeId AND wt.approve_status = 'pending' ORDER BY wt.stage_number LIMIT 1", nativeQuery = true)
+    @Query(value = "SELECT * FROM (SELECT * FROM workflow_transactions wt WHERE wt.initiative_id = :initiativeId AND wt.approve_status = 'pending' ORDER BY wt.stage_number) WHERE ROWNUM <= 1", nativeQuery = true)
     Optional<WorkflowTransaction> findCurrentPendingStage(@Param("initiativeId") Long initiativeId);
     
     @Query("SELECT COUNT(wt) FROM WorkflowTransaction wt WHERE wt.initiativeId = :initiativeId AND wt.approveStatus = 'approved'")
