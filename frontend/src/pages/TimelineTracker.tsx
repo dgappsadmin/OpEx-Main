@@ -35,7 +35,7 @@ import {
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { timelineTrackerAPI } from '@/lib/api';
+import { timelineTrackerAPI, workflowTransactionAPI } from '@/lib/api';
 
 interface User {
   id: string;
@@ -198,6 +198,17 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
       if (!selectedInitiativeId) return [];
       const result = await timelineTrackerAPI.getTimelineEntries(selectedInitiativeId);
       return result.data || [];
+    },
+    enabled: !!selectedInitiativeId,
+  });
+
+  // Fetch workflow transactions for selected initiative to check stage approval status
+  const { data: workflowTransactions = [] } = useQuery({
+    queryKey: ['workflow-transactions', selectedInitiativeId],
+    queryFn: async () => {
+      if (!selectedInitiativeId) return [];
+      const result = await workflowTransactionAPI.getTransactions(selectedInitiativeId);
+      return result || [];
     },
     enabled: !!selectedInitiativeId,
   });
@@ -368,6 +379,12 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
     }
   };
 
+  // Helper function to check if Stage 6 (Timeline Tracker) is approved
+  const isStage6Approved = () => {
+    const stage6Transaction = workflowTransactions.find((transaction: any) => transaction.stageNumber === 6);
+    return stage6Transaction && stage6Transaction.approveStatus === 'approved';
+  };
+
   const calculateProgress = (entry: TimelineEntry) => {
     if (entry.status === 'COMPLETED') return 100;
     if (entry.status === 'PENDING') return 0;
@@ -430,23 +447,10 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
     const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
     if (!selectedInitiative) return false;
     
-    // DEBUG: Log initiative data for troubleshooting
-    if (selectedInitiativeId) {
-      console.log('DEBUG - Selected Initiative Data:', {
-        id: selectedInitiative.id,
-        stageNumber: selectedInitiative.stageNumber,
-        initiativeStatus: selectedInitiative.initiativeStatus,
-        isStageOver6: selectedInitiative.stageNumber && selectedInitiative.stageNumber > 6,
-        isCompleted: selectedInitiative.initiativeStatus === 'Completed'
-      });
-    }
-    
     // PRIMARY CHECK: If stage 6 has been approved - NO ONE can edit (applies to ALL users)
-    // Check both stageNumber and initiativeStatus for comprehensive validation
-    if ((selectedInitiative.stageNumber && selectedInitiative.stageNumber > 6) || 
-        selectedInitiative.initiativeStatus === 'Completed') {
-      console.log('DEBUG - CUD Operations BLOCKED - Stage > 6 or Status = Completed');
-      return false; // Stage 6 has been approved and moved to next stage - READ ONLY for ALL
+    if (isStage6Approved() || selectedInitiative.initiativeStatus === 'Completed') {
+      console.log('DEBUG - Timeline Tracker CUD Operations BLOCKED - Stage 6 approved or Initiative completed');
+      return false; // Stage 6 has been approved - READ ONLY for ALL users
     }
     
     // SECONDARY CHECK: Role-based permissions (only after stage check passes)
@@ -465,10 +469,8 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
     if (!selectedInitiative) return false;
     
     // PRIMARY CHECK: If stage 6 has been approved - NO ONE can delete (applies to ALL users)
-    // Check both stageNumber and initiativeStatus for comprehensive validation
-    if ((selectedInitiative.stageNumber && selectedInitiative.stageNumber > 6) || 
-        selectedInitiative.initiativeStatus === 'Completed') {
-      return false; // Stage 6 has been approved and moved to next stage - READ ONLY for ALL
+    if (isStage6Approved() || selectedInitiative.initiativeStatus === 'Completed') {
+      return false; // Stage 6 has been approved - READ ONLY for ALL users
     }
     
     // SECONDARY CHECK: Role-based permissions (only after stage check passes)
@@ -487,10 +489,8 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
     if (!selectedInitiative) return false;
     
     // PRIMARY CHECK: If stage 6 has been approved - NO ONE can create (applies to ALL users)
-    // Check both stageNumber and initiativeStatus for comprehensive validation
-    if ((selectedInitiative.stageNumber && selectedInitiative.stageNumber > 6) || 
-        selectedInitiative.initiativeStatus === 'Completed') {
-      return false; // Stage 6 has been approved and moved to next stage - READ ONLY for ALL
+    if (isStage6Approved() || selectedInitiative.initiativeStatus === 'Completed') {
+      return false; // Stage 6 has been approved - READ ONLY for ALL users
     }
     
     // SECONDARY CHECK: Role-based permissions (only after stage check passes)
@@ -607,9 +607,8 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
             {(() => {
               if (selectedInitiativeId) {
                 const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
-                if (selectedInitiative && ((selectedInitiative.stageNumber && selectedInitiative.stageNumber > 6) || 
-                    selectedInitiative.initiativeStatus === 'Completed')) {
-                  return 'View initiative timelines and milestones (Read-only - Stage 6 completed or Initiative completed)';
+                if (selectedInitiative && (isStage6Approved() || selectedInitiative.initiativeStatus === 'Completed')) {
+                  return 'View initiative timelines and milestones (Read-only - Stage 6 approved or Initiative completed)';
                 }
               }
               return user.role === 'IL' 

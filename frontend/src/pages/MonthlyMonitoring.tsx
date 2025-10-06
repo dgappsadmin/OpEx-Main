@@ -34,7 +34,7 @@ import {
   X
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { monthlyMonitoringAPI } from '@/lib/api';
+import { monthlyMonitoringAPI, workflowTransactionAPI } from '@/lib/api';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, PieChart as RechartsPieChart, Pie, Cell } from 'recharts';
 
 interface User {
@@ -200,6 +200,17 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
       return result.data || [];
     },
     enabled: !!selectedInitiativeId && !!selectedMonth,
+  });
+
+  // Fetch workflow transactions for selected initiative to check stage approval status
+  const { data: workflowTransactions = [] } = useQuery({
+    queryKey: ['workflow-transactions-monthly', selectedInitiativeId],
+    queryFn: async () => {
+      if (!selectedInitiativeId) return [];
+      const result = await workflowTransactionAPI.getTransactions(selectedInitiativeId);
+      return result || [];
+    },
+    enabled: !!selectedInitiativeId,
   });
 
   // Mutations for monitoring operations
@@ -396,6 +407,12 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
     }
   };
 
+  // Helper function to check if Stage 9 (Savings Monitoring) is approved
+  const isStage9Approved = () => {
+    const stage9Transaction = workflowTransactions.find((transaction: any) => transaction.stageNumber === 9);
+    return stage9Transaction && stage9Transaction.approveStatus === 'approved';
+  };
+
   const handleEdit = (entry: MonthlyMonitoringEntry) => {
     setEditingEntry(entry);
     setFormData(entry);
@@ -413,23 +430,10 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
     const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
     if (!selectedInitiative) return false;
     
-    // DEBUG: Log initiative data for troubleshooting
-    if (selectedInitiativeId) {
-      console.log('DEBUG - Monthly Monitoring Selected Initiative Data:', {
-        id: selectedInitiative.id,
-        stageNumber: selectedInitiative.stageNumber,
-        initiativeStatus: selectedInitiative.initiativeStatus,
-        isStageOver9: selectedInitiative.stageNumber && selectedInitiative.stageNumber > 9,
-        isCompleted: selectedInitiative.initiativeStatus === 'Completed'
-      });
-    }
-    
     // SECONDARY CHECK: If stage 9 has been approved - NO ONE can edit (applies to ALL users)
-    // Check both stageNumber and initiativeStatus for comprehensive validation
-    if ((selectedInitiative.stageNumber && selectedInitiative.stageNumber > 9) || 
-        selectedInitiative.initiativeStatus === 'Completed') {
-      console.log('DEBUG - Monthly Monitoring CUD Operations BLOCKED - Stage > 9 or Status = Completed');
-      return false; // Stage 9 has been approved and moved to next stage - READ ONLY for ALL
+    if (isStage9Approved() || selectedInitiative.initiativeStatus === 'Completed') {
+      console.log('DEBUG - Monthly Monitoring CUD Operations BLOCKED - Stage 9 approved or Initiative completed');
+      return false; // Stage 9 has been approved - READ ONLY for ALL users
     }
     
     // TERTIARY CHECK: Role-based permissions (only after stage and finalization checks pass)
@@ -448,10 +452,8 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
     if (!selectedInitiative) return false;
     
     // PRIMARY CHECK: If stage 9 has been approved - NO ONE can approve (applies to ALL users)
-    // Check both stageNumber and initiativeStatus for comprehensive validation
-    if ((selectedInitiative.stageNumber && selectedInitiative.stageNumber > 9) || 
-        selectedInitiative.initiativeStatus === 'Completed') {
-      return false; // Stage 9 has been approved and moved to next stage - READ ONLY for ALL
+    if (isStage9Approved() || selectedInitiative.initiativeStatus === 'Completed') {
+      return false; // Stage 9 has been approved - READ ONLY for ALL users
     }
     
     // SECONDARY CHECK: Role-based permissions (only after stage check passes)
@@ -470,10 +472,8 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
     if (!selectedInitiative) return false;
     
     // PRIMARY CHECK: If stage 9 has been approved - NO ONE can finalize (applies to ALL users)
-    // Check both stageNumber and initiativeStatus for comprehensive validation
-    if ((selectedInitiative.stageNumber && selectedInitiative.stageNumber > 9) || 
-        selectedInitiative.initiativeStatus === 'Completed') {
-      return false; // Stage 9 has been approved and moved to next stage - READ ONLY for ALL
+    if (isStage9Approved() || selectedInitiative.initiativeStatus === 'Completed') {
+      return false; // Stage 9 has been approved - READ ONLY for ALL users
     }
     
     // SECONDARY CHECK: Role-based permissions (only after stage check passes)
@@ -492,10 +492,8 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
     if (!selectedInitiative) return false;
     
     // PRIMARY CHECK: If stage 9 has been approved - NO ONE can create (applies to ALL users)
-    // Check both stageNumber and initiativeStatus for comprehensive validation
-    if ((selectedInitiative.stageNumber && selectedInitiative.stageNumber > 9) || 
-        selectedInitiative.initiativeStatus === 'Completed') {
-      return false; // Stage 9 has been approved and moved to next stage - READ ONLY for ALL
+    if (isStage9Approved() || selectedInitiative.initiativeStatus === 'Completed') {
+      return false; // Stage 9 has been approved - READ ONLY for ALL users
     }
     
     // SECONDARY CHECK: Role-based permissions (only after stage check passes)
@@ -519,10 +517,8 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
     if (!selectedInitiative) return false;
     
     // SECONDARY CHECK: If stage 9 has been approved - NO ONE can delete (applies to ALL users)
-    // Check both stageNumber and initiativeStatus for comprehensive validation
-    if ((selectedInitiative.stageNumber && selectedInitiative.stageNumber > 9) || 
-        selectedInitiative.initiativeStatus === 'Completed') {
-      return false; // Stage 9 has been approved and moved to next stage - READ ONLY for ALL
+    if (isStage9Approved() || selectedInitiative.initiativeStatus === 'Completed') {
+      return false; // Stage 9 has been approved - READ ONLY for ALL users
     }
     
     // TERTIARY CHECK: Role-based permissions (only after stage and finalization checks pass)
@@ -647,9 +643,8 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
             {(() => {
               if (selectedInitiativeId) {
                 const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
-                if (selectedInitiative && ((selectedInitiative.stageNumber && selectedInitiative.stageNumber > 9) || 
-                    selectedInitiative.initiativeStatus === 'Completed')) {
-                  return 'View monthly monitoring entries (Read-only - Stage 9 completed or Initiative completed)';
+                if (selectedInitiative && (isStage9Approved() || selectedInitiative.initiativeStatus === 'Completed')) {
+                  return 'View monthly monitoring entries (Read-only - Stage 9 approved or Initiative completed)';
                 }
               }
               return user.role === 'IL' 
