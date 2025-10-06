@@ -581,6 +581,18 @@ export const monthlyMonitoringAPI = {
     
     const response = await api.get(`/monthly-monitoring/monthly-target-achieved?${queryParams.toString()}`);
     return response.data;
+  },
+
+  // Get total achieved value for a particular initiative
+  getTotalAchievedValue: async (initiativeId: number) => {
+    const response = await api.get(`/monthly-monitoring/${initiativeId}/total-achieved-value`);
+    return response.data;
+  },
+
+  // Sync Initiative's actualSavings field with total achieved value
+  syncActualSavings: async (initiativeId: number) => {
+    const response = await api.post(`/monthly-monitoring/${initiativeId}/sync-actual-savings`);
+    return response.data;
   }
 };
 

@@ -185,4 +185,8 @@ public interface MonthlyMonitoringEntryRepository extends JpaRepository<MonthlyM
 
     @Query("SELECT m FROM MonthlyMonitoringEntry m WHERE m.initiative.id = :initiativeId AND m.isFinalized = 'Y' AND m.faApproval = 'N' ORDER BY m.monitoringMonth DESC")
     List<MonthlyMonitoringEntry> findFinalizedPendingFAEntries(@Param("initiativeId") Long initiativeId);
+    
+    // Get total achieved value for a particular initiative (only FA approved and finalized entries)
+    @Query("SELECT SUM(mme.achievedValue) FROM MonthlyMonitoringEntry mme WHERE mme.initiative.id = :initiativeId AND mme.achievedValue IS NOT NULL AND mme.faApproval = 'Y' AND mme.isFinalized = 'Y'")
+    java.math.BigDecimal sumAchievedValueByInitiativeId(@Param("initiativeId") Long initiativeId);
 }

@@ -144,6 +144,10 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
   const [monthlyValidationLoading, setMonthlyValidationLoading] = useState(false);
   const [allMonthlyEntriesFinalized, setAllMonthlyEntriesFinalized] = useState<boolean>(true);
 
+  // Total achieved value from monthly monitoring
+  const [totalAchievedValue, setTotalAchievedValue] = useState<number | null>(null);
+  const [loadingAchievedValue, setLoadingAchievedValue] = useState(false);
+
   // Check if user can edit this initiative (role + site restrictions + status check)
   const isCompleted = initiative?.status?.toLowerCase() === 'completed';
   const canEdit = user?.role !== 'VIEWER' && user?.site === initiative?.site && !isCompleted;
@@ -354,6 +358,37 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
         });
     }
   }, [isOpen, pendingTransaction?.stageNumber, initiative?.id]);
+
+  // Fetch total achieved value from monthly monitoring entries and sync to Initiative table
+  useEffect(() => {
+    if (isOpen && initiative?.id) {
+      setLoadingAchievedValue(true);
+      // First sync the actual savings to Initiative table
+      monthlyMonitoringAPI.syncActualSavings(Number(initiative.id))
+        .then((response) => {
+          const value = response.data;
+          setTotalAchievedValue(value ? parseFloat(value) : 0);
+          // Update formData with the fetched value
+          setFormData((prev: any) => ({ ...prev, actualSavings: value }));
+        })
+        .catch((error) => {
+          console.error("Error syncing actual savings:", error);
+          // Fallback to just getting the value without sync
+          monthlyMonitoringAPI.getTotalAchievedValue(Number(initiative.id))
+            .then((response) => {
+              const value = response.data;
+              setTotalAchievedValue(value ? parseFloat(value) : 0);
+              setFormData((prev: any) => ({ ...prev, actualSavings: value }));
+            })
+            .catch(() => {
+              setTotalAchievedValue(0);
+            });
+        })
+        .finally(() => {
+          setLoadingAchievedValue(false);
+        });
+    }
+  }, [isOpen, initiative?.id]);
   
   // Show workflow tab if user can view it (for debugging/visibility) or has pending actions
   const canShowWorkflowActions = user?.role !== 'VIEWER' && user?.site === initiative?.site;
@@ -428,11 +463,10 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
         expectedSavings: typeof formData.expectedSavings === 'string' 
           ? parseFloat(formData.expectedSavings.replace(/[₹,]/g, '')) 
           : formData.expectedSavings,
-        actualSavings: typeof formData.actualSavings === 'string' 
+        actualSavings: totalAchievedValue !== null ? totalAchievedValue : (typeof formData.actualSavings === 'string' 
           ? parseFloat(formData.actualSavings.replace(/[₹,]/g, '')) 
-          : formData.actualSavings,
-        site: formData.site,
-        discipline: formData.discipline,
+          : formData.actualSavings),
+        // Site and Discipline are now disabled fields - not included in update
         budgetType: formData.budgetType || 'NON-BUDGETED',
         startDate: formData.startDate,
         endDate: formData.endDate,
@@ -525,9 +559,18 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
 
       await processStageAction.mutateAsync(data);
       
+      // Sync actual savings to Initiative table after FA approval
+      if (initiative?.id) {
+        try {
+          await monthlyMonitoringAPI.syncActualSavings(Number(initiative.id));
+        } catch (syncError) {
+          console.error("Error syncing actual savings after FA approval:", syncError);
+        }
+      }
+      
       toast({ 
         title: "F&A validation completed successfully", 
-        description: "The workflow has been updated." 
+        description: "The workflow has been updated and actual savings synced." 
       });
       
       setWorkflowComment("");
@@ -1421,9 +1464,15 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                           <div>
                             <p className="text-xs text-muted-foreground">Actual</p>
                             <p className="font-semibold text-orange-600 text-sm">
-                              {typeof initiative?.actualSavings === 'number' 
-                                ? `₹${initiative.actualSavings.toLocaleString()}` 
-                                : initiative?.actualSavings || '₹0'}
+                              {loadingAchievedValue ? (
+                                <span className="text-xs">Loading...</span>
+                              ) : totalAchievedValue !== null ? (
+                                `₹${totalAchievedValue.toLocaleString()}`
+                              ) : typeof initiative?.actualSavings === 'number' ? (
+                                `₹${initiative.actualSavings.toLocaleString()}`
+                              ) : (
+                                initiative?.actualSavings || '₹0'
+                              )}
                             </p>
                           </div>
                         </div>
@@ -1643,46 +1692,23 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                           <Label htmlFor="site" className="text-sm font-medium">
                             Site *
                           </Label>
-                          {isEditing && canEdit ? (
-                            <Select value={formData.site} onValueChange={(value) => setFormData({ ...formData, site: value })}>
-                              <SelectTrigger className="mt-1 h-10">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="NDS">NDS</SelectItem>
-                                <SelectItem value="HSD1">HSD1</SelectItem>
-                                <SelectItem value="HSD2">HSD2</SelectItem>
-                                <SelectItem value="HSD3">HSD3</SelectItem>
-                                <SelectItem value="DHJ">DHJ</SelectItem>
-                                <SelectItem value="APL">APL</SelectItem>
-                                <SelectItem value="TCD">TCD</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          ) : (
-                            <Input value={formData.site || ''} disabled className="mt-1 h-10" />
-                          )}
+                          <Input 
+                            id="site"
+                            value={formData.site || ''} 
+                            disabled={true}
+                            className="mt-1 bg-muted h-10" 
+                          />
                         </div>
                         <div>
                           <Label htmlFor="discipline" className="text-sm font-medium">
                             Discipline *
                           </Label>
-                          {isEditing && canEdit ? (
-                            <Select value={formData.discipline} onValueChange={(value) => setFormData({ ...formData, discipline: value })}>
-                              <SelectTrigger className="mt-1 h-10">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Operation">Operation</SelectItem>
-                                <SelectItem value="Engineering & Utility">Engineering & Utility</SelectItem>
-                                <SelectItem value="Environment">Environment</SelectItem>
-                                <SelectItem value="Safety">Safety</SelectItem>
-                                <SelectItem value="Quality">Quality</SelectItem>
-                                <SelectItem value="Others">Others</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          ) : (
-                            <Input value={formData.discipline || ''} disabled className="mt-1 h-10" />
-                          )}
+                          <Input 
+                            id="discipline"
+                            value={formData.discipline || ''} 
+                            disabled={true}
+                            className="mt-1 bg-muted h-10" 
+                          />
                         </div>
                         {/* Commented out Priority field as requested
                         <div>
@@ -1792,16 +1818,20 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                       
                         <div>
                           <Label htmlFor="actualSavings" className="text-sm font-medium">
-                            Actual Savings (₹)
+                            Actual Savings (₹) {loadingAchievedValue && <span className="text-xs text-muted-foreground">(Loading...)</span>}
                           </Label>
                           <Input
                             id="actualSavings"
-                            value={formData.actualSavings || ''}
-                            disabled={!isEditing || !canEdit}
-                            onChange={(e) => setFormData({ ...formData, actualSavings: e.target.value })}
-                            className="mt-1 h-10"
-                            placeholder="Enter actual savings realized"
+                            value={totalAchievedValue !== null ? `₹${totalAchievedValue.toLocaleString()}` : (formData.actualSavings || '₹0')}
+                            disabled={true}
+                            readOnly={true}
+                            className="mt-1 h-10 bg-muted cursor-not-allowed"
+                            placeholder="Auto-calculated from monthly monitoring"
+                            title="This value is auto-calculated from the sum of achieved values in monthly monitoring entries"
                           />
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Auto-calculated from monthly monitoring entries
+                          </p>
                         </div>
                       </div>
                     </CardContent>

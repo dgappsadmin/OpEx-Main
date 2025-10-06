@@ -364,4 +364,32 @@ public class MonthlyMonitoringController {
                     .body(new ApiResponse<>(false, "Error retrieving monthly target vs achieved data: " + e.getMessage(), null));
         }
     }
+
+    /**
+     * Get total achieved value for a particular initiative
+     */
+    @GetMapping("/{initiativeId}/total-achieved-value")
+    public ResponseEntity<ApiResponse<java.math.BigDecimal>> getTotalAchievedValue(@PathVariable Long initiativeId) {
+        try {
+            java.math.BigDecimal totalAchievedValue = monthlyMonitoringService.getTotalAchievedValueForInitiative(initiativeId);
+            return ResponseEntity.ok(new ApiResponse<>(true, "Total achieved value retrieved successfully", totalAchievedValue));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse<>(false, "Error retrieving total achieved value: " + e.getMessage(), null));
+        }
+    }
+
+    /**
+     * Sync Initiative's actualSavings field with total achieved value from monthly monitoring
+     */
+    @PostMapping("/{initiativeId}/sync-actual-savings")
+    public ResponseEntity<ApiResponse<java.math.BigDecimal>> syncActualSavings(@PathVariable Long initiativeId) {
+        try {
+            java.math.BigDecimal totalAchievedValue = monthlyMonitoringService.syncInitiativeActualSavings(initiativeId);
+            return ResponseEntity.ok(new ApiResponse<>(true, "Initiative actual savings synced successfully", totalAchievedValue));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse<>(false, "Error syncing actual savings: " + e.getMessage(), null));
+        }
+    }
 }

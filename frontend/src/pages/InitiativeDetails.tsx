@@ -564,8 +564,7 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
         actualSavings: typeof formData.actualSavings === 'string' 
           ? parseCurrency(formData.actualSavings)
           : formData.actualSavings,
-        site: formData.site,
-        discipline: formData.discipline,
+        // Site and Discipline are now disabled fields - not included in update
         budgetType: formData.budgetType || 'NON-BUDGETED',
         startDate: formData.startDate,
         endDate: formData.endDate,
@@ -1738,22 +1737,12 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
 
                     <div className="space-y-2">
                       <Label htmlFor="site">Site</Label>
-                      {isEditing ? (
-                        <Select value={formData.site || ''} onValueChange={(value) => setFormData({ ...formData, site: value })}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select site" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="NDS">NDS</SelectItem>
-                            <SelectItem value="DHJ">DHJ</SelectItem>
-                            <SelectItem value="HSD">HSD</SelectItem>
-                            <SelectItem value="APL">APL</SelectItem>
-                            <SelectItem value="TCD">TCD</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <p className="text-sm">{initiative?.site}</p>
-                      )}
+                      <Input
+                        id="site"
+                        value={initiative?.site || ''}
+                        disabled={true}
+                        className="text-sm bg-muted"
+                      />
                     </div>
 
                     
@@ -1781,16 +1770,12 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
 
                     <div className="space-y-2">
                       <Label htmlFor="discipline">Discipline</Label>
-                      {isEditing ? (
-                        <Input
-                          id="discipline"
-                          value={formData.discipline || ''}
-                          onChange={(e) => setFormData({ ...formData, discipline: e.target.value })}
-                          className="text-sm"
-                        />
-                      ) : (
-                        <p className="text-sm">{initiative?.discipline}</p>
-                      )}
+                      <Input
+                        id="discipline"
+                        value={initiative?.discipline || ''}
+                        disabled={true}
+                        className="text-sm bg-muted"
+                      />
                     </div>
                   </div>
 

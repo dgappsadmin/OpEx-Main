@@ -129,15 +129,31 @@ public class MonthlyMonitoringService {
     public List<MonthlyMonitoringEntry> batchFAApproval(List<Long> entryIds, String faComments) {
         List<MonthlyMonitoringEntry> entries = monthlyMonitoringRepository.findAllById(entryIds);
         
+        // Track initiatives that need actualSavings sync
+        java.util.Set<Long> initiativeIdsToSync = new java.util.HashSet<>();
+        
         for (MonthlyMonitoringEntry entry : entries) {
             // Only approve entries that are finalized but not yet F&A approved
             if ("Y".equals(entry.getIsFinalized()) && !"Y".equals(entry.getFaApproval())) {
                 entry.setFaApproval("Y");
                 entry.setFaComments(faComments);
+                initiativeIdsToSync.add(entry.getInitiative().getId());
             }
         }
         
-        return monthlyMonitoringRepository.saveAll(entries);
+        List<MonthlyMonitoringEntry> savedEntries = monthlyMonitoringRepository.saveAll(entries);
+        
+        // Sync actualSavings for all affected initiatives
+        for (Long initiativeId : initiativeIdsToSync) {
+            try {
+                syncInitiativeActualSavings(initiativeId);
+            } catch (Exception e) {
+                // Log error but don't fail the whole transaction
+                System.err.println("Error syncing actual savings for initiative " + initiativeId + ": " + e.getMessage());
+            }
+        }
+        
+        return savedEntries;
     }
 
     // Check if all monthly monitoring entries for an initiative are finalized
@@ -284,5 +300,24 @@ public class MonthlyMonitoringService {
             }
         }
         return "Unknown";
+    }
+
+    // Get total achieved value for a particular initiative
+    public BigDecimal getTotalAchievedValueForInitiative(Long initiativeId) {
+        BigDecimal total = monthlyMonitoringRepository.sumAchievedValueByInitiativeId(initiativeId);
+        return total != null ? total : BigDecimal.ZERO;
+    }
+
+    // Update Initiative's actualSavings field with total achieved value from monthly monitoring
+    @Transactional
+    public BigDecimal syncInitiativeActualSavings(Long initiativeId) {
+        Initiative initiative = initiativeRepository.findById(initiativeId)
+                .orElseThrow(() -> new RuntimeException("Initiative not found"));
+        
+        BigDecimal totalAchievedValue = getTotalAchievedValueForInitiative(initiativeId);
+        initiative.setActualSavings(totalAchievedValue);
+        initiativeRepository.save(initiative);
+        
+        return totalAchievedValue;
     }
 }
