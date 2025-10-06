@@ -1713,64 +1713,64 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
 
               {/* Main Content */}
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="h-5 w-5 text-blue-600" />
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center gap-2 text-sm">
+                    <FileText className="h-3.5 w-3.5 text-blue-600" />
                     {isEditing ? 'Edit Initiative Details' : 'Initiative Summary'}
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="title" className="text-sm font-semibold text-gray-700">Initiative Title *</Label>
+                <CardContent className="space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label htmlFor="title" className="text-xs font-medium text-gray-700">Initiative Title *</Label>
                       {isEditing ? (
                         <Input
                           id="title"
                           value={formData.title || ''}
                           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                          className="text-sm border-gray-200 focus:border-blue-400 focus:ring-blue-400"
+                          className="text-xs h-8 border-gray-200 focus:border-blue-400 focus:ring-blue-400"
                           placeholder="Enter initiative title"
                         />
                       ) : (
-                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3">
-                          <p className="text-sm font-semibold text-gray-800 leading-relaxed">
-                            {initiative?.title && initiative.title.length > 100 
-                              ? `${initiative.title.substring(0, 100)}...` 
+                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-md p-2">
+                          <p className="text-xs font-medium text-gray-800 leading-tight">
+                            {initiative?.title && initiative.title.length > 80 
+                              ? `${initiative.title.substring(0, 80)}...` 
                               : initiative?.title || 'Untitled Initiative'}
                           </p>
                         </div>
                       )}
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="initiativeNumber" className="text-sm font-semibold text-gray-700">Initiative Number</Label>
-                      <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-lg p-3">
-                        <div className="flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-emerald-600" />
-                          <span className="text-sm font-mono font-bold text-emerald-800 tracking-wider">
+                    <div className="space-y-1">
+                      <Label htmlFor="initiativeNumber" className="text-xs font-medium text-gray-700">Initiative Number</Label>
+                      <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-md p-2">
+                        <div className="flex items-center gap-1.5">
+                          <FileText className="h-3 w-3 text-emerald-600" />
+                          <span className="text-xs font-mono font-bold text-emerald-800 tracking-wide">
                             {initiative?.initiativeNumber || 'AUTO-GENERATED'}
                           </span>
                         </div>
-                        <p className="text-xs text-emerald-600 mt-1">Initiative Reference Number</p>
+                        <p className="text-2xs text-emerald-600 mt-0.5">Initiative Reference Number</p>
                       </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="site" className="text-sm font-semibold text-gray-700">Site</Label>
-                      <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-lg p-3">
-                        <div className="flex items-center gap-2">
-                          <MapPin className="h-4 w-4 text-blue-600" />
-                          <span className="text-sm font-semibold text-blue-800">
+                    <div className="space-y-1">
+                      <Label htmlFor="site" className="text-xs font-medium text-gray-700">Site</Label>
+                      <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-md p-2">
+                        <div className="flex items-center gap-1.5">
+                          <MapPin className="h-3 w-3 text-blue-600" />
+                          <span className="text-xs font-medium text-blue-800">
                             {initiative?.site || 'Not Specified'}
                           </span>
                         </div>
-                        <p className="text-xs text-blue-600 mt-1">Location/Plant</p>
+                        <p className="text-2xs text-blue-600 mt-0.5">Location/Plant</p>
                       </div>
                     </div>
 
                     
-                    <div className="space-y-2">
-                      <Label htmlFor="expectedSavings" className="text-sm font-semibold text-gray-700">Expected Savings (₹)</Label>
+                    <div className="space-y-1">
+                      <Label htmlFor="expectedSavings" className="text-xs font-medium text-gray-700">Expected Savings (₹)</Label>
                       {isEditing ? (
                         <Input
                           id="expectedSavings"
@@ -1779,57 +1779,57 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                             ? parseCurrency(formData.expectedSavings)
                             : formData.expectedSavings || ''}
                           onChange={(e) => setFormData({ ...formData, expectedSavings: parseFloat(e.target.value) || 0 })}
-                          className="text-sm"
+                          className="text-xs h-8"
                           placeholder="Enter expected savings in rupees"
                         />
                       ) : (
-                        <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-3">
-                          <div className="flex items-center gap-2">
-                            <TrendingUp className="h-4 w-4 text-green-600" />
-                            <span className="text-lg font-bold text-green-700">
+                        <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-md p-2">
+                          <div className="flex items-center gap-1.5">
+                            <TrendingUp className="h-3 w-3 text-green-600" />
+                            <span className="text-sm font-bold text-green-700">
                               {typeof initiative?.expectedSavings === 'number' 
                                 ? formatCurrencyInLakhs(initiative.expectedSavings)
                                 : initiative?.expectedSavings || '₹0'}
                             </span>
                           </div>
-                          <p className="text-xs text-green-600 mt-1">Projected Financial Impact</p>
+                          <p className="text-2xs text-green-600 mt-0.5">Projected Financial Impact</p>
                         </div>
                       )}
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="discipline" className="text-sm font-semibold text-gray-700">Discipline</Label>
-                      <div className="bg-gradient-to-r from-purple-50 to-violet-50 border border-purple-200 rounded-lg p-3">
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-purple-600" />
-                          <span className="text-sm font-semibold text-purple-800">
+                    <div className="space-y-1">
+                      <Label htmlFor="discipline" className="text-xs font-medium text-gray-700">Discipline</Label>
+                      <div className="bg-gradient-to-r from-purple-50 to-violet-50 border border-purple-200 rounded-md p-2">
+                        <div className="flex items-center gap-1.5">
+                          <User className="h-3 w-3 text-purple-600" />
+                          <span className="text-xs font-medium text-purple-800">
                             {initiative?.discipline || 'Not Specified'}
                           </span>
                         </div>
-                        <p className="text-xs text-purple-600 mt-1">Department/Function</p>
+                        <p className="text-2xs text-purple-600 mt-0.5">Department/Function</p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="description" className="text-sm font-semibold text-gray-700">Description</Label>
+                  <div className="space-y-1">
+                    <Label htmlFor="description" className="text-xs font-medium text-gray-700">Description</Label>
                     {isEditing ? (
                       <Textarea
                         id="description"
                         value={formData.description || ''}
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        className="min-h-[120px] text-sm"
+                        className="min-h-[80px] text-xs"
                         placeholder="Provide a detailed description of the initiative"
                       />
                     ) : (
-                      <div className="bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-200 rounded-lg p-4 min-h-[120px]">
-                        <p className="text-sm text-gray-700 leading-relaxed">
-                          {initiative?.description && initiative.description.length > 500 
-                            ? `${initiative.description.substring(0, 500)}...` 
+                      <div className="bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-200 rounded-md p-2 min-h-[80px]">
+                        <p className="text-xs text-gray-700 leading-relaxed">
+                          {initiative?.description && initiative.description.length > 300 
+                            ? `${initiative.description.substring(0, 300)}...` 
                             : initiative?.description || 'No description provided'}
                         </p>
-                        {initiative?.description && initiative.description.length > 500 && (
-                          <p className="text-xs text-blue-600 mt-2 cursor-pointer hover:underline">
+                        {initiative?.description && initiative.description.length > 300 && (
+                          <p className="text-2xs text-blue-600 mt-1 cursor-pointer hover:underline">
                             Click to view full description
                           </p>
                         )}
@@ -2203,6 +2203,7 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                               onChange={(e) => setWorkflowComment(e.target.value)}
                               placeholder="Provide your comments for this approval..."
                               rows={3}
+                              className="mt-2 border-[1px] border-border focus-visible:ring-1"
                             />
                           </div>
 

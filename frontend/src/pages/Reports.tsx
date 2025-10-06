@@ -68,6 +68,10 @@ export default function Reports({ user }: ReportsProps) {
   const [selectedBudgetType, setSelectedBudgetType] = useState<string>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   
+  // Pagination state for detailed tab
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [itemsPerPage] = useState<number>(10);
+  
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
   const [monthlyActualSavingsData, setMonthlyActualSavingsData] = useState<any>(null);
   const [monthlyTargetAchievedData, setMonthlyTargetAchievedData] = useState<any>(null);
@@ -109,6 +113,19 @@ export default function Reports({ user }: ReportsProps) {
   const filteredInitiativesForAmounts = useMemo(() => {
     return filteredInitiatives.filter((i: any) => i.status !== 'Rejected' && i.status !== 'Dropped');
   }, [filteredInitiatives]);
+
+  // Pagination logic for detailed tab
+  const totalPages = Math.ceil(filteredInitiatives.length / itemsPerPage);
+  const paginatedInitiatives = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredInitiatives.slice(startIndex, endIndex);
+  }, [filteredInitiatives, currentPage, itemsPerPage]);
+
+  // Reset current page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedSite, selectedBudgetType, selectedCategory, selectedFinancialYear]);
 
   // Enhanced currency formatting for improved display
   const formatCurrency = (amount: number): string => {
@@ -1097,7 +1114,7 @@ export default function Reports({ user }: ReportsProps) {
                     Initiative Details
                   </CardTitle>
                   <CardDescription className="text-xs">
-                    Detailed view of initiatives.
+                    Detailed view of initiatives ({filteredInitiatives.length} total).
                   </CardDescription>
                 </div>
                 <Button 
@@ -1110,77 +1127,136 @@ export default function Reports({ user }: ReportsProps) {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-xs">Title</TableHead>
-                      <TableHead className="text-xs">Site</TableHead>
-                      <TableHead className="text-xs">Status</TableHead>
-                      <TableHead className="text-xs">Budget Type</TableHead>
-                      <TableHead className="text-xs">Expected Savings</TableHead>
-                      <TableHead className="text-xs">Start Date</TableHead>
-                      <TableHead className="text-xs">End Date</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredInitiatives.slice(0, 10).map((initiative: any) => (
-                      <TableRow key={initiative.id} className="hover:bg-muted/50">
-                        <TableCell className="font-medium text-xs">
-                          <div className="max-w-48 truncate">
-                            {initiative.initiativeNumber || initiative.title}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-xs">{initiative.site}</TableCell>
-                        <TableCell className="text-xs">
-                          <Badge className={`${getStatusColor(initiative.status)} text-xs font-medium shadow-sm`}>
-                            {initiative.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-xs">
-                          <Badge 
-                            className={`${initiative.budgetType?.toLowerCase() === 'budgeted' ? 
-                              'bg-blue-500 hover:bg-blue-600 text-white border-blue-500' : 
-                              'bg-purple-500 hover:bg-purple-600 text-white border-purple-500'} text-xs font-medium shadow-sm`}
-                          >
-                            {initiative.budgetType || 'Budgeted'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-xs font-medium">
-                          {typeof initiative.expectedSavings === 'string' 
-                            ? initiative.expectedSavings 
-                            : formatCurrency(initiative.expectedSavings || 0)
-                          }
-                        </TableCell>
-                        <TableCell className="text-xs">
-                          {initiative.startDate 
-                            ? new Date(initiative.startDate).toLocaleDateString('en-GB', {
-                                day: '2-digit',
-                                month: '2-digit', 
-                                year: 'numeric'
-                              })
-                            : 'N/A'}
-                        </TableCell>
-                        <TableCell className="text-xs">
-                          {initiative.endDate 
-                            ? new Date(initiative.endDate).toLocaleDateString('en-GB', {
-                                day: '2-digit',
-                                month: '2-digit', 
-                                year: 'numeric'
-                              })
-                            : 'N/A'}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-              {filteredInitiatives.length > 10 && (
-                <div className="mt-3 text-center">
-                  <p className="text-xs text-muted-foreground">
-                    Showing first 10 of {filteredInitiatives.length} initiatives
-                  </p>
+              {filteredInitiatives.length === 0 ? (
+                <div className="text-center py-12">
+                  <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No Initiatives Found</h3>
+                  <p className="text-muted-foreground text-sm">No initiatives match the selected filters.</p>
                 </div>
+              ) : (
+                <>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-xs">Title</TableHead>
+                          <TableHead className="text-xs">Site</TableHead>
+                          <TableHead className="text-xs">Status</TableHead>
+                          <TableHead className="text-xs">Budget Type</TableHead>
+                          <TableHead className="text-xs">Expected Savings</TableHead>
+                          <TableHead className="text-xs">Start Date</TableHead>
+                          <TableHead className="text-xs">End Date</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {paginatedInitiatives.map((initiative: any) => (
+                          <TableRow key={initiative.id} className="hover:bg-muted/50">
+                            <TableCell className="font-medium text-xs">
+                              <div className="max-w-48 truncate">
+                                {initiative.initiativeNumber || initiative.title}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-xs">{initiative.site}</TableCell>
+                            <TableCell className="text-xs">
+                              <Badge className={`${getStatusColor(initiative.status)} text-xs font-medium shadow-sm`}>
+                                {initiative.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-xs">
+                              <Badge 
+                                className={`${initiative.budgetType?.toLowerCase() === 'budgeted' ? 
+                                  'bg-blue-500 hover:bg-blue-600 text-white border-blue-500' : 
+                                  'bg-purple-500 hover:bg-purple-600 text-white border-purple-500'} text-xs font-medium shadow-sm`}
+                              >
+                                {initiative.budgetType || 'Budgeted'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-xs font-medium">
+                              {typeof initiative.expectedSavings === 'string' 
+                                ? initiative.expectedSavings 
+                                : formatCurrency(initiative.expectedSavings || 0)
+                              }
+                            </TableCell>
+                            <TableCell className="text-xs">
+                              {initiative.startDate 
+                                ? new Date(initiative.startDate).toLocaleDateString('en-GB', {
+                                    day: '2-digit',
+                                    month: '2-digit', 
+                                    year: 'numeric'
+                                  })
+                                : 'N/A'}
+                            </TableCell>
+                            <TableCell className="text-xs">
+                              {initiative.endDate 
+                                ? new Date(initiative.endDate).toLocaleDateString('en-GB', {
+                                    day: '2-digit',
+                                    month: '2-digit', 
+                                    year: 'numeric'
+                                  })
+                                : 'N/A'}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  {/* Pagination Controls */}
+                  {totalPages > 1 && (
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 pt-4 border-t">
+                      <div className="text-xs text-muted-foreground">
+                        Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredInitiatives.length)} of {filteredInitiatives.length} initiatives
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                          disabled={currentPage === 1}
+                          className="h-8 px-3 text-xs"
+                        >
+                          Previous
+                        </Button>
+                        <div className="flex items-center gap-1">
+                          {/* Show page numbers */}
+                          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                            let pageNum;
+                            if (totalPages <= 5) {
+                              pageNum = i + 1;
+                            } else if (currentPage <= 3) {
+                              pageNum = i + 1;
+                            } else if (currentPage >= totalPages - 2) {
+                              pageNum = totalPages - 4 + i;
+                            } else {
+                              pageNum = currentPage - 2 + i;
+                            }
+
+                            return (
+                              <Button
+                                key={pageNum}
+                                variant={currentPage === pageNum ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setCurrentPage(pageNum)}
+                                className="h-8 w-8 p-0 text-xs"
+                              >
+                                {pageNum}
+                              </Button>
+                            );
+                          })}
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                          disabled={currentPage === totalPages}
+                          className="h-8 px-3 text-xs"
+                        >
+                          Next
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>

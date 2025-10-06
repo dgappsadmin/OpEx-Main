@@ -736,7 +736,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                     value={formData.remarks || ''}
                     onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
                     placeholder="Enter any remarks, notes, or additional information"
-                    className="min-h-[80px] focus:ring-2 focus:ring-gray-500"
+                    className="mt-2 min-h-[80px] border-[1px] border-border focus-visible:ring-1"
                     required
                   />
                 </div>
