@@ -466,7 +466,9 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
         actualSavings: totalAchievedValue !== null ? totalAchievedValue : (typeof formData.actualSavings === 'string' 
           ? parseFloat(formData.actualSavings.replace(/[₹,]/g, '')) 
           : formData.actualSavings),
-        // Site and Discipline are now disabled fields - not included in update
+        // Site and Discipline are required fields, include existing values
+        site: formData.site || initiative?.site,
+        discipline: formData.discipline || initiative?.discipline,
         budgetType: formData.budgetType || 'NON-BUDGETED',
         startDate: formData.startDate,
         endDate: formData.endDate,
@@ -2178,29 +2180,6 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-4">
-                        {/* Current Stage Information */}
-                        <Alert>
-                          <CheckCircle className="h-4 w-4" />
-                          <AlertDescription>
-                            <div className="space-y-2">
-                              <div className="flex items-center gap-2">
-                                <Badge variant="outline" className="font-medium">
-                                  Stage {pendingTransaction?.stageNumber || initiative?.currentStage || 1}
-                                </Badge>
-                                <span className="text-sm font-medium">
-                                  {WORKFLOW_STAGE_NAMES[pendingTransaction?.stageNumber] || pendingTransaction?.stageName || currentStageName}
-                                </span>
-                              </div>
-                              <p className="text-xs text-muted-foreground">
-                                {pendingTransaction 
-                                  ? getStageDescription(pendingTransaction.stageNumber)
-                                  : "No pending approval found for you on this initiative."
-                                }
-                              </p>
-                            </div>
-                          </AlertDescription>
-                        </Alert>
-
                         {/* Stage-specific content */}
                         {getStageSpecificWorkflowContent()}
 

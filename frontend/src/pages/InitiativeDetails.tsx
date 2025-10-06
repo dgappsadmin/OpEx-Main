@@ -561,10 +561,10 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
         expectedSavings: typeof formData.expectedSavings === 'string' 
           ? parseCurrency(formData.expectedSavings)
           : formData.expectedSavings,
-        actualSavings: typeof formData.actualSavings === 'string' 
-          ? parseCurrency(formData.actualSavings)
-          : formData.actualSavings,
-        // Site and Discipline are now disabled fields - not included in update
+        // actualSavings is auto-calculated from monthly monitoring - not included in manual updates
+        // Site and Discipline are required fields, include existing values
+        site: formData.site || initiative?.site,
+        discipline: formData.discipline || initiative?.discipline,
         budgetType: formData.budgetType || 'NON-BUDGETED',
         startDate: formData.startDate,
         endDate: formData.endDate,
@@ -1949,29 +1949,20 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
 
                       <div className="space-y-2">
                         <Label htmlFor="actualSavings" className="text-sm font-semibold text-gray-700">Actual Savings (₹)</Label>
-                        {isEditing ? (
-                          <Input
-                            id="actualSavings"
-                            type="number"
-                            value={typeof formData.actualSavings === 'string' 
-                              ? parseCurrency(formData.actualSavings)
-                              : formData.actualSavings || ''}
-                            onChange={(e) => setFormData({ ...formData, actualSavings: parseFloat(e.target.value) || 0 })}
-                            placeholder="Enter amount in rupees"
-                          />
-                        ) : (
-                          <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-lg p-3">
-                            <div className="flex items-center gap-2">
-                              <CheckCircle className="h-4 w-4 text-emerald-600" />
-                              <span className="text-sm font-bold text-emerald-800">
-                                {typeof initiative?.actualSavings === 'number' 
-                                  ? formatCurrencyInLakhs(initiative.actualSavings)
-                                  : initiative?.actualSavings || '₹0'}
-                              </span>
-                            </div>
-                            <p className="text-xs text-emerald-600 mt-1">Realized Savings</p>
-                          </div>
-                        )}
+                        <Input
+                          id="actualSavings"
+                          value={typeof initiative?.actualSavings === 'number' 
+                            ? formatCurrencyInLakhs(initiative.actualSavings)
+                            : initiative?.actualSavings || '₹0'}
+                          disabled={true}
+                          readOnly={true}
+                          className="bg-muted cursor-not-allowed"
+                          placeholder="Auto-calculated from monthly monitoring"
+                          title="This value is auto-calculated from the sum of achieved values in monthly monitoring entries"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Auto-calculated from monthly monitoring entries
+                        </p>
                       </div>
 
                       <div className="space-y-2">
@@ -2197,15 +2188,6 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                       </div>
                     ) : (
                       <div className="space-y-6">
-                        <Alert>
-                          <CheckCircle2 className="h-4 w-4" />
-                          <AlertDescription>
-                            <strong>{WORKFLOW_STAGE_NAMES[pendingTransaction.stageNumber] || pendingTransaction.stageName}</strong>
-                            <br />
-                            {getStageDescription(pendingTransaction.stageNumber)}
-                          </AlertDescription>
-                        </Alert>
-
                         {/* Stage-specific content */}
                         <div className="space-y-4">
                           {getStageSpecificWorkflowContent()}
