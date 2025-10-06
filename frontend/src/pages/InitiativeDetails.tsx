@@ -1724,19 +1724,30 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                     <div className="space-y-1">
                       <Label htmlFor="title" className="text-xs font-medium text-gray-700">Initiative Title *</Label>
                       {isEditing ? (
-                        <Input
-                          id="title"
-                          value={formData.title || ''}
-                          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                          className="text-xs h-8 border-gray-200 focus:border-blue-400 focus:ring-blue-400"
-                          placeholder="Enter initiative title"
-                        />
+                        <div className="relative">
+                          <Input
+                            id="title"
+                            value={formData.title || ''}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              if (value.length <= 25) {
+                                setFormData({ ...formData, title: value });
+                              }
+                            }}
+                            maxLength={25}
+                            className="text-xs h-8 border-gray-200 focus:border-blue-400 focus:ring-blue-400 pr-12"
+                            placeholder="Enter initiative title (max 25 chars)"
+                          />
+                          <div className="absolute right-2 top-1/2 transform -translate-y-1/2 text-xs text-muted-foreground">
+                            {(formData.title || '').length}/25
+                          </div>
+                        </div>
                       ) : (
-                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-md p-2">
-                          <p className="text-xs font-medium text-gray-800 leading-tight">
-                            {initiative?.title && initiative.title.length > 80 
-                              ? `${initiative.title.substring(0, 80)}...` 
-                              : initiative?.title || 'Untitled Initiative'}
+                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-md p-2 min-h-[32px] flex items-center">
+                          <p className="text-xs font-medium text-gray-800 leading-tight break-words overflow-hidden w-full">
+                            <span className="block truncate" title={initiative?.title || 'Untitled Initiative'}>
+                              {initiative?.title || 'Untitled Initiative'}
+                            </span>
                           </p>
                         </div>
                       )}
@@ -1840,45 +1851,54 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
               </Card>
             </TabsContent>
 
-            <TabsContent value="details" className="space-y-6">
+            <TabsContent value="details" className="space-y-4">
               <Card>
-                <CardHeader>
-                  <CardTitle>Detailed Information</CardTitle>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    {isEditing ? 'Edit Initiative Details' : 'Initiative Summary'}
+                  </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-6">
+                <CardContent className="space-y-3">
                   {/* Timeline Information */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold flex items-center gap-2">
-                      <Calendar className="h-5 w-5 text-blue-600" />
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-semibold flex items-center gap-1.5">
+                      <Calendar className="h-3 w-3 text-blue-600" />
                       Timeline Information
                     </h3>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="startDate">Start Date</Label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label htmlFor="startDate" className="text-xs font-medium text-gray-700">Start Date</Label>
                         {isEditing ? (
                           <Input
                             id="startDate"
                             type="date"
                             value={formData.startDate || ''}
                             onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                            className="text-xs h-8 border-gray-200 focus:border-blue-400 focus:ring-blue-400"
                           />
                         ) : (
-                          <p className="text-sm">{initiative?.startDate || 'Not set'}</p>
+                          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-md p-2">
+                            <p className="text-xs font-medium text-gray-800">{initiative?.startDate || 'Not set'}</p>
+                          </div>
                         )}
                       </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="endDate">End Date</Label>
+                      <div className="space-y-1">
+                        <Label htmlFor="endDate" className="text-xs font-medium text-gray-700">End Date</Label>
                         {isEditing ? (
                           <Input
                             id="endDate"
                             type="date"
                             value={formData.endDate || ''}
                             onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                            className="text-xs h-8 border-gray-200 focus:border-blue-400 focus:ring-blue-400"
                           />
                         ) : (
-                          <p className="text-sm">{initiative?.endDate || 'Not set'}</p>
+                          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-md p-2">
+                            <p className="text-xs font-medium text-gray-800">{initiative?.endDate || 'Not set'}</p>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -1887,29 +1907,29 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                   <Separator />
 
                   {/* Financial Information */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold flex items-center gap-2">
-                      <DollarSign className="h-5 w-5 text-green-600" />
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-semibold flex items-center gap-1.5">
+                      <DollarSign className="h-3 w-3 text-green-600" />
                       Financial Information
                     </h3>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="budgetType" className="text-sm font-semibold text-gray-700">Budget Type</Label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label htmlFor="budgetType" className="text-xs font-medium text-gray-700">Budget Type</Label>
                         {isEditing ? (
                           <Select value={formData.budgetType || 'NON-BUDGETED'} onValueChange={(value) => setFormData({ ...formData, budgetType: value })}>
-                            <SelectTrigger className="h-10">
+                            <SelectTrigger className="h-8 text-xs">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="BUDGETED">
-                                <div className="flex items-center gap-2">
+                              <SelectItem value="BUDGETED" className="text-xs">
+                                <div className="flex items-center gap-1.5">
                                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                                   <span>Budgeted</span>
                                 </div>
                               </SelectItem>
-                              <SelectItem value="NON-BUDGETED">
-                                <div className="flex items-center gap-2">
+                              <SelectItem value="NON-BUDGETED" className="text-xs">
+                                <div className="flex items-center gap-1.5">
                                   <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
                                   <span>Non-Budgeted</span>
                                 </div>
@@ -1921,22 +1941,22 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                             initiative?.budgetType === 'BUDGETED'
                               ? 'from-green-50 to-emerald-50 border-green-200'
                               : 'from-orange-50 to-amber-50 border-orange-200'
-                          } border rounded-lg p-3`}>
-                            <div className="flex items-center gap-2">
-                              <div className={`p-1 rounded-full ${
+                          } border rounded-md p-2`}>
+                            <div className="flex items-center gap-1.5">
+                              <div className={`p-0.5 rounded-full ${
                                 initiative?.budgetType === 'BUDGETED' ? 'bg-green-100' : 'bg-orange-100'
                               }`}>
-                                <DollarSign className={`h-3 w-3 ${
+                                <DollarSign className={`h-2.5 w-2.5 ${
                                   initiative?.budgetType === 'BUDGETED' ? 'text-green-600' : 'text-orange-600'
                                 }`} />
                               </div>
-                              <span className={`text-sm font-semibold ${
+                              <span className={`text-xs font-semibold ${
                                 initiative?.budgetType === 'BUDGETED' ? 'text-green-800' : 'text-orange-800'
                               }`}>
                                 {initiative?.budgetType === 'BUDGETED' ? 'BUDGETED' : 'NON-BUDGETED'}
                               </span>
                             </div>
-                            <p className={`text-xs mt-1 ${
+                            <p className={`text-xs mt-0.5 ${
                               initiative?.budgetType === 'BUDGETED' ? 'text-green-600' : 'text-orange-600'
                             }`}>
                               {initiative?.budgetType === 'BUDGETED' 
@@ -1947,8 +1967,8 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                         )}
                       </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="actualSavings" className="text-sm font-semibold text-gray-700">Actual Savings (₹)</Label>
+                      <div className="space-y-1">
+                        <Label htmlFor="actualSavings" className="text-xs font-medium text-gray-700">Actual Savings (₹)</Label>
                         <Input
                           id="actualSavings"
                           value={typeof initiative?.actualSavings === 'number' 
@@ -1956,7 +1976,7 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                             : initiative?.actualSavings || '₹0'}
                           disabled={true}
                           readOnly={true}
-                          className="bg-muted cursor-not-allowed"
+                          className="bg-muted cursor-not-allowed text-xs h-8"
                           placeholder="Auto-calculated from monthly monitoring"
                           title="This value is auto-calculated from the sum of achieved values in monthly monitoring entries"
                         />
@@ -1965,8 +1985,8 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                         </p>
                       </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="targetValue" className="text-sm font-semibold text-gray-700">Target Value (₹)</Label>
+                      <div className="space-y-1">
+                        <Label htmlFor="targetValue" className="text-xs font-medium text-gray-700">Target Value (₹)</Label>
                         {isEditing ? (
                           <Input
                             id="targetValue"
@@ -1974,16 +1994,17 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                             value={formData.targetValue || ''}
                             onChange={(e) => setFormData({ ...formData, targetValue: parseFloat(e.target.value) || 0 })}
                             placeholder="Enter target value"
+                            className="text-xs h-8 border-gray-200 focus:border-blue-400 focus:ring-blue-400"
                           />
                         ) : (
-                          <div className="bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200 rounded-lg p-3">
-                            <div className="flex items-center gap-2">
-                              <Target className="h-4 w-4 text-indigo-600" />
-                              <span className="text-sm font-bold text-indigo-800">
+                          <div className="bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200 rounded-md p-2">
+                            <div className="flex items-center gap-1.5">
+                              <Target className="h-3 w-3 text-indigo-600" />
+                              <span className="text-xs font-bold text-indigo-800">
                                 {initiative?.targetValue ? formatCurrencyInLakhs(initiative.targetValue) : '₹0'}
                               </span>
                             </div>
-                            <p className="text-xs text-indigo-600 mt-1">Expected Achievement</p>
+                            <p className="text-xs text-indigo-600 mt-0.5">Expected Achievement</p>
                           </div>
                         )}
                       </div>

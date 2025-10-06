@@ -1594,7 +1594,11 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                     <CardContent>
                       <div className="space-y-3">
                         <div>
-                          <p className="font-semibold text-sm leading-tight">{initiative?.title}</p>
+                          <p className="font-semibold text-sm leading-tight break-words overflow-hidden w-full" title={initiative?.title}>
+                            <span className="block truncate">
+                              {initiative?.title}
+                            </span>
+                          </p>
                           <div className="flex flex-wrap items-center gap-1 mt-1">
                             <Badge variant="outline" className="text-xs">
                               {initiative?.discipline}
@@ -1682,13 +1686,32 @@ export default function InitiativeModal({ isOpen, onClose, initiative, mode, onS
                           <Label htmlFor="title" className="text-sm font-medium">
                             Title *
                           </Label>
-                          <Input
-                            id="title"
-                            value={formData.title || ''}
-                            disabled={!isEditing || !canEdit}
-                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                            className="mt-1 h-10"
-                          />
+                          {isEditing && canEdit ? (
+                            <div className="relative">
+                              <Input
+                                id="title"
+                                value={formData.title || ''}
+                                maxLength={25}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  if (value.length <= 25) {
+                                    setFormData({ ...formData, title: value });
+                                  }
+                                }}
+                                className="mt-1 h-10 pr-12"
+                                placeholder="Enter title (max 25 chars)"
+                              />
+                              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">
+                                {(formData.title || '').length}/25
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="mt-1 h-10 px-3 border border-input bg-muted rounded-md flex items-center">
+                              <span className="text-sm text-muted-foreground truncate block w-full" title={formData.title || initiative?.title || 'Untitled Initiative'}>
+                                {formData.title || initiative?.title || 'Untitled Initiative'}
+                              </span>
+                            </div>
+                          )}
                         </div>
                         <div>
                           <Label htmlFor="site" className="text-sm font-medium">
