@@ -34,8 +34,8 @@ interface DashboardProps {
 export default function Dashboard({ user }: DashboardProps) {
   const navigate = useNavigate();
   
-  // State for site filter - defaults to "Overall"
-  const [selectedSite, setSelectedSite] = useState<string>("overall");
+  // State for site filter - defaults to user's site
+  const [selectedSite, setSelectedSite] = useState<string>(user.site || "overall");
   
   // Determine which site to use for API calls
   const apiSite = selectedSite === "overall" ? undefined : selectedSite;

@@ -30,37 +30,9 @@ export default function PerformanceAnalysis({
   initiatives = [] // Add initiatives prop with default empty array
 }: PerformanceAnalysisProps) {
   
-  // Filter out rejected and dropped initiatives (similar to KPI.tsx logic)
-  const filteredInitiatives = initiatives.filter((i: any) => 
-    i.status !== 'Rejected' && i.status !== 'Dropped'
-  );
-  
-  // Calculate filtered potential savings for Annualized and Current FY
-  const filteredPotentialSavingsAnnualized = filteredInitiatives.length > 0 
-    ? filteredInitiatives.reduce((sum: number, i: any) => {
-        const savings = typeof i.expectedSavings === 'string' 
-          ? parseFloat(i.expectedSavings.replace(/[₹L,]/g, '')) || 0
-          : i.expectedSavings || 0;
-        return sum + savings;
-      }, 0)
-    : 0;
-    
-  const filteredPotentialSavingsCurrentFY = filteredInitiatives.length > 0
-    ? filteredInitiatives.reduce((sum: number, i: any) => {
-        const savings = typeof i.expectedSavings === 'string' 
-          ? parseFloat(i.expectedSavings.replace(/[₹L,]/g, '')) || 0
-          : i.expectedSavings || 0;
-        return sum + savings;
-      }, 0)
-    : 0;
-  
-  // Use filtered values for Annualized Potential and Current FY Potential, 
-  // but keep original metrics for other values like Actual Savings
-  const adjustedMetrics = {
-    ...metrics,
-    potentialSavingsAnnualized: filteredPotentialSavingsAnnualized,
-    potentialSavingsCurrentFY: filteredPotentialSavingsCurrentFY,
-  };
+  // Use metrics directly from backend - they are already correctly calculated
+  // and separated by budget/non-budget. No need for client-side recalculation.
+  const adjustedMetrics = metrics;
   
   // Smart currency formatting that handles all amounts automatically and removes trailing zeros
   const formatCurrencyInLakhs = (amount: number): string => {
@@ -170,16 +142,16 @@ export default function PerformanceAnalysis({
       value: formatCurrencyInLakhs(adjustedMetrics?.potentialSavingsAnnualized || 0),
       subtitle: "Total yearly potential",
       icon: TrendingUp,
-      trend: formatTrend(adjustedMetrics?.potentialSavingsAnnualizedTrend || metrics?.potentialSavingsAnnualizedTrend) + " vs target",
-      trendDirection: getTrendDirection(adjustedMetrics?.potentialSavingsAnnualizedTrend || metrics?.potentialSavingsAnnualizedTrend)
+      trend: formatTrend(metrics?.potentialSavingsAnnualizedTrend) + " vs target",
+      trendDirection: getTrendDirection(metrics?.potentialSavingsAnnualizedTrend)
     },
     {
       title: "Current FY Potential",
       value: formatCurrencyInLakhs(adjustedMetrics?.potentialSavingsCurrentFY || 0),
       subtitle: "This financial year",
       icon: IndianRupee,
-      trend: formatTrend(adjustedMetrics?.potentialSavingsCurrentFYTrend || metrics?.potentialSavingsCurrentFYTrend) + " vs last FY",
-      trendDirection: getTrendDirection(adjustedMetrics?.potentialSavingsCurrentFYTrend || metrics?.potentialSavingsCurrentFYTrend)
+      trend: formatTrend(metrics?.potentialSavingsCurrentFYTrend) + " vs last FY",
+      trendDirection: getTrendDirection(metrics?.potentialSavingsCurrentFYTrend)
     },
     {
       title: "Actual Savings",

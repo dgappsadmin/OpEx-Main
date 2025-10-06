@@ -1,6 +1,7 @@
 package com.company.opexhub.security;
 
 import com.company.opexhub.service.CustomUserDetailsService;
+import com.company.opexhub.service.TokenInvalidationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Date;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -24,6 +26,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Autowired
     private CustomUserDetailsService customUserDetailsService;
+    
+    @Autowired
+    private TokenInvalidationService tokenInvalidationService;
 
     private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
@@ -33,6 +38,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String jwt = getJwtFromRequest(request);
 
             if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
+                // Check if token was issued before mass logout
+                Date tokenIssuedAt = tokenProvider.getIssuedAtDateFromJWT(jwt);
+                
+                if (!tokenInvalidationService.isTokenValid(tokenIssuedAt)) {
+                    logger.info("Token invalidated due to mass logout");
+                    filterChain.doFilter(request, response);
+                    return;
+                }
+                
                 Long userId = tokenProvider.getUserIdFromJWT(jwt);
 
                 UserDetails userDetails = customUserDetailsService.loadUserById(userId);

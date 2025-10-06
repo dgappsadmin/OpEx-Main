@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { User } from "@/lib/mockData";
 import { useInitiatives } from "@/hooks/useInitiatives";
 import { 
@@ -19,13 +20,13 @@ import { Pagination, PaginationContent, PaginationItem, PaginationLink, Paginati
 import { useToast } from "@/hooks/use-toast";
 import WorkflowStageModal from "@/components/workflow/WorkflowStageModal";
 import { DynamicWorkflowTracker } from "@/components/workflow/DynamicWorkflowTracker";
-import InitiativeModal from "@/components/modals/InitiativeModal";
 
 interface NewWorkflowProps {
   user: User;
 }
 
 export default function NewWorkflow({ user }: NewWorkflowProps) {
+  const navigate = useNavigate();
   const [selectedInitiative, setSelectedInitiative] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
@@ -35,10 +36,6 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
   const [statusFilter, setStatusFilter] = useState("default"); // "default" or "completed"
   // const [siteFilter, setSiteFilter] = useState(user.site || ""); // Default to user's site
   const [siteFilter, setSiteFilter] = useState(user.site === "CORP" ? "all" : user.site || "");
-  
-  // Initiative Modal state
-  const [isInitiativeModalOpen, setIsInitiativeModalOpen] = useState(false);
-  const [selectedInitiativeForModal, setSelectedInitiativeForModal] = useState<any>(null);
   
   // State for pending approvals filtering
   const [initiativesWithPendingActions, setInitiativesWithPendingActions] = useState<Set<number>>(new Set());
@@ -232,8 +229,7 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
   };
 
   const handleViewInitiativeDetails = (initiative: any) => {
-    setSelectedInitiativeForModal(initiative);
-    setIsInitiativeModalOpen(true);
+    navigate(`/initiatives/${initiative.id}`, { state: { from: '/workflow' } });
   };
 
   const getStatusIcon = (status: string) => {
@@ -1315,18 +1311,6 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
         userRole={user.role || ""}
         onProcess={handleProcessStage}
         isLoading={processStageAction.isPending}
-      />
-
-      {/* Initiative Details Modal */}
-      <InitiativeModal
-        isOpen={isInitiativeModalOpen}
-        onClose={() => {
-          setIsInitiativeModalOpen(false);
-          setSelectedInitiativeForModal(null);
-        }}
-        initiative={selectedInitiativeForModal}
-        mode="view"
-        user={user}
       />
     </div>
   );

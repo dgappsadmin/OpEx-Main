@@ -4,6 +4,7 @@ import com.company.opexhub.dto.*;
 import com.company.opexhub.entity.User;
 import com.company.opexhub.service.AuthService;
 import com.company.opexhub.service.EmailVerificationService;
+import com.company.opexhub.service.TokenInvalidationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +21,9 @@ public class AuthController {
 
     @Autowired
     EmailVerificationService emailVerificationService;
+    
+    @Autowired
+    TokenInvalidationService tokenInvalidationService;
 
     @PostMapping("/signin")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
@@ -165,6 +169,23 @@ public class AuthController {
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body(new ApiResponse(false, "Error resending verification code"));
+        }
+    }
+
+    /**
+     * Mass logout endpoint - Logs out all users regardless of role
+     * Only accessible by ADMIN role (hasRole=ADMIN)
+     * This will invalidate all existing JWT tokens server-side
+     */
+    @PostMapping("/logout-all-users")
+    public ResponseEntity<?> logoutAllUsers() {
+        try {
+            // Trigger mass logout - this will invalidate all tokens issued before this moment
+            tokenInvalidationService.triggerMassLogout();
+            return ResponseEntity.ok(new ApiResponse(true, "All users logged out successfully. All existing tokens are now invalid."));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse(false, "Error during mass logout"));
         }
     }
 }

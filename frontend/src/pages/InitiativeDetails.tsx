@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -167,9 +167,13 @@ const WORKFLOW_STAGE_NAMES: { [key: number]: string } = {
 export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  
+  // Get the "from" location from navigation state
+  const fromPath = (location.state as any)?.from || '/initiatives';
   
   const [initiative, setInitiative] = useState<Initiative | null>(null);
   const [isEditing, setIsEditing] = useState(searchParams.get('edit') === 'true');
@@ -1436,9 +1440,9 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
       <div className="container mx-auto p-4 max-w-6xl">
         <div className="text-center py-12">
           <p className="text-destructive text-lg">Initiative not found or error loading data</p>
-          <Button onClick={() => navigate('/initiatives')} className="mt-4">
+          <Button onClick={() => navigate(fromPath)} className="mt-4">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Initiatives
+            Back
           </Button>
         </div>
       </div>
@@ -1453,7 +1457,7 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => navigate('/initiatives')}
+            onClick={() => navigate(fromPath)}
             className="flex items-center gap-1.5 h-8 px-3"
           >
             <ArrowLeft className="h-3 w-3" />
@@ -1724,24 +1728,13 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                     <div className="space-y-1">
                       <Label htmlFor="title" className="text-xs font-medium text-gray-700">Initiative Title *</Label>
                       {isEditing ? (
-                        <div className="relative">
-                          <Input
-                            id="title"
-                            value={formData.title || ''}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              if (value.length <= 25) {
-                                setFormData({ ...formData, title: value });
-                              }
-                            }}
-                            maxLength={25}
-                            className="text-xs h-8 border-gray-200 focus:border-blue-400 focus:ring-blue-400 pr-12"
-                            placeholder="Enter initiative title (max 25 chars)"
-                          />
-                          <div className="absolute right-2 top-1/2 transform -translate-y-1/2 text-xs text-muted-foreground">
-                            {(formData.title || '').length}/25
-                          </div>
-                        </div>
+                        <Input
+                          id="title"
+                          value={formData.title || ''}
+                          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                          className="text-xs h-8 border-gray-200 focus:border-blue-400 focus:ring-blue-400"
+                          placeholder="Enter initiative title"
+                        />
                       ) : (
                         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-md p-2 min-h-[32px] flex items-center">
                           <p className="text-xs font-medium text-gray-800 leading-tight break-words overflow-hidden w-full">
@@ -2009,8 +2002,8 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                         )}
                       </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="estimatedCapex" className="text-sm font-semibold text-gray-700">Estimated CAPEX (₹)</Label>
+                      <div className="space-y-1">
+                        <Label htmlFor="estimatedCapex" className="text-xs font-medium text-gray-700">Estimated CAPEX (₹)</Label>
                         {isEditing ? (
                           <Input
                             id="estimatedCapex"
@@ -2018,38 +2011,40 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                             value={formData.estimatedCapex || ''}
                             onChange={(e) => setFormData({ ...formData, estimatedCapex: parseFloat(e.target.value) || 0 })}
                             placeholder="Enter estimated CAPEX"
+                            className="text-xs h-8 border-gray-200 focus:border-blue-400 focus:ring-blue-400"
                           />
                         ) : (
-                          <div className="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-lg p-3">
-                            <div className="flex items-center gap-2">
-                              <DollarSign className="h-4 w-4 text-red-600" />
-                              <span className="text-sm font-bold text-red-800">
+                          <div className="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-md p-2">
+                            <div className="flex items-center gap-1.5">
+                              <DollarSign className="h-3 w-3 text-red-600" />
+                              <span className="text-xs font-bold text-red-800">
                                 {initiative?.estimatedCapex ? formatCurrencyInLakhs(initiative.estimatedCapex) : '₹0'}
                               </span>
                             </div>
-                            <p className="text-xs text-red-600 mt-1">Capital Investment</p>
+                            <p className="text-xs text-red-600 mt-0.5">Capital Investment</p>
                           </div>
                         )}
                       </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="targetOutcome" className="text-sm font-semibold text-gray-700">Target Outcome</Label>
+                      <div className="space-y-1">
+                        <Label htmlFor="targetOutcome" className="text-xs font-medium text-gray-700">Target Outcome</Label>
                         {isEditing ? (
                           <Input
                             id="targetOutcome"
                             value={formData.targetOutcome || ''}
                             onChange={(e) => setFormData({ ...formData, targetOutcome: e.target.value })}
                             placeholder="Describe the expected outcome"
+                            className="text-xs h-8 border-gray-200 focus:border-blue-400 focus:ring-blue-400"
                           />
                         ) : (
-                          <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-lg p-3">
-                            <div className="flex items-center gap-2">
-                              <Target className="h-4 w-4 text-amber-600" />
-                              <span className="text-sm font-medium text-amber-800">
+                          <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-md p-2">
+                            <div className="flex items-center gap-1.5">
+                              <Target className="h-3 w-3 text-amber-600" />
+                              <span className="text-xs font-bold text-amber-800">
                                 {initiative?.targetOutcome || 'Not specified'}
                               </span>
                             </div>
-                            <p className="text-xs text-amber-600 mt-1">Expected Result</p>
+                            <p className="text-xs text-amber-600 mt-0.5">Expected Result</p>
                           </div>
                         )}
                       </div>
@@ -2065,33 +2060,132 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                   <CardTitle>MOC & CAPEX References</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      <h3 className="text-base font-semibold">MOC Information</h3>
+                  {/* MOC & CAPEX Requirements Section */}
+                  <div>
+                    <p className="text-base font-semibold mb-4">MOC & CAPEX Requirements</p>
+                    
+                    {/* MOC Requirements Section */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                       <div className="space-y-2">
-                        <Label>MOC Required</Label>
-                        <p className="text-sm">{initiative?.requiresMoc === 'Y' ? 'Yes' : 'No'}</p>
+                        <Label className="text-sm font-medium">MOC Required</Label>
+                        {isEditing ? (
+                          <Select 
+                            value={formData.requiresMoc || 'N'} 
+                            onValueChange={(value) => setFormData({ ...formData, requiresMoc: value })}
+                          >
+                            <SelectTrigger className="h-10">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Y">Yes</SelectItem>
+                              <SelectItem value="N">No</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <Badge 
+                              variant={
+                                initiative?.requiresMoc === 'Y' ? 'default' : 
+                                initiative?.requiresMoc === 'N' ? 'secondary' : 
+                                'outline'
+                              }
+                              className="flex items-center gap-1"
+                            >
+                              {initiative?.requiresMoc === 'Y' ? (
+                                <>
+                                  <CheckCircle className="h-3 w-3" />
+                                  Yes
+                                </>
+                              ) : initiative?.requiresMoc === 'N' ? (
+                                <>
+                                  <X className="h-3 w-3" />
+                                  No
+                                </>
+                              ) : (
+                                <>
+                                  <Clock className="h-3 w-3" />
+                                  Decision Pending
+                                </>
+                              )}
+                            </Badge>
+                          </div>
+                        )}
                       </div>
-                      {initiative?.requiresMoc === 'Y' && (
-                        <div className="space-y-2">
-                          <Label>MOC Number</Label>
-                          <p className="text-sm font-mono">{initiative?.mocNumber || 'Not provided'}</p>
-                        </div>
-                      )}
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">MOC Number</Label>
+                        {isEditing ? (
+                          <Input
+                            value={formData.mocNumber || ''}
+                            onChange={(e) => setFormData({ ...formData, mocNumber: e.target.value })}
+                            className="h-10"
+                            placeholder="Enter MOC Number"
+                          />
+                        ) : (
+                          <p className="text-sm font-mono bg-muted p-2 rounded-md">{initiative?.mocNumber || 'Not provided'}</p>
+                        )}
+                      </div>
                     </div>
 
-                    <div className="space-y-4">
-                      <h3 className="text-base font-semibold">CAPEX Information</h3>
+                    {/* CAPEX Requirements Section */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <Label>CAPEX Required</Label>
-                        <p className="text-sm">{initiative?.requiresCapex === 'Y' ? 'Yes' : 'No'}</p>
+                        <Label className="text-sm font-medium">CAPEX Required</Label>
+                        {isEditing ? (
+                          <Select 
+                            value={formData.requiresCapex || 'N'} 
+                            onValueChange={(value) => setFormData({ ...formData, requiresCapex: value })}
+                          >
+                            <SelectTrigger className="h-10">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Y">Yes</SelectItem>
+                              <SelectItem value="N">No</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <Badge 
+                              variant={
+                                initiative?.requiresCapex === 'Y' ? 'default' : 
+                                initiative?.requiresCapex === 'N' ? 'secondary' : 
+                                'outline'
+                              }
+                              className="flex items-center gap-1"
+                            >
+                              {initiative?.requiresCapex === 'Y' ? (
+                                <>
+                                  <CheckCircle className="h-3 w-3" />
+                                  Yes
+                                </>
+                              ) : initiative?.requiresCapex === 'N' ? (
+                                <>
+                                  <X className="h-3 w-3" />
+                                  No
+                                </>
+                              ) : (
+                                <>
+                                  <Clock className="h-3 w-3" />
+                                  Decision Pending
+                                </>
+                              )}
+                            </Badge>
+                          </div>
+                        )}
                       </div>
-                      {initiative?.requiresCapex === 'Y' && (
-                        <div className="space-y-2">
-                          <Label>CAPEX Number</Label>
-                          <p className="text-sm font-mono">{initiative?.capexNumber || 'Not provided'}</p>
-                        </div>
-                      )}
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">CAPEX Number</Label>
+                        {isEditing ? (
+                          <Input
+                            value={formData.capexNumber || ''}
+                            onChange={(e) => setFormData({ ...formData, capexNumber: e.target.value })}
+                            className="h-10"
+                            placeholder="Enter CAPEX Number"
+                          />
+                        ) : (
+                          <p className="text-sm font-mono bg-muted p-2 rounded-md">{initiative?.capexNumber || 'Not provided'}</p>
+                        )}
+                      </div>
                     </div>
                   </div>
 

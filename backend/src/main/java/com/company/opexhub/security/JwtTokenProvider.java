@@ -41,6 +41,15 @@ public class JwtTokenProvider {
 
         return Long.parseLong(claims.getSubject());
     }
+    
+    public Date getIssuedAtDateFromJWT(String token) {
+        Claims claims = Jwts.parser()
+                .setSigningKey(jwtSecret)
+                .parseClaimsJws(token)
+                .getBody();
+
+        return claims.getIssuedAt();
+    }
 
     public boolean validateToken(String authToken) {
         try {

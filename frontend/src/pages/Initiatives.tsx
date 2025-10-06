@@ -755,7 +755,7 @@ export default function Initiatives({ user }: InitiativesProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [statusFilter, setStatusFilter] = useState("all");
-  const [siteFilter, setSiteFilter] = useState("all");
+  const [siteFilter, setSiteFilter] = useState(user.site || "all"); // Default to logged-in user's site
   const [searchTerm, setSearchTerm] = useState("");
 
   // Use real API or fallback to mock data
