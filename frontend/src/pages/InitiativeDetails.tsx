@@ -243,6 +243,9 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
     if (initiativesData?.content) {
       foundInitiative = initiativesData.content.find((item: any) => item.id?.toString() === id);
       if (foundInitiative) {
+        // Debug: Log the original budget type from API
+        console.log('Original budgetType from API:', foundInitiative.budgetType);
+        
         // Transform API data to match interface
         foundInitiative = {
           id: foundInitiative.id?.toString() || foundInitiative.id,
@@ -263,7 +266,9 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
             ? new Date(foundInitiative.createdAt).toLocaleDateString() 
             : foundInitiative.submittedDate || new Date().toLocaleDateString(),
           description: foundInitiative.description,
-          budgetType: foundInitiative.budgetType,
+          budgetType: (foundInitiative.budgetType?.toString().toUpperCase() === 'BUDGETED') 
+            ? 'BUDGETED' 
+            : 'NON-BUDGETED',
           startDate: foundInitiative.startDate,
           endDate: foundInitiative.endDate,
           currentStage: Math.min(foundInitiative.currentStage || 1, 11),
@@ -298,6 +303,9 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
             ? formatCurrencyInLakhs(foundInitiative.actualSavings)
             : foundInitiative.actualSavings,
         };
+        
+        // Debug: Log the transformed budget type
+        console.log('Transformed budgetType:', foundInitiative.budgetType);
       }
     }
 

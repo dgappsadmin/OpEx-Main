@@ -16,3 +16,92 @@
 [2025-10-07 15:01:49.382] [INFO] Login successful - User: Kiran Sharma | Email: kiran.sharma@godeepak.com | Role: IL | Site: NDS
 [2025-10-07 15:04:56.627] [INFO] Login attempt - Email: kiran.sharma@godeepak.com
 [2025-10-07 15:04:56.779] [INFO] Login successful - User: Kiran Sharma | Email: kiran.sharma@godeepak.com | Role: IL | Site: NDS
+[2025-10-07 15:32:43.704] [INFO] === INITIATIVE CREATION STARTED ===
+[2025-10-07 15:32:43.718] [INFO] User ID: 13 | Site: NDS | Discipline: Others
+[2025-10-07 15:32:43.74] [INFO] Expected Savings: 46463 | Target Value: 64436 | Estimated CAPEX: 643
+[2025-10-07 15:32:43.746] [INFO] Selected HOD ID: 7 | HOD Email: kavya.nair.hod@godeepak.com
+[2025-10-07 15:32:43.894] [INFO] Initiative created successfully - ID: 2 | Number: NDS/25/OT/01/002 | Title: TestTestTestTestTestTestTestTestTestTestTestTest
+[2025-10-07 15:32:43.937] [INFO] === WORKFLOW INITIALIZATION STARTED === Initiative: NDS/25/OT/01/002 | Site: NDS | HOD: kavya.nair.hod@godeepak.com
+[2025-10-07 15:32:44.013] [INFO] Stage 1 auto-approved for Initiative: NDS/25/OT/01/002
+[2025-10-07 15:32:47.431] [INFO] Stage 2 created and email sent to HOD: kavya.nair.hod@godeepak.com
+[2025-10-07 15:32:47.437] [INFO] === WORKFLOW INITIALIZATION COMPLETED === Initiative: NDS/25/OT/01/002
+[2025-10-07 15:32:47.442] [INFO] === INITIATIVE CREATION COMPLETED === Initiative: NDS/25/OT/01/002
+[2025-10-07 15:36:24.243] [INFO] === INITIATIVE CREATION STARTED ===
+[2025-10-07 15:36:24.25] [INFO] User ID: 13 | Site: NDS | Discipline: Environment
+[2025-10-07 15:36:24.265] [INFO] Expected Savings: 325325 | Target Value: 5325 | Estimated CAPEX: 5235
+[2025-10-07 15:36:24.268] [INFO] Selected HOD ID: 4 | HOD Email: amit.singh.hod@godeepak.com
+[2025-10-07 15:36:24.431] [INFO] Initiative created successfully - ID: 3 | Number: NDS/25/EV/01/003 | Title: TestTestTestTestTestTestTestTestTest
+[2025-10-07 15:36:24.466] [INFO] === WORKFLOW INITIALIZATION STARTED === Initiative: NDS/25/EV/01/003 | Site: NDS | HOD: amit.singh.hod@godeepak.com
+[2025-10-07 15:36:24.537] [INFO] Stage 1 auto-approved for Initiative: NDS/25/EV/01/003
+[2025-10-07 15:36:26.774] [INFO] Stage 2 created and email sent to HOD: amit.singh.hod@godeepak.com
+[2025-10-07 15:36:26.78] [INFO] === WORKFLOW INITIALIZATION COMPLETED === Initiative: NDS/25/EV/01/003
+[2025-10-07 15:36:26.785] [INFO] === INITIATIVE CREATION COMPLETED === Initiative: NDS/25/EV/01/003
+[2025-10-07 15:38:13.156] [INFO] Login attempt - Email: amit.singh.hod@godeepak.com
+[2025-10-07 15:38:13.823] [WARNING] Login failed - Email: amit.singh.hod@godeepak.com | Reason: Bad credentials
+[2025-10-07 15:38:18.002] [INFO] Login attempt - Email: amit.singh.hod@godeepak.com
+[2025-10-07 15:38:18.303] [INFO] Login successful - User: Amit Singh | Email: amit.singh.hod@godeepak.com | Role: HOD | Site: NDS
+[2025-10-07 15:38:24.157] [INFO] === WORKFLOW ACTION STARTED === Transaction ID: 15 | Action: approved | User: amit.singh.hod@godeepak.com
+[2025-10-07 15:38:24.22] [INFO] Stage: 2 - Evaluation and Approval | Initiative ID: 3
+[2025-10-07 15:38:24.26] [INFO] Processing workflow for Initiative: NDS/25/EV/01/003
+[2025-10-07 15:38:24.264] [INFO] Stage 2 APPROVED by Amit Singh
+[2025-10-07 15:38:24.352] [INFO] Initiative moved to Stage 3
+[2025-10-07 15:38:26.164] [INFO] === WORKFLOW ACTION COMPLETED === Initiative: NDS/25/EV/01/003 | Status: In Progress
+[2025-10-07 15:38:35.349] [INFO] Login attempt - Email: deepika.singh@godeepak.com
+[2025-10-07 15:38:35.566] [INFO] Login successful - User: Deepika Singh | Email: deepika.singh@godeepak.com | Role: STLD | Site: NDS
+[2025-10-07 15:39:14.91] [INFO] === WORKFLOW ACTION STARTED === Transaction ID: 16 | Action: approved | User: deepika.singh@godeepak.com
+[2025-10-07 15:39:14.93] [INFO] Stage: 3 - Initiative assessment and approval | Initiative ID: 3
+[2025-10-07 15:39:14.952] [INFO] Processing workflow for Initiative: NDS/25/EV/01/003
+[2025-10-07 15:39:14.956] [INFO] Stage 3 APPROVED by Deepika Singh
+[2025-10-07 15:39:15.002] [INFO] Initiative moved to Stage 4
+[2025-10-07 15:39:16.287] [INFO] === WORKFLOW ACTION COMPLETED === Initiative: NDS/25/EV/01/003 | Status: In Progress
+[2025-10-07 15:39:28.778] [INFO] Login attempt - Email: ananya.verma@godeepak.com
+[2025-10-07 15:39:29.027] [INFO] Login successful - User: Ananya Verma | Email: ananya.verma@godeepak.com | Role: SH | Site: NDS
+[2025-10-07 15:40:00.765] [INFO] === WORKFLOW ACTION STARTED === Transaction ID: 17 | Action: approved | User: ananya.verma@godeepak.com
+[2025-10-07 15:40:00.778] [INFO] Stage: 4 - Define Responsibilities | Initiative ID: 3
+[2025-10-07 15:40:00.794] [INFO] Processing workflow for Initiative: NDS/25/EV/01/003
+[2025-10-07 15:40:00.799] [INFO] Stage 4 APPROVED by Ananya Verma
+[2025-10-07 15:40:00.86] [INFO] Initiative moved to Stage 5
+[2025-10-07 15:40:02.214] [INFO] === WORKFLOW ACTION COMPLETED === Initiative: NDS/25/EV/01/003 | Status: In Progress
+[2025-10-07 15:40:16.441] [INFO] Login attempt - Email: kiran.sharma@godeepak.com
+[2025-10-07 15:40:16.611] [INFO] Login successful - User: Kiran Sharma | Email: kiran.sharma@godeepak.com | Role: IL | Site: NDS
+[2025-10-07 15:40:31.884] [INFO] === WORKFLOW ACTION STARTED === Transaction ID: 18 | Action: approved | User: kiran.sharma@godeepak.com
+[2025-10-07 15:40:31.903] [INFO] Stage: 5 - MOC-CAPEX Evaluation | Initiative ID: 3
+[2025-10-07 15:40:31.932] [INFO] Processing workflow for Initiative: NDS/25/EV/01/003
+[2025-10-07 15:40:31.937] [INFO] Stage 5 APPROVED by Kiran Sharma
+[2025-10-07 15:40:32.003] [INFO] Initiative moved to Stage 6
+[2025-10-07 15:40:33.654] [INFO] === WORKFLOW ACTION COMPLETED === Initiative: NDS/25/EV/01/003 | Status: In Progress
+[2025-10-07 15:40:33.668] [INFO] === MOC/CAPEX UPDATE STARTED === Initiative ID: 3
+[2025-10-07 15:40:33.675] [INFO] Initiative: NDS/25/EV/01/003 - TestTestTestTestTestTestTestTestTest
+[2025-10-07 15:40:33.682] [INFO] Current MOC - Requires: true | Number: null
+[2025-10-07 15:40:33.689] [INFO] Current CAPEX - Requires: true | Number: null
+[2025-10-07 15:40:33.695] [INFO] Updating requiresMoc to: N
+[2025-10-07 15:40:33.702] [INFO] Updating requiresCapex to: N
+[2025-10-07 15:40:33.709] [INFO] MOC/CAPEX update successful
+[2025-10-07 15:40:33.714] [INFO] Updated MOC - Requires: N | Number: null
+[2025-10-07 15:40:33.72] [INFO] Updated CAPEX - Requires: N | Number: null
+[2025-10-07 15:40:33.724] [INFO] === MOC/CAPEX UPDATE COMPLETED === Initiative: NDS/25/EV/01/003
+[2025-10-07 15:41:20.642] [INFO] === WORKFLOW ACTION STARTED === Transaction ID: 19 | Action: approved | User: kiran.sharma@godeepak.com
+[2025-10-07 15:41:20.658] [INFO] Stage: 6 - Initiative Timeline Tracker | Initiative ID: 3
+[2025-10-07 15:41:20.676] [INFO] Processing workflow for Initiative: NDS/25/EV/01/003
+[2025-10-07 15:41:20.68] [INFO] Stage 6 APPROVED by Kiran Sharma
+[2025-10-07 15:41:20.699] [INFO] All timeline entries completed - Creating Stage 7
+[2025-10-07 15:41:20.721] [INFO] Initiative moved to Stage 7
+[2025-10-07 15:41:22.202] [INFO] === WORKFLOW ACTION COMPLETED === Initiative: NDS/25/EV/01/003 | Status: In Progress
+[2025-10-07 15:41:32.265] [INFO] Login attempt - Email: rohit.jain@godeepak.com
+[2025-10-07 15:41:32.465] [INFO] Login successful - User: Rohit Jain | Email: rohit.jain@godeepak.com | Role: STLD | Site: NDS
+[2025-10-07 15:41:39.912] [INFO] === WORKFLOW ACTION STARTED === Transaction ID: 20 | Action: approved | User: rohit.jain@godeepak.com
+[2025-10-07 15:41:39.935] [INFO] Stage: 7 - Progress monitoring | Initiative ID: 3
+[2025-10-07 15:41:39.966] [INFO] Processing workflow for Initiative: NDS/25/EV/01/003
+[2025-10-07 15:41:39.972] [INFO] Stage 7 APPROVED by Rohit Jain
+[2025-10-07 15:41:40.012] [INFO] Initiative moved to Stage 8
+[2025-10-07 15:41:41.378] [INFO] === WORKFLOW ACTION COMPLETED === Initiative: NDS/25/EV/01/003 | Status: In Progress
+[2025-10-07 15:41:50.452] [INFO] Login attempt - Email: ravi.kumar@godeepak.com
+[2025-10-07 15:41:50.722] [INFO] Login successful - User: Ravi Kumar | Email: ravi.kumar@godeepak.com | Role: CTSD | Site: NDS
+[2025-10-07 15:41:57.751] [INFO] === WORKFLOW ACTION STARTED === Transaction ID: 21 | Action: approved | User: ravi.kumar@godeepak.com
+[2025-10-07 15:41:57.779] [INFO] Stage: 8 - Periodic Status Review with CMO | Initiative ID: 3
+[2025-10-07 15:41:57.802] [INFO] Processing workflow for Initiative: NDS/25/EV/01/003
+[2025-10-07 15:41:57.807] [INFO] Stage 8 APPROVED by Ravi Kumar
+[2025-10-07 15:41:57.855] [INFO] Initiative moved to Stage 9
+[2025-10-07 15:41:59.018] [INFO] === WORKFLOW ACTION COMPLETED === Initiative: NDS/25/EV/01/003 | Status: In Progress
+[2025-10-07 15:42:19.274] [INFO] Login attempt - Email: kiran.sharma@godeepak.com
+[2025-10-07 15:42:19.538] [INFO] Login successful - User: Kiran Sharma | Email: kiran.sharma@godeepak.com | Role: IL | Site: NDS

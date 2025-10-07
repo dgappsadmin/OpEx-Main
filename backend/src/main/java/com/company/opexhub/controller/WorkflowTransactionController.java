@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.HashMap;
 
 @RestController
-@RequestMapping("/opexhub/api/workflow-transactions")
+@RequestMapping("/api/workflow-transactions")
 public class WorkflowTransactionController {
 
     @Autowired
