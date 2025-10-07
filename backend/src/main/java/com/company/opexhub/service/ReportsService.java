@@ -59,15 +59,33 @@ public class ReportsService {
     public FinancialYearReportDTO getFinancialYearData(String financialYear, String site, String budgetType, String category) {
         // Calculate financial year date range (April to March)
         LocalDate currentDate = LocalDate.now();
-        int fyYear = financialYear != null ? Integer.parseInt(financialYear) : 
-                    (currentDate.getMonthValue() >= 4 ? currentDate.getYear() : currentDate.getYear() - 1);
+        
+        // Handle financial year format (convert "25" to 2025)
+        int fyYear;
+        if (financialYear != null && financialYear.length() == 2) {
+            // Convert 2-digit FY to full year (e.g., "22" -> 2022)
+            int fyShort = Integer.parseInt(financialYear);
+            fyYear = fyShort < 50 ? 2000 + fyShort : 1900 + fyShort; // Assume years < 50 are 20xx
+        } else if (financialYear != null) {
+            fyYear = Integer.parseInt(financialYear);
+        } else {
+            // Default to current financial year
+            fyYear = currentDate.getMonthValue() >= 4 ? currentDate.getYear() : currentDate.getYear() - 1;
+        }
+        
+        logger.info("Financial Year Data - Input FY: {}, Calculated FY year: {}", financialYear, fyYear);
         
         String startMonth = fyYear + "-04"; // April of FY start year
         String endMonth = (fyYear + 1) + "-03"; // March of FY end year
         
+        logger.info("Financial Year Data - Start Month: {}, End Month: {}", startMonth, endMonth);
+        
         // Get financial year data from repository
         List<Object[]> financialData = monthlyMonitoringEntryRepository.findFinancialYearData(
             startMonth, endMonth, site, budgetType, category);
+        
+        logger.info("Financial Year Data - Retrieved {} rows from repository", 
+                   financialData != null ? financialData.size() : 0);
         
         // Process monthly data
         Map<String, FinancialYearReportDTO.MonthlyData> monthlyDataMap = processMonthlyData(
@@ -92,7 +110,6 @@ public class ReportsService {
             String monthStr = String.format("%d-%02d", i < 9 ? fyYear : fyYear + 1, (i % 12) + (i < 9 ? 4 : -8));
             
             // Get last FY cumulative savings (previous year same month)
-            String lastFYMonth = String.format("%d-%02d", fyYear - 1, (i % 12) + (i < 9 ? 4 : -8));
             String lastFYEndMonth = String.format("%d-%02d", fyYear - 1, (i % 12) + (i < 9 ? 4 : -8));
             BigDecimal lastFYCumulative = monthlyMonitoringEntryRepository.findCumulativeSavings(
                 (fyYear - 1) + "-04", lastFYEndMonth, site, budgetType, category);
@@ -173,19 +190,70 @@ public class ReportsService {
         return categoryDataMap;
     }
     
-    // Get available financial years
+    // Get available financial years dynamically from initiative data
     public List<String> getAvailableFinancialYears() {
-        LocalDate currentDate = LocalDate.now();
-        int currentFY = currentDate.getMonthValue() >= 4 ? currentDate.getYear() : currentDate.getYear() - 1;
-        
-        // Return last 5 financial years
-        return java.util.Arrays.asList(
-            String.valueOf(currentFY),
-            String.valueOf(currentFY - 1),
-            String.valueOf(currentFY - 2),
-            String.valueOf(currentFY - 3),
-            String.valueOf(currentFY - 4)
-        );
+        try {
+            // Get distinct years from initiative created dates
+            List<String> availableYears = new java.util.ArrayList<>();
+            
+            // Query all initiatives and extract financial years
+            List<Initiative> allInitiatives = initiativeRepository.findAll();
+            java.util.Set<String> fySet = new java.util.LinkedHashSet<>();
+            
+            for (Initiative initiative : allInitiatives) {
+                LocalDate createdDate = null;
+                
+                // Try to get date from startDate first, then createdAt
+                if (initiative.getStartDate() != null) {
+                    createdDate = initiative.getStartDate();
+                } else if (initiative.getCreatedAt() != null) {
+                    createdDate = initiative.getCreatedAt().toLocalDate();
+                }
+                
+                if (createdDate != null) {
+                    // Calculate financial year (April to March)
+                    int fyStartYear = createdDate.getMonthValue() >= 4 ? 
+                        createdDate.getYear() : createdDate.getYear() - 1;
+                    
+                    // Convert to 2-digit format (e.g., 2022 -> "22")
+                    String fyShort = String.valueOf(fyStartYear).substring(2);
+                    fySet.add(fyShort);
+                }
+            }
+            
+            // Convert to list and sort in descending order (most recent first)
+            availableYears.addAll(fySet);
+            availableYears.sort((a, b) -> b.compareTo(a));
+            
+            // If no data found, return current FY and previous few years
+            if (availableYears.isEmpty()) {
+                LocalDate currentDate = LocalDate.now();
+                int currentFY = currentDate.getMonthValue() >= 4 ? currentDate.getYear() : currentDate.getYear() - 1;
+                
+                for (int i = 0; i < 5; i++) {
+                    String fyShort = String.valueOf(currentFY - i).substring(2);
+                    availableYears.add(fyShort);
+                }
+            }
+            
+            logger.info("Available Financial Years: {}", availableYears);
+            return availableYears;
+            
+        } catch (Exception e) {
+            logger.error("Error getting available financial years: {}", e.getMessage(), e);
+            
+            // Fallback to current FY and previous years
+            LocalDate currentDate = LocalDate.now();
+            int currentFY = currentDate.getMonthValue() >= 4 ? currentDate.getYear() : currentDate.getYear() - 1;
+            
+            return java.util.Arrays.asList(
+                String.valueOf(currentFY).substring(2),
+                String.valueOf(currentFY - 1).substring(2),
+                String.valueOf(currentFY - 2).substring(2),
+                String.valueOf(currentFY - 3).substring(2),
+                String.valueOf(currentFY - 4).substring(2)
+            );
+        }
     }
 
     // Existing methods
@@ -480,11 +548,6 @@ public class ReportsService {
         return months[now.getMonthValue() - 1]; // getMonthValue() returns 1-12, so subtract 1
     }
     
-    // Dynamic method to get current month and year in frontend format (Jan 2025)
-    private String getCurrentMonthYear() {
-        LocalDate now = LocalDate.now();
-        return getCurrentMonth() + " " + now.getYear();
-    }
     
     // Dynamic method to get current fiscal year in frontend format
     private String getCurrentFiscalYear() {
@@ -542,12 +605,26 @@ public class ReportsService {
     }
     
     private DNLReportDataDTO getDNLReportData(String site, String period, String year) {
-        // Calculate date range based on period - Default to yearly till current month
+        // Calculate date range based on period and financial year
         String startDate = null;
         String endDate = null;
         
         LocalDate now = LocalDate.now();
-        int targetYear = year != null ? Integer.parseInt(year) : now.getYear();
+        
+        // Handle financial year format (convert "25" to 2025)
+        int targetYear;
+        if (year != null && year.length() == 2) {
+            // Convert 2-digit FY to full year (e.g., "22" -> 2022)
+            int fyShort = Integer.parseInt(year);
+            targetYear = fyShort < 50 ? 2000 + fyShort : 1900 + fyShort; // Assume years < 50 are 20xx
+        } else if (year != null) {
+            targetYear = Integer.parseInt(year);
+        } else {
+            // Default to current financial year
+            targetYear = now.getMonthValue() >= 4 ? now.getYear() : now.getYear() - 1;
+        }
+        
+        logger.info("DNL Report Data - Input year: {}, Calculated target year: {}", year, targetYear);
         
         switch (period != null ? period.toLowerCase() : "yearly") {
             case "weekly":
@@ -562,15 +639,36 @@ public class ReportsService {
                 startDate = now.minusMonths(3).toString().substring(0, 7);
                 endDate = now.toString().substring(0, 7);
                 break;
-            default: // yearly - Till current month of target year
-                startDate = targetYear + "-01"; // January of target year
-                endDate = String.format("%d-%02d", targetYear, now.getMonthValue()); // Current month of target year
+            default: // yearly - Financial year period (April to March)
+                // Financial year starts in April of target year
+                startDate = targetYear + "-04"; // April of FY start year
+                
+                // Financial year ends in March of next year, but limit to current month if it's current FY
+                int currentFY = now.getMonthValue() >= 4 ? now.getYear() : now.getYear() - 1;
+                
+                if (targetYear == currentFY) {
+                    // For current FY, go till current month
+                    if (now.getMonthValue() >= 4) {
+                        endDate = String.format("%d-%02d", targetYear, now.getMonthValue());
+                    } else {
+                        endDate = String.format("%d-%02d", targetYear + 1, now.getMonthValue());
+                    }
+                } else {
+                    // For historical FY, go till March of next year
+                    endDate = (targetYear + 1) + "-03";
+                }
                 break;
         }
+        
+        logger.info("DNL Report Data - Start Date: {}, End Date: {}", startDate, endDate);
         
         // Get aggregated data from repository - fetching from ACHIEVED_VALUE column
         List<Object[]> monitoringData = monthlyMonitoringEntryRepository.findDNLPlantInitiativesData(site, startDate, endDate);
         List<Object[]> budgetTargets = monthlyMonitoringEntryRepository.findBudgetTargetsByType(site);
+        
+        logger.info("DNL Report Data - Monitoring data rows: {}, Budget targets rows: {}", 
+                   monitoringData != null ? monitoringData.size() : 0,
+                   budgetTargets != null ? budgetTargets.size() : 0);
         
         return new DNLReportDataDTO(monitoringData, budgetTargets);
     }
