@@ -38,14 +38,18 @@ import {
   Users,
   Activity,
   TrendingUp,
-  RotateCcw
+  RotateCcw,
+  MessageSquare,
+  Plus,
+  Trash2,
+  Filter
 } from 'lucide-react';
 import { useProgressPercentage, useCurrentPendingStage, useProcessStageAction, useWorkflowTransactions } from '@/hooks/useWorkflowTransactions';
 import { useUser, useInitiativeLeadsBySite, useUsers } from '@/hooks/useUsers';
 import { useFinalizedPendingFAEntries, useBatchFAApproval, MonthlyMonitoringEntry } from '@/hooks/useMonthlyMonitoring';
 import { useTimelineEntriesProgressMonitoring } from '@/hooks/useTimelineEntriesProgressMonitoring';
 import UploadedDocuments from '@/components/UploadedDocuments';
-import { initiativeAPI, timelineTrackerAPI, monthlyMonitoringAPI } from '@/lib/api';
+import { initiativeAPI, timelineTrackerAPI, monthlyMonitoringAPI, momAPI } from '@/lib/api';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { useInitiatives } from '@/hooks/useInitiatives';
@@ -203,6 +207,25 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
   // Stage 9 Monthly Monitoring Validation states
   const [monthlyValidationLoading, setMonthlyValidationLoading] = useState(false);
   const [allMonthlyEntriesFinalized, setAllMonthlyEntriesFinalized] = useState<boolean>(true);
+
+  // MOM states
+  const [momEntries, setMomEntries] = useState<any[]>([]);
+  const [momLoading, setMomLoading] = useState(false);
+  const [showMomForm, setShowMomForm] = useState(false);
+  const [editingMom, setEditingMom] = useState<any>(null);
+  const [momFilter, setMomFilter] = useState<{year?: number, month?: number}>({});
+  const [availableMonths, setAvailableMonths] = useState<any[]>([]);
+  const [momFormData, setMomFormData] = useState({
+    meetingTitle: '',
+    meetingDate: '',
+    responsiblePerson: '',
+    content: '',
+    status: 'OPEN',
+    priority: 'MEDIUM',
+    meetingType: 'MONTHLY_REVIEW',
+    dueDate: '',
+    attendees: ''
+  });
 
   // Fetch initiatives to find the specific one
   const { data: initiativesData, isLoading, error } = useInitiatives();
@@ -488,6 +511,146 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
         });
     }
   }, [pendingTransaction?.stageNumber, initiative?.id]);
+  
+  // Load MOM entries when initiative changes
+  useEffect(() => {
+    if (initiative?.id) {
+      fetchMomEntries();
+      fetchAvailableMonths();
+    }
+  }, [initiative?.id]);
+
+  // MOM Functions
+  const fetchMomEntries = async () => {
+    if (!initiative?.id) return;
+    try {
+      setMomLoading(true);
+      const data = await momAPI.getMomsByInitiative(Number(initiative.id));
+      setMomEntries(data);
+    } catch (error) {
+      console.error('Error fetching MOM entries:', error);
+      toast({
+        title: "Error loading MOM entries",
+        description: "Failed to load meeting records.",
+        variant: "destructive"
+      });
+    } finally {
+      setMomLoading(false);
+    }
+  };
+
+  const fetchMomEntriesByMonth = async (year: number, month: number) => {
+    if (!initiative?.id) return;
+    try {
+      setMomLoading(true);
+      const data = await momAPI.getMomsByMonth(Number(initiative.id), year, month);
+      setMomEntries(data);
+    } catch (error) {
+      console.error('Error fetching MOM entries by month:', error);
+      toast({
+        title: "Error filtering MOM entries",
+        description: "Failed to load filtered meeting records.",
+        variant: "destructive"
+      });
+    } finally {
+      setMomLoading(false);
+    }
+  };
+
+  const fetchAvailableMonths = async () => {
+    if (!initiative?.id) return;
+    try {
+      const data = await momAPI.getAvailableMonths(Number(initiative.id));
+      setAvailableMonths(data);
+    } catch (error) {
+      console.error('Error fetching available months:', error);
+    }
+  };
+
+  const handleSaveMom = async () => {
+    if (!initiative?.id || !momFormData.meetingTitle || !momFormData.meetingDate || 
+        !momFormData.responsiblePerson || !momFormData.content) {
+      return;
+    }
+
+    try {
+      const momData = {
+        meetingTitle: momFormData.meetingTitle,
+        meetingDate: momFormData.meetingDate,
+        responsiblePerson: momFormData.responsiblePerson,
+        content: momFormData.content,
+        status: momFormData.status,
+        priority: momFormData.priority,
+        meetingType: momFormData.meetingType,
+        dueDate: momFormData.dueDate || null,
+        attendees: momFormData.attendees || null
+      };
+
+      if (editingMom) {
+        await momAPI.updateMom(Number(initiative.id), editingMom.id, momData);
+        toast({
+          title: "MOM entry updated",
+          description: "Meeting record has been updated successfully."
+        });
+      } else {
+        await momAPI.createMom(Number(initiative.id), momData);
+        toast({
+          title: "MOM entry created",
+          description: "Meeting record has been created successfully."
+        });
+      }
+
+      setShowMomForm(false);
+      setEditingMom(null);
+      setMomFormData({
+        meetingTitle: '',
+        meetingDate: '',
+        responsiblePerson: '',
+        content: '',
+        status: 'OPEN',
+        priority: 'MEDIUM',
+        meetingType: 'MONTHLY_REVIEW',
+        dueDate: '',
+        attendees: ''
+      });
+      
+      // Refresh MOM entries and available months
+      fetchMomEntries();
+      fetchAvailableMonths();
+    } catch (error: any) {
+      console.error('Error saving MOM entry:', error);
+      toast({
+        title: "Error saving MOM entry",
+        description: error.response?.data?.message || "Failed to save meeting record.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDeleteMom = async (momId: number) => {
+    if (!initiative?.id || !window.confirm('Are you sure you want to delete this MOM entry?')) {
+      return;
+    }
+
+    try {
+      await momAPI.deleteMom(Number(initiative.id), momId);
+      toast({
+        title: "MOM entry deleted",
+        description: "Meeting record has been deleted successfully."
+      });
+      
+      // Refresh MOM entries and available months
+      fetchMomEntries();
+      fetchAvailableMonths();
+    } catch (error: any) {
+      console.error('Error deleting MOM entry:', error);
+      toast({
+        title: "Error deleting MOM entry",
+        description: error.response?.data?.message || "Failed to delete meeting record.",
+        variant: "destructive"
+      });
+    }
+  };
   
   // Show workflow tab if user can view it (for debugging/visibility) or has pending actions
   const canShowWorkflowActions = user?.role !== 'VIEWER' && user?.site === initiative?.site;
@@ -938,7 +1101,7 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                 <span className="font-semibold">Site: {initiative?.site}</span>
               </div>
               <p className="text-xs text-blue-700">
-                Select an Initiative Lead from users with IL role for this site
+                Select an Initiative Lead for this site
               </p>
             </div>
             <div>
@@ -1527,7 +1690,7 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
       {/* Content */}
       <div className="space-y-3">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className={`grid w-full h-10 gap-1 ${(canShowWorkflowActions || hasWorkflowActions) ? 'grid-cols-5' : 'grid-cols-4'}`}>
+          <TabsList className={`grid w-full h-10 gap-1 ${(canShowWorkflowActions || hasWorkflowActions) ? 'grid-cols-6' : 'grid-cols-5'}`}>
             <TabsTrigger value="overview" className="flex items-center gap-1.5 text-xs py-1.5 px-2">
               <Target className="h-3 w-3" />
               <span className="hidden sm:inline">Overview</span>
@@ -1543,6 +1706,10 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
             <TabsTrigger value="documents" className="flex items-center gap-1.5 text-xs py-1.5 px-2">
               <FolderOpen className="h-3 w-3" />
               <span className="hidden sm:inline">Documents</span>
+            </TabsTrigger>
+            <TabsTrigger value="mom" className="flex items-center gap-1.5 text-xs py-1.5 px-2">
+              <MessageSquare className="h-3 w-3" />
+              <span className="hidden sm:inline">MOM</span>
             </TabsTrigger>
             {(canShowWorkflowActions || hasWorkflowActions) && (
               <TabsTrigger value="workflow" className="flex items-center gap-1.5 text-xs py-1.5 px-2">
@@ -2279,6 +2446,343 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                       canUpload={canEdit}
                     />
                   )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* MOM Tab */}
+            <TabsContent value="mom" className="space-y-4">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-base">
+                      <MessageSquare className="h-4 w-4" />
+                      Minutes of Meeting (MOM)
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {/* Month Filter */}
+                      <Select 
+                        value={momFilter.year && momFilter.month ? `${momFilter.year}-${momFilter.month}` : 'all'} 
+                        onValueChange={(value) => {
+                          if (value === 'all') {
+                            setMomFilter({});
+                            fetchMomEntries();
+                          } else {
+                            const [year, month] = value.split('-').map(Number);
+                            setMomFilter({year, month});
+                            fetchMomEntriesByMonth(year, month);
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="w-40 h-8 text-xs">
+                          <SelectValue placeholder="Filter by month" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Months</SelectItem>
+                          {availableMonths.map((month: any) => (
+                            <SelectItem key={`${month.year}-${month.month}`} value={`${month.year}-${month.month}`}>
+                              {new Date(month.year, month.month - 1).toLocaleDateString('en-US', { 
+                                year: 'numeric', 
+                                month: 'long' 
+                              })}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      
+                      {/* Add MOM Button - Only for IL */}
+                      {user?.role === 'IL' && user?.site === initiative?.site && (
+                        <Button 
+                          size="sm" 
+                          onClick={() => {
+                            setEditingMom(null);
+                            setMomFormData({
+                              meetingTitle: '',
+                              meetingDate: '',
+                              responsiblePerson: '',
+                              content: '',
+                              status: 'OPEN',
+                              priority: 'MEDIUM',
+                              meetingType: 'MONTHLY_REVIEW',
+                              dueDate: '',
+                              attendees: ''
+                            });
+                            setShowMomForm(true);
+                          }}
+                          className="h-8 px-3"
+                        >
+                          <Plus className="h-3 w-3 mr-1" />
+                          Add MOM
+                        </Button>
+                      )}
+                    </div>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 pt-0">
+                  {showMomForm && (
+                    <Card className="border-2 border-dashed border-primary/30">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-sm">
+                          {editingMom ? 'Edit MOM Entry' : 'Add New MOM Entry'}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4 pt-0">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="meetingTitle" className="text-xs font-semibold">Meeting Title *</Label>
+                            <Input
+                              id="meetingTitle"
+                              value={momFormData.meetingTitle}
+                              onChange={(e) => setMomFormData({...momFormData, meetingTitle: e.target.value})}
+                              placeholder="Enter meeting title"
+                              className="h-9 text-xs mt-1"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="meetingDate" className="text-xs font-semibold">Meeting Date *</Label>
+                            <Input
+                              id="meetingDate"
+                              type="date"
+                              value={momFormData.meetingDate}
+                              onChange={(e) => setMomFormData({...momFormData, meetingDate: e.target.value})}
+                              className="h-9 text-xs mt-1"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="responsiblePerson" className="text-xs font-semibold">Responsible Person *</Label>
+                            <Input
+                              id="responsiblePerson"
+                              value={momFormData.responsiblePerson}
+                              onChange={(e) => setMomFormData({...momFormData, responsiblePerson: e.target.value})}
+                              placeholder="Enter responsible person name"
+                              className="h-9 text-xs mt-1"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="dueDate" className="text-xs font-semibold">Due Date</Label>
+                            <Input
+                              id="dueDate"
+                              type="date"
+                              value={momFormData.dueDate}
+                              onChange={(e) => setMomFormData({...momFormData, dueDate: e.target.value})}
+                              className="h-9 text-xs mt-1"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="status" className="text-xs font-semibold">Status</Label>
+                            <Select value={momFormData.status} onValueChange={(value) => setMomFormData({...momFormData, status: value})}>
+                              <SelectTrigger className="h-9 text-xs mt-1">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="OPEN">Open</SelectItem>
+                                <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                                <SelectItem value="COMPLETED">Completed</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label htmlFor="priority" className="text-xs font-semibold">Priority</Label>
+                            <Select value={momFormData.priority} onValueChange={(value) => setMomFormData({...momFormData, priority: value})}>
+                              <SelectTrigger className="h-9 text-xs mt-1">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="HIGH">High</SelectItem>
+                                <SelectItem value="MEDIUM">Medium</SelectItem>
+                                <SelectItem value="LOW">Low</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label htmlFor="meetingType" className="text-xs font-semibold">Meeting Type</Label>
+                            <Select value={momFormData.meetingType} onValueChange={(value) => setMomFormData({...momFormData, meetingType: value})}>
+                              <SelectTrigger className="h-9 text-xs mt-1">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="MONTHLY_REVIEW">Monthly Review</SelectItem>
+                                <SelectItem value="AD_HOC">Ad-hoc</SelectItem>
+                                <SelectItem value="PLANNING">Planning</SelectItem>
+                                <SelectItem value="PROGRESS_REVIEW">Progress Review</SelectItem>
+                                <SelectItem value="CLOSURE">Closure</SelectItem>
+                                <SelectItem value="OTHER">Other</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="content" className="text-xs font-semibold">Discussion Points / Content *</Label>
+                          <Textarea
+                            id="content"
+                            value={momFormData.content}
+                            onChange={(e) => setMomFormData({...momFormData, content: e.target.value})}
+                            placeholder="Enter detailed discussion points, decisions made, action items..."
+                            className="min-h-[100px] text-xs mt-1"
+                          />
+                        </div>
+
+                        <div>
+                          <Label htmlFor="attendees" className="text-xs font-semibold">Attendees</Label>
+                          <Textarea
+                            id="attendees"
+                            value={momFormData.attendees}
+                            onChange={(e) => setMomFormData({...momFormData, attendees: e.target.value})}
+                            placeholder="List meeting attendees (optional)"
+                            className="min-h-[60px] text-xs mt-1"
+                          />
+                        </div>
+
+                        <div className="flex items-center gap-2 pt-2">
+                          <Button 
+                            onClick={handleSaveMom}
+                            disabled={!momFormData.meetingTitle || !momFormData.meetingDate || !momFormData.responsiblePerson || !momFormData.content}
+                            size="sm"
+                            className="h-8"
+                          >
+                            <Save className="h-3 w-3 mr-1" />
+                            {editingMom ? 'Update' : 'Save'} MOM
+                          </Button>
+                          <Button variant="outline" onClick={() => setShowMomForm(false)} size="sm" className="h-8">
+                            <X className="h-3 w-3 mr-1" />
+                            Cancel
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* MOM Entries List */}
+                  <div className="space-y-3">
+                    {momLoading ? (
+                      <div className="flex items-center justify-center p-8 bg-muted rounded-lg">
+                        <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                        <span className="text-sm">Loading MOM entries...</span>
+                      </div>
+                    ) : momEntries.length === 0 ? (
+                      <div className="p-8 bg-muted rounded-lg text-center">
+                        <MessageSquare className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                        <p className="text-sm text-muted-foreground">No MOM entries found</p>
+                        {user?.role === 'IL' && user?.site === initiative?.site && (
+                          <p className="text-xs text-muted-foreground mt-1">Click "Add MOM" to create your first meeting record</p>
+                        )}
+                      </div>
+                    ) : (
+                      momEntries.map((mom: any) => (
+                        <Card key={mom.id} className="border-l-4 border-l-blue-400">
+                          <CardContent className="p-4">
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <h4 className="font-semibold text-sm">{mom.meetingTitle}</h4>
+                                  <div className="flex items-center gap-1">
+                                    <Badge 
+                                      variant="outline" 
+                                      className={`text-xs ${
+                                        mom.status === 'COMPLETED' ? 'bg-green-100 text-green-800 border-green-300' :
+                                        mom.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-800 border-blue-300' :
+                                        'bg-yellow-100 text-yellow-800 border-yellow-300'
+                                      }`}
+                                    >
+                                      {mom.status?.replace('_', ' ')}
+                                    </Badge>
+                                    <Badge 
+                                      variant="outline" 
+                                      className={`text-xs ${
+                                        mom.priority === 'HIGH' ? 'bg-red-100 text-red-800 border-red-300' :
+                                        mom.priority === 'MEDIUM' ? 'bg-orange-100 text-orange-800 border-orange-300' :
+                                        'bg-gray-100 text-gray-800 border-gray-300'
+                                      }`}
+                                    >
+                                      {mom.priority}
+                                    </Badge>
+                                  </div>
+                                </div>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs text-muted-foreground mb-2">
+                                  <div className="flex items-center gap-1">
+                                    <Calendar className="h-3 w-3" />
+                                    {new Date(mom.meetingDate).toLocaleDateString()}
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <User className="h-3 w-3" />
+                                    {mom.responsiblePerson}
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <Activity className="h-3 w-3" />
+                                    {mom.meetingType?.replace('_', ' ')}
+                                  </div>
+                                  {mom.dueDate && (
+                                    <div className="flex items-center gap-1">
+                                      <Clock className="h-3 w-3" />
+                                      Due: {new Date(mom.dueDate).toLocaleDateString()}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              {user?.role === 'IL' && user?.site === initiative?.site && (
+                                <div className="flex items-center gap-1 ml-2">
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    onClick={() => {
+                                      setEditingMom(mom);
+                                      setMomFormData({
+                                        meetingTitle: mom.meetingTitle || '',
+                                        meetingDate: mom.meetingDate || '',
+                                        responsiblePerson: mom.responsiblePerson || '',
+                                        content: mom.content || '',
+                                        status: mom.status || 'OPEN',
+                                        priority: mom.priority || 'MEDIUM',
+                                        meetingType: mom.meetingType || 'MONTHLY_REVIEW',
+                                        dueDate: mom.dueDate || '',
+                                        attendees: mom.attendees || ''
+                                      });
+                                      setShowMomForm(true);
+                                    }}
+                                    className="h-7 px-2"
+                                  >
+                                    <Edit className="h-3 w-3" />
+                                  </Button>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    onClick={() => handleDeleteMom(mom.id)}
+                                    className="h-7 px-2 text-destructive hover:text-destructive"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <div>
+                                <p className="text-xs font-medium text-muted-foreground mb-1">Discussion Points:</p>
+                                <div className="text-sm bg-muted/50 p-2 rounded whitespace-pre-wrap">
+                                  {mom.content}
+                                </div>
+                              </div>
+                              
+                              {mom.attendees && (
+                                <div>
+                                  <p className="text-xs font-medium text-muted-foreground mb-1">Attendees:</p>
+                                  <div className="text-sm bg-muted/30 p-2 rounded">
+                                    {mom.attendees}
+                                  </div>
+                                </div>
+                              )}
+                              
+                              <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
+                                <span>Created by {mom.createdBy}</span>
+                                <span>{new Date(mom.createdAt).toLocaleDateString()} {new Date(mom.createdAt).toLocaleTimeString()}</span>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>

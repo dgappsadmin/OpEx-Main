@@ -2000,7 +2000,8 @@ public class WorkflowTransactionService {
     }
 
     public Optional<WorkflowTransaction> getCurrentPendingStage(Long initiativeId) {
-        return workflowTransactionRepository.findCurrentPendingStage(initiativeId);
+        List<WorkflowTransaction> pendingTransactions = workflowTransactionRepository.findCurrentPendingStageCandidates(initiativeId);
+        return pendingTransactions.isEmpty() ? Optional.empty() : Optional.of(pendingTransactions.get(0));
     }
 
     @Transactional

@@ -596,6 +596,51 @@ export const monthlyMonitoringAPI = {
   }
 };
 
+// MOM (Minutes of Meeting) API
+export const momAPI = {
+  // Get all MOM entries for an initiative
+  getMomsByInitiative: async (initiativeId: number) => {
+    const response = await api.get(`/initiatives/${initiativeId}/moms`);
+    return response.data;
+  },
+
+  // Get MOM entries filtered by month
+  getMomsByMonth: async (initiativeId: number, year: number, month: number) => {
+    const response = await api.get(`/initiatives/${initiativeId}/moms/filter?year=${year}&month=${month}`);
+    return response.data;
+  },
+
+  // Get available months for an initiative's MOM entries
+  getAvailableMonths: async (initiativeId: number) => {
+    const response = await api.get(`/initiatives/${initiativeId}/moms/months`);
+    return response.data;
+  },
+
+  // Get a specific MOM entry by ID
+  getMomById: async (initiativeId: number, momId: number) => {
+    const response = await api.get(`/initiatives/${initiativeId}/moms/${momId}`);
+    return response.data;
+  },
+
+  // Create a new MOM entry
+  createMom: async (initiativeId: number, momData: any) => {
+    const response = await api.post(`/initiatives/${initiativeId}/moms`, momData);
+    return response.data;
+  },
+
+  // Update an existing MOM entry
+  updateMom: async (initiativeId: number, momId: number, momData: any) => {
+    const response = await api.put(`/initiatives/${initiativeId}/moms/${momId}`, momData);
+    return response.data;
+  },
+
+  // Delete a MOM entry
+  deleteMom: async (initiativeId: number, momId: number) => {
+    const response = await api.delete(`/initiatives/${initiativeId}/moms/${momId}`);
+    return response.data;
+  }
+};
+
 // Reports API - Updated for PDF DNL Plant Initiatives Report
 export const reportsAPI = {
   // Get DNL Savings Data for Chart
