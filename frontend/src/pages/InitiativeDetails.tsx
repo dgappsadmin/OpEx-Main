@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -49,7 +49,7 @@ import { useUser, useInitiativeLeadsBySite, useUsers } from '@/hooks/useUsers';
 import { useFinalizedPendingFAEntries, useBatchFAApproval, MonthlyMonitoringEntry } from '@/hooks/useMonthlyMonitoring';
 import { useTimelineEntriesProgressMonitoring } from '@/hooks/useTimelineEntriesProgressMonitoring';
 import UploadedDocuments from '@/components/UploadedDocuments';
-import { initiativeAPI, timelineTrackerAPI, monthlyMonitoringAPI, momAPI } from '@/lib/api';
+import { initiativeAPI, timelineTrackerAPI, monthlyMonitoringAPI, momAPI, userAPI } from '@/lib/api';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { useInitiatives } from '@/hooks/useInitiatives';
@@ -219,6 +219,7 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
     meetingTitle: '',
     meetingDate: '',
     responsiblePerson: '',
+    responsiblePersonEmail: '', // Add email field
     content: '',
     status: 'OPEN',
     priority: 'MEDIUM',
@@ -226,6 +227,13 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
     dueDate: '',
     attendees: ''
   });
+  
+  // User search state for responsible person dropdown
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [allUsers, setAllUsers] = useState<any[]>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const userDropdownRef = useRef<HTMLDivElement>(null);
   
   // Delete confirmation states
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -532,6 +540,40 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
     }
   }, [initiative?.id]);
 
+  // Fetch all users for responsible person dropdown
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setIsLoadingUsers(true);
+        const users = await userAPI.getAll();
+        setAllUsers(users || []);
+      } catch (error) {
+        console.error('Error fetching users:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load users for dropdown",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoadingUsers(false);
+      }
+    };
+
+    fetchUsers();
+  }, []);
+
+  // Handle click outside dropdown to close it
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userDropdownRef.current && !userDropdownRef.current.contains(event.target as Node)) {
+        setShowUserDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   // MOM Functions
   const fetchMomEntries = async () => {
     if (!initiative?.id) return;
@@ -605,11 +647,33 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
           description: "Meeting record has been updated successfully."
         });
       } else {
-        await momAPI.createMom(Number(initiative.id), momData);
-        toast({
-          title: "MOM entry created",
-          description: "Meeting record has been created successfully."
-        });
+        // Create MOM and send notification email if responsible person email is available
+        if (momFormData.responsiblePersonEmail) {
+          try {
+            await momAPI.createMomWithNotification(Number(initiative.id), {
+              ...momData,
+              responsiblePersonEmail: momFormData.responsiblePersonEmail
+            });
+            toast({
+              title: "MOM entry created with notification",
+              description: `Meeting record created and notification sent to ${momFormData.responsiblePerson}.`
+            });
+          } catch (emailError) {
+            console.error('Email notification failed:', emailError);
+            // Still create MOM even if email fails
+            await momAPI.createMom(Number(initiative.id), momData);
+            toast({
+              title: "MOM entry created",
+              description: "Meeting record created successfully, but notification email failed."
+            });
+          }
+        } else {
+          await momAPI.createMom(Number(initiative.id), momData);
+          toast({
+            title: "MOM entry created",
+            description: "Meeting record has been created successfully."
+          });
+        }
       }
 
       setShowMomForm(false);
@@ -618,6 +682,7 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
         meetingTitle: '',
         meetingDate: '',
         responsiblePerson: '',
+        responsiblePersonEmail: '',
         content: '',
         status: 'OPEN',
         priority: 'MEDIUM',
@@ -2606,6 +2671,7 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                               meetingTitle: '',
                               meetingDate: '',
                               responsiblePerson: '',
+                              responsiblePersonEmail: '',
                               content: '',
                               status: 'OPEN',
                               priority: 'MEDIUM',
@@ -2654,15 +2720,85 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                               className="h-9 text-xs mt-1"
                             />
                           </div>
-                          <div>
+                          <div className="relative" ref={userDropdownRef}>
                             <Label htmlFor="responsiblePerson" className="text-xs font-semibold">Responsible Person *</Label>
-                            <Input
-                              id="responsiblePerson"
-                              value={momFormData.responsiblePerson}
-                              onChange={(e) => setMomFormData({...momFormData, responsiblePerson: e.target.value})}
-                              placeholder="Enter responsible person name"
-                              className="h-9 text-xs mt-1"
-                            />
+                            <div className="relative">
+                              <Input
+                                id="responsiblePerson"
+                                value={userSearchQuery || momFormData.responsiblePerson}
+                                onChange={(e) => {
+                                  setUserSearchQuery(e.target.value);
+                                  setShowUserDropdown(true);
+                                  // Clear selection if user types
+                                  if (e.target.value !== momFormData.responsiblePerson) {
+                                    setMomFormData({
+                                      ...momFormData, 
+                                      responsiblePerson: '', 
+                                      responsiblePersonEmail: ''
+                                    });
+                                  }
+                                }}
+                                onFocus={() => setShowUserDropdown(true)}
+                                placeholder="Search and select responsible person..."
+                                className="h-9 text-xs mt-1"
+                                autoComplete="off"
+                              />
+                              <div className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                                {isLoadingUsers ? (
+                                  <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                                ) : (
+                                  <Users className="h-3 w-3 text-muted-foreground" />
+                                )}
+                              </div>
+                            </div>
+                            
+                            {/* User Dropdown */}
+                            {showUserDropdown && (
+                              <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-40 overflow-y-auto">
+                                {allUsers
+                                  .filter(user => 
+                                    user.fullName?.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
+                                    user.email?.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
+                                    user.site?.toLowerCase().includes(userSearchQuery.toLowerCase())
+                                  )
+                                  .slice(0, 10) // Limit to 10 results
+                                  .map((user) => (
+                                    <div
+                                      key={user.id}
+                                      className="px-3 py-2 text-xs hover:bg-blue-50 cursor-pointer border-b last:border-b-0"
+                                      onClick={() => {
+                                        setMomFormData({
+                                          ...momFormData, 
+                                          responsiblePerson: user.fullName, 
+                                          responsiblePersonEmail: user.email
+                                        });
+                                        setUserSearchQuery(user.fullName);
+                                        setShowUserDropdown(false);
+                                      }}
+                                    >
+                                      <div className="font-semibold text-gray-900">{user.fullName}</div>
+                                      <div className="text-gray-600">{user.email}</div>
+                                      <div className="text-gray-500">{user.site} • {user.role}</div>
+                                    </div>
+                                  ))
+                                }
+                                {allUsers.filter(user => 
+                                    user.fullName?.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
+                                    user.email?.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
+                                    user.site?.toLowerCase().includes(userSearchQuery.toLowerCase())
+                                  ).length === 0 && (
+                                  <div className="px-3 py-2 text-xs text-gray-500">
+                                    No users found matching "{userSearchQuery}"
+                                  </div>
+                                )}
+                                <div 
+                                  className="px-3 py-1 text-xs bg-gray-50 border-t cursor-pointer hover:bg-gray-100"
+                                  onClick={() => setShowUserDropdown(false)}
+                                >
+                                  Close
+                                </div>
+                              </div>
+                            )}
                           </div>
                           <div>
                             <Label htmlFor="dueDate" className="text-xs font-semibold">Due Date</Label>
@@ -2837,6 +2973,7 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                                         meetingTitle: mom.meetingTitle || '',
                                         meetingDate: mom.meetingDate || '',
                                         responsiblePerson: mom.responsiblePerson || '',
+                                        responsiblePersonEmail: '', // Reset email when editing existing MOM
                                         content: mom.content || '',
                                         status: mom.status || 'OPEN',
                                         priority: mom.priority || 'MEDIUM',

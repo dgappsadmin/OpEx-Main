@@ -210,38 +210,44 @@ export const timelineAPI = {
 };
 export const dashboardAPI = {
   // Get overall dashboard statistics
-  getStats: async () => {
-    const response = await api.get('/dashboard/stats');
+  getStats: async (financialYear?: string) => {
+    const url = financialYear ? `/dashboard/stats?financialYear=${financialYear}` : '/dashboard/stats';
+    const response = await api.get(url);
     return response.data;
   },
 
   // Get dashboard statistics for a specific site
-  getStatsBySite: async (site: string) => {
-    const response = await api.get(`/dashboard/stats/${site}`);
+  getStatsBySite: async (site: string, financialYear?: string) => {
+    const url = financialYear ? `/dashboard/stats/${site}?financialYear=${financialYear}` : `/dashboard/stats/${site}`;
+    const response = await api.get(url);
     return response.data;
   },
 
   // Get recent initiatives (latest 5)
-  getRecentInitiatives: async () => {
-    const response = await api.get('/dashboard/recent-initiatives');
+  getRecentInitiatives: async (financialYear?: string) => {
+    const url = financialYear ? `/dashboard/recent-initiatives?financialYear=${financialYear}` : '/dashboard/recent-initiatives';
+    const response = await api.get(url);
     return response.data;
   },
 
   // Get recent initiatives for a specific site
-  getRecentInitiativesBySite: async (site: string) => {
-    const response = await api.get(`/dashboard/recent-initiatives/${site}`);
+  getRecentInitiativesBySite: async (site: string, financialYear?: string) => {
+    const url = financialYear ? `/dashboard/recent-initiatives/${site}?financialYear=${financialYear}` : `/dashboard/recent-initiatives/${site}`;
+    const response = await api.get(url);
     return response.data;
   },
 
   // Get performance analysis dashboard data
-  getPerformanceAnalysis: async () => {
-    const response = await api.get('/dashboard/performance-analysis');
+  getPerformanceAnalysis: async (financialYear?: string) => {
+    const url = financialYear ? `/dashboard/performance-analysis?financialYear=${financialYear}` : '/dashboard/performance-analysis';
+    const response = await api.get(url);
     return response.data;
   },
 
   // Get performance analysis dashboard data for a specific site
-  getPerformanceAnalysisBySite: async (site: string) => {
-    const response = await api.get(`/dashboard/performance-analysis/${site}`);
+  getPerformanceAnalysisBySite: async (site: string, financialYear?: string) => {
+    const url = financialYear ? `/dashboard/performance-analysis/${site}?financialYear=${financialYear}` : `/dashboard/performance-analysis/${site}`;
+    const response = await api.get(url);
     return response.data;
   },
 
@@ -625,6 +631,21 @@ export const momAPI = {
   // Create a new MOM entry
   createMom: async (initiativeId: number, momData: any) => {
     const response = await api.post(`/initiatives/${initiativeId}/moms`, momData);
+    return response.data;
+  },
+
+  // Create MOM with email notification to responsible person
+  createMomWithNotification: async (initiativeId: number, momData: any) => {
+    const response = await api.post(`/initiatives/${initiativeId}/moms/with-notification`, momData);
+    return response.data;
+  },
+
+  // Send responsibility assignment notification email
+  sendResponsibilityNotification: async (initiativeId: number, responsiblePersonEmail: string, momData: any) => {
+    const response = await api.post(`/initiatives/${initiativeId}/notify-responsibility`, {
+      responsiblePersonEmail,
+      momData
+    });
     return response.data;
   },
 
