@@ -1,41 +1,41 @@
-// import React, { useState, useEffect } from 'react';
-// import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-// import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-// import { Button } from '@/components/ui/button';
-// import { Input } from '@/components/ui/input';
-// import { Label } from '@/components/ui/label';
-// import { Textarea } from '@/components/ui/textarea';
-// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-// import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-// import { Badge } from '@/components/ui/badge';
-// import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-// import { Alert, AlertDescription } from '@/components/ui/alert';
-// import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-// import { 
-//   Plus, 
-//   Edit, 
-//   Trash2, 
-//   CheckCircle, 
-//   Clock, 
-//   AlertTriangle, 
-//   Lock, 
-//   Filter, 
-//   RefreshCw, 
-//   FileText, 
-//   BarChart3, 
-//   Calendar, 
-//   TrendingUp, 
-//   PieChart, 
-//   Target, 
-//   DollarSign, 
-//   Activity,
-//   IndianRupee,
-//   Search,
-//   X
-// } from 'lucide-react';
-// import { useToast } from '@/hooks/use-toast';
-// import { monthlyMonitoringAPI, workflowTransactionAPI } from '@/lib/api';
-// import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, PieChart as RechartsPieChart, Pie, Cell } from 'recharts';
+import React, { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { 
+  Plus, 
+  Edit, 
+  Trash2, 
+  CheckCircle, 
+  Clock, 
+  AlertTriangle, 
+  Lock, 
+  Filter, 
+  RefreshCw, 
+  FileText, 
+  BarChart3, 
+  Calendar, 
+  TrendingUp, 
+  PieChart, 
+  Target, 
+  DollarSign, 
+  Activity,
+  IndianRupee,
+  Search,
+  X
+} from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { monthlyMonitoringAPI, workflowTransactionAPI } from '@/lib/api';
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, PieChart as RechartsPieChart, Pie, Cell } from 'recharts';
 
 // interface User {
 //   id: string;
@@ -1732,49 +1732,6 @@
 //   );
 // }
 
-
-
-
-
-import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { 
-  Plus, 
-  Edit, 
-  Trash2, 
-  CheckCircle, 
-  Clock, 
-  AlertTriangle, 
-  Lock, 
-  Filter, 
-  RefreshCw, 
-  FileText, 
-  BarChart3, 
-  Calendar, 
-  TrendingUp, 
-  PieChart, 
-  Target, 
-  DollarSign, 
-  Activity,
-  IndianRupee,
-  Search,
-  X
-} from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { monthlyMonitoringAPI, workflowTransactionAPI } from '@/lib/api';
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, PieChart as RechartsPieChart, Pie, Cell } from 'recharts';
-
 interface User {
   id: string;
   email: string;
@@ -1833,6 +1790,10 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
   // Finalized entry alert states
   const [showFinalizedAlert, setShowFinalizedAlert] = useState(false);
   const [attemptedAction, setAttemptedAction] = useState<string>('');
+  
+  // Finalize confirmation states
+  const [showFinalizeConfirm, setShowFinalizeConfirm] = useState(false);
+  const [entryToFinalize, setEntryToFinalize] = useState<number | null>(null);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -2183,6 +2144,29 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
   const handleFinalizedAlertClose = () => {
     setShowFinalizedAlert(false);
     setAttemptedAction('');
+  };
+
+  // Finalize confirmation handlers
+  const handleFinalize = (entry: MonthlyMonitoringEntry) => {
+    // Show confirmation dialog instead of direct finalization
+    setEntryToFinalize(entry.id!);
+    setShowFinalizeConfirm(true);
+  };
+
+  const confirmFinalize = () => {
+    if (!entryToFinalize) return;
+    
+    // Proceed with finalization
+    finalizeMutation.mutate({ id: entryToFinalize, isFinalized: 'Y' });
+    
+    // Reset confirmation state
+    setShowFinalizeConfirm(false);
+    setEntryToFinalize(null);
+  };
+
+  const cancelFinalize = () => {
+    setShowFinalizeConfirm(false);
+    setEntryToFinalize(null);
   };
 
   // Role-based permission functions with stage 9 restriction
@@ -3085,7 +3069,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                                           onClick={(e) => {
                                             e.preventDefault();
                                             e.stopPropagation();
-                                            finalizeMutation.mutate({ id: entry.id!, isFinalized: 'Y' });
+                                            handleFinalize(entry);
                                           }}
                                         >
                                           <FileText className="h-3 w-3" />
@@ -3529,6 +3513,51 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                 >
                   <CheckCircle className="h-4 w-4 mr-2" />
                   Understood
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Finalize Confirmation Modal */}
+      {showFinalizeConfirm && (
+        <div className="fixed inset-0 flex items-center justify-center z-[9999] pointer-events-none">
+          <div className="bg-white rounded-xl shadow-2xl border-2 border-blue-200 p-6 max-w-md w-full mx-4 pointer-events-auto transform animate-in fade-in zoom-in-95 duration-200">
+            <div className="text-center space-y-4">
+              {/* Icon and Header */}
+              <div className="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                <FileText className="h-6 w-6 text-blue-600" />
+              </div>
+              
+              <div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  Finalize Entry?
+                </h3>
+                <p className="text-sm text-blue-600 font-medium mb-3">
+                  This action cannot be undone
+                </p>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  Are you sure you want to finalize this monitoring entry? 
+                  Once finalized, the entry will be locked and cannot be edited or deleted.
+                </p>
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="flex gap-3 justify-center pt-2">
+                <Button
+                  variant="outline"
+                  onClick={cancelFinalize}
+                  className="px-6 py-2 min-w-[100px]"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={confirmFinalize}
+                  className="px-6 py-2 min-w-[100px] bg-blue-600 hover:bg-blue-700"
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  Finalize
                 </Button>
               </div>
             </div>

@@ -112,7 +112,11 @@ export default function PerformanceAnalysis({
   const colors = getVariantColors();
 
   // Calculate progress bar value (capped at 100% for display, but percentage can exceed 100%)
-  const progressValue = Math.min(metrics?.progressPercentage || 0, 100);
+  // Progress should be calculated as Actual Savings vs Projected Savings (not potential)
+  const actualVsProjectedPercentage = (metrics?.savingsProjectionCurrentFY && metrics?.savingsProjectionCurrentFY > 0) 
+    ? (metrics?.actualSavingsCurrentFY || 0) / metrics.savingsProjectionCurrentFY * 100 
+    : (metrics?.actualSavingsCurrentFY || 0) > 0 ? 100 : 0; // If no projection but has actual, show 100%
+  const progressValue = Math.min(actualVsProjectedPercentage, 100);
 
   // Helper function to format trend percentage with proper rounding and no trailing zeros
   const formatTrend = (trend: number | null | undefined): string => {
@@ -138,15 +142,15 @@ export default function PerformanceAnalysis({
       trendDirection: getTrendDirection(metrics?.totalInitiativesTrend)
     },
     {
-      title: "Annualized Potential",
+      title: "Annualized Projected Savings",
       value: formatCurrencyInLakhs(adjustedMetrics?.potentialSavingsAnnualized || 0),
-      subtitle: "Total yearly potential",
+      subtitle: "Total yearly projection",
       icon: TrendingUp,
       trend: formatTrend(metrics?.potentialSavingsAnnualizedTrend) + " vs target",
       trendDirection: getTrendDirection(metrics?.potentialSavingsAnnualizedTrend)
     },
     {
-      title: "Current FY Potential",
+      title: "Current FY Projected Savings",
       value: formatCurrencyInLakhs(adjustedMetrics?.potentialSavingsCurrentFY || 0),
       subtitle: "This financial year",
       icon: IndianRupee,
@@ -156,7 +160,7 @@ export default function PerformanceAnalysis({
     {
       title: "Actual Savings",
       value: formatCurrencyInLakhs(metrics?.actualSavingsCurrentFY || 0),
-      subtitle: "Achieved this FY",
+      subtitle: "Realized savings this FY",
       icon: BarChart3,
       trend: formatTrend(metrics?.actualSavingsCurrentFYTrend) + " vs last FY",
       trendDirection: getTrendDirection(metrics?.actualSavingsCurrentFYTrend)
@@ -265,23 +269,23 @@ export default function PerformanceAnalysis({
                 </div>
                 <div>
                   <h3 className="font-semibold text-sm">Performance Tracking</h3>
-                  <p className="text-xs text-muted-foreground">Actual Savings vs Target Projection</p>
+                  <p className="text-xs text-muted-foreground">Actual Savings vs Projected Savings</p>
                 </div>
               </div>
               <div className="text-right">
                 <div className={`text-lg font-bold ${
-                  (metrics?.progressPercentage || 0) > 100 
+                  actualVsProjectedPercentage > 100 
                     ? 'text-green-600' 
-                    : (metrics?.progressPercentage || 0) >= 75 
+                    : actualVsProjectedPercentage >= 75 
                       ? 'text-blue-600' 
                       : 'text-foreground'
                 }`}>
-                  {parseFloat((metrics?.progressPercentage || 0).toFixed(2))}%
+                  {parseFloat(actualVsProjectedPercentage.toFixed(2))}%
                 </div>
                 <div className="text-2xs text-muted-foreground">
-                  {(metrics?.progressPercentage || 0) > 100 
+                  {actualVsProjectedPercentage > 100 
                     ? 'Over-achieved!' 
-                    : (metrics?.progressPercentage || 0) >= 100 
+                    : actualVsProjectedPercentage >= 100 
                       ? 'Target Met' 
                       : 'Progress'}
                 </div>
@@ -295,7 +299,7 @@ export default function PerformanceAnalysis({
               />
               <div className="flex justify-between text-2xs text-muted-foreground">
                 <span>Actual: {formatCurrencyInLakhs(metrics?.actualSavingsCurrentFY || 0)}</span>
-                <span>Target: {formatCurrencyInLakhs(adjustedMetrics?.potentialSavingsCurrentFY || 0)}</span>
+                <span>Target: {formatCurrencyInLakhs(metrics?.savingsProjectionCurrentFY || 0)}</span>
               </div>
             </div>
           </CardContent>

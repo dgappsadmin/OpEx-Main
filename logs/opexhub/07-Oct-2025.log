@@ -105,3 +105,25 @@
 [2025-10-07 15:41:59.018] [INFO] === WORKFLOW ACTION COMPLETED === Initiative: NDS/25/EV/01/003 | Status: In Progress
 [2025-10-07 15:42:19.274] [INFO] Login attempt - Email: kiran.sharma@godeepak.com
 [2025-10-07 15:42:19.538] [INFO] Login successful - User: Kiran Sharma | Email: kiran.sharma@godeepak.com | Role: IL | Site: NDS
+[2025-10-07 15:56:40.683] [INFO] === WORKFLOW ACTION STARTED === Transaction ID: 22 | Action: approved | User: kiran.sharma@godeepak.com
+[2025-10-07 15:56:40.697] [INFO] Stage: 9 - Savings Monitoring (1 Month) | Initiative ID: 3
+[2025-10-07 15:56:40.711] [INFO] Processing workflow for Initiative: NDS/25/EV/01/003
+[2025-10-07 15:56:40.711] [INFO] Stage 9 APPROVED by Kiran Sharma
+[2025-10-07 15:56:40.744] [INFO] Initiative moved to Stage 10
+[2025-10-07 15:56:42.232] [INFO] === WORKFLOW ACTION COMPLETED === Initiative: NDS/25/EV/01/003 | Status: In Progress
+[2025-10-07 15:56:52.261] [INFO] Login attempt - Email: sonia.jain@godeepak.com
+[2025-10-07 15:56:52.41] [INFO] Login successful - User: Sonia Jain | Email: sonia.jain@godeepak.com | Role: F&A | Site: NDS
+[2025-10-07 15:57:02.016] [INFO] === WORKFLOW ACTION STARTED === Transaction ID: 23 | Action: approved | User: sonia.jain@godeepak.com
+[2025-10-07 15:57:02.031] [INFO] Stage: 10 - Saving Validation with F&A (Monthly) | Initiative ID: 3
+[2025-10-07 15:57:02.048] [INFO] Processing workflow for Initiative: NDS/25/EV/01/003
+[2025-10-07 15:57:02.053] [INFO] Stage 10 APPROVED by Sonia Jain
+[2025-10-07 15:57:02.091] [INFO] Initiative moved to Stage 11
+[2025-10-07 15:57:03.341] [INFO] === WORKFLOW ACTION COMPLETED === Initiative: NDS/25/EV/01/003 | Status: In Progress
+[2025-10-07 15:57:13.278] [INFO] Login attempt - Email: kiran.sharma@godeepak.com
+[2025-10-07 15:57:13.449] [INFO] Login successful - User: Kiran Sharma | Email: kiran.sharma@godeepak.com | Role: IL | Site: NDS
+[2025-10-07 15:57:20.724] [INFO] === WORKFLOW ACTION STARTED === Transaction ID: 24 | Action: approved | User: kiran.sharma@godeepak.com
+[2025-10-07 15:57:20.743] [INFO] Stage: 11 - Initiative Closure | Initiative ID: 3
+[2025-10-07 15:57:20.757] [INFO] Processing workflow for Initiative: NDS/25/EV/01/003
+[2025-10-07 15:57:20.761] [INFO] Stage 11 APPROVED by Kiran Sharma
+[2025-10-07 15:57:20.771] [INFO] Initiative COMPLETED - Final stage approved
+[2025-10-07 15:57:20.775] [INFO] === WORKFLOW ACTION COMPLETED === Initiative: NDS/25/EV/01/003 | Status: Completed
