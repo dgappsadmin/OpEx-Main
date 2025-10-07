@@ -211,42 +211,72 @@ export const timelineAPI = {
 export const dashboardAPI = {
   // Get overall dashboard statistics
   getStats: async (financialYear?: string) => {
-    const url = financialYear ? `/dashboard/stats?financialYear=${financialYear}` : '/dashboard/stats';
+    const params = new URLSearchParams();
+    if (financialYear) {
+      params.append('financialYear', financialYear);
+    }
+    const url = params.toString() ? `/dashboard/stats?${params.toString()}` : '/dashboard/stats';
+    console.log('🔍 Dashboard API - getStats URL:', url);
     const response = await api.get(url);
     return response.data;
   },
 
   // Get dashboard statistics for a specific site
   getStatsBySite: async (site: string, financialYear?: string) => {
-    const url = financialYear ? `/dashboard/stats/${site}?financialYear=${financialYear}` : `/dashboard/stats/${site}`;
+    const params = new URLSearchParams();
+    if (financialYear) {
+      params.append('financialYear', financialYear);
+    }
+    const url = params.toString() ? `/dashboard/stats/${site}?${params.toString()}` : `/dashboard/stats/${site}`;
+    console.log('🔍 Dashboard API - getStatsBySite URL:', url);
     const response = await api.get(url);
     return response.data;
   },
 
   // Get recent initiatives (latest 5)
   getRecentInitiatives: async (financialYear?: string) => {
-    const url = financialYear ? `/dashboard/recent-initiatives?financialYear=${financialYear}` : '/dashboard/recent-initiatives';
+    const params = new URLSearchParams();
+    if (financialYear) {
+      params.append('financialYear', financialYear);
+    }
+    const url = params.toString() ? `/dashboard/recent-initiatives?${params.toString()}` : '/dashboard/recent-initiatives';
+    console.log('🔍 Dashboard API - getRecentInitiatives URL:', url);
     const response = await api.get(url);
     return response.data;
   },
 
   // Get recent initiatives for a specific site
   getRecentInitiativesBySite: async (site: string, financialYear?: string) => {
-    const url = financialYear ? `/dashboard/recent-initiatives/${site}?financialYear=${financialYear}` : `/dashboard/recent-initiatives/${site}`;
+    const params = new URLSearchParams();
+    if (financialYear) {
+      params.append('financialYear', financialYear);
+    }
+    const url = params.toString() ? `/dashboard/recent-initiatives/${site}?${params.toString()}` : `/dashboard/recent-initiatives/${site}`;
+    console.log('🔍 Dashboard API - getRecentInitiativesBySite URL:', url);
     const response = await api.get(url);
     return response.data;
   },
 
   // Get performance analysis dashboard data
   getPerformanceAnalysis: async (financialYear?: string) => {
-    const url = financialYear ? `/dashboard/performance-analysis?financialYear=${financialYear}` : '/dashboard/performance-analysis';
+    const params = new URLSearchParams();
+    if (financialYear) {
+      params.append('financialYear', financialYear);
+    }
+    const url = params.toString() ? `/dashboard/performance-analysis?${params.toString()}` : '/dashboard/performance-analysis';
+    console.log('🔍 Dashboard API - getPerformanceAnalysis URL:', url);
     const response = await api.get(url);
     return response.data;
   },
 
   // Get performance analysis dashboard data for a specific site
   getPerformanceAnalysisBySite: async (site: string, financialYear?: string) => {
-    const url = financialYear ? `/dashboard/performance-analysis/${site}?financialYear=${financialYear}` : `/dashboard/performance-analysis/${site}`;
+    const params = new URLSearchParams();
+    if (financialYear) {
+      params.append('financialYear', financialYear);
+    }
+    const url = params.toString() ? `/dashboard/performance-analysis/${site}?${params.toString()}` : `/dashboard/performance-analysis/${site}`;
+    console.log('🔍 Dashboard API - getPerformanceAnalysisBySite URL:', url);
     const response = await api.get(url);
     return response.data;
   },

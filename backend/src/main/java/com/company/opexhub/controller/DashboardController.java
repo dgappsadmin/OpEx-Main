@@ -21,8 +21,9 @@ public class DashboardController {
      * Get overall dashboard statistics
      */
     @GetMapping("/stats")
-    public ResponseEntity<DashboardStatsDTO> getDashboardStats() {
-        DashboardStatsDTO stats = dashboardService.getDashboardStats();
+    public ResponseEntity<DashboardStatsDTO> getDashboardStats(
+            @RequestParam(value = "financialYear", required = false) String financialYear) {
+        DashboardStatsDTO stats = dashboardService.getDashboardStats(financialYear);
         return ResponseEntity.ok(stats);
     }
 
@@ -30,8 +31,10 @@ public class DashboardController {
      * Get dashboard statistics for a specific site
      */
     @GetMapping("/stats/{site}")
-    public ResponseEntity<DashboardStatsDTO> getDashboardStatsBySite(@PathVariable String site) {
-        DashboardStatsDTO stats = dashboardService.getDashboardStatsBySite(site);
+    public ResponseEntity<DashboardStatsDTO> getDashboardStatsBySite(
+            @PathVariable String site, 
+            @RequestParam(value = "financialYear", required = false) String financialYear) {
+        DashboardStatsDTO stats = dashboardService.getDashboardStatsBySite(site, financialYear);
         return ResponseEntity.ok(stats);
     }
 
@@ -39,8 +42,9 @@ public class DashboardController {
      * Get recent initiatives (latest 5)
      */
     @GetMapping("/recent-initiatives")
-    public ResponseEntity<List<RecentInitiativeDTO>> getRecentInitiatives() {
-        List<RecentInitiativeDTO> recentInitiatives = dashboardService.getRecentInitiatives();
+    public ResponseEntity<List<RecentInitiativeDTO>> getRecentInitiatives(
+            @RequestParam(value = "financialYear", required = false) String financialYear) {
+        List<RecentInitiativeDTO> recentInitiatives = dashboardService.getRecentInitiatives(financialYear);
         return ResponseEntity.ok(recentInitiatives);
     }
 
@@ -48,8 +52,10 @@ public class DashboardController {
      * Get recent initiatives for a specific site
      */
     @GetMapping("/recent-initiatives/{site}")
-    public ResponseEntity<List<RecentInitiativeDTO>> getRecentInitiativesBySite(@PathVariable String site) {
-        List<RecentInitiativeDTO> recentInitiatives = dashboardService.getRecentInitiativesBySite(site);
+    public ResponseEntity<List<RecentInitiativeDTO>> getRecentInitiativesBySite(
+            @PathVariable String site, 
+            @RequestParam(value = "financialYear", required = false) String financialYear) {
+        List<RecentInitiativeDTO> recentInitiatives = dashboardService.getRecentInitiativesBySite(site, financialYear);
         return ResponseEntity.ok(recentInitiatives);
     }
     
@@ -57,8 +63,9 @@ public class DashboardController {
      * Get performance analysis dashboard data
      */
     @GetMapping("/performance-analysis")
-    public ResponseEntity<PerformanceAnalysisDTO> getPerformanceAnalysis() {
-        PerformanceAnalysisDTO performanceAnalysis = dashboardService.getPerformanceAnalysis();
+    public ResponseEntity<PerformanceAnalysisDTO> getPerformanceAnalysis(
+            @RequestParam(value = "financialYear", required = false) String financialYear) {
+        PerformanceAnalysisDTO performanceAnalysis = dashboardService.getPerformanceAnalysis(financialYear);
         return ResponseEntity.ok(performanceAnalysis);
     }
 
@@ -66,8 +73,10 @@ public class DashboardController {
      * Get performance analysis dashboard data for a specific site
      */
     @GetMapping("/performance-analysis/{site}")
-    public ResponseEntity<PerformanceAnalysisDTO> getPerformanceAnalysisBySite(@PathVariable String site) {
-        PerformanceAnalysisDTO performanceAnalysis = dashboardService.getPerformanceAnalysisBySite(site);
+    public ResponseEntity<PerformanceAnalysisDTO> getPerformanceAnalysisBySite(
+            @PathVariable String site, 
+            @RequestParam(value = "financialYear", required = false) String financialYear) {
+        PerformanceAnalysisDTO performanceAnalysis = dashboardService.getPerformanceAnalysisBySite(site, financialYear);
         return ResponseEntity.ok(performanceAnalysis);
     }
 

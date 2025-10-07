@@ -128,4 +128,17 @@ public interface InitiativeRepository extends JpaRepository<Initiative, Long> {
     
     @Query("SELECT COUNT(i) FROM Initiative i WHERE i.site = :site AND LOWER(COALESCE(i.budgetType, 'budgeted')) = :budgetType AND i.createdAt >= :startDate AND i.createdAt <= :endDate")
     Long countBySiteAndBudgetTypeAndCreatedAtBetween(@Param("site") String site, @Param("budgetType") String budgetType, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+    
+    // Additional methods for financial year filtering
+    @Query("SELECT COUNT(i) FROM Initiative i WHERE i.status = :status AND i.createdAt >= :startDate AND i.createdAt <= :endDate")
+    Long countByStatusAndCreatedAtBetween(@Param("status") String status, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+    
+    @Query("SELECT COUNT(i) FROM Initiative i WHERE i.status = :status AND i.site = :site AND i.createdAt >= :startDate AND i.createdAt <= :endDate")
+    Long countByStatusAndSiteAndCreatedAtBetween(@Param("status") String status, @Param("site") String site, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+    
+    @Query("SELECT i FROM Initiative i WHERE i.createdAt >= :startDate AND i.createdAt <= :endDate ORDER BY i.createdAt DESC")
+    Page<Initiative> findByCreatedAtBetween(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate, Pageable pageable);
+    
+    @Query("SELECT i FROM Initiative i WHERE i.site = :site AND i.createdAt >= :startDate AND i.createdAt <= :endDate ORDER BY i.createdAt DESC")
+    Page<Initiative> findBySiteAndCreatedAtBetween(@Param("site") String site, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate, Pageable pageable);
 }

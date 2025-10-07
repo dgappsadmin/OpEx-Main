@@ -146,8 +146,27 @@ export default function PerformanceAnalysis({
     }
   };
 
-  const displayFY = selectedFinancialYear || getCurrentFiscalYear();
+  // Convert full year back to short year for display (e.g., "2025" -> "25")
+  const convertToDisplayYear = (year?: string): string => {
+    if (!year) return getCurrentFiscalYear();
+    // If it's a full year like "2025", convert to "25"
+    if (year.length === 4) {
+      return year.slice(-2);
+    }
+    // If it's already short year like "25", use as-is
+    return year;
+  };
+
+  const displayFY = convertToDisplayYear(selectedFinancialYear);
   const fyText = `FY ${displayFY}-${(parseInt(displayFY) + 1).toString().slice(-2)}`;
+  
+  // Debug logging to verify financial year processing in PerformanceAnalysis
+  console.log('🔍 PerformanceAnalysis FY Debug:', {
+    selectedFinancialYear,
+    displayFY,
+    fyText,
+    variant
+  });
 
   const kpiCards = [
     {

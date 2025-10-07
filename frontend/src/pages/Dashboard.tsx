@@ -64,11 +64,26 @@ export default function Dashboard({ user }: DashboardProps) {
 
     fetchAvailableFinancialYears();
   }, []);
+
+  // Convert selectedFinancialYear to full year format for API calls (similar to Reports.tsx)
+  const convertToFullYear = (year: string): string => {
+    if (!year) return '';
+    return year.length === 2 ? `20${year}` : year;
+  };
+
+  const fullYearForAPI = selectedFinancialYear ? convertToFullYear(selectedFinancialYear) : undefined;
+  
+  // Debug logging to verify financial year conversion
+  console.log('🔍 Dashboard FY Debug:', {
+    selectedFinancialYear,
+    fullYearForAPI,
+    apiSite
+  });
   
   // Fetch real dashboard data based on selected filter
-  const { data: dashboardStats, isLoading: statsLoading, error: statsError } = useDashboardStats(apiSite, selectedFinancialYear);
-  const { data: recentInitiativesData, isLoading: initiativesLoading, error: initiativesError } = useRecentInitiatives(apiSite, selectedFinancialYear);
-  const { data: performanceAnalysisData, isLoading: performanceLoading, error: performanceError } = usePerformanceAnalysis(apiSite, selectedFinancialYear);
+  const { data: dashboardStats, isLoading: statsLoading, error: statsError } = useDashboardStats(apiSite, fullYearForAPI);
+  const { data: recentInitiativesData, isLoading: initiativesLoading, error: initiativesError } = useRecentInitiatives(apiSite, fullYearForAPI);
+  const { data: performanceAnalysisData, isLoading: performanceLoading, error: performanceError } = usePerformanceAnalysis(apiSite, fullYearForAPI);
   
   // Fetch initiatives data for filtering in PerformanceAnalysis
   const { data: initiativesData } = useInitiatives(apiSite ? { site: apiSite } : {});
@@ -526,7 +541,9 @@ export default function Dashboard({ user }: DashboardProps) {
             <div>
               <h2 className="text-xl font-bold text-foreground">Performance Analysis Dashboard</h2>
               <p className="text-muted-foreground text-xs mt-0.5">
-                Financial Year: <span className="font-semibold text-blue-600">{performanceAnalysisData?.currentFinancialYear || 'Loading...'}</span>
+                Financial Year: <span className="font-semibold text-blue-600">
+                  {selectedFinancialYear ? `FY ${selectedFinancialYear}-${(parseInt(selectedFinancialYear) + 1).toString().slice(-2)}` : 'Loading...'}
+                </span>
               </p>
             </div>
             {performanceError && (

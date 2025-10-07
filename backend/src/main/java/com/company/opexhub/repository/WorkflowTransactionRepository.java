@@ -67,4 +67,11 @@ public interface WorkflowTransactionRepository extends JpaRepository<WorkflowTra
     
     // Find workflow transactions by assigned user ID (for IL assignments)
     List<WorkflowTransaction> findByAssignedUserId(Long assignedUserId);
+    
+    // Additional methods for financial year filtering by initiative creation date
+    @Query("SELECT COUNT(wt) FROM WorkflowTransaction wt JOIN Initiative i ON wt.initiativeId = i.id WHERE i.createdAt >= :startDate AND i.createdAt <= :endDate AND wt.approveStatus = :approveStatus AND wt.pendingWith IS NOT NULL")
+    Long countByInitiativeCreatedAtBetweenAndApproveStatusAndPendingWithIsNotNull(@Param("startDate") java.time.LocalDateTime startDate, @Param("endDate") java.time.LocalDateTime endDate, @Param("approveStatus") String approveStatus);
+    
+    @Query("SELECT COUNT(wt) FROM WorkflowTransaction wt JOIN Initiative i ON wt.initiativeId = i.id WHERE wt.site = :site AND i.createdAt >= :startDate AND i.createdAt <= :endDate AND wt.approveStatus = :approveStatus AND wt.pendingWith IS NOT NULL")
+    Long countBySiteAndInitiativeCreatedAtBetweenAndApproveStatusAndPendingWithIsNotNull(@Param("site") String site, @Param("startDate") java.time.LocalDateTime startDate, @Param("endDate") java.time.LocalDateTime endDate, @Param("approveStatus") String approveStatus);
 }
