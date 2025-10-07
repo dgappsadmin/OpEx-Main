@@ -26,7 +26,7 @@ import com.company.opexhub.service.InitiativeMomService.MomCreateRequest;
 import com.company.opexhub.service.InitiativeMomService.MomUpdateRequest;
 
 @RestController
-@RequestMapping("/opexhub/api/initiatives/{initiativeId}/moms")
+@RequestMapping("api/initiatives/{initiativeId}/moms")
 @CrossOrigin(origins = "*")
 public class InitiativeMomController {
 
