@@ -226,6 +226,10 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
     dueDate: '',
     attendees: ''
   });
+  
+  // Delete confirmation states
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [momToDelete, setMomToDelete] = useState<number | null>(null);
 
   // Fetch initiatives to find the specific one
   const { data: initiativesData, isLoading, error } = useInitiatives();
@@ -628,12 +632,18 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
   };
 
   const handleDeleteMom = async (momId: number) => {
-    if (!initiative?.id || !window.confirm('Are you sure you want to delete this MOM entry?')) {
+    // Show confirmation dialog instead of direct deletion
+    setMomToDelete(momId);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDeleteMom = async () => {
+    if (!initiative?.id || !momToDelete) {
       return;
     }
 
     try {
-      await momAPI.deleteMom(Number(initiative.id), momId);
+      await momAPI.deleteMom(Number(initiative.id), momToDelete);
       toast({
         title: "MOM entry deleted",
         description: "Meeting record has been deleted successfully."
@@ -649,7 +659,16 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
         description: error.response?.data?.message || "Failed to delete meeting record.",
         variant: "destructive"
       });
+    } finally {
+      // Reset confirmation state
+      setShowDeleteConfirm(false);
+      setMomToDelete(null);
     }
+  };
+
+  const cancelDeleteMom = () => {
+    setShowDeleteConfirm(false);
+    setMomToDelete(null);
   };
   
   // Show workflow tab if user can view it (for debugging/visibility) or has pending actions
@@ -2221,208 +2240,287 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
               </Card>
             </TabsContent>
 
-            <TabsContent value="references" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>MOC & CAPEX References</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {/* MOC & CAPEX Requirements Section */}
-                  <div>
-                    <p className="text-base font-semibold mb-4">MOC & CAPEX Requirements</p>
-                    
-                    {/* MOC Requirements Section */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium">MOC Required</Label>
-                        {isEditing ? (
-                          <Select 
-                            value={formData.requiresMoc || 'N'} 
-                            onValueChange={(value) => setFormData({ ...formData, requiresMoc: value })}
+            <TabsContent value="references" className="space-y-4">
+              {/* MOC & CAPEX Requirements Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* MOC Requirements Card */}
+                <Card className="border-l-4 border-l-blue-500">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <div className="p-1.5 bg-blue-100 rounded-lg">
+                        <CheckCircle2 className="h-4 w-4 text-blue-600" />
+                      </div>
+                      MOC Requirements
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-muted-foreground">MOC Required</Label>
+                      {isEditing ? (
+                        <Select 
+                          value={formData.requiresMoc || 'N'} 
+                          onValueChange={(value) => setFormData({ ...formData, requiresMoc: value })}
+                        >
+                          <SelectTrigger className="h-10">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Y">Yes</SelectItem>
+                            <SelectItem value="N">No</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <Badge 
+                            variant={
+                              initiative?.requiresMoc === 'Y' ? 'default' : 
+                              initiative?.requiresMoc === 'N' ? 'secondary' : 
+                              'outline'
+                            }
+                            className="flex items-center gap-1.5 px-3 py-1"
                           >
-                            <SelectTrigger className="h-10">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Y">Yes</SelectItem>
-                              <SelectItem value="N">No</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <Badge 
-                              variant={
-                                initiative?.requiresMoc === 'Y' ? 'default' : 
-                                initiative?.requiresMoc === 'N' ? 'secondary' : 
-                                'outline'
-                              }
-                              className="flex items-center gap-1"
-                            >
-                              {initiative?.requiresMoc === 'Y' ? (
-                                <>
-                                  <CheckCircle className="h-3 w-3" />
-                                  Yes
-                                </>
-                              ) : initiative?.requiresMoc === 'N' ? (
-                                <>
-                                  <X className="h-3 w-3" />
-                                  No
-                                </>
-                              ) : (
-                                <>
-                                  <Clock className="h-3 w-3" />
-                                  Decision Pending
-                                </>
-                              )}
-                            </Badge>
-                          </div>
-                        )}
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium">MOC Number</Label>
-                        {isEditing ? (
-                          <Input
-                            value={formData.mocNumber || ''}
-                            onChange={(e) => setFormData({ ...formData, mocNumber: e.target.value })}
-                            className="h-10"
-                            placeholder="Enter MOC Number"
-                          />
-                        ) : (
-                          <p className="text-sm font-mono bg-muted p-2 rounded-md">{initiative?.mocNumber || 'Not provided'}</p>
-                        )}
-                      </div>
+                            {initiative?.requiresMoc === 'Y' ? (
+                              <>
+                                <CheckCircle className="h-3.5 w-3.5" />
+                                Yes, Required
+                              </>
+                            ) : initiative?.requiresMoc === 'N' ? (
+                              <>
+                                <X className="h-3.5 w-3.5" />
+                                Not Required
+                              </>
+                            ) : (
+                              <>
+                                <Clock className="h-3.5 w-3.5" />
+                                Decision Pending
+                              </>
+                            )}
+                          </Badge>
+                        </div>
+                      )}
                     </div>
 
-                    {/* CAPEX Requirements Section */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium">CAPEX Required</Label>
-                        {isEditing ? (
-                          <Select 
-                            value={formData.requiresCapex || 'N'} 
-                            onValueChange={(value) => setFormData({ ...formData, requiresCapex: value })}
-                          >
-                            <SelectTrigger className="h-10">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Y">Yes</SelectItem>
-                              <SelectItem value="N">No</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <Badge 
-                              variant={
-                                initiative?.requiresCapex === 'Y' ? 'default' : 
-                                initiative?.requiresCapex === 'N' ? 'secondary' : 
-                                'outline'
-                              }
-                              className="flex items-center gap-1"
-                            >
-                              {initiative?.requiresCapex === 'Y' ? (
-                                <>
-                                  <CheckCircle className="h-3 w-3" />
-                                  Yes
-                                </>
-                              ) : initiative?.requiresCapex === 'N' ? (
-                                <>
-                                  <X className="h-3 w-3" />
-                                  No
-                                </>
-                              ) : (
-                                <>
-                                  <Clock className="h-3 w-3" />
-                                  Decision Pending
-                                </>
-                              )}
-                            </Badge>
-                          </div>
-                        )}
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium">CAPEX Number</Label>
-                        {isEditing ? (
-                          <Input
-                            value={formData.capexNumber || ''}
-                            onChange={(e) => setFormData({ ...formData, capexNumber: e.target.value })}
-                            className="h-10"
-                            placeholder="Enter CAPEX Number"
-                          />
-                        ) : (
-                          <p className="text-sm font-mono bg-muted p-2 rounded-md">{initiative?.capexNumber || 'Not provided'}</p>
-                        )}
-                      </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-muted-foreground">MOC Number</Label>
+                      {isEditing ? (
+                        <Input
+                          value={formData.mocNumber || ''}
+                          onChange={(e) => setFormData({ ...formData, mocNumber: e.target.value })}
+                          className="h-10"
+                          placeholder="Enter MOC Number"
+                        />
+                      ) : (
+                        <div className="bg-muted/50 border rounded-lg p-3">
+                          <p className="text-sm font-mono text-foreground">
+                            {initiative?.mocNumber || (
+                              <span className="text-muted-foreground italic">No MOC number provided</span>
+                            )}
+                          </p>
+                        </div>
+                      )}
                     </div>
+                  </CardContent>
+                </Card>
+
+                {/* CAPEX Requirements Card */}
+                <Card className="border-l-4 border-l-green-500">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <div className="p-1.5 bg-green-100 rounded-lg">
+                        <DollarSign className="h-4 w-4 text-green-600" />
+                      </div>
+                      CAPEX Requirements
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-muted-foreground">CAPEX Required</Label>
+                      {isEditing ? (
+                        <Select 
+                          value={formData.requiresCapex || 'N'} 
+                          onValueChange={(value) => setFormData({ ...formData, requiresCapex: value })}
+                        >
+                          <SelectTrigger className="h-10">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Y">Yes</SelectItem>
+                            <SelectItem value="N">No</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <Badge 
+                            variant={
+                              initiative?.requiresCapex === 'Y' ? 'default' : 
+                              initiative?.requiresCapex === 'N' ? 'secondary' : 
+                              'outline'
+                            }
+                            className="flex items-center gap-1.5 px-3 py-1"
+                          >
+                            {initiative?.requiresCapex === 'Y' ? (
+                              <>
+                                <CheckCircle className="h-3.5 w-3.5" />
+                                Yes, Required
+                              </>
+                            ) : initiative?.requiresCapex === 'N' ? (
+                              <>
+                                <X className="h-3.5 w-3.5" />
+                                Not Required
+                              </>
+                            ) : (
+                              <>
+                                <Clock className="h-3.5 w-3.5" />
+                                Decision Pending
+                              </>
+                            )}
+                          </Badge>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-muted-foreground">CAPEX Number</Label>
+                      {isEditing ? (
+                        <Input
+                          value={formData.capexNumber || ''}
+                          onChange={(e) => setFormData({ ...formData, capexNumber: e.target.value })}
+                          className="h-10"
+                          placeholder="Enter CAPEX Number"
+                        />
+                      ) : (
+                        <div className="bg-muted/50 border rounded-lg p-3">
+                          <p className="text-sm font-mono text-foreground">
+                            {initiative?.capexNumber || (
+                              <span className="text-muted-foreground italic">No CAPEX number provided</span>
+                            )}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Assumptions & Baseline Data */}
+              <Card className="border-l-4 border-l-purple-500">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <div className="p-1.5 bg-purple-100 rounded-lg">
+                      <FileText className="h-4 w-4 text-purple-600" />
+                    </div>
+                    Assumptions & Baseline Data
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Baseline Data */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1 bg-orange-100 rounded">
+                        <Target className="h-3.5 w-3.5 text-orange-600" />
+                      </div>
+                      <Label className="text-sm font-semibold">Baseline Data</Label>
+                    </div>
+                    {isEditing ? (
+                      <Textarea
+                        value={formData.baselineData || ''}
+                        onChange={(e) => setFormData({ ...formData, baselineData: e.target.value })}
+                        rows={3}
+                        placeholder="Enter baseline data information..."
+                        className="resize-none"
+                      />
+                    ) : (
+                      <div className="bg-muted/30 border rounded-lg p-4">
+                        <p className="text-sm leading-relaxed">
+                          {initiative?.baselineData || (
+                            <span className="text-muted-foreground italic">No baseline data provided</span>
+                          )}
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   <Separator />
 
+                  {/* Assumptions */}
                   <div className="space-y-4">
-                    <h3 className="text-base font-semibold">Assumptions & Baseline Data</h3>
-                    
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="baselineData">Baseline Data</Label>
-                        {isEditing ? (
-                          <Textarea
-                            id="baselineData"
-                            value={formData.baselineData || ''}
-                            onChange={(e) => setFormData({ ...formData, baselineData: e.target.value })}
-                            rows={3}
-                          />
-                        ) : (
-                          <p className="text-sm text-muted-foreground">
-                            {initiative?.baselineData || 'No baseline data provided'}
-                          </p>
-                        )}
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="p-1 bg-blue-100 rounded">
+                        <FileText className="h-3.5 w-3.5 text-blue-600" />
                       </div>
+                      <h4 className="text-sm font-semibold">Key Assumptions</h4>
+                    </div>
 
+                    <div className="space-y-4">
+                      {/* Assumption 1 */}
                       <div className="space-y-2">
-                        <Label htmlFor="assumption1">Assumption 1</Label>
+                        <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                          Assumption 1
+                        </Label>
                         {isEditing ? (
                           <Textarea
-                            id="assumption1"
                             value={formData.assumption1 || ''}
                             onChange={(e) => setFormData({ ...formData, assumption1: e.target.value })}
                             rows={2}
+                            placeholder="Enter first assumption..."
+                            className="resize-none text-sm"
                           />
                         ) : (
-                          <p className="text-sm text-muted-foreground">
-                            {initiative?.assumption1 || 'No assumption provided'}
-                          </p>
+                          <div className="bg-gradient-to-r from-blue-50 to-transparent border-l-2 border-l-blue-300 pl-4 py-2">
+                            <p className="text-sm leading-relaxed">
+                              {initiative?.assumption1 || (
+                                <span className="text-muted-foreground italic">No assumption provided</span>
+                              )}
+                            </p>
+                          </div>
                         )}
                       </div>
 
+                      {/* Assumption 2 */}
                       <div className="space-y-2">
-                        <Label htmlFor="assumption2">Assumption 2</Label>
+                        <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                          Assumption 2
+                        </Label>
                         {isEditing ? (
                           <Textarea
-                            id="assumption2"
                             value={formData.assumption2 || ''}
                             onChange={(e) => setFormData({ ...formData, assumption2: e.target.value })}
                             rows={2}
+                            placeholder="Enter second assumption..."
+                            className="resize-none text-sm"
                           />
                         ) : (
-                          <p className="text-sm text-muted-foreground">
-                            {initiative?.assumption2 || 'No assumption provided'}
-                          </p>
+                          <div className="bg-gradient-to-r from-green-50 to-transparent border-l-2 border-l-green-300 pl-4 py-2">
+                            <p className="text-sm leading-relaxed">
+                              {initiative?.assumption2 || (
+                                <span className="text-muted-foreground italic">No assumption provided</span>
+                              )}
+                            </p>
+                          </div>
                         )}
                       </div>
 
+                      {/* Assumption 3 */}
                       <div className="space-y-2">
-                        <Label htmlFor="assumption3">Assumption 3</Label>
+                        <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                          Assumption 3
+                        </Label>
                         {isEditing ? (
                           <Textarea
-                            id="assumption3"
                             value={formData.assumption3 || ''}
                             onChange={(e) => setFormData({ ...formData, assumption3: e.target.value })}
                             rows={2}
+                            placeholder="Enter third assumption..."
+                            className="resize-none text-sm"
                           />
                         ) : (
-                          <p className="text-sm text-muted-foreground">
-                            {initiative?.assumption3 || 'No assumption provided'}
-                          </p>
+                          <div className="bg-gradient-to-r from-purple-50 to-transparent border-l-2 border-l-purple-300 pl-4 py-2">
+                            <p className="text-sm leading-relaxed">
+                              {initiative?.assumption3 || (
+                                <span className="text-muted-foreground italic">No assumption provided</span>
+                              )}
+                            </p>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -2785,6 +2883,8 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Delete Confirmation Dialog moved to end of component for proper backdrop coverage */}
             </TabsContent>
 
             {(canShowWorkflowActions || hasWorkflowActions) && (
@@ -2870,6 +2970,52 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
           </div>
         </Tabs>
       </div>
+
+      {/* Delete Confirmation Dialog - Clean modal without backdrop */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 flex items-center justify-center z-[9999] pointer-events-none">
+          <div className="bg-white rounded-xl shadow-2xl border-2 border-red-200 p-6 max-w-md w-full mx-4 pointer-events-auto transform animate-in fade-in zoom-in-95 duration-200">
+            <div className="text-center space-y-4">
+              {/* Icon and Header */}
+              <div className="mx-auto w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                <AlertTriangle className="h-6 w-6 text-red-600" />
+              </div>
+              
+              <div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  Delete MOM Entry?
+                </h3>
+                <p className="text-sm text-red-600 font-medium mb-3">
+                  This action cannot be undone
+                </p>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  Are you sure you want to delete this Minutes of Meeting entry? 
+                  All associated information will be permanently removed from the system.
+                </p>
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="flex gap-3 justify-center pt-2">
+                <Button
+                  variant="outline"
+                  onClick={cancelDeleteMom}
+                  className="px-6 py-2 min-w-[100px]"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={confirmDeleteMom}
+                  className="px-6 py-2 min-w-[100px] bg-red-600 hover:bg-red-700"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

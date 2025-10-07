@@ -10,3 +10,9 @@
 [2025-10-07 14:12:17.375] [WARNING] Login failed - Email: kiransharma@godeepak.com | Reason: Bad credentials
 [2025-10-07 14:12:26.196] [INFO] Login attempt - Email: kiran.sharma@godeepak.com
 [2025-10-07 14:12:26.673] [INFO] Login successful - User: Kiran Sharma | Email: kiran.sharma@godeepak.com | Role: IL | Site: NDS
+[2025-10-07 15:01:11.831] [INFO] Login attempt - Email: manoj.tiwari@godeepak.com
+[2025-10-07 15:01:12.248] [INFO] Login successful - User: Manoj Tiwari | Email: manoj.tiwari@godeepak.com | Role: STLD | Site: NDS
+[2025-10-07 15:01:49.23] [INFO] Login attempt - Email: kiran.sharma@godeepak.com
+[2025-10-07 15:01:49.382] [INFO] Login successful - User: Kiran Sharma | Email: kiran.sharma@godeepak.com | Role: IL | Site: NDS
+[2025-10-07 15:04:56.627] [INFO] Login attempt - Email: kiran.sharma@godeepak.com
+[2025-10-07 15:04:56.779] [INFO] Login successful - User: Kiran Sharma | Email: kiran.sharma@godeepak.com | Role: IL | Site: NDS
