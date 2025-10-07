@@ -165,7 +165,11 @@ export default function Reports({ user }: ReportsProps) {
         
         const yearToUse = selectedFinancialYear || fiscalYearStart.toString();
         
-        console.log('Generating monthly data for FY:', yearToUse, 'selectedFinancialYear:', selectedFinancialYear);
+        // Convert short year to full year for API calls
+        const fullYearToUse = yearToUse.length === 2 ? `20${yearToUse}` : yearToUse;
+        
+        console.log('🔍 Generating monthly data for FY:', yearToUse, 'selectedFinancialYear:', selectedFinancialYear);
+        console.log('🔍 Full year for API calls:', fullYearToUse);
         
         const months = [
           'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
@@ -179,7 +183,7 @@ export default function Reports({ user }: ReportsProps) {
         try {
           const actualSavingsResponse = await monthlyMonitoringAPI.getMonthlyActualSavings({
             site: selectedSite !== 'all' ? selectedSite : undefined,
-            year: yearToUse,
+            year: fullYearToUse,
             budgetType: selectedBudgetType !== 'all' ? selectedBudgetType : undefined,
           });
           // Extract actual data from the ApiResponse structure
@@ -204,7 +208,7 @@ export default function Reports({ user }: ReportsProps) {
         try {
           const targetAchievedResponse = await monthlyMonitoringAPI.getMonthlyTargetAchievedData({
             site: selectedSite !== 'all' ? selectedSite : undefined,
-            year: yearToUse,
+            year: fullYearToUse,
             budgetType: selectedBudgetType !== 'all' ? selectedBudgetType : undefined,
           });
           
@@ -235,14 +239,15 @@ export default function Reports({ user }: ReportsProps) {
         
         for (let i = 0; i < months.length; i++) {
           const monthIndex = (3 + i) % 12; // Start from April (index 3)
-          const year = monthIndex < 3 ? fiscalYearStart + 1 : fiscalYearStart;
+          const fiscalStartYear = yearToUse.length === 2 ? parseInt(`20${yearToUse}`) : parseInt(yearToUse);
+          const year = monthIndex < 3 ? fiscalStartYear + 1 : fiscalStartYear;
           
-          // Only include months up to current month in current fiscal year
-          const isCurrentFiscalYear = (currentMonth >= 3 && year === currentYear) || 
-                                     (currentMonth < 3 && year === currentYear);
+          // For historical fiscal years, show all months. For current fiscal year, show up to current month
+          const isCurrentFiscalYear = (currentMonth >= 3 && fiscalStartYear === currentYear) || 
+                                     (currentMonth < 3 && fiscalStartYear === currentYear - 1);
           const isPastMonth = isCurrentFiscalYear ? 
                              (monthIndex < currentMonth || (currentMonth < 3 && monthIndex >= 3)) :
-                             true;
+                             true; // For historical years, show all months
           
           if (isPastMonth || monthIndex === currentMonth) {
             // Calculate dynamic values based on filtered initiatives for the month (exclude Rejected and Dropped)
@@ -343,7 +348,7 @@ export default function Reports({ user }: ReportsProps) {
     };
 
     generateDynamicMonthlyData().then(setMonthlyData);
-  }, [filteredInitiatives, filteredInitiativesForAmounts, selectedSite, selectedBudgetType, selectedFinancialYear]); // Updated to include filteredInitiativesForAmounts
+  }, [initiatives, selectedSite, selectedBudgetType, selectedFinancialYear]); // Use base initiatives instead of filtered to prevent loops
 
   // Fetch available financial years on component mount
   useEffect(() => {
@@ -375,8 +380,10 @@ export default function Reports({ user }: ReportsProps) {
       setFinancialDataError(null);
       
       try {
+        const fullYear = selectedFinancialYear && selectedFinancialYear.length === 2 ? `20${selectedFinancialYear}` : selectedFinancialYear;
+        console.log('🔍 Financial Year API - Selected:', selectedFinancialYear, 'Full Year:', fullYear);
         const data = await reportsAPI.getFinancialYearData({
-          financialYear: selectedFinancialYear,
+          financialYear: fullYear,
           site: selectedSite !== 'all' ? selectedSite : undefined,
           budgetType: selectedBudgetType !== 'all' ? selectedBudgetType : undefined,
           category: selectedCategory !== 'all' ? selectedCategory : undefined
@@ -434,10 +441,11 @@ export default function Reports({ user }: ReportsProps) {
       setLoadingChart(true);
       setChartError(null); // Clear previous errors
       try {
+        const fullYear = selectedFinancialYear && selectedFinancialYear.length === 2 ? `20${selectedFinancialYear}` : selectedFinancialYear;
         const data = await reportsAPI.getDNLSavingsData({
           site: selectedSite !== 'all' ? selectedSite : undefined,
           period: selectedPeriod,
-          year: selectedFinancialYear
+          year: fullYear
         });
         
         // Only update state if component is still mounted

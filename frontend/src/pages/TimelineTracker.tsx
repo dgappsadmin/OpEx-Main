@@ -608,7 +608,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
               if (selectedInitiativeId) {
                 const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
                 if (selectedInitiative && (isStage6Approved() || selectedInitiative.initiativeStatus === 'Completed')) {
-                  return 'View initiative timelines and milestones (Read-only - Stage 6 approved or Initiative completed)';
+                  return 'View initiative timelines and milestones';
                 }
               }
               return user.role === 'IL' 

@@ -2394,7 +2394,7 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
               if (selectedInitiativeId) {
                 const selectedInitiative = currentInitiatives.find((i: Initiative) => i.id === selectedInitiativeId);
                 if (selectedInitiative && (isStage9Approved() || selectedInitiative.initiativeStatus === 'Completed')) {
-                  return 'View monthly monitoring entries (Read-only - Stage 9 approved or Initiative completed)';
+                  return 'View monthly monitoring entries';
                 }
               }
               return user.role === 'IL' 
