@@ -119,16 +119,17 @@ export default function DNLBarChart({ data, title = "DNL Plant Initiatives", yea
   };
 
   // Get dynamic fiscal year and month
-  const currentFY = getCurrentFiscalYear();
+  const selectedFY = year || getCurrentFiscalYear(); // Use passed year or fallback to current FY
   const currentMonth = getCurrentMonth();
+  const currentYear = new Date().getFullYear();
 
   // Create the 6 time periods as shown in the image
   const timePeriods = [
-    `FY'${currentFY} Budgeted Saving`,
-    `FY'${currentFY} Non Budgeted Saving`, 
+    `FY'${selectedFY} Budgeted Saving`,
+    `FY'${selectedFY} Non Budgeted Saving`, 
     'Budgeted',
     'Non-budgeted',
-    `Savings till ${currentMonth}'${String(new Date().getFullYear()).slice(-2)}`,
+    `Savings till ${currentMonth}'${String(currentYear).slice(-2)}`,
     'Total'
   ];
 

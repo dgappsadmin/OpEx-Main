@@ -19,6 +19,7 @@ interface PerformanceAnalysisProps {
   variant: 'overall' | 'budget' | 'nonBudget';
   isLoading: boolean;
   initiatives?: any[]; // Add initiatives data for filtering
+  selectedFinancialYear?: string; // Add selectedFinancialYear prop
 }
 
 export default function PerformanceAnalysis({ 
@@ -27,7 +28,8 @@ export default function PerformanceAnalysis({
   metrics, 
   variant, 
   isLoading,
-  initiatives = [] // Add initiatives prop with default empty array
+  initiatives = [], // Add initiatives prop with default empty array
+  selectedFinancialYear // Add selectedFinancialYear prop
 }: PerformanceAnalysisProps) {
   
   // Use metrics directly from backend - they are already correctly calculated
@@ -132,6 +134,21 @@ export default function PerformanceAnalysis({
     return trend >= 0 ? "up" : "down";
   };
 
+  // Generate dynamic financial year display text
+  const getCurrentFiscalYear = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    // Fiscal year starts from April, so if current month is Jan-Mar, FY is previous year
+    if (now.getMonth() >= 3) {
+      return String(year + 1).slice(-2); // e.g., "26" for 2026
+    } else {
+      return String(year).slice(-2); // e.g., "25" for 2025
+    }
+  };
+
+  const displayFY = selectedFinancialYear || getCurrentFiscalYear();
+  const fyText = `FY ${displayFY}-${(parseInt(displayFY) + 1).toString().slice(-2)}`;
+
   const kpiCards = [
     {
       title: "Total Initiatives",
@@ -150,9 +167,9 @@ export default function PerformanceAnalysis({
       trendDirection: getTrendDirection(metrics?.potentialSavingsAnnualizedTrend)
     },
     {
-      title: "Current FY Projected Savings",
+      title: `${fyText} Projected Savings`,
       value: formatCurrencyInLakhs(adjustedMetrics?.potentialSavingsCurrentFY || 0),
-      subtitle: "This financial year",
+      subtitle: fyText + " projection",
       icon: IndianRupee,
       trend: formatTrend(metrics?.potentialSavingsCurrentFYTrend) + " vs last FY",
       trendDirection: getTrendDirection(metrics?.potentialSavingsCurrentFYTrend)
@@ -160,7 +177,7 @@ export default function PerformanceAnalysis({
     {
       title: "Actual Savings",
       value: formatCurrencyInLakhs(metrics?.actualSavingsCurrentFY || 0),
-      subtitle: "Realized savings this FY",
+      subtitle: `Realized savings ${fyText}`,
       icon: BarChart3,
       trend: formatTrend(metrics?.actualSavingsCurrentFYTrend) + " vs last FY",
       trendDirection: getTrendDirection(metrics?.actualSavingsCurrentFYTrend)
@@ -168,7 +185,7 @@ export default function PerformanceAnalysis({
     {
       title: "Projected Savings",
       value: formatCurrencyInLakhs(metrics?.savingsProjectionCurrentFY || 0),
-      subtitle: "Expected this FY",
+      subtitle: `Expected ${fyText}`,
       icon: Activity,
       trend: formatTrend(metrics?.savingsProjectionCurrentFYTrend) + " vs forecast",
       trendDirection: getTrendDirection(metrics?.savingsProjectionCurrentFYTrend)

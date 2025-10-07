@@ -20,12 +20,13 @@ import {
   Filter
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { User } from "@/lib/mockData";
 import { useDashboardStats, useRecentInitiatives, usePerformanceAnalysis, useDashboardSites } from "@/hooks/useDashboard";
 import { useInitiatives } from "@/hooks/useInitiatives";
 import { DashboardStats } from "@/lib/types";
 import PerformanceAnalysis from "@/components/PerformanceAnalysis";
+import { reportsAPI } from "@/lib/api";
 
 interface DashboardProps {
   user: User;
@@ -37,16 +38,37 @@ export default function Dashboard({ user }: DashboardProps) {
   // State for site filter - defaults to user's site
   const [selectedSite, setSelectedSite] = useState<string>(user.site || "overall");
   
+  // State for financial year filter
+  const [selectedFinancialYear, setSelectedFinancialYear] = useState<string>('');
+  const [availableFinancialYears, setAvailableFinancialYears] = useState<string[]>([]);
+  
   // Determine which site to use for API calls
   const apiSite = selectedSite === "overall" ? undefined : selectedSite;
   
   // Fetch available sites for filter
   const { data: availableSites, isLoading: sitesLoading } = useDashboardSites();
   
+  // Fetch available financial years on component mount
+  useEffect(() => {
+    const fetchAvailableFinancialYears = async () => {
+      try {
+        const years = await reportsAPI.getAvailableFinancialYears();
+        setAvailableFinancialYears(years);
+        if (years.length > 0 && !selectedFinancialYear) {
+          setSelectedFinancialYear(years[0]); // Set current FY as default
+        }
+      } catch (error) {
+        console.error('Error fetching available financial years:', error);
+      }
+    };
+
+    fetchAvailableFinancialYears();
+  }, []);
+  
   // Fetch real dashboard data based on selected filter
-  const { data: dashboardStats, isLoading: statsLoading, error: statsError } = useDashboardStats(apiSite);
-  const { data: recentInitiativesData, isLoading: initiativesLoading, error: initiativesError } = useRecentInitiatives(apiSite);
-  const { data: performanceAnalysisData, isLoading: performanceLoading, error: performanceError } = usePerformanceAnalysis(apiSite);
+  const { data: dashboardStats, isLoading: statsLoading, error: statsError } = useDashboardStats(apiSite, selectedFinancialYear);
+  const { data: recentInitiativesData, isLoading: initiativesLoading, error: initiativesError } = useRecentInitiatives(apiSite, selectedFinancialYear);
+  const { data: performanceAnalysisData, isLoading: performanceLoading, error: performanceError } = usePerformanceAnalysis(apiSite, selectedFinancialYear);
   
   // Fetch initiatives data for filtering in PerformanceAnalysis
   const { data: initiativesData } = useInitiatives(apiSite ? { site: apiSite } : {});
@@ -196,36 +218,61 @@ export default function Dashboard({ user }: DashboardProps) {
         </Button>
       </div>
 
-      {/* Site Filter */}
-      <div className="flex items-center justify-between bg-white/50 backdrop-blur-sm rounded-lg p-3 border border-gray-200">
-        <div className="flex items-center gap-2">
-          <Filter className="h-4 w-4 text-blue-600" />
-          <span className="text-sm font-medium text-gray-700">Filter by Site:</span>
+      {/* Filters */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {/* Site Filter */}
+        <div className="flex items-center justify-between bg-white/50 backdrop-blur-sm rounded-lg p-3 border border-gray-200">
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-blue-600" />
+            <span className="text-sm font-medium text-gray-700">Filter by Site:</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Select value={selectedSite} onValueChange={setSelectedSite}>
+              <SelectTrigger className="w-40 h-8 text-xs bg-white border-gray-300 focus:border-blue-500">
+                <SelectValue placeholder="Select site" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="overall" className="text-xs">Overall</SelectItem>
+                {!sitesLoading && availableSites?.map((site: string) => (
+                  <SelectItem key={site} value={site} className="text-xs">
+                    {site}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {selectedSite !== "overall" && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedSite("overall")}
+                className="h-8 px-2 text-xs text-gray-500 hover:text-gray-700"
+              >
+                Clear
+              </Button>
+            )}
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Select value={selectedSite} onValueChange={setSelectedSite}>
-            <SelectTrigger className="w-40 h-8 text-xs bg-white border-gray-300 focus:border-blue-500">
-              <SelectValue placeholder="Select site" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="overall" className="text-xs">Overall</SelectItem>
-              {!sitesLoading && availableSites?.map((site: string) => (
-                <SelectItem key={site} value={site} className="text-xs">
-                  {site}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {selectedSite !== "overall" && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSelectedSite("overall")}
-              className="h-8 px-2 text-xs text-gray-500 hover:text-gray-700"
-            >
-              Clear
-            </Button>
-          )}
+
+        {/* Financial Year Filter */}
+        <div className="flex items-center justify-between bg-white/50 backdrop-blur-sm rounded-lg p-3 border border-gray-200">
+          <div className="flex items-center gap-2">
+            <IndianRupee className="h-4 w-4 text-green-600" />
+            <span className="text-sm font-medium text-gray-700">Financial Year:</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Select value={selectedFinancialYear} onValueChange={setSelectedFinancialYear}>
+              <SelectTrigger className="w-40 h-8 text-xs bg-white border-gray-300 focus:border-green-500">
+                <SelectValue placeholder="Select FY" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableFinancialYears.map((fy) => (
+                  <SelectItem key={fy} value={fy} className="text-xs">
+                    FY {fy}-{(parseInt(fy) + 1).toString().slice(-2)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
@@ -505,6 +552,7 @@ export default function Dashboard({ user }: DashboardProps) {
             variant="overall"
             isLoading={performanceLoading}
             initiatives={initiatives}
+            selectedFinancialYear={selectedFinancialYear}
           />
 
           {/* Performance Analysis - Budget */}
@@ -522,6 +570,7 @@ export default function Dashboard({ user }: DashboardProps) {
             variant="budget"
             isLoading={performanceLoading}
             initiatives={initiatives.filter((i: any) => i.budgetStatus === 'Budgeted' || i.isBudgeted === true)}
+            selectedFinancialYear={selectedFinancialYear}
           />
 
           {/* Performance Analysis - Non-Budget */}
@@ -539,6 +588,7 @@ export default function Dashboard({ user }: DashboardProps) {
             variant="nonBudget"
             isLoading={performanceLoading}
             initiatives={initiatives.filter((i: any) => i.budgetStatus !== 'Budgeted' && i.isBudgeted !== true)}
+            selectedFinancialYear={selectedFinancialYear}
           />
         </TabsContent>
       </Tabs>

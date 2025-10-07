@@ -879,7 +879,7 @@ export default function Reports({ user }: ReportsProps) {
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-base">
                   <Activity className="h-4 w-4 text-blue-600" />
-                  Monthly Initiative Trends (FY'{getCurrentFiscalYear()})
+                  Monthly Initiative Trends (FY'{selectedFinancialYear ? selectedFinancialYear + '-' + (parseInt(selectedFinancialYear) + 1).toString().slice(-2) : getCurrentFiscalYear()})
                 </CardTitle>
                 <CardDescription className="text-xs">
                   Initiative submission and completion trends
@@ -908,7 +908,7 @@ export default function Reports({ user }: ReportsProps) {
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-base">
                   <IndianRupee className="h-4 w-4 text-green-600" />
-                  Monthly Savings Trends (FY'{getCurrentFiscalYear()})
+                  Monthly Savings Trends (FY'{selectedFinancialYear ? selectedFinancialYear + '-' + (parseInt(selectedFinancialYear) + 1).toString().slice(-2) : getCurrentFiscalYear()})
                 </CardTitle>
                 <CardDescription className="text-xs">
                   Target vs Achieved value
@@ -1047,7 +1047,7 @@ export default function Reports({ user }: ReportsProps) {
                 <div>
                   <CardTitle className="flex items-center gap-2 text-base">
                     <BarChart3 className="h-4 w-4 text-blue-600" />
-                    DNL Plant Initiatives Chart (FY'{getCurrentFiscalYear()})
+                    DNL Plant Initiatives Chart (FY'{selectedFinancialYear ? selectedFinancialYear + '-' + (parseInt(selectedFinancialYear) + 1).toString().slice(-2) : getCurrentFiscalYear()})
                   </CardTitle>
                   <CardDescription className="text-xs">
                     Initiative savings by category - {selectedSite !== 'all' ? selectedSite : 'All Sites'} 
