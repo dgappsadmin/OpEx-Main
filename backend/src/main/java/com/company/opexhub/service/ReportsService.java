@@ -2054,4 +2054,106 @@ public class ReportsService {
             document.createParagraph();
         }
     }
+    
+    /**
+     * Generate MOM Report in Excel format
+     */
+    public ByteArrayOutputStream generateMOMReport(String site, String year) throws IOException {
+        logger.info("🔄 Starting MOM Report generation - site: {}, year: {}", site, year);
+        
+        // Create workbook and worksheet
+        XSSFWorkbook workbook = new XSSFWorkbook();
+        XSSFSheet sheet = workbook.createSheet("MOM Report");
+        
+        // Create header style
+        CellStyle headerStyle = createHeaderStyle(workbook);
+        CellStyle dataStyle = createDataStyle(workbook);
+        
+        // Column headers for MOM data
+        String[] headers = {
+            "Initiative Number", "Initiative Title", "Site", "Meeting Title", 
+            "Meeting Date", "Meeting Type", "Responsible Person", "Content", 
+            "Status", "Priority", "Due Date", "Attendees", "Created At"
+        };
+        
+        // Create header row
+        Row headerRow = sheet.createRow(0);
+        for (int i = 0; i < headers.length; i++) {
+            Cell cell = headerRow.createCell(i);
+            cell.setCellValue(headers[i]);
+            cell.setCellStyle(headerStyle);
+        }
+        
+        // Get MOM data based on filters
+        List<Object[]> momData = getMOMData(site, year);
+        
+        // Populate data rows
+        int rowIndex = 1;
+        for (Object[] row : momData) {
+            Row dataRow = sheet.createRow(rowIndex++);
+            
+            for (int i = 0; i < row.length && i < headers.length; i++) {
+                Cell cell = dataRow.createCell(i);
+                if (row[i] != null) {
+                    if (row[i] instanceof LocalDate) {
+                        cell.setCellValue(((LocalDate) row[i]).toString());
+                    } else {
+                        cell.setCellValue(row[i].toString());
+                    }
+                } else {
+                    cell.setCellValue("");
+                }
+                cell.setCellStyle(dataStyle);
+            }
+        }
+        
+        // Auto-size columns
+        for (int i = 0; i < headers.length; i++) {
+            sheet.autoSizeColumn(i);
+        }
+        
+        // Write to output stream
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        workbook.write(outputStream);
+        workbook.close();
+        
+        logger.info("✅ MOM Report generation completed - {} records", momData.size());
+        return outputStream;
+    }
+    
+    /**
+     * Get MOM data with filters
+     */
+    @SuppressWarnings("unchecked")
+    private List<Object[]> getMOMData(String site, String year) {
+        // Use native query to fetch MOM data with initiative details
+        String query = "SELECT " +
+            "i.initiative_number, i.title, i.site, " +
+            "m.meeting_title, m.meeting_date, m.meeting_type, " +
+            "m.responsible_person, m.content, m.status, m.priority, " +
+            "m.due_date, m.attendees, m.created_at " +
+            "FROM opex_initiative_mom m " +
+            "INNER JOIN opex_initiatives i ON m.initiative_id = i.id ";
+        
+        // Add site filter if specified
+        boolean hasWhere = false;
+        if (site != null && !site.equals("all")) {
+            query += "WHERE i.site = '" + site + "' ";
+            hasWhere = true;
+        }
+        
+        // Add year filter if specified
+        if (year != null && !year.isEmpty()) {
+            if (!hasWhere) {
+                query += "WHERE ";
+            } else {
+                query += "AND ";
+            }
+            query += "EXTRACT(YEAR FROM m.created_at) = " + year + " ";
+        }
+        
+        query += "ORDER BY i.initiative_number, m.meeting_date DESC";
+        
+        return initiativeRepository.getMOMReportData(query);
+    }
 }

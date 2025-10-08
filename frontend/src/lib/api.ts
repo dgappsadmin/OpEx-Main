@@ -931,6 +931,42 @@ export const reportsAPI = {
   getAvailableFinancialYears: async () => {
     const response = await api.get('/reports/available-financial-years');
     return response.data;
+  },
+
+  downloadMOMReport: async (params?: { site?: string; year?: string }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.site && params.site !== 'all') {
+      queryParams.append('site', params.site);
+    }
+    if (params?.year) {
+      queryParams.append('year', params.year);
+    }
+    
+    const response = await api.get(`/reports/export/mom-report?${queryParams.toString()}`, {
+      responseType: 'blob',
+    });
+    
+    const blob = new Blob([response.data], { 
+      type: response.headers['content-type'] || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+    });
+    const url = window.URL.createObjectURL(blob);
+    
+    const contentDisposition = response.headers['content-disposition'];
+    let filename = 'MOM_Report.xlsx';
+    if (contentDisposition && contentDisposition.includes('filename=')) {
+      filename = contentDisposition.split('filename=')[1].replace(/"/g, '');
+    }
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    window.URL.revokeObjectURL(url);
+    
+    return filename;
   }
 };
 

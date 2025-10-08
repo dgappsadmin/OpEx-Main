@@ -360,4 +360,49 @@ public class ReportsController {
                 .build();
         }
     }
+
+    @GetMapping("/export/mom-report")
+    public ResponseEntity<ByteArrayResource> exportMOMReport(
+            @RequestParam(required = false) String site,
+            @RequestParam(required = false) String year) {
+        try {
+            logger.info("🔄 Generating MOM Report - site: {}, year: {}", site, year);
+            
+            // Generate the MOM Excel report
+            ByteArrayOutputStream outputStream = reportsService.generateMOMReport(site, year);
+            
+            // Validate output stream
+            if (outputStream == null || outputStream.size() == 0) {
+                logger.error("❌ Generated MOM Report is empty or null");
+                return ResponseEntity.internalServerError()
+                    .header("X-Error-Message", "MOM Report generation failed: Empty document")
+                    .build();
+            }
+            
+            // Create response with proper headers
+            ByteArrayResource resource = new ByteArrayResource(outputStream.toByteArray());
+            
+            // Generate dynamic filename with current fiscal year
+            LocalDate now = LocalDate.now();
+            int fiscalYear = now.getMonthValue() >= 4 ? now.getYear() + 1 : now.getYear();
+            String filename = String.format("MOM_Report_FY%s.xlsx", String.valueOf(fiscalYear).substring(2));
+            
+            logger.info("✅ Successfully generated MOM Report: {}", filename);
+            
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                    .header(HttpHeaders.CACHE_CONTROL, "no-cache, no-store, must-revalidate")
+                    .header(HttpHeaders.PRAGMA, "no-cache")
+                    .header(HttpHeaders.EXPIRES, "0")
+                    .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                    .contentLength(resource.contentLength())
+                    .body(resource);
+                    
+        } catch (Exception e) {
+            logger.error("❌ Error generating MOM Report: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError()
+                .header("X-Error-Message", "MOM Report generation failed: " + e.getMessage())
+                .build();
+        }
+    }
 }

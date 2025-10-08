@@ -627,6 +627,34 @@ export default function Reports({ user }: ReportsProps) {
           variant: "destructive",
         });
       }
+    } else if (reportType === 'MOM Report (Excel)') {
+      try {
+        const filename = await reportsAPI.downloadMOMReport({
+          site: selectedSite !== 'all' ? selectedSite : undefined,
+          year: selectedFinancialYear || new Date().getFullYear().toString()
+        });
+        
+        console.log(`Successfully downloaded MOM report: ${filename} for ${selectedSite} site(s)`);
+        toast({
+          title: "Download Successful",
+          description: `MOM report "${filename}" downloaded successfully!`,
+        });
+      } catch (error: any) {
+        console.error('Error downloading MOM report:', error);
+        let errorMessage = 'Failed to download MOM report. ';
+        if (error?.response?.status === 500) {
+          errorMessage += 'Server error occurred. Please try again later.';
+        } else if (error?.response?.status === 404) {
+          errorMessage += 'No MOM data found for selected filters.';
+        } else {
+          errorMessage += 'Please check your connection and try again.';
+        }
+        toast({
+          title: "Download Failed",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }
     } else {
       // Mock download functionality for other reports
       console.log(`Downloading ${reportType} report for ${selectedSite} site(s) - ${selectedPeriod} period`);
@@ -862,7 +890,7 @@ export default function Reports({ user }: ReportsProps) {
 
       {/* Tab Navigation - Match Dashboard style */}
       <Tabs defaultValue="trends" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 max-w-2xl mx-auto lg:mx-0 h-9">
+        <TabsList className="grid w-full grid-cols-4 h-9">
           <TabsTrigger value="trends" className="flex items-center gap-1.5 text-xs">
             <Activity className="h-3.5 w-3.5" />
             Trends
@@ -1113,7 +1141,7 @@ export default function Reports({ user }: ReportsProps) {
         </TabsContent>
 
         <TabsContent value="detailed" className="space-y-4 mt-4">
-          <Card className="shadow-sm">
+          <Card className="shadow-sm min-h-96">
             <CardHeader className="pb-3">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div>
@@ -1125,13 +1153,22 @@ export default function Reports({ user }: ReportsProps) {
                     Detailed view of initiatives ({filteredInitiatives.length} total).
                   </CardDescription>
                 </div>
-                <Button 
-                  onClick={() => handleDownloadReport('Detailed Report (Excel)')}
-                  className="bg-green-600 hover:bg-green-700 text-white transition-all duration-200 h-9 px-4 text-xs"
-                >
-                  <FileSpreadsheet className="h-3.5 w-3.5 mr-2" />
-                  Download Excel
-                </Button>
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={() => handleDownloadReport('Detailed Report (Excel)')}
+                    className="bg-green-600 hover:bg-green-700 text-white transition-all duration-200 h-9 px-4 text-xs"
+                  >
+                    <FileSpreadsheet className="h-3.5 w-3.5 mr-2" />
+                    Download Excel
+                  </Button>
+                  <Button 
+                    onClick={() => handleDownloadReport('MOM Report (Excel)')}
+                    className="bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200 h-9 px-4 text-xs"
+                  >
+                    <FileSpreadsheet className="h-3.5 w-3.5 mr-2" />
+                    Download MOM Report
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>

@@ -141,4 +141,17 @@ public interface InitiativeRepository extends JpaRepository<Initiative, Long> {
     
     @Query("SELECT i FROM Initiative i WHERE i.site = :site AND i.createdAt >= :startDate AND i.createdAt <= :endDate ORDER BY i.createdAt DESC")
     Page<Initiative> findBySiteAndCreatedAtBetween(@Param("site") String site, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate, Pageable pageable);
+    
+    @Query(value = "SELECT " +
+        "i.initiative_number, i.title, i.site, " +
+        "m.meeting_title, m.meeting_date, m.meeting_type, " +
+        "m.responsible_person, m.content, m.status, m.priority, " +
+        "m.due_date, m.attendees, m.created_at " +
+        "FROM opex_initiative_mom m " +
+        "INNER JOIN opex_initiatives i ON m.initiative_id = i.id " +
+        "ORDER BY i.initiative_number, m.meeting_date DESC", nativeQuery = true)
+    List<Object[]> getMOMReportData();
+    
+    @Query(value = "?1", nativeQuery = true)
+    List<Object[]> getMOMReportData(@Param("query") String query);
 }
