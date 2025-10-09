@@ -18,7 +18,6 @@ interface PerformanceAnalysisProps {
   metrics: PerformanceMetrics;
   variant: 'overall' | 'budget' | 'nonBudget';
   isLoading: boolean;
-  initiatives?: any[]; // Add initiatives data for filtering
   selectedFinancialYear?: string; // Add selectedFinancialYear prop
 }
 
@@ -28,12 +27,11 @@ export default function PerformanceAnalysis({
   metrics, 
   variant, 
   isLoading,
-  initiatives = [], // Add initiatives prop with default empty array
   selectedFinancialYear // Add selectedFinancialYear prop
 }: PerformanceAnalysisProps) {
   
   // Use metrics directly from backend - they are already correctly calculated
-  // and separated by budget/non-budget. No need for client-side recalculation.
+  // and separated by budget/non-budget with proper site + FY filtering.
   const adjustedMetrics = metrics;
   
   // Smart currency formatting that handles all amounts automatically and removes trailing zeros
@@ -172,9 +170,9 @@ export default function PerformanceAnalysis({
     {
       title: "Total Initiatives",
       value: metrics?.totalInitiatives?.toString() || "0",
-      subtitle: "Listed initiatives",
+      subtitle: `All initiatives in ${fyText}`,
       icon: Target,
-      trend: formatTrend(metrics?.totalInitiativesTrend) + " vs last period",
+      trend: formatTrend(metrics?.totalInitiativesTrend) + " vs last FY",
       trendDirection: getTrendDirection(metrics?.totalInitiativesTrend)
     },
     {

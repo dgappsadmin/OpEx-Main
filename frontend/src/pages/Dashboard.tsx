@@ -71,7 +71,7 @@ export default function Dashboard({ user }: DashboardProps) {
     return year.length === 2 ? `20${year}` : year;
   };
 
-  const fullYearForAPI = selectedFinancialYear ? convertToFullYear(selectedFinancialYear) : undefined;
+  const fullYearForAPI = selectedFinancialYear && selectedFinancialYear !== 'all' ? convertToFullYear(selectedFinancialYear) : undefined;
   
   // Debug logging to verify financial year conversion
   console.log('🔍 Dashboard FY Debug:', {
@@ -99,12 +99,17 @@ export default function Dashboard({ user }: DashboardProps) {
     ? initiativesData 
     : [];
 
-  // Calculate total initiatives count - API already handles site and FY filtering
+  // Use backend-calculated total initiatives count from performance analysis
+  // This ensures consistency with filtering and backend calculations
   const totalInitiativesCount = React.useMemo(() => {
-    if (!initiatives || initiatives.length === 0) return 0;
+    if (performanceAnalysisData?.overall?.totalInitiatives != null) {
+      return performanceAnalysisData.overall.totalInitiatives;
+    }
     
-    // API call already filtered by site and financial year, so just return the count
-    // This includes ALL statuses (same as KPI page and Initiatives page)
+    // Fallback to dashboard stats if performance analysis is not available
+    if (dashboardStats?.totalInitiatives != null) {
+      return dashboardStats.totalInitiatives;
+    }
     
     // Debug logging to verify count consistency
     console.log('🔍 Dashboard Total Initiatives Debug:', {
@@ -112,12 +117,13 @@ export default function Dashboard({ user }: DashboardProps) {
       selectedFinancialYear,
       fullYearForAPI,
       apiSite,
-      totalCount: initiatives.length,
-      initiatives: initiatives.map((i: any) => ({ id: i.id, site: i.site, status: i.status }))
+      performanceCount: performanceAnalysisData?.overall?.totalInitiatives,
+      dashboardStatsCount: dashboardStats?.totalInitiatives,
+      finalCount: performanceAnalysisData?.overall?.totalInitiatives || dashboardStats?.totalInitiatives || 0
     });
     
-    return initiatives.length;
-  }, [initiatives, selectedSite, selectedFinancialYear, fullYearForAPI, apiSite]);
+    return 0;
+  }, [performanceAnalysisData, dashboardStats, selectedSite, selectedFinancialYear, fullYearForAPI, apiSite]);
 
   // Enhanced currency formatting
   const formatCurrency = (amount: number): string => {
@@ -304,6 +310,9 @@ export default function Dashboard({ user }: DashboardProps) {
                 <SelectValue placeholder="Select FY" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="all" className="text-xs">
+                  All Year
+                </SelectItem>
                 {availableFinancialYears.map((fy) => (
                   <SelectItem key={fy} value={fy} className="text-xs">
                     FY {fy}-{(parseInt(fy) + 1).toString().slice(-2)}
@@ -566,7 +575,7 @@ export default function Dashboard({ user }: DashboardProps) {
               <h2 className="text-xl font-bold text-foreground">Performance Analysis Dashboard</h2>
               <p className="text-muted-foreground text-xs mt-0.5">
                 Financial Year: <span className="font-semibold text-blue-600">
-                  {selectedFinancialYear ? `FY ${selectedFinancialYear}-${(parseInt(selectedFinancialYear) + 1).toString().slice(-2)}` : 'Loading...'}
+                  {selectedFinancialYear === 'all' ? 'All Years' : selectedFinancialYear ? `FY ${selectedFinancialYear}-${(parseInt(selectedFinancialYear) + 1).toString().slice(-2)}` : 'Loading...'}
                 </span>
               </p>
             </div>
@@ -592,7 +601,6 @@ export default function Dashboard({ user }: DashboardProps) {
             }}
             variant="overall"
             isLoading={performanceLoading}
-            initiatives={initiatives}
             selectedFinancialYear={selectedFinancialYear}
           />
 
@@ -610,7 +618,6 @@ export default function Dashboard({ user }: DashboardProps) {
             }}
             variant="budget"
             isLoading={performanceLoading}
-            initiatives={initiatives.filter((i: any) => i.budgetStatus === 'Budgeted' || i.isBudgeted === true)}
             selectedFinancialYear={selectedFinancialYear}
           />
 
@@ -628,7 +635,6 @@ export default function Dashboard({ user }: DashboardProps) {
             }}
             variant="nonBudget"
             isLoading={performanceLoading}
-            initiatives={initiatives.filter((i: any) => i.budgetStatus !== 'Budgeted' && i.isBudgeted !== true)}
             selectedFinancialYear={selectedFinancialYear}
           />
         </TabsContent>

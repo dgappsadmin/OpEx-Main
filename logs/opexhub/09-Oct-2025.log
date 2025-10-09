@@ -98,3 +98,95 @@
 [2025-10-09 15:51:51.359] [INFO] Initiative search - Status: null | Site: null | Search: null | Financial Year: null
 [2025-10-09 15:53:13.811] [INFO] Login attempt - Email: dnsharma@godeepak.com
 [2025-10-09 15:53:14.094] [INFO] Login successful - User: Deep Sharma | Email: dnsharma@godeepak.com | Role: ADMIN | Site: NDS
+[2025-10-09 16:23:03.182] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: 2025
+[2025-10-09 16:23:03.189] [INFO] Searching with Financial Year filter: 2025
+[2025-10-09 16:23:03.206] [INFO] Financial Year 2025 range: 2025-04-01T00:00 to 2026-03-31T23:59:59
+[2025-10-09 16:31:12.099] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: 2025
+[2025-10-09 16:31:12.245] [INFO] Searching with Financial Year filter: 2025
+[2025-10-09 16:31:12.254] [INFO] Financial Year 2025 range: 2025-04-01T00:00 to 2026-03-31T23:59:59
+[2025-10-09 16:31:22.574] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: null
+[2025-10-09 16:31:22.866] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: 2025
+[2025-10-09 16:31:22.869] [INFO] Searching with Financial Year filter: 2025
+[2025-10-09 16:31:22.875] [INFO] Financial Year 2025 range: 2025-04-01T00:00 to 2026-03-31T23:59:59
+[2025-10-09 16:31:26.976] [INFO] Initiative search - Status: null | Site: DHJ | Search: null | Financial Year: 2025
+[2025-10-09 16:31:26.985] [INFO] Searching with Financial Year filter: 2025
+[2025-10-09 16:31:26.992] [INFO] Financial Year 2025 range: 2025-04-01T00:00 to 2026-03-31T23:59:59
+[2025-10-09 16:31:28.311] [INFO] Initiative search - Status: null | Site: null | Search: null | Financial Year: 2025
+[2025-10-09 16:31:28.319] [INFO] Searching with Financial Year filter: 2025
+[2025-10-09 16:31:28.322] [INFO] Financial Year 2025 range: 2025-04-01T00:00 to 2026-03-31T23:59:59
+[2025-10-09 16:32:35.889] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: null
+[2025-10-09 16:32:37.201] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: 2025
+[2025-10-09 16:32:37.201] [INFO] Searching with Financial Year filter: 2025
+[2025-10-09 16:32:37.201] [INFO] Financial Year 2025 range: 2025-04-01T00:00 to 2026-03-31T23:59:59
+[2025-10-09 16:32:44.716] [INFO] Initiative search - Status: null | Site: null | Search: null | Financial Year: 2025
+[2025-10-09 16:32:44.719] [INFO] Searching with Financial Year filter: 2025
+[2025-10-09 16:32:44.722] [INFO] Financial Year 2025 range: 2025-04-01T00:00 to 2026-03-31T23:59:59
+[2025-10-09 16:32:47.854] [INFO] Initiative search - Status: null | Site: DHJ | Search: null | Financial Year: 2025
+[2025-10-09 16:32:47.858] [INFO] Searching with Financial Year filter: 2025
+[2025-10-09 16:32:47.864] [INFO] Financial Year 2025 range: 2025-04-01T00:00 to 2026-03-31T23:59:59
+[2025-10-09 16:32:49.847] [INFO] Initiative search - Status: null | Site: HSD | Search: null | Financial Year: 2025
+[2025-10-09 16:32:49.848] [INFO] Searching with Financial Year filter: 2025
+[2025-10-09 16:32:49.861] [INFO] Financial Year 2025 range: 2025-04-01T00:00 to 2026-03-31T23:59:59
+[2025-10-09 16:32:51.92] [INFO] Initiative search - Status: null | Site: TCD | Search: null | Financial Year: 2025
+[2025-10-09 16:32:51.924] [INFO] Searching with Financial Year filter: 2025
+[2025-10-09 16:32:51.928] [INFO] Financial Year 2025 range: 2025-04-01T00:00 to 2026-03-31T23:59:59
+[2025-10-09 16:33:18.694] [INFO] Initiative search - Status: null | Site: null | Search: null | Financial Year: null
+[2025-10-09 16:34:13.681] [INFO] Initiative search - Status: null | Site: null | Search: null | Financial Year: null
+[2025-10-09 16:34:16.622] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: null
+[2025-10-09 16:34:16.994] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: 2025
+[2025-10-09 16:34:17.005] [INFO] Searching with Financial Year filter: 2025
+[2025-10-09 16:34:17.005] [INFO] Financial Year 2025 range: 2025-04-01T00:00 to 2026-03-31T23:59:59
+[2025-10-09 16:34:18.417] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: 2023
+[2025-10-09 16:34:18.425] [INFO] Searching with Financial Year filter: 2023
+[2025-10-09 16:34:18.425] [INFO] Financial Year 2023 range: 2023-04-01T00:00 to 2024-03-31T23:59:59
+[2025-10-09 16:37:35.685] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: null
+[2025-10-09 16:37:36.734] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: 2025
+[2025-10-09 16:37:36.762] [INFO] Searching with Financial Year filter: 2025
+[2025-10-09 16:37:36.771] [INFO] Financial Year 2025 range: 2025-04-01T00:00 to 2026-03-31T23:59:59
+[2025-10-09 16:37:40.649] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: 2023
+[2025-10-09 16:37:40.659] [INFO] Searching with Financial Year filter: 2023
+[2025-10-09 16:37:40.665] [INFO] Financial Year 2023 range: 2023-04-01T00:00 to 2024-03-31T23:59:59
+[2025-10-09 16:37:59.123] [INFO] Initiative search - Status: null | Site: null | Search: null | Financial Year: null
+[2025-10-09 16:38:46.116] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: null
+[2025-10-09 16:38:47.917] [INFO] Initiative search - Status: null | Site: null | Search: null | Financial Year: null
+[2025-10-09 16:39:48.877] [INFO] Initiative search - Status: null | Site: null | Search: null | Financial Year: null
+[2025-10-09 16:40:04.032] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: null
+[2025-10-09 16:40:04.265] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: 2025
+[2025-10-09 16:40:04.27] [INFO] Searching with Financial Year filter: 2025
+[2025-10-09 16:40:04.27] [INFO] Financial Year 2025 range: 2025-04-01T00:00 to 2026-03-31T23:59:59
+[2025-10-09 16:40:08.386] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: 2023
+[2025-10-09 16:40:08.392] [INFO] Searching with Financial Year filter: 2023
+[2025-10-09 16:40:08.4] [INFO] Financial Year 2023 range: 2023-04-01T00:00 to 2024-03-31T23:59:59
+[2025-10-09 16:45:24.712] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: 2023
+[2025-10-09 16:45:24.722] [INFO] Searching with Financial Year filter: 2023
+[2025-10-09 16:45:24.722] [INFO] Financial Year 2023 range: 2023-04-01T00:00 to 2024-03-31T23:59:59
+[2025-10-09 16:46:43.761] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: null
+[2025-10-09 16:46:44.52] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: 2025
+[2025-10-09 16:46:44.537] [INFO] Searching with Financial Year filter: 2025
+[2025-10-09 16:46:44.545] [INFO] Financial Year 2025 range: 2025-04-01T00:00 to 2026-03-31T23:59:59
+[2025-10-09 16:47:07.79] [INFO] Login attempt - Email: dnsharma@godeepak.com
+[2025-10-09 16:47:08.77] [WARNING] Login failed - Email: dnsharma@godeepak.com | Reason: Bad credentials
+[2025-10-09 16:47:12.659] [INFO] Login attempt - Email: dnsharma@godeepak.com
+[2025-10-09 16:47:13.164] [INFO] Login successful - User: Deep Sharma | Email: dnsharma@godeepak.com | Role: ADMIN | Site: NDS
+[2025-10-09 16:47:16.115] [INFO] Initiative search - Status: null | Site: null | Search: null | Financial Year: 2025
+[2025-10-09 16:47:16.115] [INFO] Searching with Financial Year filter: 2025
+[2025-10-09 16:47:16.127] [INFO] Financial Year 2025 range: 2025-04-01T00:00 to 2026-03-31T23:59:59
+[2025-10-09 16:47:20.0] [INFO] Initiative search - Status: null | Site: null | Search: null | Financial Year: 2023
+[2025-10-09 16:47:20.009] [INFO] Searching with Financial Year filter: 2023
+[2025-10-09 16:47:20.017] [INFO] Financial Year 2023 range: 2023-04-01T00:00 to 2024-03-31T23:59:59
+[2025-10-09 16:47:26.188] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: 2023
+[2025-10-09 16:47:26.188] [INFO] Searching with Financial Year filter: 2023
+[2025-10-09 16:47:26.198] [INFO] Financial Year 2023 range: 2023-04-01T00:00 to 2024-03-31T23:59:59
+[2025-10-09 16:48:15.753] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: null
+[2025-10-09 16:48:16.997] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: 2025
+[2025-10-09 16:48:16.997] [INFO] Searching with Financial Year filter: 2025
+[2025-10-09 16:48:17.006] [INFO] Financial Year 2025 range: 2025-04-01T00:00 to 2026-03-31T23:59:59
+[2025-10-09 16:48:21.005] [INFO] Initiative search - Status: null | Site: null | Search: null | Financial Year: 2025
+[2025-10-09 16:48:21.008] [INFO] Searching with Financial Year filter: 2025
+[2025-10-09 16:48:21.016] [INFO] Financial Year 2025 range: 2025-04-01T00:00 to 2026-03-31T23:59:59
+[2025-10-09 16:48:27.494] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: 2023
+[2025-10-09 16:48:27.577] [INFO] Searching with Financial Year filter: 2023
+[2025-10-09 16:48:27.598] [INFO] Financial Year 2023 range: 2023-04-01T00:00 to 2024-03-31T23:59:59
+[2025-10-09 16:56:21.623] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: 2025
+[2025-10-09 16:56:21.631] [INFO] Searching with Financial Year filter: 2025
+[2025-10-09 16:56:21.639] [INFO] Financial Year 2025 range: 2025-04-01T00:00 to 2026-03-31T23:59:59
