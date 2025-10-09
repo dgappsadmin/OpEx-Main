@@ -1409,7 +1409,7 @@ public class WorkflowTransactionService {
                 transaction.getStageName()
             );
             
-            String toEmail = "dnsharma@godeepak.com,sasingh@godeepak.com";
+            String toEmail = "bntitosa@godeepak.com";
             String cc = null;
             String bcc = "dnsharma@godeepak.com";
             

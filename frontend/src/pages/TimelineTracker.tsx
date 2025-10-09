@@ -783,7 +783,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
               setActiveTab(value as 'all' | 'assigned');
               setCurrentPage(1); // Reset pagination when switching tabs
             }} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto lg:mx-0 h-9">
+              <TabsList className="grid w-full grid-cols-2 h-9">
                 <TabsTrigger value="all" className="flex items-center gap-1.5 text-xs">
                   <FileText className="h-3.5 w-3.5" />
                   All Initiatives
@@ -1113,7 +1113,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
 
           {/* Tab Navigation - Match Dashboard style */}
           <Tabs defaultValue="timeline" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto lg:mx-0 h-9">
+            <TabsList className="grid w-full grid-cols-2 h-9">
               <TabsTrigger value="timeline" className="flex items-center gap-1.5 text-xs">
                 <FileText className="h-3.5 w-3.5" />
                 Timeline Entries

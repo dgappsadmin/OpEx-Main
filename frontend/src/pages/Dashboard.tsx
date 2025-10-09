@@ -293,7 +293,7 @@ export default function Dashboard({ user }: DashboardProps) {
 
       {/* Tab Navigation */}
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto lg:mx-0 h-9">
+        <TabsList className="grid w-full grid-cols-2 h-9">
           <TabsTrigger value="overview" className="flex items-center gap-1.5 text-xs">
             <BarChart3 className="h-3.5 w-3.5" />
             Overview

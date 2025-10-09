@@ -8,6 +8,7 @@ import org.springframework.boot.web.servlet.support.SpringBootServletInitializer
 @SpringBootApplication
 public class OpexHubApplication extends SpringBootServletInitializer {
 
+    
     public static void main(String[] args) {
         SpringApplication.run(OpexHubApplication.class, args);
         System.out.println("Application is running and up!");

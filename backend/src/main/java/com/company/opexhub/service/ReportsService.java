@@ -2126,34 +2126,24 @@ public class ReportsService {
      */
     @SuppressWarnings("unchecked")
     private List<Object[]> getMOMData(String site, String year) {
-        // Use native query to fetch MOM data with initiative details
-        String query = "SELECT " +
-            "i.initiative_number, i.title, i.site, " +
-            "m.meeting_title, m.meeting_date, m.meeting_type, " +
-            "m.responsible_person, m.content, m.status, m.priority, " +
-            "m.due_date, m.attendees, m.created_at " +
-            "FROM opex_initiative_mom m " +
-            "INNER JOIN opex_initiatives i ON m.initiative_id = i.id ";
-        
-        // Add site filter if specified
-        boolean hasWhere = false;
-        if (site != null && !site.equals("all")) {
-            query += "WHERE i.site = '" + site + "' ";
-            hasWhere = true;
-        }
-        
-        // Add year filter if specified
+        // Convert 2-digit year to 4-digit year if needed
+        Integer fullYear = null;
         if (year != null && !year.isEmpty()) {
-            if (!hasWhere) {
-                query += "WHERE ";
+            if (year.length() == 2) {
+                // Convert 2-digit year (e.g., "25") to 4-digit year (e.g., "2025")
+                int shortYear = Integer.parseInt(year);
+                // Assume years 00-50 are 2000s, 51-99 are 1900s
+                if (shortYear >= 0 && shortYear <= 50) {
+                    fullYear = 2000 + shortYear;
+                } else {
+                    fullYear = 1900 + shortYear;
+                }
             } else {
-                query += "AND ";
+                // Already 4-digit year
+                fullYear = Integer.parseInt(year);
             }
-            query += "EXTRACT(YEAR FROM m.created_at) = " + year + " ";
         }
         
-        query += "ORDER BY i.initiative_number, m.meeting_date DESC";
-        
-        return initiativeRepository.getMOMReportData(query);
+        return initiativeRepository.getMOMReportDataFiltered(site, fullYear);
     }
 }

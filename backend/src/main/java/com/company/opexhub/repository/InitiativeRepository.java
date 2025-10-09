@@ -145,13 +145,30 @@ public interface InitiativeRepository extends JpaRepository<Initiative, Long> {
     @Query(value = "SELECT " +
         "i.initiative_number, i.title, i.site, " +
         "m.meeting_title, m.meeting_date, m.meeting_type, " +
-        "m.responsible_person, m.content, m.status, m.priority, " +
-        "m.due_date, m.attendees, m.created_at " +
+        "m.responsible_person, " +
+        "CASE WHEN m.content IS NOT NULL THEN DBMS_LOB.SUBSTR(m.content, 4000, 1) ELSE NULL END, " +
+        "m.status, m.priority, " +
+        "m.due_date, " +
+        "CASE WHEN m.attendees IS NOT NULL THEN DBMS_LOB.SUBSTR(m.attendees, 4000, 1) ELSE NULL END, " +
+        "m.created_at " +
         "FROM opex_initiative_mom m " +
         "INNER JOIN opex_initiatives i ON m.initiative_id = i.id " +
         "ORDER BY i.initiative_number, m.meeting_date DESC", nativeQuery = true)
     List<Object[]> getMOMReportData();
     
-    @Query(value = "?1", nativeQuery = true)
-    List<Object[]> getMOMReportData(@Param("query") String query);
+    @Query(value = "SELECT " +
+        "i.initiative_number, i.title, i.site, " +
+        "m.meeting_title, m.meeting_date, m.meeting_type, " +
+        "m.responsible_person, " +
+        "CASE WHEN m.content IS NOT NULL THEN DBMS_LOB.SUBSTR(m.content, 4000, 1) ELSE NULL END, " +
+        "m.status, m.priority, " +
+        "m.due_date, " +
+        "CASE WHEN m.attendees IS NOT NULL THEN DBMS_LOB.SUBSTR(m.attendees, 4000, 1) ELSE NULL END, " +
+        "m.created_at " +
+        "FROM opex_initiative_mom m " +
+        "INNER JOIN opex_initiatives i ON m.initiative_id = i.id " +
+        "WHERE (:site IS NULL OR :site = 'all' OR i.site = :site) " +
+        "AND (:year IS NULL OR :year = '' OR EXTRACT(YEAR FROM m.created_at) = :year) " +
+        "ORDER BY i.initiative_number, m.meeting_date DESC", nativeQuery = true)
+    List<Object[]> getMOMReportDataFiltered(@Param("site") String site, @Param("year") Integer year);
 }
