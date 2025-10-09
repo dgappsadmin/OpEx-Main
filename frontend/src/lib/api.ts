@@ -155,6 +155,7 @@ export const initiativeAPI = {
     search?: string;
     page?: number;
     size?: number;
+    financialYear?: string;
   }) => {
     const response = await api.get('/initiatives', { params });
     return response.data;

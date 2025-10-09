@@ -171,4 +171,31 @@ public interface InitiativeRepository extends JpaRepository<Initiative, Long> {
         "AND (:year IS NULL OR :year = '' OR EXTRACT(YEAR FROM m.created_at) = :year) " +
         "ORDER BY i.initiative_number, m.meeting_date DESC", nativeQuery = true)
     List<Object[]> getMOMReportDataFiltered(@Param("site") String site, @Param("year") Integer year);
+    
+    // Financial Year filtering methods - using same FY logic as DashboardService
+    // Financial year runs from April 1 to March 31
+    
+    @Query("SELECT i FROM Initiative i WHERE i.createdAt >= :startDate AND i.createdAt <= :endDate")
+    Page<Initiative> findByFinancialYear(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate, Pageable pageable);
+    
+    @Query("SELECT i FROM Initiative i WHERE i.site = :site AND i.createdAt >= :startDate AND i.createdAt <= :endDate")
+    Page<Initiative> findBySiteAndFinancialYear(@Param("site") String site, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate, Pageable pageable);
+    
+    @Query("SELECT i FROM Initiative i WHERE i.status = :status AND i.createdAt >= :startDate AND i.createdAt <= :endDate")
+    Page<Initiative> findByStatusAndFinancialYear(@Param("status") String status, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate, Pageable pageable);
+    
+    @Query("SELECT i FROM Initiative i WHERE i.status = :status AND i.site = :site AND i.createdAt >= :startDate AND i.createdAt <= :endDate")
+    Page<Initiative> findByStatusAndSiteAndFinancialYear(@Param("status") String status, @Param("site") String site, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate, Pageable pageable);
+    
+    @Query("SELECT i FROM Initiative i WHERE i.title LIKE %:title% AND i.createdAt >= :startDate AND i.createdAt <= :endDate")
+    Page<Initiative> findByTitleContainingAndFinancialYear(@Param("title") String title, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate, Pageable pageable);
+    
+    @Query("SELECT i FROM Initiative i WHERE i.initiativeNumber LIKE %:initiativeNumber% AND i.createdAt >= :startDate AND i.createdAt <= :endDate")
+    Page<Initiative> findByInitiativeNumberContainingAndFinancialYear(@Param("initiativeNumber") String initiativeNumber, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate, Pageable pageable);
+    
+    @Query("SELECT i FROM Initiative i WHERE i.status = :status AND i.site = :site AND i.title LIKE %:title% AND i.createdAt >= :startDate AND i.createdAt <= :endDate")
+    Page<Initiative> findByStatusAndSiteAndTitleContainingAndFinancialYear(@Param("status") String status, @Param("site") String site, @Param("title") String title, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate, Pageable pageable);
+    
+    @Query("SELECT i FROM Initiative i WHERE i.status = :status AND i.site = :site AND i.initiativeNumber LIKE %:initiativeNumber% AND i.createdAt >= :startDate AND i.createdAt <= :endDate")
+    Page<Initiative> findByStatusAndSiteAndInitiativeNumberContainingAndFinancialYear(@Param("status") String status, @Param("site") String site, @Param("initiativeNumber") String initiativeNumber, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate, Pageable pageable);
 }

@@ -316,6 +316,8 @@
 
 package com.company.opexhub.service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -360,10 +362,23 @@ public class InitiativeService {
     }
 
     public Page<Initiative> searchInitiatives(String status, String site, String search, Pageable pageable) {
+        return searchInitiatives(status, site, search, null, pageable);
+    }
+    
+    public Page<Initiative> searchInitiatives(String status, String site, String search, String financialYear, Pageable pageable) {
+        loggingService.info("Initiative search - Status: " + status + " | Site: " + site + 
+                          " | Search: " + search + " | Financial Year: " + financialYear);
+        
         // Determine if search term looks like initiative number (contains slash or alphanumeric pattern)
         boolean isInitiativeNumberSearch = search != null && 
             (search.contains("/") || search.matches(".*[A-Z]+.*[0-9]+.*") || search.matches(".*[0-9]+.*[A-Z]+.*"));
         
+        // If financial year is provided, use the FY-specific repository methods
+        if (financialYear != null) {
+            return searchInitiativesWithFinancialYear(status, site, search, financialYear, isInitiativeNumberSearch, pageable);
+        }
+        
+        // Original logic for non-FY searches
         if (status != null && site != null && search != null) {
             if (isInitiativeNumberSearch) {
                 return initiativeRepository.findByStatusAndSiteAndInitiativeNumberContaining(status, site, search, pageable);
@@ -385,6 +400,59 @@ public class InitiativeService {
         } else {
             return initiativeRepository.findAll(pageable);
         }
+    }
+    
+    private Page<Initiative> searchInitiativesWithFinancialYear(String status, String site, String search, 
+                                                               String financialYear, boolean isInitiativeNumberSearch, 
+                                                               Pageable pageable) {
+        loggingService.info("Searching with Financial Year filter: " + financialYear);
+        
+        // Calculate financial year date range (same logic as DashboardService)
+        LocalDateTime[] fyRange = getFinancialYearRange(financialYear);
+        LocalDateTime fyStart = fyRange[0];
+        LocalDateTime fyEnd = fyRange[1];
+        
+        loggingService.info("Financial Year " + financialYear + " range: " + fyStart + " to " + fyEnd);
+        
+        if (status != null && site != null && search != null) {
+            if (isInitiativeNumberSearch) {
+                return initiativeRepository.findByStatusAndSiteAndInitiativeNumberContainingAndFinancialYear(
+                        status, site, search, fyStart, fyEnd, pageable);
+            } else {
+                return initiativeRepository.findByStatusAndSiteAndTitleContainingAndFinancialYear(
+                        status, site, search, fyStart, fyEnd, pageable);
+            }
+        } else if (search != null) {
+            if (isInitiativeNumberSearch) {
+                return initiativeRepository.findByInitiativeNumberContainingAndFinancialYear(search, fyStart, fyEnd, pageable);
+            } else {
+                return initiativeRepository.findByTitleContainingAndFinancialYear(search, fyStart, fyEnd, pageable);
+            }
+        } else if (status != null && site != null) {
+            return initiativeRepository.findByStatusAndSiteAndFinancialYear(status, site, fyStart, fyEnd, pageable);
+        } else if (status != null) {
+            return initiativeRepository.findByStatusAndFinancialYear(status, fyStart, fyEnd, pageable);
+        } else if (site != null) {
+            return initiativeRepository.findBySiteAndFinancialYear(site, fyStart, fyEnd, pageable);
+        } else {
+            return initiativeRepository.findByFinancialYear(fyStart, fyEnd, pageable);
+        }
+    }
+    
+    /**
+     * Get financial year date range for a specific year as LocalDateTime array [start, end]
+     * Same logic as DashboardService.getFinancialYearRange(String financialYear)
+     */
+    private LocalDateTime[] getFinancialYearRange(String financialYear) {
+        int year = Integer.parseInt(financialYear); // e.g., 2025 for FY 2025-26
+        
+        LocalDate fyStart = LocalDate.of(year, 4, 1);       // April 1st, 2025
+        LocalDate fyEnd = LocalDate.of(year + 1, 3, 31);    // March 31st, 2026
+        
+        return new LocalDateTime[]{
+            fyStart.atStartOfDay(),
+            fyEnd.atTime(23, 59, 59)
+        };
     }
 
     public Optional<Initiative> getInitiativeById(Long id) {

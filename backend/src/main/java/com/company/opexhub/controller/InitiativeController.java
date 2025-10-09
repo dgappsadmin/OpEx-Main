@@ -43,9 +43,10 @@ public class InitiativeController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String site,
             @RequestParam(required = false) String search,
+            @RequestParam(required = false) String financialYear,
             Pageable pageable) {
         
-        Page<Initiative> initiatives = initiativeService.searchInitiatives(status, site, search, pageable);
+        Page<Initiative> initiatives = initiativeService.searchInitiatives(status, site, search, financialYear, pageable);
         return initiatives.map(this::convertToResponse);
     }
 

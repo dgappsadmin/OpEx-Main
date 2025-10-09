@@ -20,7 +20,7 @@ import {
   Filter
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { User } from "@/lib/mockData";
 import { useDashboardStats, useRecentInitiatives, usePerformanceAnalysis, useDashboardSites } from "@/hooks/useDashboard";
 import { useInitiatives } from "@/hooks/useInitiatives";
@@ -85,15 +85,39 @@ export default function Dashboard({ user }: DashboardProps) {
   const { data: recentInitiativesData, isLoading: initiativesLoading, error: initiativesError } = useRecentInitiatives(apiSite, fullYearForAPI);
   const { data: performanceAnalysisData, isLoading: performanceLoading, error: performanceError } = usePerformanceAnalysis(apiSite, fullYearForAPI);
   
-  // Fetch initiatives data for filtering in PerformanceAnalysis
-  const { data: initiativesData } = useInitiatives(apiSite ? { site: apiSite } : {});
+  // Fetch initiatives data for consistent total count calculation with FY filter
+  const { data: initiativesData } = useInitiatives(
+    apiSite 
+      ? { site: apiSite, financialYear: fullYearForAPI } 
+      : { financialYear: fullYearForAPI }
+  );
   
-  // Process initiatives data for PerformanceAnalysis
+  // Process initiatives data for consistent counting (same logic as Initiatives.tsx)
   const initiatives = (Array.isArray(initiativesData?.content) && initiativesData.content.length > 0) 
     ? initiativesData.content 
     : (Array.isArray(initiativesData) && initiativesData.length > 0) 
     ? initiativesData 
     : [];
+
+  // Calculate total initiatives count - API already handles site and FY filtering
+  const totalInitiativesCount = React.useMemo(() => {
+    if (!initiatives || initiatives.length === 0) return 0;
+    
+    // API call already filtered by site and financial year, so just return the count
+    // This includes ALL statuses (same as KPI page and Initiatives page)
+    
+    // Debug logging to verify count consistency
+    console.log('🔍 Dashboard Total Initiatives Debug:', {
+      selectedSite,
+      selectedFinancialYear,
+      fullYearForAPI,
+      apiSite,
+      totalCount: initiatives.length,
+      initiatives: initiatives.map((i: any) => ({ id: i.id, site: i.site, status: i.status }))
+    });
+    
+    return initiatives.length;
+  }, [initiatives, selectedSite, selectedFinancialYear, fullYearForAPI, apiSite]);
 
   // Enhanced currency formatting
   const formatCurrency = (amount: number): string => {
@@ -121,11 +145,11 @@ export default function Dashboard({ user }: DashboardProps) {
     return trend >= 0 ? "up" : "down";
   };
 
-  // Create stats array from API data with real trends
+  // Create stats array with consistent total initiatives count (same as Initiatives page)
   const stats = [
     {
       title: "Total Initiatives",
-      value: statsLoading ? "..." : (dashboardStats?.totalInitiatives || 0).toString(),
+      value: statsLoading ? "..." : totalInitiativesCount.toString(),
       change: statsLoading ? "..." : formatTrend(dashboardStats?.totalInitiativesTrend),
       trend: getTrendDirection(dashboardStats?.totalInitiativesTrend),
       icon: FileText,

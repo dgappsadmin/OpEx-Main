@@ -6,6 +6,7 @@ export const useInitiatives = (filters?: {
   status?: string;
   site?: string;
   search?: string;
+  financialYear?: string;
 }) => {
   return useQuery({
     queryKey: ['initiatives', filters],
