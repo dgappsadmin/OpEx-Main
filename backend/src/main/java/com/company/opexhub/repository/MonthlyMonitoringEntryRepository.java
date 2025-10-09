@@ -382,4 +382,30 @@ public interface MonthlyMonitoringEntryRepository extends JpaRepository<MonthlyM
     // Get total achieved value for a particular initiative (only finalized entries)
     @Query("SELECT SUM(mme.achievedValue) FROM MonthlyMonitoringEntry mme WHERE mme.initiative.id = :initiativeId AND mme.achievedValue IS NOT NULL AND mme.isFinalized = 'Y'")
     java.math.BigDecimal sumAchievedValueByInitiativeId(@Param("initiativeId") Long initiativeId);
+
+    // All Years / Overall Aggregate Queries - Required for Dashboard "All Year" filter
+    
+    // Sum all achieved values across all monitoring entries (for "All Years" filter)
+    @Query("SELECT SUM(mme.achievedValue) FROM MonthlyMonitoringEntry mme WHERE mme.achievedValue IS NOT NULL")
+    java.math.BigDecimal sumAllAchievedValues();
+    
+    // Sum all achieved values for a specific site (for "All Years" + site filter)
+    @Query("SELECT SUM(mme.achievedValue) FROM MonthlyMonitoringEntry mme WHERE mme.initiative.site = :site AND mme.achievedValue IS NOT NULL")
+    java.math.BigDecimal sumAllAchievedValuesBySite(@Param("site") String site);
+    
+    // Sum all target values across all monitoring entries (for "All Years" filter)
+    @Query("SELECT SUM(mme.targetValue) FROM MonthlyMonitoringEntry mme WHERE mme.targetValue IS NOT NULL")
+    java.math.BigDecimal sumAllTargetValues();
+    
+    // Sum all target values for a specific site (for "All Years" + site filter)
+    @Query("SELECT SUM(mme.targetValue) FROM MonthlyMonitoringEntry mme WHERE mme.initiative.site = :site AND mme.targetValue IS NOT NULL")
+    java.math.BigDecimal sumAllTargetValuesBySite(@Param("site") String site);
+    
+    // Sum all achieved values by budget type (for "All Years" + budget type filter)
+    @Query("SELECT SUM(mme.achievedValue) FROM MonthlyMonitoringEntry mme WHERE mme.achievedValue IS NOT NULL AND LOWER(COALESCE(mme.initiative.budgetType, 'budgeted')) = :budgetType")
+    java.math.BigDecimal sumAllAchievedValuesByBudgetType(@Param("budgetType") String budgetType);
+    
+    // Sum all target values by budget type (for "All Years" + budget type filter)
+    @Query("SELECT SUM(mme.targetValue) FROM MonthlyMonitoringEntry mme WHERE mme.targetValue IS NOT NULL AND LOWER(COALESCE(mme.initiative.budgetType, 'budgeted')) = :budgetType")
+    java.math.BigDecimal sumAllTargetValuesByBudgetType(@Param("budgetType") String budgetType);
 }

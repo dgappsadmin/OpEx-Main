@@ -251,10 +251,15 @@ export default function Dashboard({ user }: DashboardProps) {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            OpEx Dashboard {selectedSite !== "overall" && `- ${selectedSite}`}
+            OpEx Dashboard {selectedSite !== "overall" && `- ${selectedSite}`} 
+            {selectedFinancialYear === 'all' && <span className="text-sm text-purple-600"> (All Years)</span>}
           </h1>
           <p className="text-muted-foreground text-xs mt-0.5">
-            Welcome back, {user.fullName}! {selectedSite === "overall" ? "Viewing overall stats" : `Viewing ${selectedSite} site data`}
+            Welcome back, {user.fullName}! 
+            {selectedSite === "overall" 
+              ? (selectedFinancialYear === 'all' ? "Viewing overall stats across all years" : "Viewing overall stats") 
+              : (selectedFinancialYear === 'all' ? `Viewing ${selectedSite} site data across all years` : `Viewing ${selectedSite} site data`)
+            }
           </p>
         </div>
         <Button onClick={() => navigate('/initiative/new')} className="gap-1.5 shrink-0 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 h-9 px-4 text-xs">
@@ -266,10 +271,19 @@ export default function Dashboard({ user }: DashboardProps) {
       {/* Filters */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {/* Site Filter */}
-        <div className="flex items-center justify-between bg-white/50 backdrop-blur-sm rounded-lg p-3 border border-gray-200">
+        <div className={`flex items-center justify-between backdrop-blur-sm rounded-lg p-3 border ${
+          selectedSite === "overall" 
+            ? 'bg-blue-50/80 border-blue-200' 
+            : 'bg-white/50 border-gray-200'
+        }`}>
           <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-blue-600" />
+            <Filter className={`h-4 w-4 ${selectedSite === "overall" ? 'text-blue-600' : 'text-blue-600'}`} />
             <span className="text-sm font-medium text-gray-700">Filter by Site:</span>
+            {selectedSite === "overall" && (
+              <Badge variant="secondary" className="text-2xs bg-blue-100 text-blue-700">
+                Overall View
+              </Badge>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <Select value={selectedSite} onValueChange={setSelectedSite}>
@@ -277,7 +291,7 @@ export default function Dashboard({ user }: DashboardProps) {
                 <SelectValue placeholder="Select site" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="overall" className="text-xs">Overall</SelectItem>
+                <SelectItem value="overall" className="text-xs">🌐 Overall</SelectItem>
                 {!sitesLoading && availableSites?.map((site: string) => (
                   <SelectItem key={site} value={site} className="text-xs">
                     {site}
@@ -299,19 +313,30 @@ export default function Dashboard({ user }: DashboardProps) {
         </div>
 
         {/* Financial Year Filter */}
-        <div className="flex items-center justify-between bg-white/50 backdrop-blur-sm rounded-lg p-3 border border-gray-200">
+        <div className={`flex items-center justify-between backdrop-blur-sm rounded-lg p-3 border ${
+          selectedFinancialYear === 'all' 
+            ? 'bg-purple-50/80 border-purple-200' 
+            : 'bg-white/50 border-gray-200'
+        }`}>
           <div className="flex items-center gap-2">
-            <IndianRupee className="h-4 w-4 text-green-600" />
+            <IndianRupee className={`h-4 w-4 ${selectedFinancialYear === 'all' ? 'text-purple-600' : 'text-green-600'}`} />
             <span className="text-sm font-medium text-gray-700">Financial Year:</span>
+            {selectedFinancialYear === 'all' && (
+              <Badge variant="secondary" className="text-2xs bg-purple-100 text-purple-700">
+                All Years Active
+              </Badge>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <Select value={selectedFinancialYear} onValueChange={setSelectedFinancialYear}>
-              <SelectTrigger className="w-40 h-8 text-xs bg-white border-gray-300 focus:border-green-500">
+              <SelectTrigger className={`w-40 h-8 text-xs bg-white border-gray-300 ${
+                selectedFinancialYear === 'all' ? 'focus:border-purple-500' : 'focus:border-green-500'
+              }`}>
                 <SelectValue placeholder="Select FY" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all" className="text-xs">
-                  All Year
+                  🌍 All Years
                 </SelectItem>
                 {availableFinancialYears.map((fy) => (
                   <SelectItem key={fy} value={fy} className="text-xs">
@@ -577,6 +602,12 @@ export default function Dashboard({ user }: DashboardProps) {
                 Financial Year: <span className="font-semibold text-blue-600">
                   {selectedFinancialYear === 'all' ? 'All Years' : selectedFinancialYear ? `FY ${selectedFinancialYear}-${(parseInt(selectedFinancialYear) + 1).toString().slice(-2)}` : 'Loading...'}
                 </span>
+                {selectedSite !== "overall" && (
+                  <>
+                    <span className="text-muted-foreground"> | Site: </span>
+                    <span className="font-semibold text-green-600">{selectedSite}</span>
+                  </>
+                )}
               </p>
             </div>
             {performanceError && (

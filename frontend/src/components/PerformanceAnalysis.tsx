@@ -146,7 +146,7 @@ export default function PerformanceAnalysis({
 
   // Convert full year back to short year for display (e.g., "2025" -> "25")
   const convertToDisplayYear = (year?: string): string => {
-    if (!year) return getCurrentFiscalYear();
+    if (!year || year === 'all') return 'All';
     // If it's a full year like "2025", convert to "25"
     if (year.length === 4) {
       return year.slice(-2);
@@ -156,7 +156,7 @@ export default function PerformanceAnalysis({
   };
 
   const displayFY = convertToDisplayYear(selectedFinancialYear);
-  const fyText = `FY ${displayFY}-${(parseInt(displayFY) + 1).toString().slice(-2)}`;
+  const fyText = displayFY === 'All' ? 'All Years' : `FY ${displayFY}-${(parseInt(displayFY) + 1).toString().slice(-2)}`;
   
   // Debug logging to verify financial year processing in PerformanceAnalysis
   console.log('🔍 PerformanceAnalysis FY Debug:', {
@@ -172,13 +172,13 @@ export default function PerformanceAnalysis({
       value: metrics?.totalInitiatives?.toString() || "0",
       subtitle: `All initiatives in ${fyText}`,
       icon: Target,
-      trend: formatTrend(metrics?.totalInitiativesTrend) + " vs last FY",
+      trend: formatTrend(metrics?.totalInitiativesTrend) + (displayFY === 'All' ? " vs previous period" : " vs last FY"),
       trendDirection: getTrendDirection(metrics?.totalInitiativesTrend)
     },
     {
       title: "Annualized Projected Savings",
       value: formatCurrencyInLakhs(adjustedMetrics?.potentialSavingsAnnualized || 0),
-      subtitle: "Total yearly projection",
+      subtitle: displayFY === 'All' ? "Total projected across all years" : "Total yearly projection",
       icon: TrendingUp,
       trend: formatTrend(metrics?.potentialSavingsAnnualizedTrend) + " vs target",
       trendDirection: getTrendDirection(metrics?.potentialSavingsAnnualizedTrend)
@@ -188,7 +188,7 @@ export default function PerformanceAnalysis({
       value: formatCurrencyInLakhs(adjustedMetrics?.potentialSavingsCurrentFY || 0),
       subtitle: fyText + " projection",
       icon: IndianRupee,
-      trend: formatTrend(metrics?.potentialSavingsCurrentFYTrend) + " vs last FY",
+      trend: formatTrend(metrics?.potentialSavingsCurrentFYTrend) + (displayFY === 'All' ? " vs previous period" : " vs last FY"),
       trendDirection: getTrendDirection(metrics?.potentialSavingsCurrentFYTrend)
     },
     {
@@ -196,7 +196,7 @@ export default function PerformanceAnalysis({
       value: formatCurrencyInLakhs(metrics?.actualSavingsCurrentFY || 0),
       subtitle: `Realized savings ${fyText}`,
       icon: BarChart3,
-      trend: formatTrend(metrics?.actualSavingsCurrentFYTrend) + " vs last FY",
+      trend: formatTrend(metrics?.actualSavingsCurrentFYTrend) + (displayFY === 'All' ? " vs previous period" : " vs last FY"),
       trendDirection: getTrendDirection(metrics?.actualSavingsCurrentFYTrend)
     },
     {
