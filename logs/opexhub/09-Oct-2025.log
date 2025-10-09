@@ -79,3 +79,22 @@
 [2025-10-09 15:37:43.059] [INFO] Initiative search - Status: null | Site: null | Search: null | Financial Year: 2025
 [2025-10-09 15:37:43.062] [INFO] Searching with Financial Year filter: 2025
 [2025-10-09 15:37:43.063] [INFO] Financial Year 2025 range: 2025-04-01T00:00 to 2026-03-31T23:59:59
+[2025-10-09 15:50:29.979] [INFO] Initiative search - Status: null | Site: null | Search: null | Financial Year: 2025
+[2025-10-09 15:50:29.987] [INFO] Searching with Financial Year filter: 2025
+[2025-10-09 15:50:29.995] [INFO] Financial Year 2025 range: 2025-04-01T00:00 to 2026-03-31T23:59:59
+[2025-10-09 15:50:32.025] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: null
+[2025-10-09 15:50:32.547] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: 2025
+[2025-10-09 15:50:32.552] [INFO] Searching with Financial Year filter: 2025
+[2025-10-09 15:50:32.557] [INFO] Financial Year 2025 range: 2025-04-01T00:00 to 2026-03-31T23:59:59
+[2025-10-09 15:50:36.132] [INFO] Initiative search - Status: null | Site: null | Search: null | Financial Year: null
+[2025-10-09 15:51:04.435] [INFO] Initiative search - Status: null | Site: null | Search: null | Financial Year: null
+[2025-10-09 15:51:08.034] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: null
+[2025-10-09 15:51:11.856] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: null
+[2025-10-09 15:51:15.343] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: 2025
+[2025-10-09 15:51:15.347] [INFO] Searching with Financial Year filter: 2025
+[2025-10-09 15:51:15.359] [INFO] Financial Year 2025 range: 2025-04-01T00:00 to 2026-03-31T23:59:59
+[2025-10-09 15:51:36.128] [INFO] Login attempt - Email: manoj.tiwari@godeepak.com
+[2025-10-09 15:51:36.86] [INFO] Login successful - User: Manoj Tiwari | Email: manoj.tiwari@godeepak.com | Role: STLD | Site: NDS
+[2025-10-09 15:51:51.359] [INFO] Initiative search - Status: null | Site: null | Search: null | Financial Year: null
+[2025-10-09 15:53:13.811] [INFO] Login attempt - Email: dnsharma@godeepak.com
+[2025-10-09 15:53:14.094] [INFO] Login successful - User: Deep Sharma | Email: dnsharma@godeepak.com | Role: ADMIN | Site: NDS
