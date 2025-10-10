@@ -81,3 +81,31 @@
 [2025-10-10 18:31:37.663] [INFO] === INITIATIVE CREATION COMPLETED === Initiative: CORP/25/OP/01/001
 [2025-10-10 18:31:39.644] [INFO] Initiative search - Status: null | Site: null | Search: null | Financial Year: null
 [2025-10-10 18:31:41.907] [INFO] Initiative search - Status: null | Site: null | Search: null | Financial Year: null
+[2025-10-10 18:49:33.147] [INFO] Login attempt - Email: sunil.kumar@godeepak.com
+[2025-10-10 18:49:34.889] [INFO] Login successful - User: Sunil Kumar | Email: sunil.kumar@godeepak.com | Role: STLD | Site: CORP
+[2025-10-10 18:49:36.135] [INFO] Initiative search - Status: null | Site: CORP | Search: null | Financial Year: null
+[2025-10-10 18:49:36.882] [INFO] Initiative search - Status: null | Site: CORP | Search: null | Financial Year: 2025
+[2025-10-10 18:49:36.882] [INFO] Searching with Financial Year filter: 2025
+[2025-10-10 18:49:36.899] [INFO] Financial Year 2025 range: 2025-04-01T00:00 to 2026-03-31T23:59:59
+[2025-10-10 18:50:29.147] [INFO] Initiative search - Status: null | Site: null | Search: null | Financial Year: 2025
+[2025-10-10 18:50:29.147] [INFO] Searching with Financial Year filter: 2025
+[2025-10-10 18:50:29.152] [INFO] Financial Year 2025 range: 2025-04-01T00:00 to 2026-03-31T23:59:59
+[2025-10-10 18:50:31.794] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: 2025
+[2025-10-10 18:50:31.802] [INFO] Searching with Financial Year filter: 2025
+[2025-10-10 18:50:31.805] [INFO] Financial Year 2025 range: 2025-04-01T00:00 to 2026-03-31T23:59:59
+[2025-10-10 18:50:33.119] [INFO] Initiative search - Status: null | Site: HSD | Search: null | Financial Year: 2025
+[2025-10-10 18:50:33.127] [INFO] Searching with Financial Year filter: 2025
+[2025-10-10 18:50:33.131] [INFO] Financial Year 2025 range: 2025-04-01T00:00 to 2026-03-31T23:59:59
+[2025-10-10 18:50:34.371] [INFO] Initiative search - Status: null | Site: TCD | Search: null | Financial Year: 2025
+[2025-10-10 18:50:34.376] [INFO] Searching with Financial Year filter: 2025
+[2025-10-10 18:50:34.378] [INFO] Financial Year 2025 range: 2025-04-01T00:00 to 2026-03-31T23:59:59
+[2025-10-10 18:51:05.16] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: null
+[2025-10-10 18:51:08.549] [INFO] Initiative search - Status: null | Site: null | Search: null | Financial Year: null
+[2025-10-10 18:51:32.391] [INFO] Initiative search - Status: null | Site: null | Search: null | Financial Year: null
+[2025-10-10 18:51:48.456] [INFO] Login attempt - Email: deepika.singh@godeepak.com
+[2025-10-10 18:51:48.88] [INFO] Login successful - User: Deepika Singh | Email: deepika.singh@godeepak.com | Role: STLD | Site: NDS
+[2025-10-10 18:52:13.959] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: null
+[2025-10-10 18:54:08.144] [INFO] Initiative search - Status: null | Site: null | Search: null | Financial Year: null
+[2025-10-10 18:54:18.413] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: 2025
+[2025-10-10 18:54:18.421] [INFO] Searching with Financial Year filter: 2025
+[2025-10-10 18:54:18.421] [INFO] Financial Year 2025 range: 2025-04-01T00:00 to 2026-03-31T23:59:59

@@ -379,9 +379,23 @@ public class DataInitializer implements CommandLineRunner {
                 // Stage 11: IL - Dynamic, created after Stage 4 approval
             };
 
+
+             String[][] corpWfMasterData = {
+                {"1", "Initiative Registered", "STLD", "sunil.kumar@godeepak.com"},
+                // Stage 2: HOD - Dynamic, created during initiative creation
+                {"3", "Initiative assessment and approval", "STLD", "priya.singh@godeepak.com"},
+                {"4", "Define Responsibilities", "SH", "rekha.gupta@godeepak.com"},
+                // Stages 5, 6: IL - Dynamic, created after Stage 4 approval
+                {"7", "Progress monitoring", "STLD", "ajay.sharma@godeepak.com"},
+                {"8", "Periodic Status Review with CMO", "CTSD", "anil.mishra@godeepak.com"},
+                // Stage 9: IL - Dynamic, created after Stage 4 approval
+                {"10", "Saving Validation with F&A (Monthly)", "F&A", "nisha.jain@godeepak.com"},
+                // Stage 11: IL - Dynamic, created after Stage 4 approval
+            };
+
             // Save NDS WF Master data
             saveWfMasterData(ndsWfMasterData, "NDS");
-
+    saveWfMasterData(corpWfMasterData, "CORP");
             // Save DHJ WF Master data
             saveWfMasterData(dhjWfMasterData, "DHJ");
 
