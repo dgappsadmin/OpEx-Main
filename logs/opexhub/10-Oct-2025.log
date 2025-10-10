@@ -1,0 +1,10 @@
+[2025-10-10 14:40:19.851] [INFO] Login attempt - Email: dnsharma@godeepak.com
+[2025-10-10 14:40:20.809] [INFO] Login successful - User: Deep Sharma | Email: dnsharma@godeepak.com | Role: ADMIN | Site: NDS
+[2025-10-10 14:40:21.553] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: null
+[2025-10-10 14:40:21.799] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: 2025
+[2025-10-10 14:40:21.804] [INFO] Searching with Financial Year filter: 2025
+[2025-10-10 14:40:21.809] [INFO] Financial Year 2025 range: 2025-04-01T00:00 to 2026-03-31T23:59:59
+[2025-10-10 14:41:04.935] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: null
+[2025-10-10 14:41:05.053] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: 2025
+[2025-10-10 14:41:05.058] [INFO] Searching with Financial Year filter: 2025
+[2025-10-10 14:41:05.063] [INFO] Financial Year 2025 range: 2025-04-01T00:00 to 2026-03-31T23:59:59
