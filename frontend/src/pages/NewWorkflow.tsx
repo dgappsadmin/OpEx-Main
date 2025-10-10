@@ -34,8 +34,8 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
   const [initiativeTransactions, setInitiativeTransactions] = useState<{[key: number]: any[]}>({});
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("default"); // "default" or "completed"
-  // const [siteFilter, setSiteFilter] = useState(user.site || ""); // Default to user's site
-  const [siteFilter, setSiteFilter] = useState(user.site === "CORP" ? "all" : user.site || "");
+  const [siteFilter, setSiteFilter] = useState(user.site || ""); // Default to user's site
+  // const [siteFilter, setSiteFilter] = useState(user.site === "CORP" ? "all" : user.site || "");
   
   // State for pending approvals filtering
   const [initiativesWithPendingActions, setInitiativesWithPendingActions] = useState<Set<number>>(new Set());
@@ -51,10 +51,10 @@ export default function NewWorkflow({ user }: NewWorkflowProps) {
   const sites = [
     { code: "NDS", name: "NDS" },
     { code: "DHJ", name: "DHJ" },
+    { code: "CORP", name: "CORP" },
     { code: "HSD", name: "HSD" },
-    { code: "APL", name: "DHJ" },
-    { code: "TCD", name: "APL" }
-  ];
+    { code: "APL", name: "APL" },
+    { code: "TCD", name: "TCD" }  ];
   
   // Prepare filters for API call - corrected parameter names and status values
   const apiFilters = {

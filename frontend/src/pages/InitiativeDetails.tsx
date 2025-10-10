@@ -190,6 +190,12 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
   const [processingAction, setProcessingAction] = useState<string | null>(null);
   const [assignedUserId, setAssignedUserId] = useState<string>("");
   
+  // Workflow Initiative Lead search state for stage 4
+  const [workflowIlSearchQuery, setWorkflowIlSearchQuery] = useState('');
+  const [showWorkflowIlDropdown, setShowWorkflowIlDropdown] = useState(false);
+  const [selectedWorkflowIlName, setSelectedWorkflowIlName] = useState('');
+  const workflowIlDropdownRef = useRef<HTMLDivElement>(null);
+  
   // Additional workflow states for stage-specific functionality
   const [mocRequired, setMocRequired] = useState<string>("");
   const [mocNumber, setMocNumber] = useState("");
@@ -568,11 +574,21 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
       if (userDropdownRef.current && !userDropdownRef.current.contains(event.target as Node)) {
         setShowUserDropdown(false);
       }
+      if (workflowIlDropdownRef.current && !workflowIlDropdownRef.current.contains(event.target as Node)) {
+        setShowWorkflowIlDropdown(false);
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Auto-show workflow IL dropdown for Stage 4 in Approval tab
+  useEffect(() => {
+    if (pendingTransaction?.stageNumber === 4 && initiativeLeads.length > 0) {
+      setShowWorkflowIlDropdown(true);
+    }
+  }, [pendingTransaction?.stageNumber, initiativeLeads.length]);
 
   // MOM Functions
   const fetchMomEntries = async () => {
@@ -1196,24 +1212,84 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                 Select an Initiative Lead for this site
               </p>
             </div>
-            <div>
+            <div className="relative" ref={workflowIlDropdownRef}>
               <Label htmlFor="assignedUser" className="text-xs font-semibold">Select Initiative Lead *</Label>
-              <Select value={assignedUserId} onValueChange={setAssignedUserId}>
-                <SelectTrigger className="h-9 text-xs mt-1.5">
-                  <SelectValue placeholder={
+              <div className="relative">
+                <Input
+                  id="assignedUser"
+                  value={workflowIlSearchQuery || selectedWorkflowIlName}
+                  onChange={(e) => {
+                    setWorkflowIlSearchQuery(e.target.value);
+                    setShowWorkflowIlDropdown(true);
+                    // Clear selection if user types
+                    if (e.target.value !== selectedWorkflowIlName) {
+                      setAssignedUserId('');
+                      setSelectedWorkflowIlName('');
+                    }
+                  }}
+                  onFocus={() => setShowWorkflowIlDropdown(true)}
+                  placeholder={
                     ilLoading ? "Loading Initiative Leads..." : 
                     initiativeLeads.length === 0 ? "No Initiative Leads available for this site" :
-                    "Select an Initiative Lead"
-                  } />
-                </SelectTrigger>
-                <SelectContent>
-                  {initiativeLeads.map((user) => (
-                    <SelectItem key={user.id} value={user.id.toString()} className="text-sm focus:bg-accent hover:bg-accent">
-                      {user.fullName} - {user.discipline}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                    "Search and select Initiative Lead..."
+                  }
+                  className="h-9 text-xs mt-1.5"
+                  autoComplete="off"
+                />
+                <div className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                  {ilLoading ? (
+                    <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                  ) : (
+                    <Users className="h-3 w-3 text-muted-foreground" />
+                  )}
+                </div>
+              </div>
+
+              {/* Initiative Lead Dropdown */}
+              {showWorkflowIlDropdown && initiativeLeads.length > 0 && (
+                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-40 overflow-y-auto">
+                  {initiativeLeads
+                    .filter(user => 
+                      user.fullName?.toLowerCase().includes(workflowIlSearchQuery.toLowerCase()) ||
+                      user.email?.toLowerCase().includes(workflowIlSearchQuery.toLowerCase()) ||
+                      user.discipline?.toLowerCase().includes(workflowIlSearchQuery.toLowerCase())
+                    )
+                    .slice(0, 10) // Limit to 10 results
+                    .map((user) => (
+                      <div
+                        key={user.id}
+                        className="px-3 py-2 text-xs hover:bg-blue-50 cursor-pointer border-b last:border-b-0"
+                        onClick={() => {
+                          setAssignedUserId(user.id.toString());
+                          setSelectedWorkflowIlName(user.fullName);
+                          setWorkflowIlSearchQuery(user.fullName);
+                          setShowWorkflowIlDropdown(false);
+                        }}
+                      >
+                        <div className="font-semibold text-gray-900">{user.fullName}</div>
+                        <div className="text-gray-600">{user.email}</div>
+                        <div className="text-gray-500">{user.discipline} • {user.site}</div>
+                      </div>
+                    ))
+                  }
+                  {initiativeLeads.filter(user => 
+                      user.fullName?.toLowerCase().includes(workflowIlSearchQuery.toLowerCase()) ||
+                      user.email?.toLowerCase().includes(workflowIlSearchQuery.toLowerCase()) ||
+                      user.discipline?.toLowerCase().includes(workflowIlSearchQuery.toLowerCase())
+                    ).length === 0 && (
+                    <div className="px-3 py-2 text-xs text-gray-500">
+                      No Initiative Leads found matching "{workflowIlSearchQuery}"
+                    </div>
+                  )}
+                  <div 
+                    className="px-3 py-1 text-xs bg-gray-50 border-t cursor-pointer hover:bg-gray-100"
+                    onClick={() => setShowWorkflowIlDropdown(false)}
+                  >
+                    Close
+                  </div>
+                </div>
+              )}
+
               {initiativeLeads.length === 0 && !ilLoading && (
                 <p className="text-xs text-red-600 mt-1.5">
                   No Initiative Leads found for site {initiative?.site}
@@ -2728,7 +2804,8 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                                 value={userSearchQuery || momFormData.responsiblePerson}
                                 onChange={(e) => {
                                   setUserSearchQuery(e.target.value);
-                                  setShowUserDropdown(true);
+                                  // Only show dropdown when user types (not empty)
+                                  setShowUserDropdown(e.target.value.length > 0);
                                   // Clear selection if user types
                                   if (e.target.value !== momFormData.responsiblePerson) {
                                     setMomFormData({
@@ -2738,8 +2815,7 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                                     });
                                   }
                                 }}
-                                onFocus={() => setShowUserDropdown(true)}
-                                placeholder="Search and select responsible person..."
+                                placeholder="Type to search responsible person..."
                                 className="h-9 text-xs mt-1"
                                 autoComplete="off"
                               />

@@ -286,7 +286,7 @@ public class DashboardService {
      * Get available sites for dashboard filtering (excluding CORP)
      */
     public List<String> getAvailableSites() {
-        return Arrays.asList("NDS", "DHJ", "HSD", "APL", "TCD");
+        return Arrays.asList("NDS", "DHJ", "HSD", "APL", "TCD" ,"CORP");
     }
 
     /**

@@ -993,6 +993,7 @@ export default function Initiatives({ user }: InitiativesProps) {
                   <SelectItem value="all">All Sites</SelectItem>
                   <SelectItem value="NDS">NDS</SelectItem>
                   <SelectItem value="DHJ">DHJ</SelectItem>
+                  <SelectItem value="CORP">CORP</SelectItem>
                   <SelectItem value="HSD">HSD</SelectItem>
                   <SelectItem value="APL">APL</SelectItem>
                   <SelectItem value="TCD">TCD</SelectItem>

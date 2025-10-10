@@ -216,6 +216,66 @@ public class DataInitializer implements CommandLineRunner {
                     passwordEncoder.encode("password123"), "DHJ", "Finance", "F&A", "Site F&A")
         };
 
+        // ===== CORP SITE USERS =====
+        
+        // HOD (Head of Department) users for Stage 2 - NEW ROLE
+        User[] corpHodUsers = {
+            new User("Aditya Mehta", "aditya.mehta.hod@godeepak.com", 
+                    passwordEncoder.encode("password123"), "CORP", "Operation", "HOD", "Head of Department - Operation"),
+            new User("Divya Iyer", "divya.iyer.hod@godeepak.com", 
+                    passwordEncoder.encode("password123"), "CORP", "Engineering & Utility", "HOD", "Head of Department - Engineering"),
+            new User("Rohan Kapoor", "rohan.kapoor.hod@godeepak.com", 
+                    passwordEncoder.encode("password123"), "CORP", "Environment", "HOD", "Head of Department - Environment"),
+            new User("Anjali Desai", "anjali.desai.hod@godeepak.com", 
+                    passwordEncoder.encode("password123"), "CORP", "Safety", "HOD", "Head of Department - Safety"),
+            new User("Varun Malhotra", "varun.malhotra.hod@godeepak.com", 
+                    passwordEncoder.encode("password123"), "CORP", "Quality", "HOD", "Head of Department - Quality"),
+            new User("Lakshmi Nair", "lakshmi.nair.hod@godeepak.com", 
+                    passwordEncoder.encode("password123"), "CORP", "Others", "HOD", "Head of Department - Others")
+        };
+
+        // STLD (Site TSD Lead) users for Stages 1, 3, 7
+        User[] corpStldUsers = {
+            new User("Sanjay Kulkarni", "sanjay.kulkarni@godeepak.com", 
+                    passwordEncoder.encode("password123"), "CORP", "Operation", "STLD", "Site TSD Lead"),
+            new User("Anita Rao", "anita.rao@godeepak.com", 
+                    passwordEncoder.encode("password123"), "CORP", "Engineering & Utility", "STLD", "Site TSD Lead"),
+            new User("Prakash Joshi", "prakash.joshi@godeepak.com", 
+                    passwordEncoder.encode("password123"), "CORP", "Environment", "STLD", "Site TSD Lead")
+        };
+
+        // SH (Site Head) users for Stage 4
+        User[] corpSiteHeads = {
+            new User("Rajesh Khanna", "rajesh.khanna@godeepak.com", 
+                    passwordEncoder.encode("password123"), "CORP", "Management", "SH", "Site Head")
+        };
+
+        // CTSD (Corporate TSD) users for Stage 8
+        User[] corpCtsdUsers = {
+            new User("Madhuri Dixit", "madhuri.dixit@godeepak.com", 
+                    passwordEncoder.encode("password123"), "CORP", "Corporate", "CTSD", "Corporate TSD")
+        };
+
+        // IL (Initiative Lead) users for dynamic assignment to Stages 5, 6, 9, 11
+        User[] corpInitiativeLeads = {
+            new User("Naveen Patil", "naveen.patil@godeepak.com", 
+                    passwordEncoder.encode("password123"), "CORP", "Operation", "IL", "Initiative Lead"),
+            new User("Swati Bhatt", "swati.bhatt@godeepak.com", 
+                    passwordEncoder.encode("password123"), "CORP", "Engineering & Utility", "IL", "Initiative Lead"),
+            new User("Kunal Deshmukh", "kunal.deshmukh@godeepak.com", 
+                    passwordEncoder.encode("password123"), "CORP", "Environment", "IL", "Initiative Lead"),
+            new User("Tanvi Shah", "tanvi.shah@godeepak.com", 
+                    passwordEncoder.encode("password123"), "CORP", "Safety", "IL", "Initiative Lead"),
+            new User("Ashish Bansal", "ashish.bansal@godeepak.com", 
+                    passwordEncoder.encode("password123"), "CORP", "Quality", "IL", "Initiative Lead")
+        };
+
+        // F&A (Finance & Accounts) users for Stage 10
+        User[] corpFaUsers = {
+            new User("Pallavi Menon", "pallavi.menon@godeepak.com", 
+                    passwordEncoder.encode("password123"), "CORP", "Finance", "F&A", "Site F&A")
+        };
+
         // Save all NDS users
         saveUserArray(ndsHodUsers, "NDS HOD Users");
         saveUserArray(ndsStldUsers, "NDS STLD Users");
@@ -231,6 +291,14 @@ public class DataInitializer implements CommandLineRunner {
         saveUserArray(dhjCtsdUsers, "DHJ CTSD Users");
         saveUserArray(dhjInitiativeLeads, "DHJ Initiative Lead Users");
         saveUserArray(dhjFaUsers, "DHJ F&A Users");
+
+        // Save all CORP users
+        saveUserArray(corpHodUsers, "CORP HOD Users");
+        saveUserArray(corpStldUsers, "CORP STLD Users");
+        saveUserArray(corpSiteHeads, "CORP Site Head Users");
+        saveUserArray(corpCtsdUsers, "CORP CTSD Users");
+        saveUserArray(corpInitiativeLeads, "CORP Initiative Lead Users");
+        saveUserArray(corpFaUsers, "CORP F&A Users");
 
         System.out.println("=== OpEx Hub Users Initialized Successfully ===");
         System.out.println("NEW WORKFLOW (11 Stages) with dynamic role assignments");
@@ -249,6 +317,14 @@ public class DataInitializer implements CommandLineRunner {
         printRoleCredentials("CTSD (Corporate TSD)", dhjCtsdUsers);
         printRoleCredentials("IL (Initiative Lead)", dhjInitiativeLeads);
         printRoleCredentials("F&A (Finance & Accounts)", dhjFaUsers);
+        
+        System.out.println("=== CORP SITE LOGIN CREDENTIALS ===");
+        printRoleCredentials("HOD (Head of Department)", corpHodUsers);
+        printRoleCredentials("STLD (Site TSD Lead)", corpStldUsers);
+        printRoleCredentials("SH (Site Head)", corpSiteHeads);
+        printRoleCredentials("CTSD (Corporate TSD)", corpCtsdUsers);
+        printRoleCredentials("IL (Initiative Lead)", corpInitiativeLeads);
+        printRoleCredentials("F&A (Finance & Accounts)", corpFaUsers);
         System.out.println("================================================");
     }
 
@@ -379,13 +455,30 @@ public class DataInitializer implements CommandLineRunner {
                 // Stage 11: IL - Dynamic, created after Stage 4 approval
             };
 
+            // CORP site workflow master data - UPDATED FOR NEW WORKFLOW
+            String[][] corpWfMasterData = {
+                {"1", "Initiative Registered", "STLD", "sanjay.kulkarni@godeepak.com"},
+                // Stage 2: HOD - Dynamic, created during initiative creation
+                {"3", "Initiative assessment and approval", "STLD", "anita.rao@godeepak.com"},
+                {"4", "Define Responsibilities", "SH", "rajesh.khanna@godeepak.com"},
+                // Stages 5, 6: IL - Dynamic, created after Stage 4 approval
+                {"7", "Progress monitoring", "STLD", "prakash.joshi@godeepak.com"},
+                {"8", "Periodic Status Review with CMO", "CTSD", "madhuri.dixit@godeepak.com"},
+                // Stage 9: IL - Dynamic, created after Stage 4 approval
+                {"10", "Saving Validation with F&A (Monthly)", "F&A", "pallavi.menon@godeepak.com"},
+                // Stage 11: IL - Dynamic, created after Stage 4 approval
+            };
+
             // Save NDS WF Master data
             saveWfMasterData(ndsWfMasterData, "NDS");
 
             // Save DHJ WF Master data
             saveWfMasterData(dhjWfMasterData, "DHJ");
 
-            System.out.println("WF Master data initialized successfully for NDS and DHJ sites");
+            // Save CORP WF Master data
+            saveWfMasterData(corpWfMasterData, "CORP");
+
+            System.out.println("WF Master data initialized successfully for NDS, DHJ, and CORP sites");
             System.out.println("NEW 11-STAGE WORKFLOW with dynamic HOD and IL assignments implemented");
             System.out.println("Dynamic stages (2, 5, 6, 9, 11) will be created automatically during workflow execution");
         }
