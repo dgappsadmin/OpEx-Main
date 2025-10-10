@@ -109,3 +109,6 @@
 [2025-10-10 18:54:18.413] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: 2025
 [2025-10-10 18:54:18.421] [INFO] Searching with Financial Year filter: 2025
 [2025-10-10 18:54:18.421] [INFO] Financial Year 2025 range: 2025-04-01T00:00 to 2026-03-31T23:59:59
+[2025-10-10 19:00:09.34] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: 2025
+[2025-10-10 19:00:09.346] [INFO] Searching with Financial Year filter: 2025
+[2025-10-10 19:00:09.35] [INFO] Financial Year 2025 range: 2025-04-01T00:00 to 2026-03-31T23:59:59
