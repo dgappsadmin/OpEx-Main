@@ -28,8 +28,8 @@ public class WebConfig {
                             "http://localhost:8080", 
                             "http://localhost:5173", 
                             "http://localhost:3000",
-                            "https://dgapps.godeepak.com",
-                            "https://dgpilotapps.godeepak.com"
+                            "https://dgpilotapps.godeepak.com:8444",
+                            "https://dgapps.godeepak.com:8443"
                         )
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
@@ -38,6 +38,7 @@ public class WebConfig {
         };
     }
 }
+
 
 
 // package com.company.opexhub.config;
@@ -70,8 +71,8 @@ public class WebConfig {
 //                             "http://localhost:8080", 
 //                             "http://localhost:5173", 
 //                             "http://localhost:3000",
-//                             "https://dgpilotapps.godeepak.com:8444",
-//                             "https://dgpilotapps.godeepak.com:8444"
+//                             "https://dgapps.godeepak.com",
+//                             "https://dgpilotapps.godeepak.com"
 //                         )
 //                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
 //                         .allowedHeaders("*")

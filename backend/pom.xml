@@ -11,6 +11,7 @@
     <groupId>com.company</groupId>
     <artifactId>opex-hub</artifactId>
     <version>1.0.0</version>
+    <packaging>war</packaging>
     <name>opex-hub</name>
     <description>OpEx Hub - Operational Excellence Management System</description>
     

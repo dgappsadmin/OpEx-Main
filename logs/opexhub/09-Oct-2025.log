@@ -239,3 +239,28 @@
 [2025-10-09 17:15:30.711] [INFO] Searching with Financial Year filter: 2023
 [2025-10-09 17:15:30.723] [INFO] Financial Year 2023 range: 2023-04-01T00:00 to 2024-03-31T23:59:59
 [2025-10-09 17:15:43.312] [INFO] Initiative search - Status: null | Site: null | Search: null | Financial Year: null
+[2025-10-09 17:24:56.35] [INFO] Login attempt - Email: dnsharma@godeepak.com
+[2025-10-09 17:24:57.589] [WARNING] Login failed - Email: dnsharma@godeepak.com | Reason: Bad credentials
+[2025-10-09 17:25:02.854] [INFO] Login attempt - Email: dnsharma@godeepak.com
+[2025-10-09 17:25:03.497] [INFO] Login successful - User: Deep Sharma | Email: dnsharma@godeepak.com | Role: ADMIN | Site: NDS
+[2025-10-09 17:25:04.814] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: null
+[2025-10-09 17:25:07.729] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: 2025
+[2025-10-09 17:25:07.729] [INFO] Searching with Financial Year filter: 2025
+[2025-10-09 17:25:07.755] [INFO] Financial Year 2025 range: 2025-04-01T00:00 to 2026-03-31T23:59:59
+[2025-10-09 17:25:12.659] [INFO] Initiative search - Status: null | Site: null | Search: null | Financial Year: 2025
+[2025-10-09 17:25:12.662] [INFO] Searching with Financial Year filter: 2025
+[2025-10-09 17:25:12.665] [INFO] Financial Year 2025 range: 2025-04-01T00:00 to 2026-03-31T23:59:59
+[2025-10-09 17:25:15.947] [INFO] Initiative search - Status: null | Site: null | Search: null | Financial Year: null
+[2025-10-09 17:25:37.146] [INFO] Initiative search - Status: null | Site: null | Search: null | Financial Year: null
+[2025-10-09 17:28:54.955] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: null
+[2025-10-09 17:28:55.29] [INFO] Initiative search - Status: null | Site: NDS | Search: null | Financial Year: 2025
+[2025-10-09 17:28:55.299] [INFO] Searching with Financial Year filter: 2025
+[2025-10-09 17:28:55.326] [INFO] Financial Year 2025 range: 2025-04-01T00:00 to 2026-03-31T23:59:59
+[2025-10-09 17:28:56.858] [INFO] Initiative search - Status: null | Site: null | Search: null | Financial Year: 2025
+[2025-10-09 17:28:56.863] [INFO] Searching with Financial Year filter: 2025
+[2025-10-09 17:28:56.869] [INFO] Financial Year 2025 range: 2025-04-01T00:00 to 2026-03-31T23:59:59
+[2025-10-09 17:28:58.812] [INFO] Initiative search - Status: null | Site: null | Search: null | Financial Year: null
+[2025-10-09 17:31:39.596] [INFO] Initiative search - Status: null | Site: DHJ | Search: null | Financial Year: 2025
+[2025-10-09 17:31:39.601] [INFO] Searching with Financial Year filter: 2025
+[2025-10-09 17:31:39.606] [INFO] Financial Year 2025 range: 2025-04-01T00:00 to 2026-03-31T23:59:59
+[2025-10-09 17:31:50.071] [INFO] Initiative search - Status: null | Site: null | Search: null | Financial Year: null
