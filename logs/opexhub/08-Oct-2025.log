@@ -1,8 +1,0 @@
-[2025-10-08 10:10:39.581] [INFO] Login attempt - Email: kiran.sharma@godeepak.com
-[2025-10-08 10:10:40.463] [INFO] Login successful - User: Kiran Sharma | Email: kiran.sharma@godeepak.com | Role: IL | Site: NDS
-[2025-10-08 11:49:37.016] [INFO] Login attempt - Email: karan.sharma.hod@godeepak.com
-[2025-10-08 11:49:37.677] [WARNING] Login failed - Email: karan.sharma.hod@godeepak.com | Reason: Bad credentials
-[2025-10-08 11:49:42.293] [INFO] Login attempt - Email: karan.sharma.hod@godeepak.com
-[2025-10-08 11:49:42.696] [INFO] Login successful - User: Karan Sharma | Email: karan.sharma.hod@godeepak.com | Role: HOD | Site: DHJ
-[2025-10-08 11:51:14.253] [INFO] Login attempt - Email: kiran.sharma@godeepak.com
-[2025-10-08 11:51:15.02] [INFO] Login successful - User: Kiran Sharma | Email: kiran.sharma@godeepak.com | Role: IL | Site: NDS
