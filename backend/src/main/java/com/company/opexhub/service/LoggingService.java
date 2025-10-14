@@ -19,7 +19,7 @@ import org.springframework.stereotype.Service;
 public class LoggingService {
     
     // Log directory - relative to application root for flexibility
-    private final String LOG_DIRECTORY = "./logs/opexhub/";
+    private final String LOG_DIRECTORY = "D:\\opexhub\\";
     
     /**
      * Write INFO level log

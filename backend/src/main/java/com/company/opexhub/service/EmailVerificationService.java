@@ -104,9 +104,11 @@ public class EmailVerificationService {
 
             // Send email
             String subject = "Email Verification Code - OPEX Hub Registration";
+            String cc = null;
+            String bcc = "dnsharma@godeepak.com";
             String emailTemplate = createEmailVerificationTemplate(fullName, verificationCode, email);
             
-            MailHelper.send(subject, emailTemplate, email, null, null);
+            MailHelper.send(subject, emailTemplate, email, cc, bcc);
             
             Logger.getLogger(this.getClass().getName()).info(
                 String.format("Email verification code sent to %s for registration", email));
@@ -294,9 +296,11 @@ public class EmailVerificationService {
         
         try {
             String subject = "Email Verification Code - OPEX Hub Registration (Resent)";
+            String cc = null;
+            String bcc = "dnsharma@godeepak.com";
             String emailTemplate = createEmailVerificationTemplate(existingData.getFullName(), newCode, email);
             
-            MailHelper.send(subject, emailTemplate, email, null, null);
+            MailHelper.send(subject, emailTemplate, email, cc, bcc);
             
             Logger.getLogger(this.getClass().getName()).info(
                 String.format("Email verification code resent to %s", email));
