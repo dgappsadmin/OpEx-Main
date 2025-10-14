@@ -899,7 +899,7 @@ export default function TimelineTracker({ user }: TimelineTrackerProps) {
                     <p className="text-muted-foreground text-sm max-w-md mx-auto">
                       {activeTab === 'assigned' 
                         ? 'You currently have no initiatives assigned to you as Initiative Lead where Timeline Tracker is available.'
-                        : 'You currently have no initiatives where Stage 6 (Timeline Tracker) has been approved and you have access.'}
+                        : 'You currently have no initiatives where Stage 6 (Timeline Tracker) has been approved.'}
                     </p>
                   </>
                 ) : (

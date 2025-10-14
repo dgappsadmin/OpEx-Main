@@ -1,196 +1,3 @@
-// package com.company.opexhub.repository;
-
-// import com.company.opexhub.entity.MonthlyMonitoringEntry;
-// import org.springframework.data.jpa.repository.JpaRepository;
-// import org.springframework.data.jpa.repository.Query;
-// import org.springframework.data.repository.query.Param;
-// import org.springframework.stereotype.Repository;
-
-// import java.util.List;
-
-// @Repository
-// public interface MonthlyMonitoringEntryRepository extends JpaRepository<MonthlyMonitoringEntry, Long> {
-    
-//     List<MonthlyMonitoringEntry> findByInitiative_IdOrderByMonitoringMonth(Long initiativeId);
-    
-//     List<MonthlyMonitoringEntry> findByInitiative_IdAndMonitoringMonth(Long initiativeId, String monthYear);
-    
-//     List<MonthlyMonitoringEntry> findByMonitoringMonth(String monthYear);
-    
-//     List<MonthlyMonitoringEntry> findByIsFinalized(String isFinalized);
-    
-//     List<MonthlyMonitoringEntry> findByFaApproval(String faApproval);
-    
-//     @Query("SELECT m FROM MonthlyMonitoringEntry m WHERE m.initiative.id = :initiativeId AND m.faApproval = 'N'")
-//     List<MonthlyMonitoringEntry> findPendingFAApprovalsForInitiative(@Param("initiativeId") Long initiativeId);
-    
-//     @Query("SELECT m FROM MonthlyMonitoringEntry m WHERE m.enteredBy = :userRole")
-//     List<MonthlyMonitoringEntry> findByEnteredBy(@Param("userRole") String userRole);
-     
-//     List<MonthlyMonitoringEntry> findByInitiativeIdOrderByMonitoringMonthDesc(Long initiativeId);
-    
-//     List<MonthlyMonitoringEntry> findByInitiativeIdAndMonitoringMonth(Long initiativeId, String monthYear);
-    
-//     @Query("SELECT mme FROM MonthlyMonitoringEntry mme WHERE mme.initiative.id = :initiativeId AND mme.monitoringMonth = :monthYear")
-//     List<MonthlyMonitoringEntry> findByInitiativeAndMonth(@Param("initiativeId") Long initiativeId, @Param("monthYear") String monthYear);
-    
-//     @Query("SELECT mme FROM MonthlyMonitoringEntry mme WHERE mme.initiative.site = :site")
-//     List<MonthlyMonitoringEntry> findBySite(@Param("site") String site);
-    
-//     List<MonthlyMonitoringEntry> findByIsFinalizedOrderByMonitoringMonthDesc(String isFinalized);
-    
-//     List<MonthlyMonitoringEntry> findByFaApprovalOrderByMonitoringMonthDesc(String faApproval);
-    
-//     // DNL Plant Initiatives Report - Aggregate data by category and budget type
-//     @Query("SELECT LOWER(mme.category) as category, " +
-//            "COALESCE(LOWER(i.budgetType), 'budgeted') as budgetType, " +
-//            "SUM(CASE WHEN mme.achievedValue IS NOT NULL THEN mme.achievedValue ELSE 0 END) as totalSavings, " +
-//            "COUNT(mme) as entryCount " +
-//            "FROM MonthlyMonitoringEntry mme " +
-//            "JOIN mme.initiative i " +
-//            "WHERE LOWER(mme.category) IN ('rmc', 'spent acid', 'environment') " +
-//            "AND (:site IS NULL OR :site = 'all' OR i.site = :site) " +
-//            "AND (:startDate IS NULL OR mme.monitoringMonth >= :startDate) " +
-//            "AND (:endDate IS NULL OR mme.monitoringMonth <= :endDate) " +
-//            "GROUP BY LOWER(mme.category), COALESCE(LOWER(i.budgetType), 'budgeted')")
-//     List<Object[]> findDNLPlantInitiativesData(@Param("site") String site, 
-//                                                @Param("startDate") String startDate, 
-//                                                @Param("endDate") String endDate);
-                                               
-//     // Additional query for total budget targets from initiatives
-//     @Query("SELECT COALESCE(LOWER(i.budgetType), 'budgeted') as budgetType, SUM(i.expectedSavings) as totalTarget " +
-//            "FROM Initiative i " +
-//            "WHERE (:site IS NULL OR :site = 'all' OR i.site = :site) " +
-//            "AND COALESCE(LOWER(i.budgetType), 'budgeted') IN ('budgeted', 'non-budgeted') " +
-//            "GROUP BY COALESCE(LOWER(i.budgetType), 'budgeted')")
-//     List<Object[]> findBudgetTargetsByType(@Param("site") String site);
-    
-//     // Debug query to check available categories
-//     @Query("SELECT DISTINCT mme.category, COUNT(mme) " +
-//            "FROM MonthlyMonitoringEntry mme " +
-//            "GROUP BY mme.category")
-//     List<Object[]> findAllCategories();
-    
-//     // Debug query to check available data in date range
-//     @Query("SELECT mme.monitoringMonth, COUNT(mme) " +
-//            "FROM MonthlyMonitoringEntry mme " +
-//            "WHERE (:startDate IS NULL OR mme.monitoringMonth >= :startDate) " +
-//            "AND (:endDate IS NULL OR mme.monitoringMonth <= :endDate) " +
-//            "GROUP BY mme.monitoringMonth " +
-//            "ORDER BY mme.monitoringMonth")
-//     List<Object[]> findDataByDateRange(@Param("startDate") String startDate, 
-//                                        @Param("endDate") String endDate);
-    
-//     // Performance Analysis Queries
-//     @Query("SELECT SUM(mme.achievedValue) FROM MonthlyMonitoringEntry mme WHERE mme.monitoringMonth >= :startMonth AND mme.monitoringMonth <= :endMonth AND mme.achievedValue IS NOT NULL")
-//     java.math.BigDecimal sumAchievedValueByMonitoringMonthBetween(@Param("startMonth") String startMonth, 
-//                                                                  @Param("endMonth") String endMonth);
-    
-//     @Query("SELECT SUM(mme.achievedValue) FROM MonthlyMonitoringEntry mme WHERE mme.monitoringMonth >= :startMonth AND mme.monitoringMonth <= :endMonth AND mme.achievedValue IS NOT NULL AND LOWER(COALESCE(mme.initiative.budgetType, 'budgeted')) = :budgetType")
-//     java.math.BigDecimal sumAchievedValueByMonitoringMonthBetweenAndBudgetType(@Param("startMonth") String startMonth, 
-//                                                                               @Param("endMonth") String endMonth,
-//                                                                               @Param("budgetType") String budgetType);
-    
-//     @Query("SELECT SUM(mme.targetValue) FROM MonthlyMonitoringEntry mme WHERE mme.monitoringMonth >= :startMonth AND mme.monitoringMonth <= :endMonth AND mme.targetValue IS NOT NULL")
-//     java.math.BigDecimal sumTargetValueByMonitoringMonthBetween(@Param("startMonth") String startMonth, 
-//                                                                @Param("endMonth") String endMonth);
-    
-//     @Query("SELECT SUM(mme.targetValue) FROM MonthlyMonitoringEntry mme WHERE mme.monitoringMonth >= :startMonth AND mme.monitoringMonth <= :endMonth AND mme.targetValue IS NOT NULL AND LOWER(COALESCE(mme.initiative.budgetType, 'budgeted')) = :budgetType")
-//     java.math.BigDecimal sumTargetValueByMonitoringMonthBetweenAndBudgetType(@Param("startMonth") String startMonth, 
-//                                                                             @Param("endMonth") String endMonth,
-//                                                                             @Param("budgetType") String budgetType);
-    
-//     // Site-specific performance analysis queries
-//     @Query("SELECT SUM(mme.achievedValue) FROM MonthlyMonitoringEntry mme WHERE mme.initiative.site = :site AND mme.monitoringMonth >= :startMonth AND mme.monitoringMonth <= :endMonth AND mme.achievedValue IS NOT NULL")
-//     java.math.BigDecimal sumAchievedValueBySiteAndMonitoringMonthBetween(@Param("site") String site, @Param("startMonth") String startMonth, @Param("endMonth") String endMonth);
-    
-//     @Query("SELECT SUM(mme.achievedValue) FROM MonthlyMonitoringEntry mme WHERE mme.initiative.site = :site AND mme.monitoringMonth >= :startMonth AND mme.monitoringMonth <= :endMonth AND mme.achievedValue IS NOT NULL AND LOWER(COALESCE(mme.initiative.budgetType, 'budgeted')) = :budgetType")
-//     java.math.BigDecimal sumAchievedValueBySiteAndMonitoringMonthBetweenAndBudgetType(@Param("site") String site, @Param("startMonth") String startMonth, @Param("endMonth") String endMonth, @Param("budgetType") String budgetType);
-    
-//     @Query("SELECT SUM(mme.targetValue) FROM MonthlyMonitoringEntry mme WHERE mme.initiative.site = :site AND mme.monitoringMonth >= :startMonth AND mme.monitoringMonth <= :endMonth AND mme.targetValue IS NOT NULL")
-//     java.math.BigDecimal sumTargetValueBySiteAndMonitoringMonthBetween(@Param("site") String site, @Param("startMonth") String startMonth, @Param("endMonth") String endMonth);
-    
-//     @Query("SELECT SUM(mme.targetValue) FROM MonthlyMonitoringEntry mme WHERE mme.initiative.site = :site AND mme.monitoringMonth >= :startMonth AND mme.monitoringMonth <= :endMonth AND mme.targetValue IS NOT NULL AND LOWER(COALESCE(mme.initiative.budgetType, 'budgeted')) = :budgetType")
-//     java.math.BigDecimal sumTargetValueBySiteAndMonitoringMonthBetweenAndBudgetType(@Param("site") String site, @Param("startMonth") String startMonth, @Param("endMonth") String endMonth, @Param("budgetType") String budgetType);
-    
-//     // Trend calculation queries for previous month comparison
-//     @Query("SELECT SUM(mme.achievedValue) FROM MonthlyMonitoringEntry mme WHERE mme.monitoringMonth = :month AND mme.achievedValue IS NOT NULL")
-//     java.math.BigDecimal sumAchievedValueByMonth(@Param("month") String month);
-    
-//     @Query("SELECT SUM(mme.achievedValue) FROM MonthlyMonitoringEntry mme WHERE mme.initiative.site = :site AND mme.monitoringMonth = :month AND mme.achievedValue IS NOT NULL")
-//     java.math.BigDecimal sumAchievedValueBySiteAndMonth(@Param("site") String site, @Param("month") String month);
-
-//     // Financial Year Reporting Queries
-//     @Query("SELECT mme.monitoringMonth, " +
-//            "LOWER(mme.category) as category, " +
-//            "COALESCE(LOWER(i.budgetType), 'budgeted') as budgetType, " +
-//            "SUM(CASE WHEN mme.achievedValue IS NOT NULL THEN mme.achievedValue ELSE 0 END) as actualSavings, " +
-//            "SUM(CASE WHEN mme.targetValue IS NOT NULL THEN mme.targetValue ELSE 0 END) as targetSavings, " +
-//            "SUM(CASE WHEN i.expectedSavings IS NOT NULL THEN i.expectedSavings ELSE 0 END) as expectedSavings " +
-//            "FROM MonthlyMonitoringEntry mme " +
-//            "JOIN mme.initiative i " +
-//            "WHERE mme.monitoringMonth >= :startMonth AND mme.monitoringMonth <= :endMonth " +
-//            "AND (:site IS NULL OR :site = 'all' OR i.site = :site) " +
-//            "AND (:budgetType IS NULL OR :budgetType = 'all' OR COALESCE(LOWER(i.budgetType), 'budgeted') = :budgetType) " +
-//            "AND (:category IS NULL OR :category = 'all' OR LOWER(mme.category) = :category) " +
-//            "GROUP BY mme.monitoringMonth, LOWER(mme.category), COALESCE(LOWER(i.budgetType), 'budgeted') " +
-//            "ORDER BY mme.monitoringMonth")
-//     List<Object[]> findFinancialYearData(@Param("startMonth") String startMonth, 
-//                                         @Param("endMonth") String endMonth,
-//                                         @Param("site") String site,
-//                                         @Param("budgetType") String budgetType,
-//                                         @Param("category") String category);
-
-//     // Query for last financial year cumulative data
-//     @Query("SELECT SUM(CASE WHEN mme.achievedValue IS NOT NULL THEN mme.achievedValue ELSE 0 END) as cumulativeSavings " +
-//            "FROM MonthlyMonitoringEntry mme " +
-//            "JOIN mme.initiative i " +
-//            "WHERE mme.monitoringMonth >= :startMonth AND mme.monitoringMonth <= :endMonth " +
-//            "AND (:site IS NULL OR :site = 'all' OR i.site = :site) " +
-//            "AND (:budgetType IS NULL OR :budgetType = 'all' OR COALESCE(LOWER(i.budgetType), 'budgeted') = :budgetType) " +
-//            "AND (:category IS NULL OR :category = 'all' OR LOWER(mme.category) = :category)")
-//     java.math.BigDecimal findCumulativeSavings(@Param("startMonth") String startMonth, 
-//                                               @Param("endMonth") String endMonth,
-//                                               @Param("site") String site,
-//                                               @Param("budgetType") String budgetType,
-//                                               @Param("category") String category);
-
-//     // Query for expected savings by initiative (potential savings)
-//     @Query("SELECT SUM(CASE WHEN i.expectedSavings IS NOT NULL THEN i.expectedSavings ELSE 0 END) as potentialSavings " +
-//            "FROM Initiative i " +
-//            "WHERE (:site IS NULL OR :site = 'all' OR i.site = :site) " +
-//            "AND (:budgetType IS NULL OR :budgetType = 'all' OR COALESCE(LOWER(i.budgetType), 'budgeted') = :budgetType) " +
-//            "AND i.startDate >= :startDate AND i.startDate <= :endDate")
-//     java.math.BigDecimal findPotentialSavings(@Param("startDate") java.time.LocalDate startDate,
-//                                              @Param("endDate") java.time.LocalDate endDate,
-//                                              @Param("site") String site,
-//                                              @Param("budgetType") String budgetType);
-
-//     // Category-wise summary for filters
-//     @Query("SELECT LOWER(mme.category) as category, " +
-//            "COALESCE(LOWER(i.budgetType), 'budgeted') as budgetType, " +
-//            "SUM(CASE WHEN mme.achievedValue IS NOT NULL THEN mme.achievedValue ELSE 0 END) as totalSavings " +
-//            "FROM MonthlyMonitoringEntry mme " +
-//            "JOIN mme.initiative i " +
-//            "WHERE mme.monitoringMonth >= :startMonth AND mme.monitoringMonth <= :endMonth " +
-//            "AND (:site IS NULL OR :site = 'all' OR i.site = :site) " +
-//            "AND (:budgetType IS NULL OR :budgetType = 'all' OR COALESCE(LOWER(i.budgetType), 'budgeted') = :budgetType) " +
-//            "AND (:category IS NULL OR :category = 'all' OR LOWER(mme.category) = :category) " +
-//            "GROUP BY LOWER(mme.category), COALESCE(LOWER(i.budgetType), 'budgeted')")
-//     List<Object[]> findCategoryWiseSummary(@Param("startMonth") String startMonth, 
-//                                           @Param("endMonth") String endMonth,
-//                                           @Param("site") String site,
-//                                           @Param("budgetType") String budgetType,
-//                                           @Param("category") String category);
-
-//     @Query("SELECT m FROM MonthlyMonitoringEntry m WHERE m.initiative.id = :initiativeId AND m.isFinalized = 'Y' AND m.faApproval = 'N' ORDER BY m.monitoringMonth DESC")
-//     List<MonthlyMonitoringEntry> findFinalizedPendingFAEntries(@Param("initiativeId") Long initiativeId);
-    
-//     // Get total achieved value for a particular initiative (only FA approved and finalized entries)
-//     @Query("SELECT SUM(mme.achievedValue) FROM MonthlyMonitoringEntry mme WHERE mme.initiative.id = :initiativeId AND mme.achievedValue IS NOT NULL AND mme.faApproval = 'Y' AND mme.isFinalized = 'Y'")
-//     java.math.BigDecimal sumAchievedValueByInitiativeId(@Param("initiativeId") Long initiativeId);
-// }
-
 package com.company.opexhub.repository;
 
 import com.company.opexhub.entity.MonthlyMonitoringEntry;
@@ -358,6 +165,21 @@ public interface MonthlyMonitoringEntryRepository extends JpaRepository<MonthlyM
                                              @Param("endDate") java.time.LocalDate endDate,
                                              @Param("site") String site,
                                              @Param("budgetType") String budgetType);
+
+
+    // Query for cumulative target values from monthly monitoring entries (for potential savings cumulative)
+    @Query("SELECT SUM(CASE WHEN mme.targetValue IS NOT NULL THEN mme.targetValue ELSE 0 END) as cumulativeTarget " +
+           "FROM MonthlyMonitoringEntry mme " +
+           "JOIN mme.initiative i " +
+           "WHERE mme.monitoringMonth >= :startMonth AND mme.monitoringMonth <= :endMonth " +
+           "AND (:site IS NULL OR :site = 'all' OR i.site = :site) " +
+           "AND (:budgetType IS NULL OR :budgetType = 'all' OR COALESCE(LOWER(i.budgetType), 'budgeted') = :budgetType) " +
+           "AND (:category IS NULL OR :category = 'all' OR LOWER(mme.category) = :category)")
+    java.math.BigDecimal findCumulativeTargetValue(@Param("startMonth") String startMonth,
+                                                   @Param("endMonth") String endMonth,
+                                                   @Param("site") String site,
+                                                   @Param("budgetType") String budgetType,
+                                                   @Param("category") String category);
 
     // Category-wise summary for filters
     @Query("SELECT LOWER(mme.category) as category, " +

@@ -114,12 +114,13 @@ public class ReportsService {
             BigDecimal lastFYCumulative = monthlyMonitoringEntryRepository.findCumulativeSavings(
                 (fyYear - 1) + "-04", lastFYEndMonth, site, budgetType, category);
             
-            // Get potential monthly savings cumulative (expected savings)
-            LocalDate startDate = LocalDate.of(fyYear, i < 9 ? i + 4 : i - 8, 1);
-            LocalDate endDate = LocalDate.of(i < 9 ? fyYear : fyYear + 1, (i % 12) + (i < 9 ? 4 : -8), 
-                                           LocalDate.of(i < 9 ? fyYear : fyYear + 1, (i % 12) + (i < 9 ? 4 : -8), 1).lengthOfMonth());
-            BigDecimal potentialCumulative = monthlyMonitoringEntryRepository.findPotentialSavings(
-                startDate, endDate, site, budgetType);
+            // Get potential monthly savings cumulative using TARGET VALUES (monthly average)
+            // FIXED: Using targetValue from MonthlyMonitoringEntry (monthly targets) instead of 
+            // expectedSavings from Initiative (total initiative savings)
+            // Calculate cumulative from beginning of FY (April) to current month
+            String fyStartMonth = fyYear + "-04"; // April of FY start year
+            BigDecimal potentialCumulative = monthlyMonitoringEntryRepository.findCumulativeTargetValue(
+                fyStartMonth, monthStr, site, budgetType, category);
             
             // Get current month actual and target savings from financial data
             BigDecimal actualSavings = BigDecimal.ZERO;
