@@ -153,7 +153,7 @@ public class WorkflowTransactionService {
         template.append("    \n");
         template.append("    <h2 style=\"color: #dc3545; margin-bottom: 20px;\">Initiative %s Notification</h2>\n");
         template.append("    \n");
-        template.append("    <p>Dear DN Sharma,</p>\n");
+        template.append("    <p>Dear Team,</p>\n");
         template.append("    \n");
         template.append("    <p>An initiative has been <strong>%s</strong> in the OPEX system. Please review the details below:</p>\n");
         template.append("    \n");
