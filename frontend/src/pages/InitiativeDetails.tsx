@@ -2063,13 +2063,21 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                     <div className="space-y-1">
                       <Label htmlFor="title" className="text-xs font-medium text-gray-700">Initiative Title *</Label>
                       {isEditing ? (
-                        <Input
-                          id="title"
-                          value={formData.title || ''}
-                          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                          className="text-xs h-8 border-gray-200 focus:border-blue-400 focus:ring-blue-400"
-                          placeholder="Enter initiative title"
-                        />
+                        <>
+                          <Input
+                            id="title"
+                            value={formData.title || ''}
+                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                            className="text-xs h-8 border-gray-200 focus:border-blue-400 focus:ring-blue-400"
+                            placeholder="Enter initiative title"
+                            maxLength={70}
+                          />
+                          <div className="flex justify-end">
+                            <span className="text-2xs text-muted-foreground">
+                              {(formData.title || '').length}/70
+                            </span>
+                          </div>
+                        </>
                       ) : (
                         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-md p-2 min-h-[32px] flex items-center">
                           <p className="text-xs font-medium text-gray-800 leading-tight break-words overflow-hidden w-full">
@@ -2153,14 +2161,22 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                   <div className="space-y-1">
                     <Label htmlFor="description" className="text-xs font-medium text-gray-700">Description</Label>
                     {isEditing ? (
-                      <Textarea
-                        id="description"
-                        value={formData.description || ''}
-                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        className="min-h-[120px] text-xs resize-y"
-                        placeholder="Provide a detailed description of the initiative"
-                        rows={6}
-                      />
+                      <>
+                        <Textarea
+                          id="description"
+                          value={formData.description || ''}
+                          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                          className="min-h-[120px] text-xs resize-y"
+                          placeholder="Provide a detailed description of the initiative"
+                          rows={6}
+                          maxLength={700}
+                        />
+                        <div className="flex justify-end">
+                          <span className="text-2xs text-muted-foreground">
+                            {(formData.description || '').length}/700
+                          </span>
+                        </div>
+                      </>
                     ) : (
                       <div className="bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-200 rounded-md p-3">
                         <p className="text-xs text-gray-700 leading-relaxed whitespace-pre-wrap break-words">
@@ -2358,13 +2374,21 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                       <div className="space-y-1">
                         <Label htmlFor="targetOutcome" className="text-xs font-medium text-gray-700">Target Outcome</Label>
                         {isEditing ? (
-                          <Input
-                            id="targetOutcome"
-                            value={formData.targetOutcome || ''}
-                            onChange={(e) => setFormData({ ...formData, targetOutcome: e.target.value })}
-                            placeholder="Describe the expected outcome"
-                            className="text-xs h-8 border-gray-200 focus:border-blue-400 focus:ring-blue-400"
-                          />
+                          <>
+                            <Input
+                              id="targetOutcome"
+                              value={formData.targetOutcome || ''}
+                              onChange={(e) => setFormData({ ...formData, targetOutcome: e.target.value })}
+                              placeholder="Describe the expected outcome"
+                              className="text-xs h-8 border-gray-200 focus:border-blue-400 focus:ring-blue-400"
+                              maxLength={150}
+                            />
+                            <div className="flex justify-end">
+                              <span className="text-2xs text-muted-foreground">
+                                {(formData.targetOutcome || '').length}/150
+                              </span>
+                            </div>
+                          </>
                         ) : (
                           <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-md p-2">
                             <div className="flex items-center gap-1.5">
@@ -2565,13 +2589,21 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                       <Label className="text-sm font-semibold">Baseline Data</Label>
                     </div>
                     {isEditing ? (
-                      <Textarea
-                        value={formData.baselineData || ''}
-                        onChange={(e) => setFormData({ ...formData, baselineData: e.target.value })}
-                        rows={3}
-                        placeholder="Enter baseline data information..."
-                        className="resize-none"
-                      />
+                      <>
+                        <Textarea
+                          value={formData.baselineData || ''}
+                          onChange={(e) => setFormData({ ...formData, baselineData: e.target.value })}
+                          rows={3}
+                          placeholder="Enter baseline data information..."
+                          className="min-h-[80px] text-sm resize-y"
+                          maxLength={700}
+                        />
+                        <div className="flex justify-end">
+                          <span className="text-2xs text-muted-foreground">
+                            {(formData.baselineData || '').length}/700
+                          </span>
+                        </div>
+                      </>
                     ) : (
                       <div className="bg-muted/30 border rounded-lg p-4">
                         <p className="text-sm leading-relaxed">
@@ -2601,13 +2633,21 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                           Assumption 1
                         </Label>
                         {isEditing ? (
-                          <Textarea
-                            value={formData.assumption1 || ''}
-                            onChange={(e) => setFormData({ ...formData, assumption1: e.target.value })}
-                            rows={2}
-                            placeholder="Enter first assumption..."
-                            className="resize-none text-sm"
-                          />
+                          <>
+                            <Textarea
+                              value={formData.assumption1 || ''}
+                              onChange={(e) => setFormData({ ...formData, assumption1: e.target.value })}
+                              rows={2}
+                              placeholder="Enter first assumption..."
+                              className="min-h-[60px] text-sm resize-y"
+                              maxLength={150}
+                            />
+                            <div className="flex justify-end">
+                              <span className="text-2xs text-muted-foreground">
+                                {(formData.assumption1 || '').length}/150
+                              </span>
+                            </div>
+                          </>
                         ) : (
                           <div className="bg-gradient-to-r from-blue-50 to-transparent border-l-2 border-l-blue-300 pl-4 py-2">
                             <p className="text-sm leading-relaxed">
@@ -2625,13 +2665,21 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                           Assumption 2
                         </Label>
                         {isEditing ? (
-                          <Textarea
-                            value={formData.assumption2 || ''}
-                            onChange={(e) => setFormData({ ...formData, assumption2: e.target.value })}
-                            rows={2}
-                            placeholder="Enter second assumption..."
-                            className="resize-none text-sm"
-                          />
+                          <>
+                            <Textarea
+                              value={formData.assumption2 || ''}
+                              onChange={(e) => setFormData({ ...formData, assumption2: e.target.value })}
+                              rows={2}
+                              placeholder="Enter second assumption..."
+                              className="min-h-[60px] text-sm resize-y"
+                              maxLength={150}
+                            />
+                            <div className="flex justify-end">
+                              <span className="text-2xs text-muted-foreground">
+                                {(formData.assumption2 || '').length}/150
+                              </span>
+                            </div>
+                          </>
                         ) : (
                           <div className="bg-gradient-to-r from-green-50 to-transparent border-l-2 border-l-green-300 pl-4 py-2">
                             <p className="text-sm leading-relaxed">
@@ -2649,13 +2697,21 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                           Assumption 3
                         </Label>
                         {isEditing ? (
-                          <Textarea
-                            value={formData.assumption3 || ''}
-                            onChange={(e) => setFormData({ ...formData, assumption3: e.target.value })}
-                            rows={2}
-                            placeholder="Enter third assumption..."
-                            className="resize-none text-sm"
-                          />
+                          <>
+                            <Textarea
+                              value={formData.assumption3 || ''}
+                              onChange={(e) => setFormData({ ...formData, assumption3: e.target.value })}
+                              rows={2}
+                              placeholder="Enter third assumption..."
+                              className="min-h-[60px] text-sm resize-y"
+                              maxLength={150}
+                            />
+                            <div className="flex justify-end">
+                              <span className="text-2xs text-muted-foreground">
+                                {(formData.assumption3 || '').length}/150
+                              </span>
+                            </div>
+                          </>
                         ) : (
                           <div className="bg-gradient-to-r from-purple-50 to-transparent border-l-2 border-l-purple-300 pl-4 py-2">
                             <p className="text-sm leading-relaxed">
@@ -2778,7 +2834,13 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                               onChange={(e) => setMomFormData({...momFormData, meetingTitle: e.target.value})}
                               placeholder="Enter meeting title"
                               className="h-9 text-xs mt-1"
+                              maxLength={100}
                             />
+                            <div className="flex justify-end mt-1">
+                              <span className="text-2xs text-muted-foreground">
+                                {momFormData.meetingTitle.length}/100
+                              </span>
+                            </div>
                           </div>
                           <div>
                             <Label htmlFor="meetingDate" className="text-xs font-semibold">Meeting Date *</Label>
@@ -2932,7 +2994,13 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                             onChange={(e) => setMomFormData({...momFormData, content: e.target.value})}
                             placeholder="Enter detailed discussion points, decisions made, action items..."
                             className="min-h-[100px] text-xs mt-1"
+                            maxLength={1000}
                           />
+                          <div className="flex justify-end mt-1">
+                            <span className="text-2xs text-muted-foreground">
+                              {momFormData.content.length}/1000
+                            </span>
+                          </div>
                         </div>
 
                         <div>
@@ -2943,7 +3011,13 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                             onChange={(e) => setMomFormData({...momFormData, attendees: e.target.value})}
                             placeholder="List meeting attendees (optional)"
                             className="min-h-[60px] text-xs mt-1"
+                            maxLength={500}
                           />
+                          <div className="flex justify-end mt-1">
+                            <span className="text-2xs text-muted-foreground">
+                              {momFormData.attendees.length}/500
+                            </span>
+                          </div>
                         </div>
 
                         <div className="flex items-center gap-2 pt-2">
