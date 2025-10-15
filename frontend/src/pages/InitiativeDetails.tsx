@@ -2157,21 +2157,15 @@ export default function InitiativeDetails({ user }: InitiativeDetailsProps) {
                         id="description"
                         value={formData.description || ''}
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        className="min-h-[80px] text-xs"
+                        className="min-h-[120px] text-xs resize-y"
                         placeholder="Provide a detailed description of the initiative"
+                        rows={6}
                       />
                     ) : (
-                      <div className="bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-200 rounded-md p-2 min-h-[80px]">
-                        <p className="text-xs text-gray-700 leading-relaxed">
-                          {initiative?.description && initiative.description.length > 300 
-                            ? `${initiative.description.substring(0, 300)}...` 
-                            : initiative?.description || 'No description provided'}
+                      <div className="bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-200 rounded-md p-3">
+                        <p className="text-xs text-gray-700 leading-relaxed whitespace-pre-wrap break-words">
+                          {initiative?.description || 'No description provided'}
                         </p>
-                        {initiative?.description && initiative.description.length > 300 && (
-                          <p className="text-2xs text-blue-600 mt-1 cursor-pointer hover:underline">
-                            Click to view full description
-                          </p>
-                        )}
                       </div>
                     )}
                   </div>

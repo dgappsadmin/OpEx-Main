@@ -50,23 +50,23 @@ interface InitiativeFormProps {
 }
 
 const formSchema = z.object({
-  title: z.string().min(1, "Initiative title is required").min(10, "Title must be at least 10 characters"),
-  initiatorName: z.string().min(1, "Initiator name is required"),
+  title: z.string().min(1, "Initiative title is required").min(10, "Title must be at least 10 characters").max(70, "Title must not exceed 70 characters"),
+  initiatorName: z.string().min(1, "Initiator name is required").max(100, "Name must not exceed 100 characters"),
   site: z.string().min(1, "Site selection is required"),
   discipline: z.string().min(1, "Discipline selection is required"),
   selectedHodId: z.string().min(1, "HOD selection is required"),
   date: z.date({ required_error: "Date is required" }),
-  description: z.string().min(1, "Description is required").min(50, "Description must be at least 50 characters"),
-  baselineData: z.string().min(1, "Baseline data is required"),
-  targetOutcome: z.string().min(1, "Target outcome is required"),
+  description: z.string().min(1, "Description is required").min(50, "Description must be at least 50 characters").max(700, "Description must not exceed 700 characters"),
+  baselineData: z.string().min(1, "Baseline data is required").max(700, "Baseline data must not exceed 700 characters"),
+  targetOutcome: z.string().min(1, "Target outcome is required").max(150, "Target outcome must not exceed 150 characters"),
   targetValue: z.number().min(0, "Target value must be zero or positive").finite("Target value must be a valid number"),
   budgetType: z.enum(["budgeted", "non-budgeted"], {
     required_error: "Budget type is required",
   }),
   expectedValue: z.number().min(0, "Expected value must be zero or positive").finite("Expected value must be a valid number"),
-  assumption1: z.string().min(1, "First assumption is required"),
-  assumption2: z.string().min(1, "Second assumption is required"),
-  assumption3: z.string().min(1, "Third assumption is required"),
+  assumption1: z.string().min(1, "First assumption is required").max(150, "Assumption must not exceed 150 characters"),
+  assumption2: z.string().min(1, "Second assumption is required").max(150, "Assumption must not exceed 150 characters"),
+  assumption3: z.string().min(1, "Third assumption is required").max(150, "Assumption must not exceed 150 characters"),
   estimatedCapex: z.number().min(0, "CAPEX must be zero or positive").finite("CAPEX must be a valid number"),
 });
 
@@ -379,9 +379,15 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                             className="h-9 text-xs"
                             style={{ fontSize: '13px' }}
                             disabled={isSubmitting}
+                            maxLength={70}
                           />
                         </FormControl>
-                        <FormMessage className="text-xs" />
+                        <div className="flex justify-between items-center">
+                          <FormMessage className="text-xs" />
+                          <span className="text-2xs text-muted-foreground">
+                            {field.value?.length || 0}/70
+                          </span>
+                        </div>
                       </FormItem>
                     )}
                   />
@@ -558,9 +564,15 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                             style={{ fontSize: '13px' }}
                             {...field}
                             disabled={isSubmitting}
+                            maxLength={700}
                           />
                         </FormControl>
-                        <FormMessage className="text-xs" />
+                        <div className="flex justify-between items-center">
+                          <FormMessage className="text-xs" />
+                          <span className="text-2xs text-muted-foreground">
+                            {field.value?.length || 0}/700
+                          </span>
+                        </div>
                       </FormItem>
                     )}
                   />
@@ -595,9 +607,15 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                           style={{ fontSize: '13px' }}
                           {...field}
                           disabled={isSubmitting}
+                          maxLength={700}
                         />
                       </FormControl>
-                      <FormMessage className="text-xs" />
+                      <div className="flex justify-between items-center">
+                        <FormMessage className="text-xs" />
+                        <span className="text-2xs text-muted-foreground">
+                          {field.value?.length || 0}/700
+                        </span>
+                      </div>
                     </FormItem>
                   )}
                 />
@@ -616,9 +634,15 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                             className="h-9 text-xs"
                             style={{ fontSize: '13px' }}
                             disabled={isSubmitting}
+                            maxLength={150}
                           />
                         </FormControl>
-                        <FormMessage className="text-xs" />
+                        <div className="flex justify-between items-center">
+                          <FormMessage className="text-xs" />
+                          <span className="text-2xs text-muted-foreground">
+                            {field.value?.length || 0}/150
+                          </span>
+                        </div>
                       </FormItem>
                     )}
                   />
@@ -781,15 +805,22 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                       <FormItem>
                         <FormLabel className="text-xs font-medium">Assumption 1 *</FormLabel>
                         <FormControl>
-                          <Input
+                          <Textarea
                             placeholder="e.g., Current production volume remains stable throughout implementation"
                             {...field}
-                            className="h-9 text-xs"
+                            className="min-h-[60px] text-xs resize-y"
                             style={{ fontSize: '13px' }}
                             disabled={isSubmitting}
+                            maxLength={150}
+                            rows={2}
                           />
                         </FormControl>
-                        <FormMessage className="text-xs" />
+                        <div className="flex justify-between items-center">
+                          <FormMessage className="text-xs" />
+                          <span className="text-2xs text-muted-foreground">
+                            {field.value?.length || 0}/150
+                          </span>
+                        </div>
                       </FormItem>
                     )}
                   />
@@ -800,15 +831,22 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                       <FormItem>
                         <FormLabel className="text-xs font-medium">Assumption 2 *</FormLabel>
                         <FormControl>
-                          <Input
+                          <Textarea
                             placeholder="e.g., Energy prices increase by 10% annually"
                             {...field}
-                            className="h-9 text-xs"
+                            className="min-h-[60px] text-xs resize-y"
                             style={{ fontSize: '13px' }}
                             disabled={isSubmitting}
+                            maxLength={150}
+                            rows={2}
                           />
                         </FormControl>
-                        <FormMessage className="text-xs" />
+                        <div className="flex justify-between items-center">
+                          <FormMessage className="text-xs" />
+                          <span className="text-2xs text-muted-foreground">
+                            {field.value?.length || 0}/150
+                          </span>
+                        </div>
                       </FormItem>
                     )}
                   />
@@ -819,15 +857,22 @@ export default function InitiativeForm({ user }: InitiativeFormProps) {
                       <FormItem>
                         <FormLabel className="text-xs font-medium">Assumption 3 *</FormLabel>
                         <FormControl>
-                          <Input
+                          <Textarea
                             placeholder="e.g., Technology implementation completed within 6 months"
                             {...field}
-                            className="h-9 text-xs"
+                            className="min-h-[60px] text-xs resize-y"
                             style={{ fontSize: '13px' }}
                             disabled={isSubmitting}
+                            maxLength={150}
+                            rows={2}
                           />
                         </FormControl>
-                        <FormMessage className="text-xs" />
+                        <div className="flex justify-between items-center">
+                          <FormMessage className="text-xs" />
+                          <span className="text-2xs text-muted-foreground">
+                            {field.value?.length || 0}/150
+                          </span>
+                        </div>
                       </FormItem>
                     )}
                   />
