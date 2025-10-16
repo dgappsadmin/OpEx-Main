@@ -15,7 +15,8 @@ public class EmailActionTokenService {
 
     private final Map<String, TokenData> tokenStore = new ConcurrentHashMap<>();
     
-    private static class TokenData {
+    // Make TokenData public so it can be accessed from controllers
+    public static class TokenData {
         private final Long entryId;
         private final String action; // "APPROVE" or "REQUEST_EDIT"
         private final LocalDateTime expiryTime;

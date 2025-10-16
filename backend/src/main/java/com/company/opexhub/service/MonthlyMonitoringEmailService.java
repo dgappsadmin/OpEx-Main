@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Logger;
 import java.util.logging.Level;
 
@@ -104,12 +105,12 @@ public class MonthlyMonitoringEmailService {
             String enteredBy = entry.getEnteredBy();
             
             // Get Initiative Lead user
-            List<User> ilUsers = userRepository.findByEmail(enteredBy);
-            if (ilUsers.isEmpty()) {
+            Optional<User> ilUserOpt = userRepository.findByEmail(enteredBy);
+            if (!ilUserOpt.isPresent()) {
                 return false;
             }
             
-            User ilUser = ilUsers.get(0);
+            User ilUser = ilUserOpt.get();
             
             String subject = "Monthly Entry Approved by F&A [" + 
                 initiative.getInitiativeNumber() + "]";
@@ -141,12 +142,12 @@ public class MonthlyMonitoringEmailService {
             String enteredBy = entry.getEnteredBy();
             
             // Get Initiative Lead user
-            List<User> ilUsers = userRepository.findByEmail(enteredBy);
-            if (ilUsers.isEmpty()) {
+            Optional<User> ilUserOpt = userRepository.findByEmail(enteredBy);
+            if (!ilUserOpt.isPresent()) {
                 return false;
             }
             
-            User ilUser = ilUsers.get(0);
+            User ilUser = ilUserOpt.get();
             
             String subject = "Edit Requested by F&A - Action Required [" + 
                 initiative.getInitiativeNumber() + "]";
@@ -191,87 +192,87 @@ public class MonthlyMonitoringEmailService {
         template.append("    <meta charset=\"UTF-8\">\n");
         template.append("    <title>Monthly Monitoring Entry - F&A Approval Required</title>\n");
         template.append("</head>\n");
-        template.append("<body style=\"font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #333; max-width: 700px; margin: 0 auto; padding: 20px;\">\n");
+        template.append("<body style=\"font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6; color: " + "#333" + "; max-width: 700px; margin: 0 auto; padding: 20px;\">\n");
         template.append("    \n");
-        template.append("    <div style=\"background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; border-radius: 8px 8px 0 0; text-align: center;\">\n");
+        template.append("    <div style=\"background: linear-gradient(135deg, " + "#667eea" + " 0%, " + "#764ba2" + " 100%); padding: 25px; border-radius: 8px 8px 0 0; text-align: center;\">\n");
         template.append("        <h1 style=\"color: white; margin: 0; font-size: 24px;\">📊 Monthly Monitoring Entry Finalized</h1>\n");
-        template.append("        <p style=\"color: #f0f0f0; margin: 8px 0 0 0; font-size: 14px;\">Action Required: F&A Approval</p>\n");
+        template.append("        <p style=\"color: " + "#f0f0f0" + "; margin: 8px 0 0 0; font-size: 14px;\">Action Required: F&A Approval</p>\n");
         template.append("    </div>\n");
         template.append("    \n");
-        template.append("    <div style=\"background: #ffffff; border: 1px solid #e0e0e0; border-top: none; padding: 30px; border-radius: 0 0 8px 8px;\">\n");
+        template.append("    <div style=\"background: " + "#ffffff" + "; border: 1px solid " + "#e0e0e0" + "; border-top: none; padding: 30px; border-radius: 0 0 8px 8px;\">\n");
         template.append("        \n");
         template.append("        <p>Dear <strong>%s</strong>,</p>\n");
         template.append("        \n");
         template.append("        <p>A monthly monitoring entry has been finalized by the Initiative Lead and requires your approval as F&A.</p>\n");
         template.append("        \n");
-        template.append("        <h3 style=\"color: #667eea; margin-top: 25px; margin-bottom: 15px; border-bottom: 2px solid #667eea; padding-bottom: 8px;\">📋 Initiative Details</h3>\n");
+        template.append("        <h3 style=\"color: " + "#667eea" + "; margin-top: 25px; margin-bottom: 15px; border-bottom: 2px solid " + "#667eea" + "; padding-bottom: 8px;\">📋 Initiative Details</h3>\n");
         template.append("        \n");
-        template.append("        <table style=\"width: 100%%; border-collapse: collapse; margin: 20px 0; background: #f8f9ff;\">\n");
-        template.append("            <tr style=\"background: #e8ecff;\">\n");
-        template.append("                <td style=\"padding: 12px; border: 1px solid #d0d7ff; font-weight: bold; width: 35%%;\">Initiative Number</td>\n");
-        template.append("                <td style=\"padding: 12px; border: 1px solid #d0d7ff;\">%s</td>\n");
+        template.append("        <table style=\"width: 100%%; border-collapse: collapse; margin: 20px 0; background: " + "#f8f9ff" + ";\">\n");
+        template.append("            <tr style=\"background: " + "#e8ecff" + ";\">\n");
+        template.append("                <td style=\"padding: 12px; border: 1px solid " + "#d0d7ff" + "; font-weight: bold; width: 35%%;\">Initiative Number</td>\n");
+        template.append("                <td style=\"padding: 12px; border: 1px solid " + "#d0d7ff" + ";\">%s</td>\n");
         template.append("            </tr>\n");
         template.append("            <tr>\n");
-        template.append("                <td style=\"padding: 12px; border: 1px solid #d0d7ff; font-weight: bold;\">Initiative Title</td>\n");
-        template.append("                <td style=\"padding: 12px; border: 1px solid #d0d7ff;\">%s</td>\n");
+        template.append("                <td style=\"padding: 12px; border: 1px solid " + "#d0d7ff" + "; font-weight: bold;\">Initiative Title</td>\n");
+        template.append("                <td style=\"padding: 12px; border: 1px solid " + "#d0d7ff" + ";\">%s</td>\n");
         template.append("            </tr>\n");
-        template.append("            <tr style=\"background: #e8ecff;\">\n");
-        template.append("                <td style=\"padding: 12px; border: 1px solid #d0d7ff; font-weight: bold;\">Site</td>\n");
-        template.append("                <td style=\"padding: 12px; border: 1px solid #d0d7ff;\">%s</td>\n");
+        template.append("            <tr style=\"background: " + "#e8ecff" + ";\">\n");
+        template.append("                <td style=\"padding: 12px; border: 1px solid " + "#d0d7ff" + "; font-weight: bold;\">Site</td>\n");
+        template.append("                <td style=\"padding: 12px; border: 1px solid " + "#d0d7ff" + ";\">%s</td>\n");
         template.append("            </tr>\n");
         template.append("        </table>\n");
         template.append("        \n");
-        template.append("        <h3 style=\"color: #667eea; margin-top: 30px; margin-bottom: 15px; border-bottom: 2px solid #667eea; padding-bottom: 8px;\">💰 Monitoring Entry Details</h3>\n");
+        template.append("        <h3 style=\"color: " + "#667eea" + "; margin-top: 30px; margin-bottom: 15px; border-bottom: 2px solid " + "#667eea" + "; padding-bottom: 8px;\">💰 Monitoring Entry Details</h3>\n");
         template.append("        \n");
-        template.append("        <table style=\"width: 100%%; border-collapse: collapse; margin: 20px 0; background: #fffbf0;\">\n");
-        template.append("            <tr style=\"background: #fff8e1;\">\n");
-        template.append("                <td style=\"padding: 12px; border: 1px solid #ffe0b2; font-weight: bold; width: 35%%;\">Monitoring Month</td>\n");
-        template.append("                <td style=\"padding: 12px; border: 1px solid #ffe0b2;\">%s</td>\n");
+        template.append("        <table style=\"width: 100%%; border-collapse: collapse; margin: 20px 0; background: " + "#fffbf0" + ";\">\n");
+        template.append("            <tr style=\"background: " + "#fff8e1" + ";\">\n");
+        template.append("                <td style=\"padding: 12px; border: 1px solid " + "#ffe0b2" + "; font-weight: bold; width: 35%%;\">Monitoring Month</td>\n");
+        template.append("                <td style=\"padding: 12px; border: 1px solid " + "#ffe0b2" + ";\">%s</td>\n");
         template.append("            </tr>\n");
         template.append("            <tr>\n");
-        template.append("                <td style=\"padding: 12px; border: 1px solid #ffe0b2; font-weight: bold;\">Category</td>\n");
-        template.append("                <td style=\"padding: 12px; border: 1px solid #ffe0b2;\">%s</td>\n");
+        template.append("                <td style=\"padding: 12px; border: 1px solid " + "#ffe0b2" + "; font-weight: bold;\">Category</td>\n");
+        template.append("                <td style=\"padding: 12px; border: 1px solid " + "#ffe0b2" + ";\">%s</td>\n");
         template.append("            </tr>\n");
-        template.append("            <tr style=\"background: #fff8e1;\">\n");
-        template.append("                <td style=\"padding: 12px; border: 1px solid #ffe0b2; font-weight: bold;\">KPI Description</td>\n");
-        template.append("                <td style=\"padding: 12px; border: 1px solid #ffe0b2;\">%s</td>\n");
-        template.append("            </tr>\n");
-        template.append("            <tr>\n");
-        template.append("                <td style=\"padding: 12px; border: 1px solid #ffe0b2; font-weight: bold;\">Target Value</td>\n");
-        template.append("                <td style=\"padding: 12px; border: 1px solid #ffe0b2; font-weight: bold; color: #1976d2;\">₹ %s</td>\n");
-        template.append("            </tr>\n");
-        template.append("            <tr style=\"background: #fff8e1;\">\n");
-        template.append("                <td style=\"padding: 12px; border: 1px solid #ffe0b2; font-weight: bold;\">Achieved Value</td>\n");
-        template.append("                <td style=\"padding: 12px; border: 1px solid #ffe0b2; font-weight: bold; color: #388e3c;\">₹ %s</td>\n");
+        template.append("            <tr style=\"background: " + "#fff8e1" + ";\">\n");
+        template.append("                <td style=\"padding: 12px; border: 1px solid " + "#ffe0b2" + "; font-weight: bold;\">KPI Description</td>\n");
+        template.append("                <td style=\"padding: 12px; border: 1px solid " + "#ffe0b2" + ";\">%s</td>\n");
         template.append("            </tr>\n");
         template.append("            <tr>\n");
-        template.append("                <td style=\"padding: 12px; border: 1px solid #ffe0b2; font-weight: bold;\">Deviation</td>\n");
-        template.append("                <td style=\"padding: 12px; border: 1px solid #ffe0b2; font-weight: bold; color: %s;\">₹ %s (%s)</td>\n");
+        template.append("                <td style=\"padding: 12px; border: 1px solid " + "#ffe0b2" + "; font-weight: bold;\">Target Value</td>\n");
+        template.append("                <td style=\"padding: 12px; border: 1px solid " + "#ffe0b2" + "; font-weight: bold; color: " + "#1976d2" + ";\">₹ %s</td>\n");
         template.append("            </tr>\n");
-        template.append("            <tr style=\"background: #fff8e1;\">\n");
-        template.append("                <td style=\"padding: 12px; border: 1px solid #ffe0b2; font-weight: bold;\">Remarks</td>\n");
-        template.append("                <td style=\"padding: 12px; border: 1px solid #ffe0b2;\">%s</td>\n");
+        template.append("            <tr style=\"background: " + "#fff8e1" + ";\">\n");
+        template.append("                <td style=\"padding: 12px; border: 1px solid " + "#ffe0b2" + "; font-weight: bold;\">Achieved Value</td>\n");
+        template.append("                <td style=\"padding: 12px; border: 1px solid " + "#ffe0b2" + "; font-weight: bold; color: " + "#388e3c" + ";\">₹ %s</td>\n");
+        template.append("            </tr>\n");
+        template.append("            <tr>\n");
+        template.append("                <td style=\"padding: 12px; border: 1px solid " + "#ffe0b2" + "; font-weight: bold;\">Deviation</td>\n");
+        template.append("                <td style=\"padding: 12px; border: 1px solid " + "#ffe0b2" + "; font-weight: bold; color: %s;\">₹ %s (%s)</td>\n");
+        template.append("            </tr>\n");
+        template.append("            <tr style=\"background: " + "#fff8e1" + ";\">\n");
+        template.append("                <td style=\"padding: 12px; border: 1px solid " + "#ffe0b2" + "; font-weight: bold;\">Remarks</td>\n");
+        template.append("                <td style=\"padding: 12px; border: 1px solid " + "#ffe0b2" + ";\">%s</td>\n");
         template.append("            </tr>\n");
         template.append("        </table>\n");
         template.append("        \n");
-        template.append("        <h3 style=\"color: #667eea; margin-top: 30px; margin-bottom: 15px; border-bottom: 2px solid #667eea; padding-bottom: 8px;\">⚡ Quick Actions</h3>\n");
+        template.append("        <h3 style=\"color: " + "#667eea" + "; margin-top: 30px; margin-bottom: 15px; border-bottom: 2px solid " + "#667eea" + "; padding-bottom: 8px;\">⚡ Quick Actions</h3>\n");
         template.append("        \n");
         template.append("        <div style=\"text-align: center; margin: 30px 0;\">\n");
         template.append("            \n");
         template.append("            <!-- Approve Button -->\n");
-        template.append("            <a href=\"%s\" style=\"display: inline-block; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 15px 40px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; margin: 10px; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3); transition: all 0.3s ease;\">\n");
+        template.append("            <a href=\"%s\" style=\"display: inline-block; background: linear-gradient(135deg, " + "#10b981" + " 0%, " + "#059669" + " 100%); color: white; padding: 15px 40px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; margin: 10px; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3); transition: all 0.3s ease;\">\n");
         template.append("                ✓ APPROVE ENTRY\n");
         template.append("            </a>\n");
         template.append("            \n");
         template.append("            <!-- Request Edit Button -->\n");
-        template.append("            <a href=\"%s\" style=\"display: inline-block; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 15px 40px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; margin: 10px; box-shadow: 0 4px 6px rgba(245, 158, 11, 0.3); transition: all 0.3s ease;\">\n");
+        template.append("            <a href=\"%s\" style=\"display: inline-block; background: linear-gradient(135deg, " + "#f59e0b" + " 0%, " + "#d97706" + " 100%); color: white; padding: 15px 40px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; margin: 10px; box-shadow: 0 4px 6px rgba(245, 158, 11, 0.3); transition: all 0.3s ease;\">\n");
         template.append("                ✎ REQUEST EDIT\n");
         template.append("            </a>\n");
         template.append("            \n");
         template.append("        </div>\n");
         template.append("        \n");
-        template.append("        <div style=\"background: #e3f2fd; border-left: 4px solid #2196f3; padding: 15px; margin: 25px 0; border-radius: 4px;\">\n");
-        template.append("            <p style=\"margin: 0; color: #1565c0; font-size: 13px;\">\n");
+        template.append("        <div style=\"background: " + "#e3f2fd" + "; border-left: 4px solid " + "#2196f3" + "; padding: 15px; margin: 25px 0; border-radius: 4px;\">\n");
+        template.append("            <p style=\"margin: 0; color: " + "#1565c0" + "; font-size: 13px;\">\n");
         template.append("                <strong>📌 Note:</strong><br>\n");
         template.append("                • Click <strong>APPROVE ENTRY</strong> to automatically approve this monitoring entry<br>\n");
         template.append("                • Click <strong>REQUEST EDIT</strong> to re-open the entry and request changes from Initiative Lead<br>\n");
@@ -279,16 +280,16 @@ public class MonthlyMonitoringEmailService {
         template.append("            </p>\n");
         template.append("        </div>\n");
         template.append("        \n");
-        template.append("        <div style=\"background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 25px 0; border-radius: 4px;\">\n");
-        template.append("            <p style=\"margin: 0; color: #856404; font-size: 13px;\">\n");
+        template.append("        <div style=\"background: " + "#fff3cd" + "; border-left: 4px solid " + "#ffc107" + "; padding: 15px; margin: 25px 0; border-radius: 4px;\">\n");
+        template.append("            <p style=\"margin: 0; color: " + "#856404" + "; font-size: 13px;\">\n");
         template.append("                <strong>⚠️ Important:</strong> Monthly monitoring entries require F&A validation before the initiative can progress. Please review and take action at your earliest convenience.\n");
         template.append("            </p>\n");
         template.append("        </div>\n");
         template.append("        \n");
         template.append("    </div>\n");
         template.append("    \n");
-        template.append("    <div style=\"background: #f5f5f5; padding: 20px; border-radius: 0 0 8px 8px; margin-top: 2px; text-align: center;\">\n");
-        template.append("        <p style=\"font-size: 12px; color: #666; margin: 0;\">\n");
+        template.append("    <div style=\"background: " + "#f5f5f5" + "; padding: 20px; border-radius: 0 0 8px 8px; margin-top: 2px; text-align: center;\">\n");
+        template.append("        <p style=\"font-size: 12px; color: " + "#666" + "; margin: 0;\">\n");
         template.append("            <strong>OPEX Hub - Operational Excellence Platform</strong><br>\n");
         template.append("            This is an automated notification. Please do not reply to this email.\n");
         template.append("        </p>\n");
@@ -311,7 +312,7 @@ public class MonthlyMonitoringEmailService {
         return String.format(template.toString(),
             faUserName,
             initiative.getInitiativeNumber(),
-            initiative.getInitiativeTitle(),
+            initiative.getTitle(),
             initiative.getSite(),
             entry.getMonitoringMonth(),
             entry.getCategory() != null ? entry.getCategory() : "General",
