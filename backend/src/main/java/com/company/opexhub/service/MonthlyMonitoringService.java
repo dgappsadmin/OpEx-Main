@@ -348,6 +348,9 @@ public class MonthlyMonitoringService {
     
     @Autowired
     private InitiativeRepository initiativeRepository;
+    
+    @Autowired
+    private MonthlyMonitoringEmailService emailService;
 
     public List<MonthlyMonitoringEntry> getMonitoringEntriesByInitiative(Long initiativeId) {
         return monthlyMonitoringRepository.findByInitiative_IdOrderByMonitoringMonth(initiativeId);
@@ -454,6 +457,21 @@ public class MonthlyMonitoringService {
         } catch (Exception e) {
             // Log error but don't fail the finalization
             System.err.println("Error syncing actual savings for initiative " + entry.getInitiative().getId() + ": " + e.getMessage());
+        }
+        
+        // Send email to F&A user when entry is finalized (changed from 'N' to 'Y')
+        if ("Y".equals(isFinalized)) {
+            try {
+                boolean emailSent = emailService.sendFANotificationEmail(savedEntry);
+                if (emailSent) {
+                    System.out.println("F&A notification email sent successfully for entry ID: " + savedEntry.getId());
+                } else {
+                    System.err.println("Failed to send F&A notification email for entry ID: " + savedEntry.getId());
+                }
+            } catch (Exception e) {
+                // Log error but don't fail the finalization
+                System.err.println("Error sending F&A notification email for entry ID: " + savedEntry.getId() + ": " + e.getMessage());
+            }
         }
         
         return savedEntry;

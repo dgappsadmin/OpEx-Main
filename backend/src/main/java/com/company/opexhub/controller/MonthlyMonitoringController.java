@@ -2,8 +2,12 @@ package com.company.opexhub.controller;
 
 import com.company.opexhub.dto.ApiResponse;
 import com.company.opexhub.entity.MonthlyMonitoringEntry;
+import com.company.opexhub.entity.User;
 import com.company.opexhub.service.MonthlyMonitoringService;
+import com.company.opexhub.service.MonthlyMonitoringEmailService;
+import com.company.opexhub.service.EmailActionTokenService;
 import com.company.opexhub.service.WorkflowTransactionService;
+import com.company.opexhub.repository.UserRepository;
 import com.company.opexhub.dto.WorkflowTransactionDetailDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -26,6 +30,15 @@ public class MonthlyMonitoringController {
     
     @Autowired
     private WorkflowTransactionService workflowTransactionService;
+    
+    @Autowired
+    private MonthlyMonitoringEmailService emailService;
+    
+    @Autowired
+    private EmailActionTokenService tokenService;
+    
+    @Autowired
+    private UserRepository userRepository;
 
     /**
      * Get initiatives where Stage 8 is approved and current stage is 9 (Savings Monitoring)
@@ -391,5 +404,219 @@ public class MonthlyMonitoringController {
             return ResponseEntity.badRequest()
                     .body(new ApiResponse<>(false, "Error syncing actual savings: " + e.getMessage(), null));
         }
+    }
+
+    /**
+     * EMAIL ACTION ENDPOINTS - Public endpoints for F&A actions from email
+     * These endpoints use secure tokens and don't require authentication
+     */
+
+    /**
+     * F&A Approve Entry via Email Link
+     * This is a PUBLIC endpoint - no authentication required (uses secure token)
+     */
+    @GetMapping("/email-action/approve")
+    public ResponseEntity<String> approveEntryViaEmail(@RequestParam String token) {
+        try {
+            // Validate and consume token
+            EmailActionTokenService.TokenData tokenData = tokenService.validateAndConsumeToken(token);
+            
+            if (tokenData == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(createHtmlResponse(
+                        "Invalid or Expired Link",
+                        "This approval link is invalid, has expired, or has already been used.",
+                        "#ef4444",
+                        false
+                    ));
+            }
+            
+            // Verify this is an APPROVE action
+            if (!"APPROVE".equals(tokenData.getAction())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(createHtmlResponse(
+                        "Invalid Action",
+                        "This link is not valid for approval action.",
+                        "#ef4444",
+                        false
+                    ));
+            }
+            
+            // Get the entry
+            Long entryId = tokenData.getEntryId();
+            Optional<MonthlyMonitoringEntry> entryOpt = monthlyMonitoringService.getMonitoringEntryById(entryId);
+            
+            if (!entryOpt.isPresent()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(createHtmlResponse(
+                        "Entry Not Found",
+                        "The monitoring entry could not be found.",
+                        "#ef4444",
+                        false
+                    ));
+            }
+            
+            MonthlyMonitoringEntry entry = entryOpt.get();
+            
+            // Check if entry is finalized
+            if (!"Y".equals(entry.getIsFinalized())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(createHtmlResponse(
+                        "Entry Not Finalized",
+                        "This entry has not been finalized yet and cannot be approved.",
+                        "#f59e0b",
+                        false
+                    ));
+            }
+            
+            // Check if already approved
+            if ("Y".equals(entry.getFaApproval())) {
+                return ResponseEntity.ok(createHtmlResponse(
+                    "Already Approved",
+                    "This entry has already been approved by F&A.",
+                    "#10b981",
+                    true
+                ));
+            }
+            
+            // Approve the entry
+            monthlyMonitoringService.updateFAApproval(entryId, "Y", "Approved via email");
+            
+            // Get F&A user info (from token or site)
+            String site = entry.getInitiative().getSite();
+            List<User> faUsers = userRepository.findByRoleAndSite("F&A", site);
+            User faUser = faUsers.isEmpty() ? null : faUsers.get(0);
+            
+            // Send confirmation email to IL
+            if (faUser != null) {
+                emailService.sendApprovalConfirmationEmail(entry, faUser);
+            }
+            
+            return ResponseEntity.ok(createHtmlResponse(
+                "✓ Entry Approved Successfully",
+                String.format("Monthly monitoring entry for <strong>%s</strong> (Month: %s) has been approved by F&A.",
+                    entry.getInitiative().getInitiativeNumber(),
+                    entry.getMonitoringMonth()),
+                "#10b981",
+                true
+            ));
+            
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(createHtmlResponse(
+                    "Error Processing Request",
+                    "An error occurred while processing your approval: " + e.getMessage(),
+                    "#ef4444",
+                    false
+                ));
+        }
+    }
+
+    /**
+     * F&A Request Edit via Email Link
+     * This is a PUBLIC endpoint - no authentication required (uses secure token)
+     */
+    @GetMapping("/email-action/request-edit")
+    public ResponseEntity<String> requestEditViaEmail(
+            @RequestParam String token,
+            @RequestParam(required = false) String comments) {
+        try {
+            // Validate and consume token
+            EmailActionTokenService.TokenData tokenData = tokenService.validateAndConsumeToken(token);
+            
+            if (tokenData == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(createHtmlResponse(
+                        "Invalid or Expired Link",
+                        "This edit request link is invalid, has expired, or has already been used.",
+                        "#ef4444",
+                        false
+                    ));
+            }
+            
+            // Verify this is a REQUEST_EDIT action
+            if (!"REQUEST_EDIT".equals(tokenData.getAction())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(createHtmlResponse(
+                        "Invalid Action",
+                        "This link is not valid for edit request action.",
+                        "#ef4444",
+                        false
+                    ));
+            }
+            
+            // Get the entry
+            Long entryId = tokenData.getEntryId();
+            Optional<MonthlyMonitoringEntry> entryOpt = monthlyMonitoringService.getMonitoringEntryById(entryId);
+            
+            if (!entryOpt.isPresent()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(createHtmlResponse(
+                        "Entry Not Found",
+                        "The monitoring entry could not be found.",
+                        "#ef4444",
+                        false
+                    ));
+            }
+            
+            MonthlyMonitoringEntry entry = entryOpt.get();
+            
+            // Re-open the entry (set finalized to 'N')
+            monthlyMonitoringService.updateFinalizationStatus(entryId, "N");
+            
+            // Add F&A comments
+            String faComments = comments != null && !comments.trim().isEmpty() ? 
+                comments : "F&A has requested edits to this entry";
+            monthlyMonitoringService.updateFAApproval(entryId, "N", faComments);
+            
+            // Get F&A user info
+            String site = entry.getInitiative().getSite();
+            List<User> faUsers = userRepository.findByRoleAndSite("F&A", site);
+            User faUser = faUsers.isEmpty() ? null : faUsers.get(0);
+            
+            // Send notification email to IL
+            if (faUser != null) {
+                emailService.sendEditRequestEmail(entry, faComments, faUser);
+            }
+            
+            return ResponseEntity.ok(createHtmlResponse(
+                "✎ Edit Request Submitted",
+                String.format("The entry for <strong>%s</strong> (Month: %s) has been re-opened for editing. " +
+                    "Initiative Lead will be notified to make the necessary changes.",
+                    entry.getInitiative().getInitiativeNumber(),
+                    entry.getMonitoringMonth()),
+                "#f59e0b",
+                true
+            ));
+            
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(createHtmlResponse(
+                    "Error Processing Request",
+                    "An error occurred while processing your edit request: " + e.getMessage(),
+                    "#ef4444",
+                    false
+                ));
+        }
+    }
+
+    /**
+     * Helper method to create HTML response for email actions
+     */
+    private String createHtmlResponse(String title, String message, String color, boolean success) {
+        String icon = success ? "✓" : "✗";
+        return String.format(
+            "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>%s</title></head>" +
+            "<body style=\"font-family: Arial, sans-serif; padding: 40px; text-align: center; background: #f5f5f5;\">" +
+            "<div style=\"background: white; max-width: 600px; margin: 0 auto; padding: 40px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);\">" +
+            "<div style=\"font-size: 48px; margin-bottom: 20px;\">%s</div>" +
+            "<h1 style=\"color: %s; margin-bottom: 20px;\">%s</h1>" +
+            "<p style=\"font-size: 16px; color: #666; line-height: 1.6;\">%s</p>" +
+            "<div style=\"margin-top: 30px; padding: 15px; background: #f8f9fa; border-radius: 4px;\">" +
+            "<p style=\"margin: 0; font-size: 14px; color: #666;\">OPEX Hub - Operational Excellence Platform</p>" +
+            "</div>" +
+            "</div></body></html>",
+            title, icon, color, title, message
+        );
     }
 }

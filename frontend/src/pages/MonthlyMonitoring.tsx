@@ -274,9 +274,23 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
       const result = await monthlyMonitoringAPI.updateFinalizationStatus(id, isFinalized);
       return result.data;
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['monitoring-entries'] });
-      toast({ title: "Success", description: "Entry finalization status updated" });
+      
+      // Show different message based on finalization status
+      if (variables.isFinalized === 'Y') {
+        toast({ 
+          title: "Entry Finalized & F&A Notified", 
+          description: "Entry has been finalized and F&A user has been notified via email for approval.",
+          duration: 5000
+        });
+      } else {
+        toast({ 
+          title: "Entry Re-opened", 
+          description: "Entry finalization status has been updated." 
+        });
+      }
+      
       refetchEntries();
     },
     onError: (error: any) => {
@@ -1336,18 +1350,24 @@ export default function MonthlyMonitoring({ user }: MonthlyMonitoringProps) {
                                   </TableCell>
                                   <TableCell className="text-xs">
                                     <div className="flex flex-wrap gap-1">
-                                      {entry.isFinalized === 'Y' && (
-                                        <Badge variant="outline" className="text-xs bg-blue-50">
+                                      {entry.isFinalized === 'Y' && entry.faApproval !== 'Y' && (
+                                        <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
                                           <CheckCircle className="h-3 w-3 mr-1" />
-                                          Finalized
+                                          Finalized (F&A Notified)
                                         </Badge>
                                       )}
-                                      {/* {entry.faApproval === 'Y' && (
-                                        <Badge variant="outline" className="text-xs bg-green-50">
+                                      {entry.faApproval === 'Y' && (
+                                        <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
                                           <Target className="h-3 w-3 mr-1" />
                                           F&A Approved
                                         </Badge>
-                                      )} */}
+                                      )}
+                                      {entry.isFinalized === 'N' && entry.faComments && (
+                                        <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200">
+                                          <AlertTriangle className="h-3 w-3 mr-1" />
+                                          Edit Requested
+                                        </Badge>
+                                      )}
                                     </div>
                                   </TableCell>
                                   <TableCell className="text-xs">
