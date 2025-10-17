@@ -78,6 +78,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .permitAll()
                 .antMatchers("/h2-console/**")
                 .permitAll()
+                // Allow email action endpoints without authentication (uses secure tokens)
+                .antMatchers("/api/monthly-monitoring/email-action/**")
+                .permitAll()
                 .anyRequest()
                 .authenticated();
 
