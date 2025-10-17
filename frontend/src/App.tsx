@@ -252,6 +252,7 @@ import Reports from "./pages/Reports";
 import TimelineTracker from "./pages/TimelineTracker";
 import MonthlyMonitoring from "./pages/MonthlyMonitoring";
 import NotFound from "./pages/NotFound";
+import EmailActionHandler from "./pages/EmailActionHandler";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -326,6 +327,16 @@ const AppRoutes = () => {
             <AuthPage onLogin={() => {}} />
           </PublicRoute>
         } 
+      />
+      
+      {/* Public routes - Email actions (no authentication required) */}
+      <Route 
+        path="/api/monthly-monitoring/email-action/approve" 
+        element={<EmailActionHandler />} 
+      />
+      <Route 
+        path="/api/monthly-monitoring/email-action/request-edit" 
+        element={<EmailActionHandler />} 
       />
       
       {/* Protected routes - Main app */}

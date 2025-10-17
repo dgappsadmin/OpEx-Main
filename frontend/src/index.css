@@ -225,6 +225,27 @@
   }
 }
 
+/* Email Action Handler Animations */
+@keyframes scale-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes progress {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 /* Component-specific optimizations for 14-inch laptops - Compact Design */
 @layer components {
   /* Compact utility classes */
@@ -310,6 +331,15 @@
   
   .animate-pulse-bond-delayed {
     animation: pulse-bond-delayed 6s ease-in-out infinite 2s;
+  }
+
+  /* Email Action Handler Animation Classes */
+  .animate-scale-in {
+    animation: scale-in 0.4s ease-out;
+  }
+
+  .animate-progress {
+    animation: progress 1.5s ease-in-out infinite;
   }
 
   /* Glassmorphism Loader Animations */
